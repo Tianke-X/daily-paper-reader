@@ -25,3 +25,52 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: power-ticket
+      description: 关于图结构的检索生成
+      enabled: true
+      paper_sources:
+        - arxiv
+      keywords:
+        - keyword: electric power work ticket
+          keyword_cn: 电力工作票
+          query: electric power work ticket
+        - keyword: retrieval augmented generation
+          keyword_cn: 检索增强生成
+          query: retrieval augmented generation for work tickets
+        - keyword: power system document
+          keyword_cn: 电力系统文档
+          query: power system document retrieval and generation
+        - keyword: graph structure learning
+          keyword_cn: 图结构学习
+          query: graph structure learning
+        - keyword: graph embedding
+          keyword_cn: 图嵌入
+          query: graph embedding
+      intent_queries:
+        - query: Find articles about retrieval generation for electric power work tickets
+          query_cn: 查找关于电力工作票检索生成的文章
+          enabled: true
+          source: manual
+          note: ''
+        - query: graph based retrieval augmented generation
+          query_cn: 基于图的检索增强生成
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-06-01T07:01:01.191Z'
+source_backends:
+  arxiv:
+    papers_table: arxiv_papers
+    use_vector_rpc: true
+    vector_rpc: match_arxiv_papers
+    vector_rpc_exact: match_arxiv_papers_exact
+    use_bm25_rpc: true
+    bm25_rpc: match_arxiv_papers_bm25
+    sync_table: arxiv_sync_status
+    sync_success_value: success
+    schema: public
+    kind: supabase
+    enabled: true
+    url: https://lyucdwgefyfbmaiopjbk.supabase.co
+    anon_key: sb_publishable_lX-oi64Uxyd7SIVv3_w2Uw_MTOojeKq
