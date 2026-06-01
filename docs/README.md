@@ -6,73 +6,47 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-05-23 ~ 2026-06-01
-- 运行时间：2026-06-01 07:16:35 UTC
+- 最新运行日期：2026-06-01
+- 运行时间：2026-06-01 22:46:27 UTC
 - 运行状态：成功
-- 本次总论文数：17
-- 精读区：6
-- 速读区：11
+- 本次总论文数：9
+- 精读区：1
+- 速读区：8
 
 ### 今日简报（AI）
-本期聚焦图增强检索与结构化状态管理，共精读2篇9.0高分的GraphRAG论文。  
-最值得关注的是跨块图增强和结构化检索状态管理两个方向，能显著提升RAG的跨任务表现。  
-普通读者可尝试将图结构引入现有RAG系统，重点看精读列表的两篇文章。
-- 详情：[/20260523-20260601/README](/20260523-20260601/README)
+共处理9篇论文，其中精读1篇获8分，速读8篇。最值得关注的是图压缩的高效性与多跳问答的共识检索方向，《Structure-Preserving》精读与ConRAG、OmniRetrieval等速读均有亮点。建议优先精读图压缩论文以把握底层结构优化思路，再速读速读列表中的多源检索工作。
+- 详情：[/202606/01/README](/202606/01/README)
 
 ### 精读区论文标签
-1. [EfficientGraph-RAG: Structured Retrieval-State Management for Cross-Task Retrieval-Augmented Generation](/20260523-20260601/2605.25379v1-efficientgraph-rag-structured-retrieval-state-management-for-cross-task-retrieval-augmented-generation)  
-   标签：评分：9.0/10、query:power-ticket
-   evidence：EfficientGraph-RAG：使用类型化分层状态空间和图基更新的结构化检索状态管理
-2. [Beyond Chunk-Local Extraction: Cross-Chunk Graph Augmentation for GraphRAG](/20260523-20260601/2605.28004v1-beyond-chunk-local-extraction-cross-chunk-graph-augmentation-for-graphrag)  
-   标签：评分：9.0/10、query:power-ticket
-   evidence：跨块图增强的GraphRAG方法
-3. [Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation](/20260523-20260601/2605.28175v1-mixture-of-experts-knowledge-graph-retrieval-augmented-generation-for-multi-agent-llm-based-recommendation)  
-   标签：评分：9.0/10、query:power-ticket
-   evidence：基于知识图谱的混合专家检索增强生成用于多智能体推荐
-4. [Query Symbolically or Retrieve Semantically? A Dataset and Method for Semi-Structured Question Answering](/20260523-20260601/2605.27164v1-query-symbolically-or-retrieve-semantically-a-dataset-and-method-for-semi-structured-question-answering)  
+1. [An Efficient and Scalable Graph Condensation with Structure-Preserving](/202606/01/2605.31016v1-an-efficient-and-scalable-graph-condensation-with-structure-preserving)  
    标签：评分：8.0/10、query:power-ticket
-   evidence：DualGraph框架结合文本和符号知识图谱用于半结构化问答
-5. [Beyond Similarity: Task-Aligned Retrieval for Language Models](/20260523-20260601/2605.27951v1-beyond-similarity-task-aligned-retrieval-for-language-models)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：用任务对齐的规则选择替代相似性检索，非常适合程序性工作票检索
-6. [LegalGraphRAG: Multi-Agent Graph Retrieval-Augmented Generation for Reliable Legal Reasoning](/20260523-20260601/2605.28120v1-legalgraphrag-multi-agent-graph-retrieval-augmented-generation-for-reliable-legal-reasoning)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：显式的基于图的检索增强生成框架，使用多智能体和知识图谱进行法律推理，直接匹配需求7。
+   evidence：保持结构的图压缩
 
 ### 速读区论文标签
-1. [GRASP: Plan-Guided Graph Retrieval with Adaptive Fusion and Reranking on Semi-Structured Knowledge Bases](/20260523-20260601/2605.30237v1-grasp-plan-guided-graph-retrieval-with-adaptive-fusion-and-reranking-on-semi-structured-knowledge-bases)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：基于规划的图检索与自适应融合用于半结构化知识库
-2. [MoG: Mixture of Experts for Graph-based Retrieval-Augmented Generation](/20260523-20260601/2605.31010v1-mog-mixture-of-experts-for-graph-based-retrieval-augmented-generation)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：提出用于图基检索增强生成的专家混合模型，直接相关于图结构检索生成
-3. [Retrieval as Reasoning: Self-Evolving Agent-Native Retrieval via LLM-Wiki](/20260523-20260601/2605.25480v2-retrieval-as-reasoning-self-evolving-agent-native-retrieval-via-llm-wiki)  
+1. [ConRAG: Consensus-Driven Multi-View Retrieval for Multi-Hop Question Answering](/202606/01/2605.28093v1-conrag-consensus-driven-multi-view-retrieval-for-multi-hop-question-answering)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：基于类Wiki图结构的智能代理原生检索
-4. [RAGEAR: Retrieval-Augmented Graph-Enhanced Academic Recommender](/20260523-20260601/2605.26819v1-ragear-retrieval-augmented-graph-enhanced-academic-recommender)  
+   evidence：融合关系、实体和文本信号的多视图RAG，涉及图结构
+2. [OmniRetrieval: Unified Retrieval across Heterogeneous Knowledge Sources](/202606/01/2605.29250v1-omniretrieval-unified-retrieval-across-heterogeneous-knowledge-sources)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：图增强的RAG推荐系统
-5. [Rethinking Agentic RAG: Toward LLM-Driven Logical Retrieval Beyond Embeddings](/20260523-20260601/2605.27123v1-rethinking-agentic-rag-toward-llm-driven-logical-retrieval-beyond-embeddings)  
+   evidence：异构图源统一检索
+3. [DynaTree: Dynamic Agentic Retrieval Tree for Time-Sensitive News Retrieval](/202606/01/2605.31377v1-dynatree-dynamic-agentic-retrieval-tree-for-time-sensitive-news-retrieval)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：提出由LLM驱动的逻辑检索型智能体RAG，讨论了图结构检索架构
-6. [Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation](/20260523-20260601/2605.28175v2-mixture-of-experts-knowledge-graph-retrieval-augmented-generation-for-multi-agent-llm-based-recommendation)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：知识图谱检索增强生成用于多智能体推荐
-7. [Better Later Than Sooner: Neuro-Symbolic Knowledge Graph Construction via Ontology-grounded Post-extraction Correction](/20260523-20260601/2605.29168v1-better-later-than-sooner-neuro-symbolic-knowledge-graph-construction-via-ontology-grounded-post-extraction-correction)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：提出神经符号知识图谱构建方法，以增强基于图的检索增强生成在复杂问答中的能力
-8. [Iterate Until Retrieved: Factual Nugget Optimization for Discoverable Continual Corrections in Agentic RAG](/20260523-20260601/2605.25641v1-iterate-until-retrieved-factual-nugget-optimization-for-discoverable-continual-corrections-in-agentic-rag)  
+   evidence：动态智能体检索树用于新闻
+4. [MimirRAG: A Multi-Agent RAG Framework for Financial Data Retrieval with Metadata Integration](/202606/01/2605.25030v1-mimirrag-a-multi-agent-rag-framework-for-financial-data-retrieval-with-metadata-integration)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：基于事实片段优化的RAG纠错方法
-9. [In-Context Optimization for Retrieval-Augmented Generation: A Gradient-Descent Perspective](/20260523-20260601/2605.26356v1-in-context-optimization-for-retrieval-augmented-generation-a-gradient-descent-perspective)  
+   evidence：面向金融文档的多智能体RAG
+5. [Search for Coverage: Learning Coverage-Aware Retrieval with Augmented Sub-Question Answerability](/202606/01/2605.28522v1-search-for-coverage-learning-coverage-aware-retrieval-with-augmented-sub-question-answerability)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：从上下文优化角度理解RAG，将检索和梯度下降联系起来
-10. [RAGe: A Retrieval-Augmented Generation Evaluation Framework](/20260523-20260601/2605.27445v1-rage-a-retrieval-augmented-generation-evaluation-framework)  
+   evidence：面向RAG的覆盖感知检索
+6. [GraphSteal: Structural Knowledge Stealing from Graph RAG via Traversal Reconstruction](/202606/01/2605.28645v1-graphsteal-structural-knowledge-stealing-from-graph-rag-via-traversal-reconstruction)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：模块化RAG应用基准测试框架，可为特定领域推荐最优组件
-11. [DiagramRAG: A Lightweight Framework to Retrieve Scientific Diagram for Figure Generation](/20260523-20260601/2605.27931v1-diagramrag-a-lightweight-framework-to-retrieve-scientific-diagram-for-figure-generation)  
+   evidence：通过遍历从Graph RAG中窃取知识图谱结构
+7. [Evolutionary Refinement of Generative Graph Topologies: A Hybrid WGAN-GA Approach](/202606/01/2605.29161v1-evolutionary-refinement-of-generative-graph-topologies-a-hybrid-wgan-ga-approach)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：基于草图拓扑结构的检索增强框架
+   evidence：使用WGAN和遗传算法进化优化图生成拓扑
+8. [HiKEY: Hierarchical Multimodal Retrieval for Open-Domain Document Question Answering](/202606/01/2605.29606v1-hikey-hierarchical-multimodal-retrieval-for-open-domain-document-question-answering)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：分层树状检索用于文档问答
 
 
 <div class="dpr-home-promo-card">

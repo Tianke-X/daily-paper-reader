@@ -1,0 +1,377 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-01T22:41:19.069711+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 1,
+    "deep_cap": 6,
+    "deep_selected": 1,
+    "quick_candidates": 8,
+    "quick_skim_target": 11,
+    "quick_selected": 8
+  },
+  "deep_dive": [
+    {
+      "id": "2605.31016v1",
+      "source": "arxiv",
+      "title": "An Efficient and Scalable Graph Condensation with Structure-Preserving",
+      "abstract": "Graph condensation (GC) is pivotal for enabling Graph Neural Networks (GNNs) deployment in resource-constrained scenarios by compressing large-scale graphs into compact synthetic counterparts. Existing GC methods commonly suffer from computational inefficiency due to coupled optimization as well as encountering poor generalization across GNN architectures. To address these challenges, this study proposes an Efficient and Scalable Graph Condensation with Structure-Preserving (SP-ESGC), which possesses a decoupled design that separates node condensation from graph structure generation. Specifically, it first employs heat kernel feature propagation to generate node representation via spectral graph theory-inspired diffusion. Further, a novel hybrid clustering strategy is designed to extracts discriminative intra-class centroids from the node representation. Finally, a pre-trained edge predictor infers transferable structural patterns from the original graph, ensuring accurate synthetic graph generation. Extensive experiments on real-world graph datasets demonstrate that the proposed SP-ESGC implementes a precise GC with significantly high computational efficiency. Moreover, SP-ESGC also generalizes well across diverse GNN architectures.",
+      "authors": [
+        "Yulin Hu",
+        "Fuyan Ou",
+        "Ye Yuan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-29T08:49:17+00:00",
+      "link": "https://arxiv.org/pdf/2605.31016v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph condensation with structure preserving",
+      "llm_evidence_cn": "保持结构的图压缩",
+      "llm_evidence": "保持结构的图压缩",
+      "canonical_evidence": "保持结构的图压缩",
+      "llm_tldr_en": "SP-ESGC proposes a decoupled graph condensation method that separates node condensation from structure generation, achieving efficiency and scalability.",
+      "llm_tldr_cn": "针对图压缩中计算效率低和跨架构泛化差的问题，提出SP-ESGC，采用解耦设计将节点压缩与图结构生成分离，利用热核特征传播和混合聚类实现高效可扩展的图压缩。",
+      "llm_tldr": "针对图压缩中计算效率低和跨架构泛化差的问题，提出SP-ESGC，采用解耦设计将节点压缩与图结构生成分离，利用热核特征传播和混合聚类实现高效可扩展的图压缩。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.28093v1",
+      "source": "arxiv",
+      "title": "ConRAG: Consensus-Driven Multi-View Retrieval for Multi-Hop Question Answering",
+      "abstract": "Retrieval-augmented generation (RAG) has emerged as a promising paradigm for enhancing large language models (LLMs) on multi-hop question answering (QA), which requires reasoning over evidence from multiple documents. Current multi-hop RAG methods generally focus on either query-side task decomposition or corpus-side knowledge graph construction. Despite their progress, these methods still struggle to achieve satisfactory performance on complex multi-hop QA tasks. To this end, we propose ConRAG, a consensus-driven multi-view RAG framework that effectively boosts LLMs on complex multi-hop QA. The core of ConRAG is to systematically optimize both the query and corpus sides and to leverage multi-view evidence (relation, entity, and text signals) for more accurate retrieval. Extensive experiments on three multi-hop QA benchmarks show that ConRAG consistently outperforms all baselines by a clear margin, e.g., up to +26.9% average performance gains over vanilla RAG, and enables Gemma-4-31B to achieve a new state-of-the-art record on the challenging MuSiQue benchmark.",
+      "authors": [
+        "Yikai Zhu",
+        "Kunfeng Chen",
+        "Qihuang Zhong",
+        "Juhua Liu",
+        "Bo Du"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-27T07:51:46+00:00",
+      "link": "https://arxiv.org/pdf/2605.28093v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Multi-view RAG with relation, entity, and text signals involving graph structures",
+      "llm_evidence_cn": "融合关系、实体和文本信号的多视图RAG，涉及图结构",
+      "llm_evidence": "融合关系、实体和文本信号的多视图RAG，涉及图结构",
+      "canonical_evidence": "融合关系、实体和文本信号的多视图RAG，涉及图结构",
+      "llm_tldr_en": "ConRAG improves multi-hop QA by jointly optimizing query and corpus sides and fusing multi-view evidence (relation, entity, text) for more comprehensive retrieval.",
+      "llm_tldr_cn": "针对多跳问答中现有方法单视图局限的问题，提出ConRAG共识驱动多视图检索增强生成框架，系统优化查询端和语料端，融合关系、实体和文本多视图证据，显著提升复杂多跳问答的准确率和召回率。",
+      "llm_tldr": "针对多跳问答中现有方法单视图局限的问题，提出ConRAG共识驱动多视图检索增强生成框架，系统优化查询端和语料端，融合关系、实体和文本多视图证据，显著提升复杂多跳问答的准确率和召回率。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.25030v1",
+      "source": "arxiv",
+      "title": "MimirRAG: A Multi-Agent RAG Framework for Financial Data Retrieval with Metadata Integration",
+      "abstract": "Retrieval-augmented generation (RAG) systems offer a promising approach to reduce hallucinations and improve answer accuracy in large language models (LLMs), a requirement for reliable, financial analysis where answers must be grounded in verifiable evidence from filings rather than generated from model priors. However, designing RAG systems that extract meaningful insights from mixed financial documents and integrate into analyst workflows remains challenging. This paper introduces MimirRAG (Metadata-Integrated Multi-Agent Information Retrieval), a multi-agent RAG system developed iteratively to address these challenges. MimirRAG features a modular pipeline encompassing structure-preserving parsing of PDF filings, table-aware chunking, metadata extraction, agent-based retrieval with query planning and hybrid search, validation, and context-aware generation with numerical reasoning support. Our ablation study identifies three key technical enablers for effective financial RAG: metadata integration, table-aware chunking, and an agentic workflow. MimirRAG was evaluated quantitatively using FinanceBench and qualitatively through expert validation with four financial analysts. The system achieved 89.3% accuracy on FinanceBench, outperforming the original benchmark baselines. Expert feedback highlighted that successful deployment also requires calibrated trust, comprehensive data integration, and user personalization. We conclude that combining multi-agent RAG architecture with human-centric design principles can improve the extraction of meaningful insights in financial analysis.",
+      "authors": [
+        "Magnus Samuelsen",
+        "Wilmer Nyström",
+        "Somnath Mazumdar",
+        "Mansoor Hussain",
+        "Mikkel Strange"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-24T12:15:27+00:00",
+      "link": "https://arxiv.org/pdf/2605.25030v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "multi-agent RAG for financial documents",
+      "llm_evidence_cn": "面向金融文档的多智能体RAG",
+      "llm_evidence": "面向金融文档的多智能体RAG",
+      "canonical_evidence": "面向金融文档的多智能体RAG",
+      "llm_tldr_en": "MimirRAG is a multi-agent RAG system for financial data retrieval with metadata integration, applicable to structured document retrieval tasks like work tickets.",
+      "llm_tldr_cn": "现有RAG系统在处理混合金融文档时面临挑战，本文提出MimirRAG，一种集成元数据的多智能体RAG框架，通过结构化保留解析和表格感知分块等方法，在金融数据集上提升了检索和生成质量。该框架可迁移至电力工作票等领域的文档检索生成任务。",
+      "llm_tldr": "现有RAG系统在处理混合金融文档时面临挑战，本文提出MimirRAG，一种集成元数据的多智能体RAG框架，通过结构化保留解析和表格感知分块等方法，在金融数据集上提升了检索和生成质量。该框架可迁移至电力工作票等领域的文档检索生成任务。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.29250v1",
+      "source": "arxiv",
+      "title": "OmniRetrieval: Unified Retrieval across Heterogeneous Knowledge Sources",
+      "abstract": "Real-world information needs require access to structurally diverse knowledge sources, from unstructured text and relational tables to knowledge graphs and property graphs. Existing retrievers, however, operate over one source at a time under a fixed query language, leaving the broader landscape of available knowledge fragmented behind incompatible interfaces. A natural attempt at unification would collapse these sources into a shared space, but this erases the structural affordances (such as schemas, ontologies, compositional operators) that give each source its expressive power. Effective retrieval over diverse knowledge, therefore, requires not homogenization but an overarching layer that meets each source on its own terms. To achieve this, we present OmniRetrieval, a framework that takes any natural-language query, identifies appropriate knowledge sources, and dispatches source-native queries to their native execution engines. Across an extensive benchmark spanning 13 datasets and 309 distinct knowledge bases over text, relational, and graph-structured sources, OmniRetrieval exceeds single-source baselines, demonstrating that it can serve as a general-purpose interface to the heterogeneous sources while preserving the structural distinctions that make each source valuable.",
+      "authors": [
+        "Jinheon Baek",
+        "Soyeong Jeong",
+        "Sangwoo Park",
+        "Woongyeong Yeo",
+        "Minki Kang",
+        "Patara Trirat",
+        "Heejun Lee",
+        "Sung Ju Hwang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "published": "2026-05-28T02:10:35+00:00",
+      "link": "https://arxiv.org/pdf/2605.29250v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "unified retrieval over heterogeneous graph sources",
+      "llm_evidence_cn": "异构图源统一检索",
+      "llm_evidence": "异构图源统一检索",
+      "canonical_evidence": "异构图源统一检索",
+      "llm_tldr_en": "OmniRetrieval unifies retrieval across diverse knowledge sources including graphs, preserving structural affordances; directly relevant to graph structure learning and graph embedding.",
+      "llm_tldr_cn": "真实需求需访问结构多样的知识源，但现有检索器各不兼容。本文提出OmniRetrieval统一检索框架，通过一个上层层在保持各源结构优势的同时实现跨知识图谱、属性图等异构源的检索，不采用同质化方案。该方法为图结构学习和图嵌入提供了实际应用场景。",
+      "llm_tldr": "真实需求需访问结构多样的知识源，但现有检索器各不兼容。本文提出OmniRetrieval统一检索框架，通过一个上层层在保持各源结构优势的同时实现跨知识图谱、属性图等异构源的检索，不采用同质化方案。该方法为图结构学习和图嵌入提供了实际应用场景。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.28522v1",
+      "source": "arxiv",
+      "title": "Search for Coverage: Learning Coverage-Aware Retrieval with Augmented Sub-Question Answerability",
+      "abstract": "Long-form Retrieval-Augmented Generation (RAG) brings the challenge of coverage-based ranking, because ranking methods must ensure the inclusion of comprehensive relevant nuggets (i.e., facts), which can thereby be synthesized into a comprehensive output. In this work, we propose CoveR (Our code is available at https://github.com/DylanJoo/CoveR ) a dense retrieval method optimized for coverage-aware retrieval scenarios. CoveR is a bi-encoder trained with the coverage-based contrastive and distillation objectives, which enables CoveR to capture diverse aspects of information needs. To train CoveR, we create the SCOPE dataset, (Our training data is available at https://huggingface.co/datasets/DylanJHJ/scope ) which comprises 90K training pairs from Researchy Questions with synthetic coverage signals augmented from sub-question answerability judgments generated by LLMs. Our empirical experiments show that CoveR enhances nugget coverage by 10\\% over strong dense retrieval baselines without sacrificing its relevance-based retrieval capability. Further ablation studies validate the importance of our proposed learning method, showing that CoveR achieves a superior trade-off between relevance- and coverage-based ranking, which is essential for long-form RAG.",
+      "authors": [
+        "Jia-Huei Ju",
+        "Eugene Yang",
+        "Trevor Adriaanse",
+        "Suzan Verberne",
+        "Andrew Yates"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-05-27T14:20:52+00:00",
+      "link": "https://arxiv.org/pdf/2605.28522v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "coverage-aware retrieval for RAG",
+      "llm_evidence_cn": "面向RAG的覆盖感知检索",
+      "llm_evidence": "面向RAG的覆盖感知检索",
+      "canonical_evidence": "面向RAG的覆盖感知检索",
+      "llm_tldr_en": "CoveR learns coverage-aware dense retrieval for comprehensive information in long-form RAG, addressing the need for diverse nugget inclusion; relevant for work ticket generation.",
+      "llm_tldr_cn": "长文本RAG面临覆盖性排序挑战，需确保全面相关事实的包含。本文提出CoveR密集检索方法，通过覆盖性对比和蒸馏训练双编码器以捕获信息需求的多方面，并构建90K规模的SCOPE数据集。方法可直接提升电力工作票生成中的信息覆盖率。",
+      "llm_tldr": "长文本RAG面临覆盖性排序挑战，需确保全面相关事实的包含。本文提出CoveR密集检索方法，通过覆盖性对比和蒸馏训练双编码器以捕获信息需求的多方面，并构建90K规模的SCOPE数据集。方法可直接提升电力工作票生成中的信息覆盖率。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.31377v1",
+      "source": "arxiv",
+      "title": "DynaTree: Dynamic Agentic Retrieval Tree for Time-Sensitive News Retrieval",
+      "abstract": "Agentic Retrieval-Augmented Generation improves retrieval by integrating planning, tool use, and iterative reasoning, but existing agentic RAG methods often couple semantic expansion with retrieval decisions in short-horizon inference loops, leading to high inference cost and limited suitability for time-sensitive news retrieval. We propose DynaTree, a two-stage framework for efficient and adaptive news retrieval. In the offline stage, DynaTree uses coordinated agents to construct a reusable retrieval tree that materializes the semantic space of a query topic. In the online stage, DynaTree performs lightweight daily subtree selection over a time-localized evaluation proxy, without further agentic reasoning, tree modification, or retraining. Experiments on a multi-day Syft news benchmark and multiple BEIR datasets show that DynaTree achieves strong recall and ranking performance, consistently outperforming standard RAG and prior agentic baselines. We further deploy DynaTree in the Syft production system and evaluate it through online A/B testing from Jan. 28 to Feb. 6, 2026. The dynamically adapted variant improves survival rate from 0.32-0.53 to 0.59-0.73 over a fixed offline-selected subtree and outperforms existing production recallers on every evaluation day. These results show that persistent, structure-aware semantic expansion can translate offline agentic reasoning into practical improvements in coverage, freshness, and relevance for real-world news retrieval.",
+      "authors": [
+        "Siyuan Qi",
+        "Xinyuan Wang",
+        "Yingxuan Yang",
+        "Haochuan Guo",
+        "Jianghao Lin",
+        "Weiwen Liu",
+        "Yong Yu",
+        "Weinan Zhang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-05-29T14:45:58+00:00",
+      "link": "https://arxiv.org/pdf/2605.31377v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "dynamic agentic retrieval tree for news",
+      "llm_evidence_cn": "动态智能体检索树用于新闻",
+      "llm_evidence": "动态智能体检索树用于新闻",
+      "canonical_evidence": "动态智能体检索树用于新闻",
+      "llm_tldr_en": "DynaTree constructs a reusable retrieval tree for efficient time-sensitive news RAG, using graph-based structure; directly applicable to graph-based retrieval augmented generation.",
+      "llm_tldr_cn": "现有智能体RAG推理成本高且不适合时效性新闻检索，本文提出DynaTree两阶段框架，离线阶段用协调智能体构建可复用的检索树，在线阶段通过时间局部评估进行轻量子树选择，无需额外智能体推理。在新闻检索任务上实现高效自适应，其图结构思想可用于电力工作票的检索生成。",
+      "llm_tldr": "现有智能体RAG推理成本高且不适合时效性新闻检索，本文提出DynaTree两阶段框架，离线阶段用协调智能体构建可复用的检索树，在线阶段通过时间局部评估进行轻量子树选择，无需额外智能体推理。在新闻检索任务上实现高效自适应，其图结构思想可用于电力工作票的检索生成。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.28645v1",
+      "source": "arxiv",
+      "title": "GraphSteal: Structural Knowledge Stealing from Graph RAG via Traversal Reconstruction",
+      "abstract": "Retrieval-Augmented Generation (RAG) enhances LLMs by grounding generation in query-relevant external evidence. Beyond unstructured text corpora, Graph RAG integrates knowledge graphs into the retrieval pipeline, enabling LLMs to access entities, relations, and multi-hop dependencies encoded in structured knowledge. However, the same structured knowledge that empowers Graph RAG also creates a new privacy attack surface. We demonstrate that Graph RAG systems can be turned into structural oracles: through adaptive black-box interactions, an adversary can elicit sufficient relational evidence to reconstruct substantial portions of the hidden knowledge graph. We propose a structure-oriented reconstruction framework that recovers targeted graphs from both local and global perspectives. Specifically, Depth-Wise Heuristic Search extracts fine-grained node attributes by recursively expanding entity-centered evidence, while Breadth-Wise Diffusion Search infers graph topology by propagating across relation-induced neighborhoods. Experiments on generic and healthcare scenarios demonstrate that our method can recover over 90\\% of the original knowledge graph from representative Graph RAG systems, revealing sensitive entities, relations, and structural dependencies with high fidelity. Existing guradrails provide limited defense against our attack, highlighting the inherent difficulty of safeguarding structural privacy in Graph RAG pipelines.",
+      "authors": [
+        "Jinze Gu",
+        "Qinghua Mao",
+        "Xi Lin",
+        "Jun Wu"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.CL"
+      ],
+      "published": "2026-05-27T15:50:14+00:00",
+      "link": "https://arxiv.org/pdf/2605.28645v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Stealing knowledge graph structure from Graph RAG via traversal",
+      "llm_evidence_cn": "通过遍历从Graph RAG中窃取知识图谱结构",
+      "llm_evidence": "通过遍历从Graph RAG中窃取知识图谱结构",
+      "canonical_evidence": "通过遍历从Graph RAG中窃取知识图谱结构",
+      "llm_tldr_en": "GraphSteal demonstrates structural knowledge stealing from Graph RAG systems via adaptive black-box traversal reconstruction, highlighting privacy risks.",
+      "llm_tldr_cn": "针对Graph RAG系统在提供结构化知识时可能暴露隐私的问题，提出GraphSteal框架，通过自适应黑盒遍历查询逐步重建隐藏的知识图谱结构，实验证明可高效窃取目标图结构，强调了部署中图结构隐私保护的重要性。",
+      "llm_tldr": "针对Graph RAG系统在提供结构化知识时可能暴露隐私的问题，提出GraphSteal框架，通过自适应黑盒遍历查询逐步重建隐藏的知识图谱结构，实验证明可高效窃取目标图结构，强调了部署中图结构隐私保护的重要性。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.29161v1",
+      "source": "arxiv",
+      "title": "Evolutionary Refinement of Generative Graph Topologies: A Hybrid WGAN-GA Approach",
+      "abstract": "Generating realistic graph-structured data is challenging due to discrete connectivity, varying graph sizes, and class-specific structural patterns. Recent Generative Adversarial Networks (GAN)-based graph generation methods improve edge modelling by learning connectivity and matching class-specific density distributions. However these models still exhibit noticeable deviations such as in degree and spectral distribution when compared to real graphs, indicating that important structural properties are not fully preserved. This work aims to reduce these deviations by refining the graphs produced by an existing GAN-based graph generator framework with a Genetic Algorithm (GA). In the GAN framework, the generator produces both node features and connectivity patterns, while a GNN-based critic evaluates graph realism and class consistency to ensure global structural and class alignment. Building on this foundation, we apply a GA to refine the edges of generated graphs. The refinement process guides synthetic graphs toward closer agreement with real data, while preserving diversity and novelty. Experimental results show that the GA refinement consistently lowers combined Maximum Mean Discrepancy (MMD) compared to the base model, leading to graphs that more closely match real structural patterns. This demonstrates that evolutionary refinement is an effective and flexible way to correct residual structural deviations in GAN-based graph generators, improving their suitability for realistic graph synthesis and data augmentation.",
+      "authors": [
+        "James Sargant",
+        "Seyedeh Ava Razi Razavi",
+        "Renata Dividino",
+        "Sheridan Houghten"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-05-27T22:53:49+00:00",
+      "link": "https://arxiv.org/pdf/2605.29161v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Evolutionary refinement of generative graph topologies using WGAN and genetic algorithm",
+      "llm_evidence_cn": "使用WGAN和遗传算法进化优化图生成拓扑",
+      "llm_evidence": "使用WGAN和遗传算法进化优化图生成拓扑",
+      "canonical_evidence": "使用WGAN和遗传算法进化优化图生成拓扑",
+      "llm_tldr_en": "This work refines GAN-generated graphs with a genetic algorithm to better preserve structural properties like degree and spectral distributions, advancing graph structure learning.",
+      "llm_tldr_cn": "生成图数据常难以保留真实图的度分布、谱分布等关键结构属性。本文提出混合WGAN-GA方法，在GAN生成图后使用遗传算法进行拓扑微调，显著降低了生成图与真实图在多种结构指标上的偏差，提升图生成质量，为图结构学习提供了有效改进手段。",
+      "llm_tldr": "生成图数据常难以保留真实图的度分布、谱分布等关键结构属性。本文提出混合WGAN-GA方法，在GAN生成图后使用遗传算法进行拓扑微调，显著降低了生成图与真实图在多种结构指标上的偏差，提升图生成质量，为图结构学习提供了有效改进手段。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.29606v1",
+      "source": "arxiv",
+      "title": "HiKEY: Hierarchical Multimodal Retrieval for Open-Domain Document Question Answering",
+      "abstract": "Retrieval-augmented generation (RAG) for document-based Open-domain Question Answering (ODQA) on large-scale industrial corpora faces two critical bottlenecks: routing failure in locating the correct document and evidence fragmentation in integrating scattered information. Existing approaches relying on flat text chunks or page-level images inherently struggle to (i) precisely pinpoint the target document among thousands of candidates and (ii) organically connect multimodal evidence, such as tables and figures, within a limited token budget. To address these challenges, we propose HiKEY, a hierarchical tree-based multimodal retrieval framework that elevates document hierarchy to a first-class retrieval signal. Instead of simple chunking, HiKEY reconstructs a logical heterogeneous graph via Document Hierarchical Parsing (DHP), explicitly encoding parent-child relationships. Adopting a hierarchical coarse-to-fine strategy, the framework (1) performs global routing to rapidly prune the search space using hierarchical indexing, and (2) conducts fine-grained retrieval to rank sections by employing a multimodal fusion strategy that captures the most discriminative evidence. Finally, HiKEY assembles a token-efficient evidence subgraph via a hybrid structural-semantic packing strategy. Experiments on ODQA benchmarks demonstrate that HiKEY significantly outperforms page- and chunk-based baselines, improving retrieval recall by up to 12.9% and end-to-end QA performance by up to 6.8%.",
+      "authors": [
+        "Joongmin Shin",
+        "Gyuho Shim",
+        "Jeongbae Park",
+        "Jaehyung Seo",
+        "Heuiseok Lim"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.IR"
+      ],
+      "published": "2026-05-28T08:42:21+00:00",
+      "link": "https://arxiv.org/pdf/2605.29606v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "hierarchical tree retrieval for document QA",
+      "llm_evidence_cn": "分层树状检索用于文档问答",
+      "llm_evidence": "分层树状检索用于文档问答",
+      "canonical_evidence": "分层树状检索用于文档问答",
+      "llm_tldr_en": "HiKEY uses hierarchical tree-based multimodal retrieval to improve document-level RAG, addressing routing and fragmentation issues; applicable to power system document retrieval.",
+      "llm_tldr_cn": "现有RAG在大型工业文档库上面临路由失败和证据碎片化问题，本文提出HiKEY分层树状多模态检索框架，将文档层次性作为首要检索信号，通过树结构精准定位文档并整合多模态证据，在开放域问答上显著优于平铺分块方法。该方法可应用于电力系统工作票等文档的检索生成。",
+      "llm_tldr": "现有RAG在大型工业文档库上面临路由失败和证据碎片化问题，本文提出HiKEY分层树状多模态检索框架，将文档层次性作为首要检索信号，通过树结构精准定位文档并整合多模态证据，在开放域问答上显著优于平铺分块方法。该方法可应用于电力系统工作票等文档的检索生成。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "power system document retrieval and generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
