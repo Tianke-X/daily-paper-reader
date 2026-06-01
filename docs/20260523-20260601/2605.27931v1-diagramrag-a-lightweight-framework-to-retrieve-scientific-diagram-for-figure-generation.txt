@@ -1,0 +1,458 @@
+Title: DiagramRAG: A Lightweight Framework to Retrieve Scientific Diagram for Figure Generation
+
+URL Source: https://arxiv.org/pdf/2605.27931v1
+
+Published Time: Thu, 28 May 2026 00:43:10 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+# DiagramRAG: A Lightweight Framework to Retrieve Scientific Diagram for Figure Generation 
+
+Xinjiang Yu ∗ Junyi Han ∗ Zhuofan Chen ∗ Chi Zhang Xiangyu Fu Jingyuan Tan Zirui You Yixiang Jian Yu-Ping Wang Chengliang Chai †
+
+Beijing Institute of Technology 
+
+{3220251215, hanjunyi}@bit.edu.cn 
+
+# Abstract 
+
+Scientific diagrams are essential for communicating complex methodologies in academic papers. A natural way for researchers to specify such diagrams is through rough sketches, where text labels, connectors, and spatial arrangements express early semantic and topological intentions. However, sketches are usually incom-plete, making them insufficient for directly producing publication-quality diagrams. Existing sketch-based generation methods mainly reconstruct the sketch itself, while recent text-driven diagram generation frameworks rely on textual semantics and do not fully exploit the topological structure contained in sketches. In this paper, we introduce DiagramRAG , a lightweight retrieval-augmented framework for sketch-based scientific diagram completion. Given a user sketch, DiagramRAG 
+
+retrieves reference diagrams that are both semantically relevant to the sketch content and topologically compatible with its structure, and uses them to guide downstream diagram generation. To enable efficient structure-aware retrieval, we represent diagrams as knowledge graphs, synthesize sketch variants at differ-ent simplification levels, and train an embedding model to align sketches with compatible diagrams in a shared space. The retrieved references further provide content, topology, and visual priors for completing and rendering the final di-agram. Experiments show that DiagramRAG achieves F1-scores of 0.848 and 0.802 on DiagramBank and FigureBench , respectively, and improves genera-tion quality with the best VLM-as-a-Judge score of 7.170, while reducing infer-ence latency to 35.48 seconds per sample. Our code and data are available at 
+
+https://anonymous.4open.science/r/DiagramRAG-A262 and https:// huggingface.co/datasets/anonymous-review-a262/DiagramSketch .
+
+# 1 Introduction 
+
+Scientific diagrams play a central role in academic communication, often serving as structural-rich visual summaries [ 1– 3 ] of complex methodologies [ 4– 6 ]. Despite recent advances in automated diagram generation [ 7 , 8], producing high-quality diagrams remains a labor-intensive process [ 9]. In practice, researchers often rely on sketches to externalize their ideas, since sketches can naturally express semantic content through text labels and topological structure through connectors and spatial arrangement [ 5 , 10 , 11 ]. Nevertheless, such semantic and topological cues are usually sparse and abstract, making sketches insufficient for producing publication-quality scientific diagrams [ 12 , 10 ]. Therefore, sketches require further completion and rendering, which makes sketch-based diagram completion an important task: a system should not simply refine the visual appearance of the input sketch, but should also complete its information with semantically and topologically compatible references. 
+
+> ∗Equal contribution.
+> †Corresponding author: ccl@bit.edu.cn Preprint.
+> arXiv:2605.27931v1 [cs.AI] 27 May 2026
+
+Existing work has made progress in generating diagrams from sketches, but completing rough sketches into publication-quality diagrams still remains challenging. Sketch-based generation methods [ 10 , 13 ]such as SketchAgent [ 12 ] convert hand-drawn sketches into structured representations by parsing diagram elements and relations. However, these methods primarily focus on reconstructing the input sketch itself, rather than enriching its content and topology. Another possible method [ 7–9, 14 ] is to convert sketches into textual descriptions and then employ multi-agent text-to-diagram generation frameworks. Among these frameworks, PaperBanana [7] uses VLMs to retrieve reference examples [ 15 , 3 ] based on textual information and coordinates specialized agents to generate diagrams. However, such retrieval primarily relies on textual semantics and does not fully exploit the topological structure captured in sketches [ 16 – 20 ]. Moreover, VLM-based reference retrieval [ 21 – 23 ] incurs substantial computational cost, making it difficult to scale to large diagram collections. Motivated by these limitations, we propose DiagramRAG , a lightweight framework that completes sketches by retrieving reference diagrams with semantic relevance and topological compatibility. Given a user sketch, our goal is to retrieve semantically relevant and topologically compatible diagrams from a curated diagram set as references to guide the generation of publication-quality diagrams. To achieve this, DiagramRAG first curates a high-quality diagram set from raw diagram collections [ 8, 3] and represents diagrams as knowledge graphs [ 1, 2, 16 ] that capture both semantic content and topological structure. Using these representations, we generate sketch variants at different simplification levels to construct sketch-diagram supervision pairs. We then train a lightweight embedding model [ 24 – 26 ] using contrastive objectives to learn a structure-aware retrieval space, where sketches are aligned with compatible reference diagrams. For efficient retrieval, we precompute diagram embeddings into an offline index. At query time, the user sketch is encoded into the same space, and top-k references are retrieved via similarity search. The retrieved references provide content, structural, and visual guidance for downstream generation, enabling DiagramRAG to produce diagrams that are structurally complete, semantically enriched, and visually polished. We summarize our main contributions as follows: • We formulate sketch-based diagram completion, where rough user sketches are transformed into publication-quality diagrams with the support of retrieved reference diagrams. • We propose a lightweight structure-aware retrieval framework that constructs sketch-diagram supervision and trains a contrastive embedding model to align sketches with structurally compatible diagrams while preserving semantic relevance. • We validate DiagramRAG through comprehensive retrieval and generation experiments on 
+
+DiagramBank and FigureBench , showing that it enhances VLM-as-a-Judge generation quality, improves structure-aware retrieval, and achieves efficient inference for publication-ready diagram generation. 
+
+# 2 Related Work 
+
+Automated Scientific Diagram Generation. Recent progress in automated scientific diagram generation can be broadly grouped into three lines of work. The first line is text-driven scientific figure generation, where systems generate diagrams from textual inputs. Representative methods, such as PaperBanana [7 ] and AutoFigure [ 8 ] generate intermediate layouts, retrieve textual or visual references, and refine outputs through planning or multi-agent pipelines. While these methods [ 14 , 9]have significantly improved automation, they largely rely on textual descriptions. The second line starts from sketches. Methods such as Sketch2Diagram [ 10 ] and SketchAgent [ 12 ] focus on converting hand-drawn sketches into vector code or structured, machine-readable diagrams. However, they mainly emphasize structural parsing and reconstruction, rather than information completion. The third line includes controllable image generation methods such as ControlNet [ 13 ], which inject low-level spatial conditions into diffusion models. Although these methods provide stronger control over layout cues, they are mainly designed to preserve local spatial patterns. 
+
+Multimodal Retrieval-Augmented Generation (RAG). Retrieval-augmented generation (RAG) incorporates external knowledge into generation and has been extended to multimodal settings [ 15 ,21 ]. Prior work [ 27 , 28 ] explores structure-driven retrieval strategies for text in RAG systems. Besides, diagram-oriented resources for RAG reflect a growing trend of treating scientific diagrams as retrievable knowledge sources [ 3 ] .However, existing MRAG methods [ 21 , 29 ] primarily focus 2on semantic relevance and do not explicitly model structural compatibility, which is critical for sketch-based diagram retrieval with limited textual information. 
+
+Diagram Similarity and Structure Matching. Recent work increasingly models diagrams as structured objects. Benchmarks such as DiagramEval [ 30 ] and SciFlow-Bench [ 31 ] evaluate diagrams via graph representations. Prior approaches include shared embedding models for sketch-image matching [ 21 , 24 ] and graph-based similarity methods [ 26 , 32 , 33 ] such as GNN and GED ,along with subgraph matching techniques [ 34 , 35 ]. However, these methods typically assume explicit graph inputs or focus on symmetric similarity, rather than retrieval from raster sketches with completion-oriented structural compatibility. 
+
+# 3 Method 
+
+In this section, we first define the task and introduce the core notations in Sec. 3.1. We then present the overall framework in Sec. 3.2, which consists of three components: Structure-aware Representation Learning in Sec. 3.3, Structure-aware Retrieval in Sec. 3.4, and Refined Diagram Generation in Sec. 3.5. 
+
+Figure 1: Overview of DiagramRAG .
+
+3.1 Problem Definition 
+
+In this paper, we study the problem of sketch-based diagram completion over a high-quality diagram set D, where each diagram d ∈ D is a publication-quality diagram and the sketch s is a simplified diagram representation. The objective is to retrieve diagrams that are semantically relevant and topologically compatible with s and generate a refined diagram I based on them. In the offline training stage, we learn encoders that map sketches and diagrams into a shared embedding space via contrastive learning, where the similarity sim( s, d ) is measured based on their semantic and topological compatibility; we compute the sketch embedding and directly compare it against the precomputed diagram embedding index, retrieving the top-k most similar diagrams to form the reference set R, based on which a generator produces the final refined diagram I by enriching the semantic content and topological structure of the sketch and rendering it into a visually refined diagram I.
+
+3.2 Overall Framework 
+
+As illustrated in Figure 1, DiagramRAG follows a three-stage pipeline for sketch-based diagram completion. In the first stage, DiagramRAG constructs structure-aware training data from a raw 3diagram set by first selecting a high-quality subset of diagrams. Starting from these curated diagrams, we extract knowledge graph (KG) representations and generate diverse sketch variants to simulate different levels of simplification, enabling the model to learn representations that capture both semantic content and topological structure. Using the generated sketches together with their original diagrams, we construct positive and negative sketch-diagram pairs for contrastive learning. This trains the model to differentiate diagrams that are semantically and topologically consistent with a given sketch from those that are not, thereby aligning the sketch space with the diagram space. In the second stage, given a user sketch, DiagramRAG encodes it into the learned embedding space and retrieves the top-k compatible diagrams from a precomputed diagram embedding index as references. In the final stage, DiagramRAG leverages the retrieved diagrams to guide generation. A structural planning agent infers a completion plan from the sketch and references, while a visual guidance agent extracts aesthetic patterns from the references. These signals are combined to condition the downstream generator, producing the final publication-quality diagram that is structurally complete, semantically enriched, and visually refined. The remainder of this section is organized as follows. We first introduce structure-aware representation learning in Sec. 3.3. We then describe the structure-aware retrieval mechanism in Sec. 3.4. Finally, we present the reference-guided diagram generation process in Sec. 3.5. 
+
+3.3 Structure-aware Representation Learning Motivation. Sketches provide compact visual specifications, where textual labels convey semantic content and spatial layout reveals topological structure. However, existing sketch interpretation methods based mainly on textual semantics makes limited use of the rich topological information inherently present in sketches, including connectivity, containment, and spatial layout. This motivates a structure-aware representation that preserves semantic cues while explicitly organizing diagram elements and their relations. To this end, we represent diagrams as knowledge graphs and construct supervised sketch-diagram training data by synthesizing sketch variants with different degrees of simplification. These supervision pairs provide the foundation for learning sketch-diagram alignment in the subsequent retrieval stage. As illustrated in Figure 1, this stage consists of diagram filtering, sketch generation, and sketch-diagram alignment. 
+
+Diagram Filtering. The raw diagram set extracted from scientific publications [ 8, 3 ] is highly heterogeneous, containing a large proportion of plots and natural images, as well as samples with insufficient structural information and poor visual quality, making it unsuitable for structure-aware representation. So, we construct a high-quality diagram set D through a multi-stage filtering pipeline. First, we extract low-level visual features from the diagram set using conventional image processing techniques, and perform coarse filtering to remove samples with insufficient structural content or poor visual quality. Next, we jointly model high-level semantic alignment and visual quality by leveraging CLIP-based image representations [ 21 ] together with low-level visual features. Specifically, we employ a pre-trained LightGBM classifier [ 36 ] to estimate a retention probability for each image based on these combined features. According to predefined thresholds, candidate images are categorized into accepted, rejected, and uncertain groups. Furthermore, for samples in the uncertain group, we employ a vision-language model [ 37 ] to perform fine-grained verification under explicit task criteria, focusing on whether the image belongs to structured diagram types suitable for DiagramRAG .Through this pipeline, we obtain a high-quality diagram set D with clear structure, consistent content, and strong suitability for downstream tasks. Implementation details and feature definitions are provided in Appendix C. 
+
+Sketch Generation. To enable controllable sketch synthesis, we first represent each diagram as a diagram-specific knowledge graph (KG), rather than directly operating on pixels. This design is inspired by prior works [ 16 , 17 , 1 , 2]on scene graphs and diagram parse graphs (DPGs), which shows that visual content can be abstracted into explicit objects, attributes, and relations for retrieval and reasoning. In our setting, such a structured representation is particularly suitable for scientific diagrams, since textual labels, connectors, containment relations, and spatial layouts jointly define the semantic content and topological structure of a diagram. By making these components explicit, the KG enables us to synthesize sketch variants through controlled graph-level simplification and perturbation, while preserving the core topological relations of the original diagram. To efficiently construct training supervision, we sample a subset Ds ⊂ D instead of processing the entire diagram set. This reduces the computational overhead of structural parsing while preserving 4sufficient structural diversity for learning. For each diagram d ∈ D s, we first parse it into a KG representation and then generate a set of sketches Sd by applying controlled graph-level transforma-tions in the KG space. In this representation, nodes describe diagram elements through attributes such as element type and textual name, while edges capture relational structure through source-target connections and relation labels. Each sketch s ∈ S d serves as a simplified variant of its source diagram d, reflecting common properties of user-drawn sketches: incomplete structural components, sparse textual labels, and imprecise spatial layouts. To capture these properties, we apply three types of graph-level transformations: importance-aware merging of locally and semantically related nodes, textual-label suppression, and spatial-layout perturbation, producing sketches with varying degrees of structural simplification, textual sparsity, and drawing noise while retaining the essential topology of the source diagram. 
+
+Figure 2: Examples of generated sketch variants Figure 2 illustrates specific examples of sketches generated from the KG representation. Starting from the original diagram in Figure 2 (a), we present three representative variants: the text-suppressed sketch in Figure 2 (b) removes most textual labels while preserving the original layout; the structure-coarsened sketch in Figure 2 (c) compresses fine-grained nodes into a compact structural backbone; and the spatially perturbed sketch in Figure 2 (d) rearranges the coarse components to reflect imperfect hand-drawn layouts. These examples show how multiple sketch variants can be derived from a single diagram, varying in textual completeness, structural granularity, and layout precision, thereby providing diverse supervision for structure-aware matching. 
+
+Sketch-Diagram Space Alignment. We learn a structure-aware embedding space for sketches and diagrams via contrastive learning. In our setting, we construct supervision by pairing each synthesized sketch with its source diagram, and train the embedding model to capture their structural correspondence. Let fs(·) and fd(·) denote the sketch encoder and diagram encoder with the same set of weight. For each synthesized sketch s, we treat its source diagram as the positive sample d+ . Negative samples 
+
+d− are obtained through in-batch sampling, where diagrams from other sketch-diagram pairs in the same mini-batch are used as negatives. The similarity between a sketch s and a diagram d is measured by cosine similarity: 
+
+sim( s, d ) = fs(s) · fd(d)
+
+∥fs(s)∥ ∥ fd(d)∥ . (1) The model is trained with the following contrastive objective: 
+
+L = − log exp(sim( s, d +)/τ )exp(sim( s, d +)/τ ) + P 
+
+> d−∈N
+
+exp(sim( s, d −)/τ ) , (2) where N denotes the set of negative samples drawn from the current mini-batch, and τ is a temperature parameter. Under this formulation, sketches are encouraged to be close to their corresponding diagrams in the embedding space, while remaining separated from unrelated diagrams. As a result, diagrams that share relevant textual semantics and compatible structural patterns with a given sketch are mapped to nearby regions and can be retrieved as reference diagrams. This training strategy enables the model to capture KG-level correspondence between sketches and diagrams, allowing it to retrieve diagrams that are both semantically relevant and topologically compatible at inference time. 53.4 Structure-aware Retrieval. 
+
+Given the structure-aware embedding model learned in Sec. 3.3, we use it to retrieve diagrams that are structurally compatible with a user-provided sketch. Specifically, we first encode all diagrams in the high-quality set D using the diagram encoder fd(·)
+
+and store their embeddings as a retrieval library {fd(d) | d ∈ D} , which serves as a fixed index for efficient similarity-based retrieval. At inference time, given a sketch s, we compute its embedding using fs(·) and measure its similarity with all diagrams using the similarity function defined in Sec. 3.3. We then retrieve the top-k most similar diagrams: 
+
+R = Top k {sim( s, d )}d∈D 
+
+. (3) The retrieved set R forms the reference diagram collection, consisting of diagrams that are semanti-cally relevant to and topologically compatible with the input sketch. Notably, compared to approaches that perform explicit structure parsing or large vision-language models at inference time, our method is lightweight and efficient. Both diagram and sketch embeddings are computed using a locally deployed model, eliminating the need for repeated calls to expensive models for structure parsing. This design not only preserves structure-aware matching by aligning sketch and diagram embedding spaces, but also significantly reduces computational cost, enabling efficient and scalable deployment. 
+
+3.5 Refined Diagram Generation 
+
+Building upon the semantically and structurally compatible reference diagrams retrieved in Sec. 3.4, this stage generates the final diagram by integrating explicit structure planning with visual guidance. Given an input sketch s and the retrieved set R = {d1, . . . , d k}, we first employ a structural planning agent to produce a high-level structure prompt 
+
+P = Plan( s, R ), (4) that specifies the key components and their connectivity. This step leverages the structural patterns in R to infer a topology that is both complete and compatible with the input sketch, effectively compensating for the sparsity and incompleteness of the sketch. In parallel, a Visual Guidance Agent summarizes aesthetic cues from R into a style prompt 
+
+G = Style( R), (5) providing guidance on layout, color, and composition. The structure prompt P and style prompt G
+
+are then jointly fed into a generative model (e.g., Nano Banana Pro or GPT-Image 2 ) to produce the final diagram 
+
+I = Gen( P, G ). (6) Under this framework, the generator performs semantic enrichment, topological completion, and visual rendering based on the retrieved references. Since the reference set R is obtained through structure-aware retrieval, it provides both content and topology priors that guide the generation process. These priors help the generator enrich sparse sketch semantics, complete structural relations, and preserve coherent visual organization, thereby reducing semantic drift, structural hallucination, missing components, and incorrect connections. Overall, the three stages together transform a simplified input sketch into a publication-quality diagram that is semantically aligned with the user’s intent and topologically compatible with the input sketch. By retrieving compatible references and using them to guide generation, DiagramRAG 
+
+enriches semantic content, completes structural relations, and produces a visually polished diagram suitable for scientific papers. 
+
+# 4 Experiments 
+
+4.1 Experimental Setup Datasets and Data Synthesis. To evaluate DiagramRAG , we construct a diagram pool D based on the DiagramBank and FigureBench datasets. To ensure structural suitability and high visual fidelity, we apply the multi-stage filtering pipeline described in Sec. 3.3 to the raw collection; full 6implementation details of this pipeline are provided in Appendix C. For training data construction, we first extract diagram-internal knowledge graphs using Qwen3.6-Plus. We then employ GPT-4o and Gemini 3.1 Flash to synthesize five distinct classes of sketch variants, designed to emulate varying degrees of structural incompleteness and layout perturbations. The full generation protocol, associated degradation statistics and the specific prompt templates for KG extraction and sketch synthesis for these variants are presented in Appendix D, Appendix E, and Appendix G, respectively. During contrastive training, we form triplets via a structured mini-batch sampling strategy: each micro-batch samples 20 target diagram IDs, and each target contributes 5 sketch variants as queries. Each query is paired with its corresponding high-fidelity diagram as the positive example, and with up to two randomly sampled diagrams from the candidate pool as negative examples. 
+
+Implementation Details. We implement our structure-aware retrieval framework using the Qwen3-VL-Embedding-2B [ 23 ] backbone. To efficiently align the sketch and diagram embedding spaces, we adopt Low-Rank Adaptation (LoRA). Specifically, the sketch and diagram encoders share a single set of LoRA weights, while the original parameters of the base model remain strictly frozen. During the fine-tuning process, the model is trained for 50 epochs using a peak learning rate of 1 × 10 −5 with a cosine annealing schedule and a 5% linear warmup. To stabilize the optimization process, we apply gradient accumulation over 3 micro-batches before each optimizer update. All training experiments are conducted on a single node equipped with a NVIDIA H800 GPU with 80GB memory, utilizing CUDA version 12.4. 
+
+Baselines. To comprehensively evaluate our framework, we divide our baselines into two distinct tracks: retrieval and generation. (1) Retrieval Baselines. To evaluate the effectiveness of our structure-aware retrieval approach, we compare our adapted model with several strong pre-trained vision models that are used without LoRA-based adaptation. The baseline models comprise OpenCLIP [ 22 ], SIGLIP [ 38 ], SIGLIP2 [ 39 ], and the base Qwen3 [ 23 ] model. We also introduce SKetch_LVM [ 24 ] as a sketch-specific embedding baseline, with its task-specific fine-tuning details provided in Appendix A. These models rely strictly on their original embedding spaces to retrieve candidates, highlighting the necessity of our topology-aware alignment. (2) Generation Baselines. To evaluate the final visual quality of the synthesized diagrams, we compare our retrieval-augmented generation pipeline against state-of-the-art generative models. The baselines include text-mediated generation frameworks, namely AutoFigure and PaperBanana . Furthermore, we compare against powerful end-to-end multimodal generators directly conditioned on sketches, including GPT-Image-2 and NanoBanana. 
+
+Evaluation Metrics. We evaluate our framework along three principal dimensions. (1) Retrieval Metrics : We report Mean Reciprocal Rank (MRR), Accuracy, Recall@1, Recall@5, and F1-score to quantitatively assess the degree of structural correspondence. (2) Generation Metrics : Conventional image quality metrics (e.g., FID) are often insufficient to characterize the stringent requirements for logical and semantic correctness in scientific diagrams. Consequently, we adopt a Vision-Language Model-as-a-Judge (VLM-as-a-Judge) evaluation protocol, which assesses eight fine-grained criteria encompassing content fidelity, communicative effectiveness, and visual design quality.(3) Efficiency Metrics : We report the end-to-end inference latency and the API cost on a per-sample basis. Formal definitions of these metrics, along with a detailed justification of our evaluation methodology, are provided in Appendix F. 
+
+4.2 Results Generation Quality. Table 1 reports the VLM-as-a-Judge evaluation outcomes across the eight fine-grained sub-metrics as well as the aggregated overall score. The direct end-to-end generation models (GPT-Image-2 and Nano-Banana) exhibit limitations in Accuracy and Completeness criteria. In the absence of externally imposed structural priors, these models exhibit a tendency to hallucinate spurious connections or to omit critical methodological components that are represented in the sparse diagrammatic inputs. Text-mediated multi-agent baselines AutoFigure and PaperBanana 
+
+demonstrate substantially superior performance, with AutoFigure attaining a strong overall score of 7.060. However, their dependence on intermediate textual or code-based representations frequently results in diminished fidelity in fine-grained layout control. In contrast, our proposed retrieval-augmented frameworks, DiagramRAG (NanoBanana) and 
+
+DiagramRAG (GPT) , attain the highest overall performance scores of 7.170 and 7.120, respec-tively. By conditioning the multimodal generators on retrieved, structurally compatible reference diagrams, DiagramRAG demonstrates particularly strong performance in Aesthetic Quality (reaching 7up to 8.200) and Professional Polish (8.200). The retrieved diagrams function as high-quality visual anchors, guiding the generator to synthesize refined, publication-ready illustrations while preserving the structural fidelity of the original user sketch. Table 1: VLM-as-a-Judge evaluation of diagram generation quality.                                                         
+
+> Method Aesthetic Express Polish Clarity Flow Accuracy Complete. Approp. overall
+> Paperbanana 6.625 5.625 6.625 7.125 6.375 5.750 5.625 5.500 6.188 Autofigure 7.900 6.800 7.900 7.800 6.900 6.600 6.500 6.800 7.060 GPT-image-2 7.600 6.400 7.600 8.000 7.000 6.700 6.400 6.400 6.920 NanoBanana 6.500 5.500 6.500 7.400 7.400 6.600 6.100 5.500 6.500
+> DiagramRAG(NanoBanana) 8.000 7.100 8.000 7.400 6.900 6.704 6.700 7.101 7.170 DiagramRAG(GPT) 8.200 7.105 8.200 7.300 6.500 6.400 6.502 7.100 7.120
+
+Retrieval Performance. As reported in Table 2, traditional contrastive models (e.g., OpenCLIP), as well as the fully supervised, sketch-specific baseline Sketch-LVM (see Appendix A), exhibit markedly limited performance, attaining F1-scores below 0.14 on DiagramBank. These results indicate a substantial domain shift and underscore their limited capacity to model the dense topological structures characteristic of this dataset. Conversely, our Qwen3 + LoRA configuration consistently outperforms all baseline models, attaining a Recall@5 of 0.894 on DiagramBank and an F1-score of 0.802 on FigureBench. These performance improvements substantiate our central hypothesis that effectively narrowing the representational gap between abstract sketches and publication-ready diagrams necessitates the combined use of a vision–language model’s intrinsic semantic reasoning capabilities and our explicit structure-aware enhancement mechanisms. Table 2: Quantitative comparison of structure-aware retrieval performance. 
+
+Dataset Method MRR Accuracy Recall@1 Recall@5 F1-score 
+
+OpenCLIP 0.113 0.077 0.077 0.132 0.077 SKetch_LVM 0.150 0.107 0.107 0.178 0.107 SIGLIP 0.318 0.249 0.249 0.388 0.249 SIGLIP2 0.453 0.386 0.386 0.513 0.386 Qwen3 0.856 0.836 0.836 0.875 0.836 DiagramBank 
+
+Qwen3 + LoRA 0.870 0.848 0.848 0.894 0.848 
+
+OpenCLIP 0.124 0.095 0.095 0.137 0.095 SKetch_LVM 0.161 0.130 0.130 0.193 0.130 SIGLIP 0.256 0.206 0.206 0.302 0.206 SIGLIP2 0.333 0.282 0.282 0.378 0.282 Qwen3 0.776 0.746 0.746 0.809 0.746 FigureBench 
+
+Qwen3 + LoRA 0.833 0.802 0.802 0.874 0.802 
+
+Efficiency and Cost. In addition to ensuring high-quality generation, a practical diagram illustration system must also exhibit computational efficiency. As detailed in Appendix B.1, computationally intensive multi-agent frameworks such as AutoFigure require 12.62 minutes and $0.400 per sample, primarily due to iterative coding cycles. In contrast, DiagramRAG substantially reduces online compu-tation by pre-computing diagram embeddings into an offline library. DiagramRAG (NanoBanana) 
+
+completes generation in 35.48 seconds at a cost of $0.072 per sample. This corresponds to a 21 ×
+
+reduction in latency and an 82% decrease in cost, demonstrating that the proposed framework exhibits high scalability and is well suited for deployment in real-world workflow scenarios. 
+
+4.3 Ablation Study 
+
+To better understand the source of performance gains in DiagramRAG , we conduct a comprehensive ablation study covering both the structure-aware supervision design in the retrieval stage and the agent-guided generation strategy in the generation stage. 
+
+Effect of Sketch Variants. To assess the contribution of each component within our heterogeneous topological supervision scheme, we perform a leave-one-variant-out ablation study. Beginning with the complete training configuration, we iteratively remove a single sketch-synthesis variant while 8(a) FigureBench (b) DiagramBank 
+
+Figure 3: Effect of sketch variants on retrieval performance. holding the model architecture, retrieval corpus, and evaluation splits strictly fixed. As illustrated in Figure 3, the exclusion of any individual variant consistently results in a reduction of retrieval performance on both FigureBench and DiagramBank. Specifically, removing the coarse layout variant—which exhibits the most severe structural abstrac-tion—leads to the most precipitous performance drop. On FigureBench, its removal causes the Recall@1 to plummet from 0.802 to 0.769, and the Recall@5 from 0.874 to 0.802. This substantial degradation demonstrates that exposing the model to heavily abstracted samples is crucial for forcing it to learn robust, topology-level correspondences. Furthermore, the absence of the text reduced 
+
+variant also noticeably harms performance, reducing the Recall@5 to 0.832 on FigureBench. This empirically confirms our hypothesis: without text-suppressed supervision, the embedding space risks collapsing into trivial semantic text-matching. By contrast, our full variant set compels the model to attend to layout, node relations, and connector geometries. Ultimately, the full model consistently achieves the upper bound across all metrics, proving that diverse structural degradation is essential for generalizing to the sparse and noisy nature of human-drawn sketches. 
+
+Impact of Dual-Agent Constraints. To evaluate the role of the two generation agents in the refined diagram generation stage, we conduct a 2 × 2 ablation study on the Structural Planning Agent and the Visual Guidance Agent. We keep the input sketch, retrieval index, retrieved references, top-k
+
+setting ( k = 3 ), and image generation model unchanged, and only remove the corresponding agent. The full model achieves the highest overall score of 7.275. Removing the Structural Planning Agent decreases the overall score to 7.112, mainly due to drops in accuracy and completeness, indicating that structural planning helps preserve module coverage, connection relations, and topological consistency. In contrast, removing the Visual Guidance Agent leads to a larger degradation, reducing the overall score to 6.775, with particularly clear drops in aesthetic quality, visual expressiveness, and professional polish. Removing both agents further decreases the overall score to 6.750. These results suggest that the two prompt agents provide complementary constraints during generation: the Structural Planning Agent primarily improves structural fidelity, while the Visual Guidance Agent enhances visual quality and publication-level diagram style.Detailed ablation settings and metric-level analysis are provided in Appendix B.2. 
+
+# 5 conclusion 
+
+This paper presents DiagramRAG , a lightweight retrieval-augmented framework for sketch-based scientific diagram completion. It first converts high-quality diagrams into knowledge graph represen-tations, where semantic content and topological structure are organized in the explicit structured space. Based on these representations, DiagramRAG synthesizes simplified sketch variants and adopts con-trastive learning to align sketches with compatible diagrams, enabling efficient retrieval of references that are both semantically relevant and topologically compatible. Finally, the retrieved references are used as content, topology, and visual priors to guide diagram generation, allowing DiagramRAG 
+
+to produce scientific diagrams that are semantically enriched, topologically complete, and visually polished. Empirical results on DiagramBank and FigureBench further verify the effectiveness of this design, showing that retrieval grounded in both semantics and topology can provide useful priors for high-quality diagram generation while keeping the overall framework lightweight and efficient. 9References 
+
+[1] Aniruddha Kembhavi, Mike Salvato, Eric Kolve, Minjoon Seo, Hannaneh Hajishirzi, and Ali Farhadi. A diagram is worth a dozen images. In Computer Vision – ECCV 2016, volume 9908 of Lecture Notes in Computer Science, pages 235–251. Springer, 2016. doi: 10.1007/ 978-3-319-46493-0_15. URL https://doi.org/10.1007/978-3-319-46493-0_15 .[2] Daesik Kim, Youngjoon Yoo, Jeesoo Kim, Sangkuk Lee, and Nojun Kwak. Dy-namic graph generation network: Generating relational knowledge from diagrams. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition , pages 3298– 3307, 2018. URL https://openaccess.thecvf.com/content_cvpr_2018/html/Kim_ Dynamic_Graph_Generation_CVPR_2018_paper.html .[3] Tingwen Zhang, Ling Yue, Zhen Xu, and Shaowu Pan. Diagrambank: A large-scale dataset of diagram design exemplars with paper metadata for retrieval-augmented generation. arXiv preprint arXiv:2604.20857, 2026. [4] Johanna Drucker. Graphesis: Visual Knowledge Production and Representation . Harvard University Press, 2014. [5] Barbara Tversky. Visualizing thought. Topics in Cognitive Science, 3(3):499–535, 2011. [6] Po-Shen Lee, Jevin D. West, and Bill Howe. Viziometrics: Analyzing visual information in the scientific literature. IEEE Transactions on Big Data, 4(1):117–129, 2018. doi: 10.1109/ TBDATA.2017.2689038. [7] Dawei Zhu, Rui Meng, Yale Song, Xiyu Wei, Sujian Li, Tomas Pfister, and Jinsung Yoon. Paper-banana: Automating academic illustration for ai scientists. arXiv preprint arXiv:2601.23265, 2026. URL https://arxiv.org/abs/2601.23265 .[8] Minjun Zhu, Zhen Lin, Yixuan Weng, Panzhong Lu, Qiujie Xie, Yifan Wei, Sifan Liu, Qiyao Sun, and Yue Zhang. Autofigure: Generating and refining publication-ready scientific illustrations. In International Conference on Learning Representations, 2026. URL https://arxiv.org/ abs/2602.03828 . to appear. [9] Siyuan Huang, Yutong Gao, Juyang Bai, Yifan Zhou, Zi Yin, Xinxin Liu, Rama Chellappa, Chun Pong Lau, Sayan Nag, Cheng Peng, and Shraman Pramanick. SciFig: Towards Automating Scientific Figure Generation. arXiv preprint arXiv:2601.04390, 2026. URL https://arxiv. org/abs/2601.04390 .[10] Itsumi Saito, Haruto Yoshida, and Keisuke Sakaguchi. Sketch2diagram: Generating vector diagrams from hand-drawn sketches. In International Conference on Learning Representations (ICLR), 2025. [11] Kevin Ellis, Daniel Ritchie, Armando Solar-Lezama, and Joshua B. Tenenbaum. Learning to in-fer graphics programs from hand-drawn images. In Advances in Neural Information Processing Systems , volume 31, pages 6062–6071, 2018. URL https://proceedings.neurips.cc/ paper/2018/hash/6788076842014c83cedadbe6b0ba0314-Abstract.html .[12] Cheng Tan, Qi Chen, Jingxuan Wei, Gaowei Wu, Zhangyang Gao, Siyuan Li, Bihui Yu, Ruifeng Guo, and Stan Z. Li. Sketchagent: Generating structured diagrams from hand-drawn sketches. arXiv preprint arXiv:2508.01237, 2025. [13] Lvmin Zhang, Anyi Rao, and Maneesh Agrawala. Adding conditional control to text-to-image diffusion models. In Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV) , pages 3836–3847, 2023. URL https: //openaccess.thecvf.com/content/ICCV2023/html/Zhang_Adding_Conditional_ Control_to_Text-to-Image_Diffusion_Models_ICCV_2023_paper.html .[14] Abhay Zala, Han Lin, Jaemin Cho, and Mohit Bansal. Diagrammergpt: Generating open-domain, open-platform diagrams via llm planning. arXiv preprint arXiv:2310.12128, 2023. URL https://arxiv.org/abs/2310.12128 .10 [15] Patrick Lewis, Ethan Perez, Aleksandras Piktus, and et al. Retrieval-augmented generation for knowledge-intensive nlp tasks. NeurIPS, 2020. [16] Justin Johnson, Ranjay Krishna, Michael Stark, Li-Jia Li, David A. Shamma, Michael S. Bernstein, and Li Fei-Fei. Image retrieval using scene graphs. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2015. [17] Ranjay Krishna, Yuke Zhu, Oliver Groth, Justin Johnson, Kenji Hata, Joshua Kravitz, Stephanie Chen, Yannis Kalantidis, Li-Jia Li, David A. Shamma, Michael S. Bernstein, and Li Fei-Fei. Visual genome: Connecting language and vision using crowdsourced dense image annotations. International Journal of Computer Vision (IJCV), 2017. [18] Cewu Lu, Ranjay Krishna, Michael Bernstein, and Li Fei-Fei. Visual relationship detection with language priors. In European Conference on Computer Vision, pages 852–869. Springer, 2016. doi: 10.1007/978-3-319-46448-0_51. URL https://arxiv.org/abs/1608.00187 .[19] Danfei Xu, Yuke Zhu, Christopher B. Choy, and Li Fei-Fei. Scene graph generation by iterative message passing. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition , pages 5410–5419, 2017. URL https://openaccess.thecvf.com/content_ cvpr_2017/html/Xu_Scene_Graph_Generation_CVPR_2017_paper.html .[20] Rowan Zellers, Mark Yatskar, Sam Thomson, and Yejin Choi. Neural motifs: Scene graph parsing with global context. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition , pages 5831–5840, 2018. URL https://openaccess.thecvf.com/ content_cvpr_2018/html/Zellers_Neural_Motifs_Scene_CVPR_2018_paper.html .[21] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel Goh, Sandhini Agar-wal, Girish Sastry, Amanda Askell, Pamela Mishkin, Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable visual models from natural language supervision. In Proceedings of the 38th International Conference on Machine Learning (ICML) , pages 8748– 8763, 2021. URL https://proceedings.mlr.press/v139/radford21a.html .[22] Mehdi Cherti, Romain Beaumont, Ross Wightman, Mitchell Wortsman, Gabriel Ilharco, Cade Gordon, Christoph Schuhmann, Ludwig Schmidt, and Jenia Jitsev. Reproducible scaling laws for contrastive language-image learning. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 2818–2829, 2023. [23] Mingxin Li, Yanzhao Zhang, Dingkun Long, Keqin Chen, Sibo Song, Shuai Bai, Zhibo Yang, Pengjun Xie, An Yang, Dayiheng Liu, et al. Qwen3-vl-embedding and qwen3-vl-reranker: A unified framework for state-of-the-art multimodal retrieval and ranking. arXiv preprint arXiv:2601.04720, 2026. [24] Aneeshan Sain, Ayan Kumar Bhunia, Pinaki Nath Chowdhury, Subhadeep Koley, Tao Xiang, and Yi-Zhe Song. Clip for all things zero-shot sketch-based image retrieval, fine-grained or not. In Proceedings of the IEEE/CVF conference on computer vision and pattern recognition, pages 2765–2775, 2023. [25] Xuefei Li, Yizhou Zhou, et al. Multimodal representation learning via contrastive predic-tion for image and text matching. Pattern Recognition, 123:108402, 2022. doi: 10.1016/j. patcog.2021.108402. URL https://www.sciencedirect.com/science/article/pii/ S0031320321003198 .[26] Yunsheng Bai, Hao Ding, Song Bian, Ting Chen, Yizhou Sun, and Wei Wang. SimGNN: A Neural Network Approach to Fast Graph Similarity Computation. In Proceedings of the 12th ACM International Conference on Web Search and Data Mining (WSDM) , pages 384–392, 2019. doi: 10.1145/3289600.3290967. [27] Parth Sarthi, Salman Abdullah, Aditi Tuli, Shubh Khanna, Anna Goldie, and Christopher D. Manning. Raptor: Recursive abstractive processing for tree-organized retrieval. 2024. [28] Darren Edge, Ha Trinh, Newman Cheng, Joshua Bradley, Alex Chao, Apurva Mody, Steven Truitt, Dasha Metropolitansky, Robert Osazuwa Ness, and Jonathan Larson. From local to global: A graph rag approach to query-focused summarization. 2025. 11 [29] Omar Khattab and Matei Zaharia. Colbert: Efficient and effective passage search via contextu-alized late interaction over bert. 2020. [30] Chumeng Liang and Jiaxuan You. Diagrameval: Evaluating llm-generated diagrams via graphs. 2025. [31] Tong Zhang, Honglin Lin, Zhou Liu, Chong Chen, and Wentao Zhang. Sciflow-bench: Evaluat-ing structure-aware scientific diagram generation via inverse parsing. 2026. [32] Gary Bécigneul, Octavian-Eugen Ganea, Benson Chen, Regina Barzilay, and Tommi Jaakkola. Optimal transport graph neural networks. arXiv preprint arXiv:2006.04804 , 2020. URL 
+
+https://arxiv.org/abs/2006.04804 .[33] Michel Neuhaus and Horst Bunke. Bridging the gap between graph edit distance and kernel machines. World Scientific Publishing Co., Inc., 15(10):2129–2144, 2005. [34] Ziheng Sun, Hongning Wang, Kangfei Zhao, and Qiong Luo. A comprehensive sur-vey and experimental study of subgraph matching: Trends, unbiasedness, and interaction. ACM Transactions on Database Systems , 49(1):1–42, 2024. doi: 10.1145/3639315. URL 
+
+https://dl.acm.org/doi/10.1145/3639315 .[35] Myoungji Han, Hyunjoon Kim, Geonmo Gu, Kunsoo Park, and Wook-Shin Han. A comprehen-sive survey of subgraph matching: [experiments & analysis]. ACM Transactions on Database Systems , 2025. doi: 10.1145/3771791. URL https://dl.acm.org/doi/10.1145/3771791 .Just Accepted. [36] Guolin Ke, Qi Meng, Thomas Finley, Taifeng Wang, Wei Chen, Weidong Ma, Qiwei Ye, and Tie-Yan Liu. LightGBM: A highly efficient gradient boosting decision tree. In Advances in Neural Information Processing Systems , volume 30, 2017. URL https://papers.nips.cc/ paper/6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree .[37] Seongyun Lee, Seungone Kim, Sue Hyun Park, Geewook Kim, and Minjoon Seo. Prometheus-vision: Vision-language model as a judge for fine-grained evaluation. arXiv preprint arXiv:2401.06591, 2024. URL https://arxiv.org/abs/2401.06591 .[38] Xiaohua Zhai, Basil Mustafa, Alexander Kolesnikov, and Lucas Beyer. Sigmoid loss for language image pre-training. In Proceedings of the IEEE/CVF international conference on computer vision, pages 11975–11986, 2023. [39] Michael Tschannen, Alexey Gritsenko, Xiao Wang, Muhammad Ferjad Naeem, Ibrahim Alab-dulmohsin, Nikhil Parthasarathy, Talfan Evans, Lucas Beyer, Ye Xia, Basil Mustafa, et al. Siglip 2: Multilingual vision-language encoders with improved semantic understanding, localization, and dense features. arXiv preprint arXiv:2502.14786, 2025. [40] Chaoyuan Shen, Chi Zhang, Chengliang Chai, Jiacheng Wang, Jia Yuan, Yuping Wang, Ye Yuan, Guoren Wang, and Lei Cao. Brief: Bi-level coreset selection for efficient instruction tuning in llms. Proceedings of the VLDB Endowment, 19(6):1264–1277, 2026. [41] Kuan Zhang, Chengliang Chai, Jingzhe Xu, Chi Zhang, Han Han, Ye Yuan, Guoren Wang, and Lei Cao. Handling label noise via instance-level difficulty modeling and dynamic optimization. Advances in Neural Information Processing Systems, 38:46667–46696, 2026. [42] Chi Zhang, Huaping Zhong, Hongtao Li, Chengliang Chai, Jiawei Hong, Yuhao Deng, Jiacheng Wang, Tian Tan, Yizhou Yan, Jiantao Qiu, et al. Not all documents are what you need for extracting instruction tuning data. arXiv preprint arXiv:2505.12250, 2025. [43] Chi Zhang, Huaping Zhong, Kuan Zhang, Chengliang Chai, Rui Wang, Xinlin Zhuang, Tianyi Bai, Qiu Jiantao, Lei Cao, Ju Fan, et al. Harnessing diversity for important data selection in pretraining large language models. In International Conference on Learning Representations, volume 2025, pages 72980–73003, 2025. 12 A Additional Experimental Details 
+
+Training Details for Sketch-Specific Baseline (Sketch-LVM). In Section 4.2, we noted that the sketch-specific baseline, Sketch-LVM, was evaluated under full supervision on our datasets. To ensure a rigorously fair comparison, we implement and train Sketch-LVM following its visual prompt tuning paradigm. We utilize a CLIP ViT image encoder as the visual backbone. Unless otherwise stated, we adopt CLIP ViT-B/32 and introduce three learnable visual prompt tokens for each input branch. Specifically, we maintain two separate sets of visual prompts: one for sketch queries and the other for original diagram images. The CLIP backbone is kept frozen, with the exception of LayerNorm parameters, which are allowed to be updated during training. By default, the model is trained for 5 epochs with a mini-batch size of 64. We optimize the trainable parameters using Adam. The learning rate is set to 1 × 10 −4 for the visual prompt parameters and 
+
+1 × 10 −6 for the trainable LayerNorm parameters. The random seed is fixed to 42 for reproducibility. When using the larger CLIP ViT-L/14 backbone, we reduce the mini-batch size to 32 due to increased memory consumption and train the model for 10 epochs. Training samples are constructed from the training split by pairing each sketch query with its corresponding original diagram according to their source_diagram_id . We optimize the model using an in-batch contrastive objective with a temperature of 0.05 . Within each mini-batch, diagrams associated with the same source diagram ID are considered positive samples, whereas diagrams from different source diagrams are treated as negatives. The objective is applied symmetrically in both sketch-to-diagram and diagram-to-sketch directions. To account for the varying difficulty of different sketch variants, we introduce variant-dependent loss weights. In the default setting, samples from the text-reduced variant ( text_reduced_force )are assigned a weight of 4, samples from the coarse layout variant ( coarse_layout ) are assigned a weight of 2, and all remaining variants are assigned a weight of 1. After each training epoch, we evaluate the model on the validation split using the same retrieval protocol as in testing. The model checkpoint with the highest validation MRR is selected for final evaluation, while the final-epoch checkpoint is retained only for reproducibility. 
+
+# B Additional Results 
+
+Table 3: End-to-end inference efficiency and computational cost. Method Time Cost PaperBanana 2.26 min $0.268 AutoFigure 12.62 min $0.400 DiagramRAG (NanoBanana) 35.48 s $0.072 DiagramRAG (GPT) 3.09 min $0.205 
+
+B.1 End-to-End Inference Efficiency and Computational Cost. 
+
+To further assess the practical deployability of DiagramRAG , we conduct a detailed quantitative evaluation of its inference latency and associated API costs for generating a single scientific illus-tration. As summarized in Table 3, multi-agent baseline methods that depend on iterative coding or multi-stage planning procedures (e.g., AutoFigure and PaperBanana ) incur substantial temporal and financial overhead. In contrast, by precomputing diagram embeddings and storing them in an offline repository, DiagramRAG markedly reduces both latency and monetary expenditure, thereby enhancing the efficiency of the subsequent online structure-aware retrieval and generation pipeline. 
+
+B.2 Dual-Agent Ablation Details 
+
+To further analyze the contributions of structural planning and visual guidance in the refined diagram generation stage, we conduct a 2 × 2 agent ablation study. The full model enables both the Structural Planning Agent and the Visual Guidance Agent [ 40 ]. The Structural Planning Agent treats the input sketch as the structural source of truth and explicitly constrains module coverage, grouping relations, 13 Figure 4: Dual-Agent ablation. VLM-based comparison of variants with and without the Structural Planning Agent and Visual Guidance Agent. arrow directions, and topological consistency. The Visual Guidance Agent uses the retrieved top-3 fine diagrams as visual references and guides layout organization, color logic, icon usage, local panels, feature/token/image thumbnails, and the level of detail expected in publication-quality scientific diagrams. For a fair comparison, we keep the input sketch, retrieval index, retrieved references, top-k setting (k = 3 ), and image generation model unchanged across all variants, and only disable the correspond-ing agent instruction block. We compare four variants: the full model, w/o Structural Planning Agent, w/o Visual Guidance Agent, and w/o both agents. All variants are evaluated on the same samples using the same GPT-4o VLM judge. As illustrated in Figure 3, the full model achieves the highest overall score of 7.275. Removing the Structural Planning Agent decreases the overall score to 7.112, with both accuracy and completeness dropping by 0.25, indicating that structural planning helps preserve module coverage and topological consistency. In contrast, removing the Visual Guidance Agent leads to a larger degradation, reducing the overall score to 6.775. The drop is especially pronounced in aesthetic quality, visual expressive-ness, and professional polish, each decreasing by 0.75. This suggests that visual guidance plays a key role in transferring publication-level visual cues, visual expressiveness, and detail density from the retrieved diagrams. When both agents are removed, the overall score further decreases to 6.750, with completeness and appropriateness dropping by 0.625 and 0.875, respectively. Interestingly, the clarity score of the variant without both agents is slightly higher than that of the full model. We attribute this to the fact that, without structural planning and visual guidance, the generated diagrams tend to be simpler, contain fewer elements, and have lower visual density, which can make them appear clearer to the VLM judge. However, this apparent clarity does not translate into better overall quality: this variant obtains lower overall, completeness, appropriateness, and visual-design scores than the full model. These results show that the two agents provide complementary constraints during generation: the Structural Planning Agent mainly improves structural fidelity, while the Visual Guidance Agent primarily enhances visual quality and scientific-diagram style transfer. 
+
+# C Details of Diagram Filtering 
+
+The raw diagram collection extracted from scientific publications contains a large number of non-diagram images, including plots, tables, screenshots, natural images, and visually degraded samples. To construct the final high-quality diagram set D, we apply a multi-stage filtering pipeline that 14 combines low-level visual features, CLIP-based semantic alignment, supervised classification, and vision-language model [41, 42]. 
+
+Low-level visual filtering. We first extract low-level visual features using conventional image processing techniques. Each image is converted to RGB format and resized for efficient feature computation. The extracted features describe visual quality and structural density, including resolution statistics, aspect ratio, colorfulness, saturation, color entropy, grayscale ratio, edge density, spatial frequency, image entropy, foreground ratio, and connected component count. These features capture whether an image contains sufficient visual content, edge structures, foreground regions, and layout complexity. We then apply coarse filtering rules to remove samples with clearly insufficient structural content or poor visual quality, such as images with very weak edge density or abnormal foreground proportion. 
+
+CLIP-based semantic quality representation. Since low-level visual features alone cannot deter-mine whether an image is semantically suitable for DiagramRAG , we further use CLIP to estimate semantic alignment with target diagram characteristics. We construct positive textual concepts de-scribing clear, well-organized, and readable scientific diagrams, and negative concepts describing confusing, crude, or illegible figures. For each image, we compute its cosine similarity to both positive and negative text prototypes and use their difference as a semantic quality margin: 
+
+mclip = 1
+
+N+
+
+X
+
+> i
+
+cos( v, t+ 
+
+> i
+
+) − 1
+
+N−
+
+X
+
+> j
+
+cos( v, t− 
+
+> j
+
+),
+
+where v denotes the image embedding, and t+ 
+
+> i
+
+and t− 
+
+> j
+
+denote positive and negative text prototypes, respectively. A larger margin indicates stronger semantic alignment with high-quality structured diagrams. 
+
+Manual annotation and supervised retention modeling. To obtain task-specific supervision, we manually annotate a subset of candidate images as positive or negative examples. Positive samples are images that clearly match the target data distribution of DiagramRAG , such as method architecture diagrams, system diagrams, pipelines, workflows, flowcharts, or module interaction diagrams. Negative samples include figures that are not suitable for structure-aware modeling, such as experimental plots, tables, screenshots, natural images, qualitative result grids, dataset examples, pure text or formula figures, and images with poor visual quality or insufficient structural information. This annotation process provides a direct supervision signal for learning what should be retained in the final diagram set. Based on the annotated data, we train a LightGBM binary classifier to jointly model visual quality and semantic relevance. For each annotated image, we construct a feature vector by concatenating low-level visual features and CLIP-derived semantic features: 
+
+x = [ xvisual ; xclip ].
+
+The low-level visual features describe basic image quality and structural density, including color statistics, edge density, spatial frequency, entropy, foreground ratio, and connected component count. The CLIP-derived features describe high-level semantic alignment, including similarities to positive and negative diagram descriptions and their semantic margin. The classifier is trained to predict the manual keep/drop label: 
+
+pkeep = P (y = 1 | x),
+
+where y = 1 denotes that the image should be retained. We use stratified cross-validation on the annotated subset to evaluate the classifier and select a reliable operating regime. After validation, the classifier is trained on the full annotated subset and applied to all candidate images to estimate their retention probabilities. In this way, the model learns a task-specific decision boundary from human judgments, while still leveraging both objective visual quality signals and semantic alignment signals. 
+
+Confidence-based stratification and VLM verification. After applying the trained LightGBM classifier to all candidate images, we stratify samples according to their predicted retention probabili-ties. Images with high pkeep are treated as high-confidence accepted samples, while those with low 
+
+pkeep are treated as high-confidence rejected samples. Images whose probabilities fall between the 15 two thresholds are considered uncertain, since they are close to the learned decision boundary and are more likely to contain ambiguous cases. For these uncertain samples, we further employ a vision-language model to perform fine-grained verification under explicit task criteria [ 43 ]. The VLM is instructed to retain structured diagram types suitable for DiagramRAG , including method architecture diagrams, system diagrams, pipelines, workflows, flowcharts, and module interaction diagrams, and to reject plots, tables, screenshots, natural images, qualitative result grids, dataset examples, pure text/formula figures, and low-quality images. 
+
+Final decision fusion. The final decision is obtained by combining the high-confidence LightGBM decisions with the VLM verification results for uncertain samples. If the VLM fails to provide a reliable decision, the sample is rejected by default. This conservative strategy prioritizes precision over recall, ensuring that the resulting diagram set D contains images with clear structure, consistent semantic relevance, and strong suitability for downstream DiagramRAG tasks. 
+
+# D Details of Topology-KG Variant Generation Protocol 
+
+We generate controlled topology-KG variants from diagram KG records. Each record contains a diagram identifier, an image path, metadata, and a graph field. The graph follows a topology-first schema with five components: nodes, directed edges, groups, and layout attributes. A node stores an identifier, name, semantic type, shape, normalized bounding box, center location, group assignment, and an importance tag. An edge stores source and target node identifiers, a path type, and a direction. Groups store member node identifiers and optional bounding boxes. The layout field records global topology attributes, including flow direction, topology type, reading order, and a short description of the main structure. Before variant generation, each KG is normalized and cleaned. Invalid nodes without identifiers are removed. Missing node labels are normalized, bounding boxes and node centers are clipped to the unit image coordinate range, containment edges are assigned type containment , and duplicate edges are removed. Group memberships are filtered to valid node identifiers. Layout lists such as main path, branch points, merge points, reading order, and feedback edges are restricted to retained nodes. If branch points, merge points, reading order, or main path are missing after filtering, they are inferred from node positions and non-containment edges. Group bounding boxes are recomputed from their retained member nodes when possible. For each KG Gi, we construct five deterministic variant instances: L IGHT SKELETON , M EDIUM -MISSING , C OARSE LAYOUT , T EXT REDUCED , and L AYOUT JITTER . The random seed associated with each pair (Gi, v ) is obtained by hashing the global seed, the identifier of the source diagram, and the variant name. This procedure guarantees that all stochastic operations, including layout jitter, are fully reproducible. 
+
+Text reduction policy. All variants apply constraints on textual content to ensure that the degraded KG cannot preserve the full original labels. Three levels of text retention are defined. At the medium 
+
+level, node labels are preserved but truncated to at most three words; group labels are preserved up to a maximum of two words; and at most a single textual element is retained from among role title, label, legend, or annotation, truncated to two words. At the low level, only short node and group labels are retained, and all free-text elements are removed. At the none level, node labels, group labels, layout text, and all free-text elements are removed, with the exception that input and output nodes may be replaced by generic placeholder labels. 
+
+LIGHT SKELETON . This variant removes only nodes whose importance is marked as decorative .Edges are retained only when both endpoints survive; no bridge edges are added through removed nodes. Groups and layout attributes are cleaned according to the retained node set. The medium text policy is then applied. Thus, L IGHT SKELETON preserves the main topology while deleting visually decorative elements and shortening text. 
+
+MEDIUM MISSING . This variant keeps structural anchors rather than all non-decorative nodes. The retained set includes nodes appearing in the main path, branch points, merge points, or feedback edges, as well as nodes whose type is input, output, container, connector, branch, or merge. If this set 16 is empty, major-importance nodes are used as a fallback. Removed nodes may be bridged: when a path from one retained node to another passes only through removed nodes, a new edge is inserted and marked with its original intermediate path using a bridged_from field. Free text items are removed before the medium text policy is applied. This variant simulates missing intermediate content while preserving global connectivity. 
+
+COARSE LAYOUT . This is the strongest structural simplification. It keeps topology-critical anchors, including branch points, merge points, feedback endpoints, input nodes, output nodes, and a sparse sample of the main path. The main path sample preserves endpoints and targets approximately 22% 
+
+of the path, with at most six sampled nodes. Only structurally useful connectors with degree at least three are kept. If no explicit topology anchors are available, the method falls back to a small layout-ordered sample of major nodes. A node budget is then enforced: the retained set is limited to at most 30% of the original nodes and at most six nodes, while preserving at least three nodes when possible and restoring main-path endpoints if needed. Text is reduced with the low policy. This variant keeps a coarse visual backbone rather than the full detailed topology. 
+
+TEXT REDUCED . This variant first applies L IGHT SKELETON , then removes nearly all semantic text. Input and output nodes are renamed to generic labels Input and Output ; all other node names, group labels, free text items, and the layout main-structure description are removed. The graph topology and retained bounding boxes are otherwise preserved from the light skeleton. 
+
+LAYOUT JITTER . This variant first applies M EDIUM MISSING , then perturbs the bounding box of each retained node. The box center is shifted independently in x and y by a uniform offset in [−ρ, ρ ],where ρ is the jitter fraction and defaults to 0.05 . Width and height are scaled by independent factors sampled from [1 − 0.8ρ, 1 + 0 .8ρ]. The resulting boxes are clipped to the unit coordinate range, node centers are recomputed, and group bounding boxes are refreshed with padding. The medium text policy is applied after jittering. 17 Algorithm 1 Canonical Topology-KG → Variant KG Generation 
+
+Require: canonical KG records R; variant set V; global seed s0; jitter fraction ρ
+
+Ensure: variant KG records {Rvi } and variant loss records {L vi } 
+
+> 1:
+
+for each record Ri ∈ R do  
+
+> 2:
+
+Obtain source identifier di from the image path or diagram identifier;  
+
+> 3:
+
+Extract graph Gi and normalize nodes, edges, groups, texts, and layout fields;  
+
+> 4:
+
+Remove invalid nodes, invalid edges, self-loops, and duplicate edges;  
+
+> 5:
+
+Filter group memberships and layout references to valid retained nodes;  
+
+> 6:
+
+Infer missing main path, reading order, branch points, merge points, and flow direction when needed;  
+
+> 7:
+
+for each variant v ∈ V do  
+
+> 8:
+
+Initialize deterministic seed ri,v ← STABLE SEED (s0, d i, v ); 
+
+> 9:
+
+if v = LIGHT SKELETON then  
+
+> 10:
+
+Remove decorative nodes and retain edges only between surviving nodes;  
+
+> 11:
+
+Apply the medium text policy;  
+
+> 12:
+
+else if v = MEDIUM MISSING then  
+
+> 13:
+
+Keep structural layout anchors and typed structural nodes;  
+
+> 14:
+
+Add bridge edges through removed intermediate nodes when possible;  
+
+> 15:
+
+Apply the medium text policy;  
+
+> 16:
+
+else if v = COARSE LAYOUT then  
+
+> 17:
+
+Keep branch/merge points, feedback endpoints, endpoints, useful connectors, and a sparse main-path sample;  
+
+> 18:
+
+Enforce the coarse node budget and apply the low text policy;  
+
+> 19:
+
+else if v = TEXT REDUCED then  
+
+> 20:
+
+Start from L IGHT SKELETON ; 
+
+> 21:
+
+Replace input/output labels with generic labels and remove other text;  
+
+> 22:
+
+else if v = LAYOUT JITTER then  
+
+> 23:
+
+Start from M EDIUM MISSING ; 
+
+> 24:
+
+Perturb retained node bounding boxes using seed ri,v and jitter fraction ρ; 
+
+> 25:
+
+Refresh group bounding boxes and apply the medium text policy;  
+
+> 26:
+
+end if  
+
+> 27:
+
+Clean the resulting graph Gvi ; 
+
+> 28:
+
+Compute loss record Lvi ← VARIANT LOSS (Gi, G vi ); 
+
+> 29:
+
+Store a variant record with source identifier di, variant name v, graph Gvi , and Lvi ; 
+
+> 30:
+
+end for  
+
+> 31:
+
+end for 
+
+# E Degradation Statistics of KG Variants 
+
+To quantitatively evaluate the extent of information removed or modified during the generation of knowledge graph (KG) variants, we compute a set of degradation metrics for each original graph Gi
+
+and its corresponding variant Gvi . These metrics are designed to characterize three primary forms of degradation: node loss, edge loss, and text loss. 18 Figure 5: Mean information loss in the Diagrambank dataset. 
+
+Figure 6: Mean information loss in the Figurebench dataset. 
+
+# F Detailed Evaluation Metrics 
+
+To complement Section 4.1, we provide a detailed description of our evaluation metrics and the rationale behind our generation assessment protocol. 
+
+Retrieval Metrics. To quantitatively assess the capability of the models to retrieve structurally compatible diagrams from the candidate pool, we report Mean Reciprocal Rank (MRR), Accuracy, Recall@1, Recall@5, and F1-score. Collectively, these metrics provide a rigorous evaluation of the correspondence between the sparse input sketch and the dense diagram topology. 
+
+Generation Metrics. In accordance with evaluation paradigms recently introduced by automated scientific illustration systems such as AutoFigure and PaperBanana , we omit conventional image-level metrics (e.g., FID), as these measures are frequently misaligned with the stringent logical and topological correctness requirements of scientific diagrams. Instead, we adopt a fully VLM-as-a-Judge–based evaluation protocol. In this framework, a vision-language model (VLM) quantitatively 19 assesses the generated diagrams with respect to human-authored, ground-truth figures along three primary dimensions: • Content Fidelity : Measures adherence to the underlying source context, operationalized in terms of accuracy, completeness, and contextual appropriateness. • Communication Effectiveness : Evaluates the degree to which the diagram facilitates compre-hension, characterized by clarity and logical flow. • Visual Design : Captures aesthetic and professional qualities, assessed through aesthetic quality, visual expressiveness, and the level of professional polish. 
+
+Efficiency Metrics. To quantitatively characterize the trade-off between model performance and practical deployment feasibility, we additionally report the end-to-end inference time and the monetary cost per processed sample. 
+
+# G Details of prompts 
+
+G.1 Prompts Overview 
+
+The DiagramRAG pipeline employs six distinct prompts, each corresponding to a key processing stage: (1) vision–language model (VLM)-as-judge filtering, (2) knowledge graph extraction, (3) sketch generation, (4) structural planning, (5) visual guidance, and (6) VLM-based absolute evaluation. The full prompt templates are provided in prompts.txt .
+
+G.2 VLM-as-judge filtering System Prompt. You are evaluating whether a figure should be included in a high-quality scientific-diagram dataset for retrieval-augmented generation. The figure has already been pre-filtered and lies in the AMBIGUOUS middle of a probe model — your job is to make the final keep/drop call. 
+
+User Prompt.    
+
+> KEEP if the figure is one of: - architecture / model / system diagram of the paper 's proposed method - training pipeline or inference procedure of the proposed approach - workflow or flowchart describing the proposed method logic - module / block diagram showing concrete component interactions DROP if the figure is: - experiment plot or chart (line / bar / scatter / radar / heatmap) - table - screenshot or UI capture - natural image / photo - qualitative result gallery or comparison grid - dataset / benchmark example - pure formula / pure text / legend-only figure - generic conceptual illustration without concrete method structure - blurry / low-resolution / broken / cropped figure Decision rules: - Trust the image; ignore any caption. - For multi-panel figures, judge by the dominant panel. - If uncertain, err on DROP (precision > recall). - If decision is 'drop ', label MUST be 'other '.- If decision is 'keep ', label MUST be one of architecture | pipeline | workflow | flowchart | overview. Return exactly ONE JSON object, no extra text: {"decision": "keep|drop", "label": "...", "confidence": 0.00, "reason": "<one short phrase>"}
+
+20 G.3 knowledge graph extracting System Prompt. You are a meticulous topology extraction engine for scientific figures. Extract redrawable graph structure from the image only. Prioritize topological fidelity over semantic summarization. Return exactly one valid JSON object and no prose. 
+
+User Prompt. Extract a redrawable topology graph from the research figure. The output should preserve enough structure for another program to reconstruct a sketch with the same topology, including repeated modules, branches, merges, containers or groups, main paths, reading order, and feedback loops. Return a single JSON object with the following fields:   
+
+> {"nodes": [ {"id": "n1", "name": "visible label or neutral role", "type": "input|output|module|component|container|connector|branch|merge| ⌋
+> stage|visual|text|other", "shape": "rectangle|circle|diamond|image_panel|table|text|container|poin ⌋
+> t|line|other", "bbox": [x1, y1, x2, y2], "x": 0.5, "y": 0.5, "group": "optional group id", "importance": "major|minor|connector|decorative" }], "edges": [ {"source": "n1", "target": "n2" }], "layout": { "flow_direction": "horizontal|vertical|mixed|unknown", "main_structure": "one sentence describing the visible topology" }}
+
+Preserve repeated visual modules as separate nodes, even when labels are identical. Add explicit connector, branch, or merge nodes when they affect topology. Preserve containers, edge directions, edge geometry, feedback loops, and the dominant information-flow path. Use normalized bounding boxes in [0 , 1] with the origin at the top-left image corner. Use stable node IDs and reference only these IDs in edges, groups, paths, and layout fields. Use only information visible in the figure; do not invent scientific modules. The output must be a single syntactically valid JSON object without markdown, code fences, explanations, or trailing commas. 
+
+G.4 sketch generating System Prompt. You are a topology-preserving sketch generation assistant. Given a source topology render and an authoritative knowledge graph, redraw the diagram as a clean black-and-white hand-drawn line sketch. Preserve only the KG-supported nodes, labels, containers, and directed edges. Use the source image only as a weak layout reference. Do not invent or omit structural elements, do not copy visual style or exact geometry, and do not add icons, textures, colors, captions, or decorative marks. 
+
+User Prompt. Draw a new topology line diagram on a pure white canvas. Use the attached source render only as a weak layout reference for coarse placement, ordering, and grouping. The KG is the authoritative drawing specification for all nodes, labels, containers, and directed edges. Redraw the diagram as a clean black-and-white hand-drawn sketch using only simple geometric primitives such as boxes, circles, container outlines, arrows, and short handwritten 
+
+21 labels. Do not copy the source image’s exact geometry, text style, colors, icons, pictorial content, frame boundaries, or connector routes. Preserve every major KG node and KG edge. Do not invent new nodes, labels, arrows, groups, or relationships. For each KG edge, the arrow tail must attach to the source node boundary and the arrowhead must attach to the target node boundary. Reroute arrows when needed to avoid overlaps while keeping the KG connectivity unchanged. Keep the sketch sparse, readable, and structurally faithful. Use black pen-like strokes with slight hand-drawn irregularity. Avoid vector-like diagrams, printed typography, screenshots, decorative marks, textures, shading, captions, legends, and any non-KG visual elements. Authoritative KG drawing plan: 
+
+> <Minimal KG JSON. Use only these nodes and edges; do not infer missing visual styles: {...}>
+
+G.5 structural planning System Prompt. You are a scientific diagram generation assistant. Treat the first image as the structural blueprint. Infer the main modules, grouping, data flow, and relationships from it, but do not copy its rough sketch style, node/edge IDs, debug labels, or placeholder text. Preserve the intended structure, not the visual appearance. 
+
+User Prompt. Use the first image mainly as the semantic and structural plan: infer the main components, their grouping, data-flow direction, and high-level relationships. Do not imitate its rough drawing style, black-and-white simplicity, node IDs, edge IDs, or graph/debug annotations. If the sketch has placeholder labels, replace them with clean, concise academic module names. 
+
+G.6 visual guidance System Prompt. You are a scientific diagram generation assistant.Treat the retrieved reference diagrams as visual style guidance. Use them for polished layout, spacing, colors, typography, icons, arrows, and paper-ready visual quality, but do not copy their exact content, paper-specific text, logos, or module names. 
+
+User Prompt. Visual Guidance images follow. These are clean fine diagrams. Use them for layout polish, colors, icons, image panels, typography, spacing, arrows, and paper-ready visual style. 
+
+G.7 VLM-based absolute evaluation System Prompt. You are an impartial VLM-as-a-judge evaluator for scientific framework figures. Evaluate the candidate figure objectively. Use the sketch as the structural source of truth and the human-created reference figure as the target-quality reference. Return exactly one valid JSON object and no prose. 
+
+User Prompt. You are given three images: Image 1 is the sketch-derived structural source of truth. Image 2 is the human-created fine/reference figure for the same source. Image 3 is the candidate generated figure to evaluate. Evaluate Image 3 against Image 1 and Image 2. Score each sub-metric from 0 to 10. Use the sketch to judge topology, containment, arrow directions, and module coverage. Use the reference figure to judge publication quality and intended target content. The sub-metrics are: aesthetic quality, visual expressiveness, professional polish, clarity, logical flow, accuracy, completeness, and appropriateness. Penalize unreadable text, copied reference-specific content from unrelated examples, invented titles or captions, missing or reversed arrows, dropped modules, irrelevant objects, and debug labels such as node IDs or edge IDs. Return a single JSON object with the following fields: 
+
+22 {"scores": { "aesthetic_quality": 0, "visual_expressiveness": 0, "professional_polish": 0, "clarity": 0, "logical_flow": 0, "accuracy": 0, "completeness": 0, "appropriateness": 0 }, "overall": 0, "strengths": [], "weaknesses": [], "most_important_fix": "" }
+
+The output must be a single syntactically valid JSON object without markdown, code fences, explanations, or trailing commas. 
+
+# H Limitations 
+
+Although DiagramRAG improves sketch-based scientific diagram generation through structure-aware retrieval, it has several limitations. First, its retrieval quality depends on the coverage and quality of the curated diagram corpus; sketches whose topology or domain is poorly represented in the corpus may retrieve less suitable references. Second, the construction of sketch-diagram supervision relies on knowledge-graph extraction and sketch synthesis, which may introduce noise for diagrams with dense layouts, ambiguous connectors, or very small text. Third, the final generation quality still depends on external multimodal generators, which may occasionally produce visually plausible but structurally incorrect diagrams. Finally, our evaluation focuses on scientific framework and workflow diagrams, and the generalization of DiagramRAG to other figure types such as plots, tables, screenshots, or mathematical illustrations remains future work. 23

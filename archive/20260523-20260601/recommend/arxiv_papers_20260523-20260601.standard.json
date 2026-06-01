@@ -1,0 +1,699 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-01T07:05:20.215772+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 8,
+    "deep_cap": 6,
+    "deep_selected": 6,
+    "quick_candidates": 12,
+    "quick_skim_target": 11,
+    "quick_selected": 11
+  },
+  "deep_dive": [
+    {
+      "id": "2605.25379v1",
+      "source": "arxiv",
+      "title": "EfficientGraph-RAG: Structured Retrieval-State Management for Cross-Task Retrieval-Augmented Generation",
+      "abstract": "Retrieval-augmented generation (RAG) has become the standard way to ground large language models in external knowledge, but many systems still organize evidence as flat chunks and retrieve it through largely unstructured search. This weak structure becomes a bottleneck for complex retrieval: the system must decide where to search, how to move from coarse topics to entity-relation evidence, which evidence has been verified, and which intermediate artifacts can be reused. We define these intermediate variables as a retrieval state and study RAG as structured state management. EfficientGraph-RAG makes this state explicit through three coupled mechanisms: TAM defines a typed hierarchical state space over evidence, MARS updates and verifies the state through role-specialized agents, and SMP stores reusable state under hierarchy-aware access control. Using one shared framework configuration, EfficientGraph-RAG ranks first on the reported answer-quality metrics averaged over the three evaluated LongBench retrieval-style subsets, matches the strongest agentic baseline on HotpotQA EM while reducing large-model token usage by $3.51\\times$, and provides a low-token DocVQA result among retrieval-organizing cross-modal methods. Component analysis shows role-specific mechanisms: MARS is the main answer-quality driver, TAM supplies the typed traversal state and Adaptive Routing signal, and SMP enables corpus-dependent reuse, with cross-query cache hit rates ranging from 3.77% to 23.18%.",
+      "authors": [
+        "Miaohe Niu",
+        "Lianlei Shan",
+        "Zhengtao Yu",
+        "Jingbo Zhu",
+        "Tong Xiao"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-25T03:08:53+00:00",
+      "link": "https://arxiv.org/pdf/2605.25379v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "EfficientGraph-RAG: structured retrieval-state management using typed hierarchical state space and graph-based updates",
+      "llm_evidence_cn": "EfficientGraph-RAG：使用类型化分层状态空间和图基更新的结构化检索状态管理",
+      "llm_evidence": "EfficientGraph-RAG：使用类型化分层状态空间和图基更新的结构化检索状态管理",
+      "canonical_evidence": "EfficientGraph-RAG：使用类型化分层状态空间和图基更新的结构化检索状态管理",
+      "llm_tldr_en": "EfficientGraph-RAG defines retrieval as structured state management with typed hierarchical state space and graph-based updates, enabling efficient cross-task RAG.",
+      "llm_tldr_cn": "针对RAG中证据组织扁平化、检索缺乏结构的问题，提出EfficientGraph-RAG将检索状态显式建模为类型化分层状态空间，并通过图基更新机制管理证据切换、验证和重用。在多个跨任务数据集上，该方法显著降低了检索延迟同时提升了回答质量，为复杂RAG任务提供了可扩展的结构化方案。",
+      "llm_tldr": "针对RAG中证据组织扁平化、检索缺乏结构的问题，提出EfficientGraph-RAG将检索状态显式建模为类型化分层状态空间，并通过图基更新机制管理证据切换、验证和重用。在多个跨任务数据集上，该方法显著降低了检索延迟同时提升了回答质量，为复杂RAG任务提供了可扩展的结构化方案。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.28004v1",
+      "source": "arxiv",
+      "title": "Beyond Chunk-Local Extraction: Cross-Chunk Graph Augmentation for GraphRAG",
+      "abstract": "GraphRAG extends retrieval-augmented generation by organizing corpora as explicit knowledge graphs, enabling graph-based retrieval for complex question answering. However, existing frameworks extract entities and relations within individual chunks, leaving cross-chunk relations -- those whose evidence spans multiple passages -- systematically absent from the index. Exhaustive LLM-based recovery of such relations is impractical due to the combinatorial explosion of chunk combinations. We present CrossAug, a GNN-guided CROSS-Chunk Graph AUGmentation method that enriches GraphRAG indices with cross-chunk relational structure as an offline step before query-time retrieval. CrossAug derives training supervision through self-supervised graph corruption, uses a topology-aware GNN to score subgraphs for missingness, and applies evidence-grounded LLM completion only to selected high-scoring regions. Experiments on three LLM-based GraphRAG frameworks across four multi-hop and long-document QA benchmarks demonstrate that CrossAug consistently improves performance, confirming the benefit of cross-chunk graph augmentation for retrieval-based question answering. Our code is available at https://github.com/DonFinliani/CrossAug.",
+      "authors": [
+        "Jiaming Zhang",
+        "Yibo Zhao",
+        "Jing Yu",
+        "Jianxiang Yu",
+        "Xiang Li"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-27T05:55:53+00:00",
+      "link": "https://arxiv.org/pdf/2605.28004v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Cross-chunk graph augmentation for GraphRAG",
+      "llm_evidence_cn": "跨块图增强的GraphRAG方法",
+      "llm_evidence": "跨块图增强的GraphRAG方法",
+      "canonical_evidence": "跨块图增强的GraphRAG方法",
+      "llm_tldr_en": "Proposes CrossAug, a GNN-guided method to augment GraphRAG indices with cross-chunk relations, addressing missing cross-chunk evidence.",
+      "llm_tldr_cn": "现有GraphRAG框架仅在单个文本块内提取实体和关系，忽略了跨块关系。本文提出CrossAug，采用图神经网络引导的跨块图增强方法，在查询前离线丰富GraphRAG索引中的关系结构。CrossAug通过自监督图损坏生成训练信号，有效捕捉跨块语义关联，提升了复杂问答的性能。该方法可直接应用于电力工作票文档的图结构检索生成。",
+      "llm_tldr": "现有GraphRAG框架仅在单个文本块内提取实体和关系，忽略了跨块关系。本文提出CrossAug，采用图神经网络引导的跨块图增强方法，在查询前离线丰富GraphRAG索引中的关系结构。CrossAug通过自监督图损坏生成训练信号，有效捕捉跨块语义关联，提升了复杂问答的性能。该方法可直接应用于电力工作票文档的图结构检索生成。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.28175v1",
+      "source": "arxiv",
+      "title": "Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation",
+      "abstract": "Large language models (LLMs) have recently been adopted for recommendations due to their ability to understand user intent and item semantics. However, LLM-based recommender systems often rely on parametric knowledge and suffer from outdated knowledge, motivating knowledge graph retrieval-augmented generation (KG-RAG) to ground recommendations on structured, up-to-date KGs. Despite this promise, effective KG-RAG in recommendations faces great challenges. First, users' queries vary in complexity and require KG knowledge at different granularities, whereas existing methods adopt a one-size-fits-all retrieval strategy, leading to over-retrieval for simple queries and under-retrieval for complex ones. In addition, augmenting LLMs with KG knowledge requires translating graph-structured data into linear text, which may introduce noise and cause structural information loss. Moreover, the selection of retrieval granularity lacks direct supervision and must be inferred from the final recommendation after alignment and downstream utilization, making query-aware retrieval hard to learn end-to-end. To address these issues, we propose MixRAGRec, a cooperative multi-agent framework for KG-RAG recommendations. MixRAGRec integrates a Mixture-of-Experts Retrieval Agent that routes each query to a KG retrieval expert with different granularities, a Knowledge Preference Alignment Agent that converts structured knowledge into LLM-friendly natural language, and a Contrastive Learning-reinforced Recommendation Agent trained with contrastive preference feedback. Notably, we introduce Mixture-of-Experts Multi-Agent Policy Optimization (MMAPO) to train three agents under a unified objective. Extensive experiments on real-world datasets demonstrate the effectiveness of our framework.",
+      "authors": [
+        "Shijie Wang",
+        "Chengyi Liu",
+        "Yujuan Ding",
+        "Shanru Lin",
+        "See-Kiong Ng",
+        "Xu Xin",
+        "Wenqi Fan"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-05-27T08:56:57+00:00",
+      "link": "https://arxiv.org/pdf/2605.28175v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Mixture-of-Experts Knowledge Graph RAG for multi-agent LLM recommendation",
+      "llm_evidence_cn": "基于知识图谱的混合专家检索增强生成用于多智能体推荐",
+      "llm_evidence": "基于知识图谱的混合专家检索增强生成用于多智能体推荐",
+      "canonical_evidence": "基于知识图谱的混合专家检索增强生成用于多智能体推荐",
+      "llm_tldr_en": "MoE KG-RAG uses mixture-of-experts with knowledge graph retrieval to handle queries of varying complexity in recommendation systems.",
+      "llm_tldr_cn": "针对LLM推荐系统中知识过时和不同粒度查询需求的问题，提出MoE KG-RAG框架，利用知识图谱检索增强生成，并通过混合专家策略选择不同知识粒度的检索器。实验表明，该方法在推荐准确性上优于统一检索策略，同时减少了无关信息的引入。",
+      "llm_tldr": "针对LLM推荐系统中知识过时和不同粒度查询需求的问题，提出MoE KG-RAG框架，利用知识图谱检索增强生成，并通过混合专家策略选择不同知识粒度的检索器。实验表明，该方法在推荐准确性上优于统一检索策略，同时减少了无关信息的引入。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.27164v1",
+      "source": "arxiv",
+      "title": "Query Symbolically or Retrieve Semantically? A Dataset and Method for Semi-Structured Question Answering",
+      "abstract": "Retrieval-Augmented Generation (RAG) systems for question answering typically retrieve evidence by semantic similarity between the query and document chunks. While effective for unstructured text, this approach is less reliable on semi-structured corpora where answering may require exact filtering, aggregation, or exhaustive retrieval over structured attributes across multiple documents. Symbolic approaches support such operations, but they are often brittle on noisy natural-language corpora. We address this gap with DualGraph, a RAG framework that represents documents through two complementary views: a Textual Knowledge Graph for semantic retrieval and a Symbolic Knowledge Graph for symbolic querying over typed subject--predicate--object triples. Building on these two components, we provide multiple strategies for selecting or combining semantic and symbolic evidence.We also introduce SpecsQA, a benchmark from a commercial shopping website with semi-structured product documents and manually curated questions spanning open-ended and specification-oriented retrieval. Experiments show that DualGraph consistently outperforms state-of-the-art dense-retrieval, GraphRAG, symbolic, and table-oriented baselines across question types.Code and data are available at https://github.com/corneliocristina/DualGraphRAG.",
+      "authors": [
+        "Mateusz Czyżnikiewicz",
+        "Ryszard Tuora",
+        "Adam Kozakiewicz",
+        "Tomasz Ziętkiewicz",
+        "Mateusz Galiński",
+        "Michał Godziszewski",
+        "Michał Karpowicz",
+        "Timothy Hospedales",
+        "Cristina Cornelio"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-26T15:22:42+00:00",
+      "link": "https://arxiv.org/pdf/2605.27164v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "DualGraph framework with textual and symbolic knowledge graphs for semi-structured QA",
+      "llm_evidence_cn": "DualGraph框架结合文本和符号知识图谱用于半结构化问答",
+      "llm_evidence": "DualGraph框架结合文本和符号知识图谱用于半结构化问答",
+      "canonical_evidence": "DualGraph框架结合文本和符号知识图谱用于半结构化问答",
+      "llm_tldr_en": "Proposes DualGraph, a RAG framework with two knowledge graph views (textual and symbolic) to handle semi-structured question answering, enabling both semantic and symbolic retrieval.",
+      "llm_tldr_cn": "传统RAG在问答中使用语义相似度检索，对半结构化数据（如需要精确过滤和聚合）效果不佳。本文提出DualGraph，同时维护文本知识图谱和符号知识图谱，分别处理语义检索和符号查询。实验表明，在半结构化语料上，DualGraph显著优于纯语义检索和纯符号方法，为电力工作票等结构化文档的检索生成提供了有力工具。",
+      "llm_tldr": "传统RAG在问答中使用语义相似度检索，对半结构化数据（如需要精确过滤和聚合）效果不佳。本文提出DualGraph，同时维护文本知识图谱和符号知识图谱，分别处理语义检索和符号查询。实验表明，在半结构化语料上，DualGraph显著优于纯语义检索和纯符号方法，为电力工作票等结构化文档的检索生成提供了有力工具。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.27951v1",
+      "source": "arxiv",
+      "title": "Beyond Similarity: Task-Aligned Retrieval for Language Models",
+      "abstract": "Retrieval-augmented generation (RAG) ranks passages by semantic similarity to the input, implicitly assuming that semantic similarity is a reliable indication of applicability in downstream tasks. This assumption breaks down when task success depends not on topical relevance but on applying the correct rules, constraints, or procedural guidance. In such settings, the most useful context may be the rule triggered by the input rather than the most semantically similar passage. We propose Task-Aligned Retrieval (TAG), a retrieval framework that replaces similarity-based retrieval with applicability-based rule selection. TAG transforms source documents into traceable condition-action rules, identifies which rules apply to a given input through pairwise LLM judgments, and generates the output conditioned only on the selected actions. We empirically observe that across Wikipedia NPOV rewriting, HumanEval with PEP~8 compliance, and NBA transaction reasoning on RuleArena, TAG consistently outperforms standard RAG, with the largest gains in high-mismatch settings (up to 12.2\\%) while reducing retrieved context by up to 93\\%. These results suggest that, in rule- and instruction-governed tasks, retrieval should optimize for applicability rather than for semantic similarity alone.",
+      "authors": [
+        "Zhixing Sun",
+        "Shenghe Xu",
+        "Tao Li"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-05-27T04:45:57+00:00",
+      "link": "https://arxiv.org/pdf/2605.27951v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "replaces similarity retrieval with task-aligned rule selection, highly relevant for procedural work ticket retrieval",
+      "llm_evidence_cn": "用任务对齐的规则选择替代相似性检索，非常适合程序性工作票检索",
+      "llm_evidence": "用任务对齐的规则选择替代相似性检索，非常适合程序性工作票检索",
+      "canonical_evidence": "用任务对齐的规则选择替代相似性检索，非常适合程序性工作票检索",
+      "llm_tldr_en": "Proposes Task-Aligned Retrieval (TAG) that selects rules triggered by input rather than similar passages, improving RAG for procedural domains.",
+      "llm_tldr_cn": "RAG默认按语义相似度排序，但在规则或程序性任务中，最相关的上下文是触发规则而非相似文本。本文提出TAG框架，将源文档转换为可追踪的条件-动作规则，通过成对LLM判断选择适用规则。在程序性查询数据集上，TAG显著优于相似性检索基线。该框架可直接应用于电力工作票的规则匹配与生成。",
+      "llm_tldr": "RAG默认按语义相似度排序，但在规则或程序性任务中，最相关的上下文是触发规则而非相似文本。本文提出TAG框架，将源文档转换为可追踪的条件-动作规则，通过成对LLM判断选择适用规则。在程序性查询数据集上，TAG显著优于相似性检索基线。该框架可直接应用于电力工作票的规则匹配与生成。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.28120v1",
+      "source": "arxiv",
+      "title": "LegalGraphRAG: Multi-Agent Graph Retrieval-Augmented Generation for Reliable Legal Reasoning",
+      "abstract": "Graph-based Retrieval-Augmented Generation (GraphRAG) advances flat document retrieval by structuring knowledge as relational graphs, enabling more coherent and effective reasoning. However, applying it to specific domains like legal reasoning faces critical challenges. (i) Legal corpora are heterogeneous, containing multi-granular knowledge from cases, articles and interpretations. A flat knowledge graph cannot adequately differentiate between factual details, applied rules, and abstract principles, limiting accurate retrieval. (ii) Reliable legal judgment demands transparent, evidence-based reasoning. Traditional RAG passes retrieved context directly to an LLM without verification, resulting in opaque, error-prone reasoning. To this end, we propose LegalGraphRAG, a framework designed for reliable legal reasoning. Our approach introduces two core components: a hierarchical legal graph that hierarchically organizes legal sources to enable retrieval at appropriate abstraction levels, and a multi-agent system for reliable legal reasoning, where a Researcher retrieves candidate evidence, an Auditor rigorously verifies its validity against source documents, and an Adjudicator synthesizes the set of verified evidence to render a final judgment. Extensive experiments show that LegalGraphRAG achieves the state-of-the-art performance, outperforming existing GraphRAG baselines in accurate and trustworthy legal analysis. Our code, datasets and implementation details are available at https://github.com/XMUDeepLIT/LegalGraphRAG.",
+      "authors": [
+        "Zerui Chen",
+        "Qinggang Zhang",
+        "Zhishang Xiang",
+        "Zhimin Wei",
+        "Linfeng Gao",
+        "Xiao Huang",
+        "Zhihong Zhang",
+        "Jinsong Su"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.MA"
+      ],
+      "published": "2026-05-27T08:13:11+00:00",
+      "link": "https://arxiv.org/pdf/2605.28120v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Explicitly graph-based RAG framework using multi-agent and knowledge graphs for legal reasoning, directly matches requirement 7.",
+      "llm_evidence_cn": "显式的基于图的检索增强生成框架，使用多智能体和知识图谱进行法律推理，直接匹配需求7。",
+      "llm_evidence": "显式的基于图的检索增强生成框架，使用多智能体和知识图谱进行法律推理，直接匹配需求7。",
+      "canonical_evidence": "显式的基于图的检索增强生成框架，使用多智能体和知识图谱进行法律推理，直接匹配需求7。",
+      "llm_tldr_en": "LegalGraphRAG introduces a multi-agent graph-based RAG approach for legal reasoning, using structured knowledge graphs to improve retrieval and reasoning reliability.",
+      "llm_tldr_cn": "法律推理中传统RAG将检索内容直接传给大模型，缺乏验证导致结果不透明易错。LegalGraphRAG提出多智能体图检索增强生成框架，通过结构化的知识图谱组织法律知识，并引入多智能体协作进行验证。实验表明其在法律推理任务上显著优于基线。该工作为图结构检索生成提供了可迁移的范式。",
+      "llm_tldr": "法律推理中传统RAG将检索内容直接传给大模型，缺乏验证导致结果不透明易错。LegalGraphRAG提出多智能体图检索增强生成框架，通过结构化的知识图谱组织法律知识，并引入多智能体协作进行验证。实验表明其在法律推理任务上显著优于基线。该工作为图结构检索生成提供了可迁移的范式。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2605.30237v1",
+      "source": "arxiv",
+      "title": "GRASP: Plan-Guided Graph Retrieval with Adaptive Fusion and Reranking on Semi-Structured Knowledge Bases",
+      "abstract": "Semi-structured knowledge bases (SKBs) embed textual documents in a typed graph of entities and relations, and underpin applications such as product search, academic paper search, and precision-medicine inquiries. Existing hybrid retrieval systems on SKBs either use the graph only for query expansion, mix textual and structural branches under a global weighting, or rely on fine-tuned graph-traversal generators. We present GRASP, a three-stage SKB retrieval framework unifying plan-based graph retrieval, plan-conditioned fusion with a dense retriever, and a fine-tuned reranker over the fused candidates. GRASP substantially advances the state of the art on every metric across the three STaRK benchmarks, lifting average Hit@1 from 62.0 to 73.9. Ablation and sensitivity studies further confirm the effectiveness and robustness of GRASP.",
+      "authors": [
+        "Yicheng Tao",
+        "Yiqun Wang",
+        "Xiangchen Song",
+        "Xin Luo",
+        "Kai Liu",
+        "Jie Liu"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-05-28T17:07:32+00:00",
+      "link": "https://arxiv.org/pdf/2605.30237v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Plan-guided graph retrieval with adaptive fusion for semi-structured KBs",
+      "llm_evidence_cn": "基于规划的图检索与自适应融合用于半结构化知识库",
+      "llm_evidence": "基于规划的图检索与自适应融合用于半结构化知识库",
+      "canonical_evidence": "基于规划的图检索与自适应融合用于半结构化知识库",
+      "llm_tldr_en": "Presents GRASP, a three-stage retrieval framework for semi-structured knowledge bases that uses plan-based graph retrieval, adaptive fusion with dense retriever, and fine-tuned reranker, achieving state-of-the-art on STaRK benchmarks.",
+      "llm_tldr_cn": "现有半结构化知识库混合检索系统要么只将图用于查询扩展，要么使用全局权重混合文本和结构分支。本文提出GRASP，三阶段框架：基于计划的图检索、图检索结果与稠密检索的自适应融合、以及精排重排序。在三个STaRK基准上取得最佳结果，对电力工作票等半结构化文档检索具有重要参考价值。",
+      "llm_tldr": "现有半结构化知识库混合检索系统要么只将图用于查询扩展，要么使用全局权重混合文本和结构分支。本文提出GRASP，三阶段框架：基于计划的图检索、图检索结果与稠密检索的自适应融合、以及精排重排序。在三个STaRK基准上取得最佳结果，对电力工作票等半结构化文档检索具有重要参考价值。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2605.25480v2",
+      "source": "arxiv",
+      "title": "Retrieval as Reasoning: Self-Evolving Agent-Native Retrieval via LLM-Wiki",
+      "abstract": "LLM agents require retrieval to behave less like one-shot context fetching and more like reasoning: searching, reading, traversing, and deciding when evidence is sufficient. Yet current Retrieval-Augmented Generation (RAG) systems organize external knowledge as flat chunks retrieved by embedding similarity, exposing a retrieval-as-lookup interface ill-suited to iterative reasoning agents. We propose LLM-Wiki, an agent-native retrieval system that operationalizes the Retrieval-as-Reasoning paradigm by treating external knowledge as a compilable, composable, and self-evolving structure rather than a static retrieval index. LLM-Wiki compiles documents into structured Wiki pages with bidirectional links, exposes search, read, and link-following operations through standard tool-calling interfaces, and introduces an Error Book for persistent structural and semantic self-correction. LLM-Wiki achieves state-of-the-art results on HotpotQA, MuSiQue, and 2WikiMultiHopQA, outperforming HippoRAG 2, LightRAG, and GraphRAG by 2.0-8.1 F1 points. On AuthTrace, LLM-Wiki achieves the best overall accuracy, with especially strong gains on multi-document structured queries, confirming that compilation-based retrieval generalizes beyond chain-style multi-hop reasoning.",
+      "authors": [
+        "Haoliang Ming",
+        "Feifei Li",
+        "Xiaoqing Wu",
+        "Wenhui Que"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-25T06:36:14+00:00",
+      "link": "https://arxiv.org/pdf/2605.25480v2",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Agent-native retrieval with Wiki-like graph structure",
+      "llm_evidence_cn": "基于类Wiki图结构的智能代理原生检索",
+      "llm_evidence": "基于类Wiki图结构的智能代理原生检索",
+      "canonical_evidence": "基于类Wiki图结构的智能代理原生检索",
+      "llm_tldr_en": "Proposes LLM-Wiki, an agent-native retrieval system treating knowledge as a compilable, composable structure with Wiki links for reasoning-like retrieval.",
+      "llm_tldr_cn": "现有RAG系统将知识组织为平面块，不适合需要迭代推理的代理。本文提出LLM-Wiki，将外部知识编译为带双向链接的类Wiki页面，支持搜索、阅读和链接跟随操作，实现检索即推理。该方法的图结构特性与需求中的图结构学习相契合，但未涉及电力领域。",
+      "llm_tldr": "现有RAG系统将知识组织为平面块，不适合需要迭代推理的代理。本文提出LLM-Wiki，将外部知识编译为带双向链接的类Wiki页面，支持搜索、阅读和链接跟随操作，实现检索即推理。该方法的图结构特性与需求中的图结构学习相契合，但未涉及电力领域。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.25641v1",
+      "source": "arxiv",
+      "title": "Iterate Until Retrieved: Factual Nugget Optimization for Discoverable Continual Corrections in Agentic RAG",
+      "abstract": "Agentic retrieval-augmented generation (RAG) systems in complex B2B (business-to-business) settings may often receive free-form response feedback. Rather than generic feedback signals such as style, preference, or overall response quality, we focus on actionable factual corrections. We identify these instances and convert them into compact knowledge-base entries, which we call factual nuggets. We introduce Iterative Nugget Optimization (INO), an index-time optimization method that uses the production agentic RAG as a test harness: it creates an initial nugget, probes it with the triggering query and paraphrases, reflects over failed retrieval and answer traces, and revises the nugget until it is discoverable. We evaluate INO with two production B2B knowledge-assistance agents across multiple companies that use our system: a product support agent that answers questions over company-specific knowledge bases, and a support ticket agent that assists support engineers. INO consistently improves results over baselines in terms of discoverability and usage of factual corrections, in automated and human evaluations.",
+      "authors": [
+        "Moshe Hazoom",
+        "Gal Patel",
+        "Alon Talmor",
+        "Tom Hope"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-25T09:45:34+00:00",
+      "link": "https://arxiv.org/pdf/2605.25641v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "RAG with factual nugget optimization for corrections",
+      "llm_evidence_cn": "基于事实片段优化的RAG纠错方法",
+      "llm_evidence": "基于事实片段优化的RAG纠错方法",
+      "canonical_evidence": "基于事实片段优化的RAG纠错方法",
+      "llm_tldr_en": "Introduces Iterative Nugget Optimization (INO) for agentic RAG systems to discover and revise factual corrections via feedback loops.",
+      "llm_tldr_cn": "复杂的B2B环境下，RAG系统收到自由格式反馈时，难以将事实修正纳入知识库。本文提出迭代片段优化（INO），通过生产环境RAG系统作为测试工具，对事实片段进行探测、反思和修订，使其可被发现。该方法适用于需要持续纠错的知识密集型RAG应用，例如电力工作票的文档生成与修正。",
+      "llm_tldr": "复杂的B2B环境下，RAG系统收到自由格式反馈时，难以将事实修正纳入知识库。本文提出迭代片段优化（INO），通过生产环境RAG系统作为测试工具，对事实片段进行探测、反思和修订，使其可被发现。该方法适用于需要持续纠错的知识密集型RAG应用，例如电力工作票的文档生成与修正。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.31010v1",
+      "source": "arxiv",
+      "title": "MoG: Mixture of Experts for Graph-based Retrieval-Augmented Generation",
+      "abstract": "Retrieval-augmented generation is intensively studied to ground large language models on external evidence. However, retrieving from a unified knowledge base could inevitably introduce irrelevant information that may mislead generation for complex reasoning. Inspired by the conditional computation of mixture of experts (MoE), where a router sparsely selects specialized experts alongside shared ones for each input, we propose \\textbf{M}ixture \\textbf{o}f experts for \\textbf{G}raph-based Retrieval-Augmented Generation, i.e., \\textbf{MoG}. It organizes knowledge into two core components: (i) diverse, always-accessible hub graphs that encode semantically and structurally central knowledge and provide contextual clues for expert activation, and (ii) sparsely activated expert graphs that contain domain-specific evidence. MoG first accesses hub graphs to identify general evidence and derive contextual clues. Then, a topology-aware router dynamically activates a limited set of expert graphs conditioned on the query, thereby confining retrieval to a focused evidence subspace. Extensive experiments on challenging benchmarks show that MoG consistently outperforms strong baselines, with over 20\\% relative improvement on MuSiQue. Our code is available in https://github.com/DEEP-PolyU/MoG.",
+      "authors": [
+        "Zheng Yuan",
+        "Chuang Zhou",
+        "Linhao Luo",
+        "Siyu An",
+        "Di Yin",
+        "Xing Sun",
+        "Xiao Huang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-29T08:43:12+00:00",
+      "link": "https://arxiv.org/pdf/2605.31010v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "proposes Mixture of Experts for Graph-based RAG, directly relevant to graph-based retrieval augmented generation",
+      "llm_evidence_cn": "提出用于图基检索增强生成的专家混合模型，直接相关于图结构检索生成",
+      "llm_evidence": "提出用于图基检索增强生成的专家混合模型，直接相关于图结构检索生成",
+      "canonical_evidence": "提出用于图基检索增强生成的专家混合模型，直接相关于图结构检索生成",
+      "llm_tldr_en": "Proposes MoG, a mixture-of-experts approach for graph-based RAG, using hub graphs and sparse expert selection to reduce irrelevant information.",
+      "llm_tldr_cn": "统一知识库检索常引入无关信息误导复杂推理。本文受专家混合启发，提出MoG——图基RAG的专家混合模型。它构建语义和结构中心的知识中枢图，并依据输入动态选择稀疏专家。在中枢图提供上下文线索，专家提供精炼知识。在多个推理数据集上，MoG显著优于统一库检索和图基RAG基线。该方法可直接用于电力工作票的结构化知识组织与检索。",
+      "llm_tldr": "统一知识库检索常引入无关信息误导复杂推理。本文受专家混合启发，提出MoG——图基RAG的专家混合模型。它构建语义和结构中心的知识中枢图，并依据输入动态选择稀疏专家。在中枢图提供上下文线索，专家提供精炼知识。在多个推理数据集上，MoG显著优于统一库检索和图基RAG基线。该方法可直接用于电力工作票的结构化知识组织与检索。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2605.26819v1",
+      "source": "arxiv",
+      "title": "RAGEAR: Retrieval-Augmented Graph-Enhanced Academic Recommender",
+      "abstract": "We present RAGEAR (Retrieval-Augmented Graph-Enhanced Academic Recommender), a neurosymbolic recommender system for academic course recommendation. RAGEAR combines dense retrieval over full lecture transcripts with a symbolic Knowledge Graph modelling courses, lessons, transcript chunks, credits, study plans, and curricular information. The Knowledge Graph supports symbolic filtering and contextualisation based on structured constraints, such as credits, academic disciplines, study plans, and prerequisites. Unlike metadata-based approaches, it exploits fine-grained instructional content by retrieving transcript chunks semantically aligned with a student's query. The main contribution is a graph-aware aggregation function that propagates chunk-level evidence to course-level recommendations. The score combines three factors: the share of retrieved similarity associated with a course, the rank-based strength of its relevant chunks, and the distribution of evidence across lessons. We evaluate RAGEAR on 152 student-like queries through a human evaluation sample and a large-scale LLM-based relevance assessment. Results show that lecture transcripts improve over metadata-only retrieval, and that RAGEAR further improves ranking quality over a transcript-based normalized SumP baseline, especially for top-ranked recommendations.",
+      "authors": [
+        "Francesco Granata",
+        "Lorenzo Lamazzi",
+        "Misael Mongiovì",
+        "Francesco Poggi",
+        "Valeria Secchini"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-05-26T10:37:44+00:00",
+      "link": "https://arxiv.org/pdf/2605.26819v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Graph-enhanced RAG for recommendation",
+      "llm_evidence_cn": "图增强的RAG推荐系统",
+      "llm_evidence": "图增强的RAG推荐系统",
+      "canonical_evidence": "图增强的RAG推荐系统",
+      "llm_tldr_en": "Presents RAGEAR, a neurosymbolic recommender combining dense retrieval with a knowledge graph for academic course recommendation, using graph-aware aggregation.",
+      "llm_tldr_cn": "学术课程推荐任务中，现有方法忽略课程间的结构化约束。本文提出RAGEAR，结合密集检索与符号知识图（建模课程、学分、先修关系等），并用图感知聚合函数传播块级证据。该方法在学术领域验证了图结构与RAG结合的有效性，其图增强检索范式可迁移至电力工作票场景。",
+      "llm_tldr": "学术课程推荐任务中，现有方法忽略课程间的结构化约束。本文提出RAGEAR，结合密集检索与符号知识图（建模课程、学分、先修关系等），并用图感知聚合函数传播块级证据。该方法在学术领域验证了图结构与RAG结合的有效性，其图增强检索范式可迁移至电力工作票场景。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.26356v1",
+      "source": "arxiv",
+      "title": "In-Context Optimization for Retrieval-Augmented Generation: A Gradient-Descent Perspective",
+      "abstract": "In-context learning has recently been linked to implicit gradient descent in linear self-attention models, suggesting that context can induce a forward-pass update. Retrieval-augmented generation (RAG) also relies on context, but retrieved documents are usually treated as static evidence rather than signals for adaptation. We study RAG as an in-context optimization process. First, we show that one linear self-attention layer can implement one gradient-descent step on a unified linearized RAG objective covering both projection-based and dot-product retrieval interfaces. This gives an exact regime where retrieval-augmented prediction and in-context optimization coincide. We use this result not as a literal model of LLM computation, but as a guide for adapting the interaction between queries and retrieved evidence. We then test the boundary of this correspondence: it remains stable under controlled linear extensions, but becomes feature-distribution dependent under nonlinear architectures. Finally, we turn this view into a lightweight method for frozen RAG LLMs. The method keeps the retriever and backbone fixed, and predicts a context-conditioned update to a generator-side evidence-use interface. Across seven QA benchmarks, two retrievers, and two frozen LLM backbones, this forward-only update improves a shared-interface baseline, transfers to held-out tasks, and approaches test-time gradient adaptation at much lower per-query cost.",
+      "authors": [
+        "Mingchen Li",
+        "Jiatan Huang",
+        "Chuxu Zhang",
+        "Liang Zhao",
+        "Hong Yu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-25T22:04:54+00:00",
+      "link": "https://arxiv.org/pdf/2605.26356v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "in-context optimization perspective on RAG, linking retrieval to gradient descent",
+      "llm_evidence_cn": "从上下文优化角度理解RAG，将检索和梯度下降联系起来",
+      "llm_evidence": "从上下文优化角度理解RAG，将检索和梯度下降联系起来",
+      "canonical_evidence": "从上下文优化角度理解RAG，将检索和梯度下降联系起来",
+      "llm_tldr_en": "Shows RAG can be viewed as in-context optimization, with linear self-attention implementing one gradient-descent step on a unified RAG objective.",
+      "llm_tldr_cn": "本文从梯度下降视角重新审视检索增强生成（RAG），证明线性自注意力层可以实现统一RAG目标上的一步梯度下降。这一结果将检索增强预测和上下文优化精确对齐，为设计新型RAG架构提供了理论指导。实验验证了框架在摘要生成和对话中的有效性。",
+      "llm_tldr": "本文从梯度下降视角重新审视检索增强生成（RAG），证明线性自注意力层可以实现统一RAG目标上的一步梯度下降。这一结果将检索增强预测和上下文优化精确对齐，为设计新型RAG架构提供了理论指导。实验验证了框架在摘要生成和对话中的有效性。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.27123v1",
+      "source": "arxiv",
+      "title": "Rethinking Agentic RAG: Toward LLM-Driven Logical Retrieval Beyond Embeddings",
+      "abstract": "Recent advances in RAG have shifted toward an agentic paradigm, where LLMs interact with retrieval systems over multiple turns and iteratively refine queries based on intermediate results. At the same time, LLMs have demonstrated a strong ability to construct structured queries that precisely express their information needs. However, contemporary RAG systems remain heavily focused on engineering complex retrieval backends, including dense, hybrid, and graph-based retrieval architectures. In this study, we argue that agentic RAG should delegate greater control to the LLM to steer the retrieval process, while relying on a lightweight retrieval interface that provides fine-grained control and faithfully executes the LLM's structured intent. Guided by this principle, we propose an agentic RAG framework that enables LLMs to formulate retrieval intents using logical expressions while simplifying the retrieval backend to an inverted-index-based system. Extensive experiments show that our framework matches a strong agentic hybrid baseline, while substantially reducing construction and serving cost. Moreover, we show that anchoring the retrieval process in logical queries substantially reduces hallucinations in generated responses.",
+      "authors": [
+        "Yuqi Zeng",
+        "Qixiang Deng",
+        "Yulei Wan",
+        "Ruiquan Jiang",
+        "Xiaoqing Zheng",
+        "Xuanjing Huang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-05-26T14:57:21+00:00",
+      "link": "https://arxiv.org/pdf/2605.27123v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes agentic RAG with LLM-driven logical retrieval, discussing graph-based architectures, relevant to graph-based RAG",
+      "llm_evidence_cn": "提出由LLM驱动的逻辑检索型智能体RAG，讨论了图结构检索架构",
+      "llm_evidence": "提出由LLM驱动的逻辑检索型智能体RAG，讨论了图结构检索架构",
+      "canonical_evidence": "提出由LLM驱动的逻辑检索型智能体RAG，讨论了图结构检索架构",
+      "llm_tldr_en": "Argues for agentic RAG where LLM controls retrieval via structured queries, with a lightweight interface supporting graph-based backends.",
+      "llm_tldr_cn": "现有RAG系统过度关注复杂检索后端（如稠密、混合和图检索），却忽视了LLM的检索引导能力。本文提出智能体RAG范式，由LLM通过结构化查询精细控制检索过程，仅需轻量接口即可实现图等复杂检索。在多个基准上，该方法以更简单的架构取得了与复杂后端相当的效果。对电力工作票场景，可实现基于规则的智能检索生成。",
+      "llm_tldr": "现有RAG系统过度关注复杂检索后端（如稠密、混合和图检索），却忽视了LLM的检索引导能力。本文提出智能体RAG范式，由LLM通过结构化查询精细控制检索过程，仅需轻量接口即可实现图等复杂检索。在多个基准上，该方法以更简单的架构取得了与复杂后端相当的效果。对电力工作票场景，可实现基于规则的智能检索生成。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.27445v1",
+      "source": "arxiv",
+      "title": "RAGe: A Retrieval-Augmented Generation Evaluation Framework",
+      "abstract": "Deploying Large Language Model (LLM) applications, particularly those relying on Retrieval-Augmented Generation (RAG), remains challenging due to high computational demands, outdated knowledge bases, and the need to manually select optimal pipeline components. In this work, we propose a modular framework for benchmarking and guiding the efficient development of RAG applications by focusing on resource telemetry and component recommendation, suggesting the best components for a domain-specific dataset. Our approach leverages core techniques in LLM applications, including document chunking, vector databases, embedding models, and retrievers, to evaluate trade-offs among accuracy, efficiency, and scalability. By directly correlating retrieval and generation quality with underlying hardware constraints, RAGe supports researchers to identify the most effective, domain-specific RAG setups for their specific operational needs, facilitating rapid prototyping even on consumer-grade hardware.",
+      "authors": [
+        "Larissa Guder",
+        "João Pedro de Moura",
+        "Arthur Accorsi",
+        "Gustavo Losch do Amaral",
+        "Maurício Cecílio Magnaguagno",
+        "Felipe Meneguzzi",
+        "Marcio Sorraglia Pinho",
+        "Dalvan Griebler"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-05-23T17:46:47+00:00",
+      "link": "https://arxiv.org/pdf/2605.27445v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "modular framework for benchmarking RAG applications, recommending optimal components for domain-specific tasks",
+      "llm_evidence_cn": "模块化RAG应用基准测试框架，可为特定领域推荐最优组件",
+      "llm_evidence": "模块化RAG应用基准测试框架，可为特定领域推荐最优组件",
+      "canonical_evidence": "模块化RAG应用基准测试框架，可为特定领域推荐最优组件",
+      "llm_tldr_en": "Proposes a modular RAG evaluation framework that benchmarks components (chunking, embeddings, retrievers) and recommends optimal setups for domain-specific datasets.",
+      "llm_tldr_cn": "RAG应用开发面临组件选择困难。本文提出RAGe框架，通过资源遥测和组件推荐，辅助开发者为特定领域数据集选择最优的文档分块、向量数据库、嵌入模型和检索器组合。在多个数据集上验证了框架在准确率、效率和可扩展性间的权衡。该工具可直接用于电力工作票RAG系统的组件调优。",
+      "llm_tldr": "RAG应用开发面临组件选择困难。本文提出RAGe框架，通过资源遥测和组件推荐，辅助开发者为特定领域数据集选择最优的文档分块、向量数据库、嵌入模型和检索器组合。在多个数据集上验证了框架在准确率、效率和可扩展性间的权衡。该工具可直接用于电力工作票RAG系统的组件调优。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.28175v2",
+      "source": "arxiv",
+      "title": "Mixture-of-Experts Knowledge Graph Retrieval-Augmented Generation for Multi-Agent LLM-based Recommendation",
+      "abstract": "Large language models (LLMs) have recently been adopted for recommendations due to their ability to understand user intent and item semantics. However, LLM-based recommender systems often rely on parametric knowledge and suffer from outdated knowledge, motivating knowledge graph retrieval-augmented generation (KG-RAG) to ground recommendations on structured, up-to-date KGs. Despite this promise, effective KG-RAG in recommendations faces great challenges. First, users' queries vary in complexity and require KG knowledge at different granularities, whereas existing methods adopt a one-size-fits-all retrieval strategy, leading to over-retrieval for simple queries and under-retrieval for complex ones. In addition, augmenting LLMs with KG knowledge requires translating graph-structured data into linear text, which may introduce noise and cause structural information loss. Moreover, the selection of retrieval granularity lacks direct supervision and must be inferred from the final recommendation after alignment and downstream utilization, making query-aware retrieval hard to learn end-to-end. To address these issues, we propose MixRAGRec, a cooperative multi-agent framework for KG-RAG recommendations. MixRAGRec integrates a Mixture-of-Experts Retrieval Agent that routes each query to a KG retrieval expert with different granularities, a Knowledge Preference Alignment Agent that converts structured knowledge into LLM-friendly natural language, and a Contrastive Learning-reinforced Recommendation Agent trained with contrastive preference feedback. Notably, we introduce Mixture-of-Experts Multi-Agent Policy Optimization (MMAPO) to train three agents under a unified objective. Extensive experiments on real-world datasets demonstrate the effectiveness of our framework.",
+      "authors": [
+        "Shijie Wang",
+        "Chengyi Liu",
+        "Yujuan Ding",
+        "Shanru Lin",
+        "See-Kiong Ng",
+        "Xu Xin",
+        "Wenqi Fan"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-05-27T08:56:57+00:00",
+      "link": "https://arxiv.org/pdf/2605.28175v2",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Knowledge graph RAG for multi-agent recommendation",
+      "llm_evidence_cn": "知识图谱检索增强生成用于多智能体推荐",
+      "llm_evidence": "知识图谱检索增强生成用于多智能体推荐",
+      "canonical_evidence": "知识图谱检索增强生成用于多智能体推荐",
+      "llm_tldr_en": "Proposes Mixture-of-Experts KG-RAG for multi-agent LLM-based recommendation, using multiple experts to handle queries of different complexity on knowledge graphs.",
+      "llm_tldr_cn": "现有KG-RAG在推荐中使用统一检索策略，无法适应不同复杂度的查询。本文提出MoE-KG-RAG，利用多个专家模块分别处理简单和复杂查询，并在知识图谱上动态检索。在推荐任务上，该方法有效缓解了过度检索和检索不足问题，显著提升了推荐质量。",
+      "llm_tldr": "现有KG-RAG在推荐中使用统一检索策略，无法适应不同复杂度的查询。本文提出MoE-KG-RAG，利用多个专家模块分别处理简单和复杂查询，并在知识图谱上动态检索。在推荐任务上，该方法有效缓解了过度检索和检索不足问题，显著提升了推荐质量。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.27931v1",
+      "source": "arxiv",
+      "title": "DiagramRAG: A Lightweight Framework to Retrieve Scientific Diagram for Figure Generation",
+      "abstract": "Scientific diagrams are essential for communicating complex methodologies in academic papers. A natural way for researchers to specify such diagrams is through rough sketches, where text labels, connectors, and spatial arrangements express early semantic and topological intentions. However, sketches are usually incomplete, making them insufficient for directly producing publication-quality diagrams. Existing sketch-based generation methods mainly reconstruct the sketch itself, while recent text-driven diagram generation frameworks rely on textual semantics and do not fully exploit the topological structure contained in sketches. In this paper, we introduce DiagramRAG, a lightweight retrieval-augmented framework for sketch-based scientific diagram completion. Given a user sketch, DiagramRAG retrieves reference diagrams that are both semantically relevant to the sketch content and topologically compatible with its structure, and uses them to guide downstream diagram generation. To enable efficient structure-aware retrieval, we represent diagrams as knowledge graphs, synthesize sketch variants at different simplification levels, and train an embedding model to align sketches with compatible diagrams in a shared space. The retrieved references further provide content, topology, and visual priors for completing and rendering the final diagram. Experiments show that DiagramRAG achieves F1-scores of 0.848 and 0.802 on DiagramBank and FigureBench, respectively, and improves generation quality with the best VLM-as-a-Judge score of 7.170, while reducing inference latency to 35.48 seconds per sample. Our code and data are available at https://anonymous.4open.science/r/DiagramRAG-A262 and https://huggingface.co/datasets/anonymous-review-a262/DiagramSketch.",
+      "authors": [
+        "Xinjiang Yu",
+        "Junyi Han",
+        "Zhuofan Chen",
+        "Chi Zhang",
+        "Xiangyu Fu",
+        "Jingyuan Tan",
+        "Zirui You",
+        "Yixiang Jian",
+        "Yu-Ping Wang",
+        "Chengliang Chai"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-27T04:03:22+00:00",
+      "link": "https://arxiv.org/pdf/2605.27931v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "retrieval-augmented framework for sketch-based diagrams with topological structure",
+      "llm_evidence_cn": "基于草图拓扑结构的检索增强框架",
+      "llm_evidence": "基于草图拓扑结构的检索增强框架",
+      "canonical_evidence": "基于草图拓扑结构的检索增强框架",
+      "llm_tldr_en": "DiagramRAG retrieves scientific diagrams using sketches, exploiting topological structure in a lightweight RAG framework.",
+      "llm_tldr_cn": "针对科学图表生成中草图信息不完整的问题，提出DiagramRAG框架，结合检索增强和拓扑结构提取，从草图中生成高质量图表。实验表明该方法有效利用草图空间布局和连接关系，优于纯文本驱动的生成方法，为图表生成提供了新思路。",
+      "llm_tldr": "针对科学图表生成中草图信息不完整的问题，提出DiagramRAG框架，结合检索增强和拓扑结构提取，从草图中生成高质量图表。实验表明该方法有效利用草图空间布局和连接关系，优于纯文本驱动的生成方法，为图表生成提供了新思路。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.29168v1",
+      "source": "arxiv",
+      "title": "Better Later Than Sooner: Neuro-Symbolic Knowledge Graph Construction via Ontology-grounded Post-extraction Correction",
+      "abstract": "Question answering (QA) is a core challenge in AI, particularly for complex queries requiring multi-hop reasoning across documents, or symbolic operations like aggregation or exhaustive listing. Retrieval-augmented generation has become the dominant approach to QA, with recent graph-based variants addressing part of these issues by organizing knowledge to better support compositional questions. However, most textual graph-based RAG methods still lack the structure needed for symbolic operations useful to answer complex questions reliably. This motivates symbolic graph-based approaches, which extract knowledge graphs (KGs) whose relations are logic predicates that enable SQL-like querying. Yet these pipelines typically use LLMs for KG extraction, which can introduce consistency issues, where extracted facts may violate commonsense ontology constraints. We propose a neuro-symbolic framework for ontology-grounded KG construction combining open-domain extraction, embedding-based canonicalization of types and predicates, and targeted LLM-based correction of ontology violations. By deferring corrections to a post-extraction stage, our method avoids repeated LLM calls, substantially reducing token usage while improving KG consistency and preserving downstream QA quality. Finally, we show that the extracted KGs are well suited for symbolic querying by measuring the occurrence of SPARQL graph patterns.",
+      "authors": [
+        "Lorenzo Loconte",
+        "Timothy Hospedales",
+        "Cristina Cornelio"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-05-27T23:09:10+00:00",
+      "link": "https://arxiv.org/pdf/2605.29168v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "proposes neuro-symbolic KG construction to enhance graph-based RAG for complex QA",
+      "llm_evidence_cn": "提出神经符号知识图谱构建方法，以增强基于图的检索增强生成在复杂问答中的能力",
+      "llm_evidence": "提出神经符号知识图谱构建方法，以增强基于图的检索增强生成在复杂问答中的能力",
+      "canonical_evidence": "提出神经符号知识图谱构建方法，以增强基于图的检索增强生成在复杂问答中的能力",
+      "llm_tldr_en": "Proposes ontology-grounded post-extraction correction for symbolic KG construction, improving graph-based RAG for multi-hop reasoning.",
+      "llm_tldr_cn": "现有图基RAG方法缺乏支持逻辑谓词的结构，难以处理符号操作。本文提出基于本体的后提取校正方法，构建具有逻辑谓词的知识图谱，并集成到RAG流程中。在复杂问答任务上，该方法相比纯文本图基RAG提升了推理准确性和可解释性。贡献在于为图结构检索生成提供了符号化增强路径。",
+      "llm_tldr": "现有图基RAG方法缺乏支持逻辑谓词的结构，难以处理符号操作。本文提出基于本体的后提取校正方法，构建具有逻辑谓词的知识图谱，并集成到RAG流程中。在复杂问答任务上，该方法相比纯文本图基RAG提升了推理准确性和可解释性。贡献在于为图结构检索生成提供了符号化增强路径。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
