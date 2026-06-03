@@ -1,0 +1,369 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-03T22:35:27.331866+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 1,
+    "deep_divecandidates": 0,
+    "deep_cap": 6,
+    "deep_selected": 0,
+    "quick_candidates": 9,
+    "quick_skim_target": 11,
+    "quick_selected": 9
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2605.26902v1",
+      "source": "arxiv",
+      "title": "ICICLE: Expanding Retrieval with In-Context Documents",
+      "abstract": "Generative retrieval (GR) maps queries directly to document identifiers (docids) using parametric knowledge, However, this design makes corpus expansion costly: adding new documents requires updating model parameters to encode new document-docid associations incurs repeated training and catastrophic forgetting of previously indexed documents. In this work, we revisit incremental GR as an in-context retrieval problem, where newly added documents are supplied as inference-time document-docid evidence. We propose ICICLE, an in-context indexing framework that performs source-aware docid generation over both parametric memory and context-provided document-docid pairs. ICICLE combines a `[COPY]`-based routing mechanism, preference-based calibration, and large context adaptation to distinguish context-grounded retrieval from parametric retrieval. Experiments on MS MARCO and NQ320K show that ICICLE improves retrieval of newly introduced documents while preserving seen-document retention without corpus-specific retraining. Our analysis further shows that high-shot degradation is mainly caused by routing failure, highlighting source-selection calibration as a key bottleneck for scaling in-context generative retrieval.",
+      "authors": [
+        "Yu-Chen Den",
+        "Yung-Yu Shih",
+        "Zhi Rui Tam",
+        "Kuan-Yu Chen",
+        "Pu-Jen Cheng",
+        "Yun-Nung Chen",
+        "Eugene Yang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-05-26T12:01:44+00:00",
+      "link": "https://arxiv.org/pdf/2605.26902v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "in-context indexing for generative retrieval",
+      "llm_evidence_cn": "上下文索引用于生成式检索",
+      "llm_evidence": "上下文索引用于生成式检索",
+      "canonical_evidence": "上下文索引用于生成式检索",
+      "llm_tldr_en": "ICICLE treats incremental corpus expansion as an in-context retrieval problem, generating docids from both parametric memory and provided context documents without retraining.",
+      "llm_tldr_cn": "该论文将生成式检索的增量扩展视为上下文检索问题，提出ICICLE框架，通过复制路由和偏好校准从上下文文档生成docid，避免重新训练和灾难性遗忘。实验表明该方法在增量场景下显著优于现有生成式检索方法，为动态语料库维护提供了新方案。",
+      "llm_tldr": "该论文将生成式检索的增量扩展视为上下文检索问题，提出ICICLE框架，通过复制路由和偏好校准从上下文文档生成docid，避免重新训练和灾难性遗忘。实验表明该方法在增量场景下显著优于现有生成式检索方法，为动态语料库维护提供了新方案。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.28481v1",
+      "source": "arxiv",
+      "title": "Co-creation of AI technology, empowering curators of cultural heritage information and guarding research commons",
+      "abstract": "The substance of this paper is the description of the use of Retrieval-Augmented Generation (RAG) for specific digital collections of cultural assets. The collections are provided by institutions operating in the cultural sector. The topical areas are the humanities and social sciences. More concretely, most of the work presented here was enabled by a European-funded research project MuseIT which is clearly situated in the realm of fostering new technologies for Cultural Heritage. We adhere to this interaction by presenting a sequence of our experimentations. This sequence is narrated as a specific journey of engineering all executed around a specific data-sharing and archiving platform Dataverse. Implementing a local chatbot for collections - a method also known as RAG in Information Retrieval - is the current culmination of this journey. The engineering journey we describe in the core of the paper starts from \"archives for everyone\" and ends with \"local chatbots for specific collections\".",
+      "authors": [
+        "Andrea Scharnhorst",
+        "Han Yang",
+        "Jetze Touber",
+        "Kim Ferguson",
+        "Philipp Mayr",
+        "Vyacheslav Tykhonov"
+      ],
+      "primary_category": "cs.DL",
+      "categories": [
+        "cs.DL"
+      ],
+      "published": "2026-05-27T13:40:41+00:00",
+      "link": "https://arxiv.org/pdf/2605.28481v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "RAG application in cultural heritage",
+      "llm_evidence_cn": "文化遗产领域的RAG应用",
+      "llm_evidence": "文化遗产领域的RAG应用",
+      "canonical_evidence": "文化遗产领域的RAG应用",
+      "llm_tldr_en": "Describes the use of RAG for digital collections of cultural assets, focusing on co-creation with curators and data sharing platform Dataverse.",
+      "llm_tldr_cn": "该论文描述了在文化遗产领域应用检索增强生成（RAG）技术处理数字藏品，与策展人共同创建，并依托Dataverse平台。文章展示了RAG在特定领域（人文学科）的实践，为类似非技术领域的RAG部署提供了参考。",
+      "llm_tldr": "该论文描述了在文化遗产领域应用检索增强生成（RAG）技术处理数字藏品，与策展人共同创建，并依托Dataverse平台。文章展示了RAG在特定领域（人文学科）的实践，为类似非技术领域的RAG部署提供了参考。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.27220v1",
+      "source": "arxiv",
+      "title": "The Coverage Illusion: From Pre-retrieval Routing Failure to Post-retrieval Cascades in a Production RAG System",
+      "abstract": "In modern RAG pipelines, query augmentation methods such as HyDE and query expansion are applied to every query, resulting in substantial LLM inference costs and increased end-to-end latency. The empirical justification for this overhead in real production traffic remains largely unexplored. We present a case study of the Danish National Encyclopedia, evaluating five retrieval workflows over 20,000 query-workflow pairs from production traffic and synthetic conditions. In this system, synthetic queries suggest that LLM augmentation is needed for over 90% of queries to achieve high retrieval coverage. However, under our production deferral policy, only 27.8% of real user queries need LLM augmentation. We call this gap the Coverage Illusion and attribute it to a structural mismatch between synthetic and real query distributions. Pre-retrieval routing cannot resolve this gap, as the need for LLM augmentation is only revealed after searching the index, a result confirmed by our evaluation of four machine learning paradigms. The coverage gap, undetectable from the query alone, motivates a post-retrieval cascade that runs workflows in cheapest-first order and escalates to LLM augmentation only when a step returns no documents. Operating entirely without training overhead or secondary serving infrastructure, the cascade improves quality by +0.140 Composite Overall points over Always-HyDE, reduces latency by 31.8%, and serves 72.2% of real user queries without LLM augmentation.",
+      "authors": [
+        "Zafar Hussain",
+        "Kristoffer Nielbo"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.IR"
+      ],
+      "published": "2026-05-26T16:08:34+00:00",
+      "link": "https://arxiv.org/pdf/2605.27220v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "production RAG system analysis with query augmentation",
+      "llm_evidence_cn": "生产RAG系统分析与查询增强策略",
+      "llm_evidence": "生产RAG系统分析与查询增强策略",
+      "canonical_evidence": "生产RAG系统分析与查询增强策略",
+      "llm_tldr_en": "Case study of Danish National Encyclopedia reveals that LLM augmentation is needed for only 27.8% of real queries, challenging the common practice of augmenting all queries.",
+      "llm_tldr_cn": "该论文对丹麦国家百科全书生产RAG系统进行案例研究，发现仅27.8%的真实用户查询需要LLM增强，而合成查询显示超过90%。提出了生产环境下的延迟策略，避免不必要的增强开销。该工作为RAG系统的部署优化提供了重要经验。",
+      "llm_tldr": "该论文对丹麦国家百科全书生产RAG系统进行案例研究，发现仅27.8%的真实用户查询需要LLM增强，而合成查询显示超过90%。提出了生产环境下的延迟策略，避免不必要的增强开销。该工作为RAG系统的部署优化提供了重要经验。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.30029v1",
+      "source": "arxiv",
+      "title": "RAISE: RAG Design as an Architecture Search Problem",
+      "abstract": "Retrieval-augmented generation (RAG) systems expose numerous design choices spanning query rewriting, chunking, retrieval depth, reranking, and context compression. In practice, these choices are often configured through heuristics, hindering systematic evaluation and reproducibility across settings. We argue that this challenge is best formulated as RAG architecture search. To support controlled and reproducible study of this problem, we introduce the RAG Intelligence Search Engine (RAISE), a comprehensive framework and benchmark for RAG hyperparameter optimization, which evaluates optimization methods for RAG pipelines under standardized search spaces and budgets. RAISE implements 13 search algorithms and evaluates them across seven public text and multimodal datasets using three random seeds. Our experiments show that optimization performance is highly task-dependent: methods that perform strongly on one dataset may not generalize consistently across others, cautioning against interpreting aggregate rankings as evidence of universally superior strategies. RAISE provides a common experimental substrate for fair, reproducible, and systematic research on RAG hyperparameter optimization.",
+      "authors": [
+        "Zhen Chen",
+        "Yibing Liu",
+        "Weihao Xie",
+        "Yu Liang",
+        "Peilin Chen",
+        "Shiqi Wang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-28T14:52:43+00:00",
+      "link": "https://arxiv.org/pdf/2605.30029v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "RAG hyperparameter optimization framework, applicable to work ticket RAG",
+      "llm_evidence_cn": "RAG超参数优化框架，可应用于工作票RAG",
+      "llm_evidence": "RAG超参数优化框架，可应用于工作票RAG",
+      "canonical_evidence": "RAG超参数优化框架，可应用于工作票RAG",
+      "llm_tldr_en": "Formulates RAG system design as architecture search and proposes the RAISE framework for hyperparameter optimization, covering 13 search algorithms across multiple datasets.",
+      "llm_tldr_cn": "针对RAG系统中大量设计选择依赖启发式配置的问题，论文提出将RAG设计视为架构搜索问题，并构建RAISE框架。该框架集成13种搜索算法，在7个公开数据集上系统评估优化方法。RAISE为推动RAG系统的自动化调优提供了基准和工具，可迁移至电力工作票等特定领域的RAG应用。",
+      "llm_tldr": "针对RAG系统中大量设计选择依赖启发式配置的问题，论文提出将RAG设计视为架构搜索问题，并构建RAISE框架。该框架集成13种搜索算法，在7个公开数据集上系统评估优化方法。RAISE为推动RAG系统的自动化调优提供了基准和工具，可迁移至电力工作票等特定领域的RAG应用。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.28074v1",
+      "source": "arxiv",
+      "title": "SilentRetrieval: Hijacking Retrieval-Augmented Generation via Semantically-Preserving Adversarial Data Poisoning",
+      "abstract": "Retrieval-Augmented Generation (RAG) mitigates LLM hallucinations but introduces a critical vulnerability: corpus integrity. We present SilentRetrieval, a two-stage data poisoning attack that hijacks RAG systems through adversarially crafted yet fluent documents. Stage 1 uses Coordinated Beam Search, a multi-token joint optimization method with a fluency-similarity objective, to keep a poisoned host document retrievable while constraining perplexity. Stage 2 uses Context-Adaptive Trigger Generation, a lightweight trigger-fusion step driven by a frozen LLM, to integrate manipulation triggers into document content. Under a one-poisoned-document-per-query evaluation with synthetic target answers, SilentRetrieval achieves 84.6%/81.3% HR@10 and 57.5%/54.8% ASR-LLM on Natural Questions and MS MARCO, while maintaining near-benign perplexity. Cross-model evaluation across four target LLMs shows nontrivial effectiveness under a fixed trigger generator, and transfer tests against unseen retrievers, including ColBERT and commercial embedding models, yield 64.7% average HR@10 under the same injected-corpus protocol. In a sampled Wikipedia-scale evaluation, SilentRetrieval retains 74.2% HR@10 at a 0.016% poisoning ratio. Combined retrieval-side and generation-side defenses reduce attack success substantially but incur a latency trade-off. Human evaluation shows substantially lower flag rates than disfluent baselines, while remaining numerically more suspicious than benign content at the current sample size.",
+      "authors": [
+        "Jiachen Qian"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.CL",
+        "cs.IR"
+      ],
+      "published": "2026-05-27T07:30:30+00:00",
+      "link": "https://arxiv.org/pdf/2605.28074v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "retrieval augmented generation attack method",
+      "llm_evidence_cn": "检索增强生成攻击方法",
+      "llm_evidence": "检索增强生成攻击方法",
+      "canonical_evidence": "检索增强生成攻击方法",
+      "llm_tldr_en": "Presents SilentRetrieval, a two-stage data poisoning attack that hijacks RAG systems by crafting adversarially fluent documents, exposing a critical vulnerability in RAG corpus integrity.",
+      "llm_tldr_cn": "该论文提出SilentRetrieval攻击，通过两阶段数据投毒劫持RAG系统：第一阶段使用协调集束搜索生成语义流畅的恶意文档，第二阶段融合触发词。实验表明单文档即可操纵RAG输出，揭示了RAG系统在语料库完整性方面的严重漏洞，对保障RAG安全有重要意义。",
+      "llm_tldr": "该论文提出SilentRetrieval攻击，通过两阶段数据投毒劫持RAG系统：第一阶段使用协调集束搜索生成语义流畅的恶意文档，第二阶段融合触发词。实验表明单文档即可操纵RAG输出，揭示了RAG系统在语料库完整性方面的严重漏洞，对保障RAG安全有重要意义。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.30465v1",
+      "source": "arxiv",
+      "title": "Knowledge Graph-Enhanced Zero-Shot Topic Classification: A Multi-Strategy Comparative Study",
+      "abstract": "Multi-label topic classification without labeled training data is a challenging task, specially when documents contain complex relational information. We present a zero-shot multi-label topic classification framework and systematically investigate how per-article knowledge graph augmentation affects its performance. The base framework classifies topics in documents without labeled training data and has four variants: article-only classification, keyword-enhanced classification, and self-consistency decoding variants of both. Then, we augment each base variant with per article knowledge graph. This graph is extracted from the input document through a pipeline similar to KGGen based on subject-predicate-object triples. We test all eight methods, four base and four graph augmented on fifteen LLMs and eight multi-label datasets across different domains. For the base framework, keyword-enhanced classification (AK) is the best performing method, and six out of fifteen LLMs surpass the sentence-encoder baseline. Graph augmentation has positive and negative impacts on small and large models, respectively. This shows that larger models already contain enough relational information from pretraining. Furthermore, the self-consistency decoding variant does not show performance improvements in any experiment while increasing computation costs about fivefold.",
+      "authors": [
+        "Shahana Akter",
+        "Yatharth Vohra",
+        "Ankita Shukla",
+        "Souvika Sarkar"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-28T18:39:05+00:00",
+      "link": "https://arxiv.org/pdf/2605.30465v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "knowledge graph enhancement for classification",
+      "llm_evidence_cn": "使用知识图谱增强分类",
+      "llm_evidence": "使用知识图谱增强分类",
+      "canonical_evidence": "使用知识图谱增强分类",
+      "llm_tldr_en": "Proposes a zero-shot multi-label topic classification framework augmented with per-article knowledge graphs, systematically studying the impact of graph structure on classification performance.",
+      "llm_tldr_cn": "该论文提出一种零样本多标签主题分类框架，通过为每篇文章构建知识图谱来增强分类。实验系统研究了知识图结构对分类性能的影响，展示了图结构在提升零样本分类准确率方面的潜力。该研究为图结构在文本分类中的应用提供了重要参考。",
+      "llm_tldr": "该论文提出一种零样本多标签主题分类框架，通过为每篇文章构建知识图谱来增强分类。实验系统研究了知识图结构对分类性能的影响，展示了图结构在提升零样本分类准确率方面的潜力。该研究为图结构在文本分类中的应用提供了重要参考。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2605.31031v1",
+      "source": "arxiv",
+      "title": "GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning",
+      "abstract": "Relational reasoning lies at the heart of intelligence, but existing benchmarks are typically confined to formats such as grids or text. We introduce GraphARC, a benchmark for abstract reasoning on graph-structured data. GraphARC generalizes the few-shot transformation learning paradigm of the Abstraction and Reasoning Corpus (ARC). Each task requires inferring a transformation rule from a few input-output pairs and applying it to a new test graph, covering local, global, and hierarchical graph transformations. Unlike grid-based ARC, GraphARC instances can be generated at scale across diverse graph families and sizes, enabling systematic evaluation of generalization abilities. We evaluate state-of-the-art language models on GraphARC and observe clear limitations. Models can answer questions about graph properties but often fail to solve the full graph transformation task, revealing a comprehension-execution gap. Performance further degrades on larger instances, exposing scaling barriers. More broadly, by combining aspects of node classification, link prediction, and graph generation within a single framework, GraphARC provides a promising testbed for future graph foundation models.",
+      "authors": [
+        "Saku Peltonen",
+        "August Bøgh Rønberg",
+        "Andreas Plesner",
+        "Roger Wattenhofer"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-29T09:03:30+00:00",
+      "link": "https://arxiv.org/pdf/2605.31031v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "benchmark for graph-based abstract reasoning",
+      "llm_evidence_cn": "图结构抽象推理基准",
+      "llm_evidence": "图结构抽象推理基准",
+      "canonical_evidence": "图结构抽象推理基准",
+      "llm_tldr_en": "Introduces GraphARC, a benchmark for abstract reasoning on graph-structured data, enabling systematic evaluation of graph transformation learning.",
+      "llm_tldr_cn": "针对现有抽象推理基准局限于网格或文本格式的问题，本文提出GraphARC，一个基于图结构数据的抽象推理基准，涵盖局部、全局和层次图变换，支持大规模生成和系统评估泛化能力。",
+      "llm_tldr": "针对现有抽象推理基准局限于网格或文本格式的问题，本文提出GraphARC，一个基于图结构数据的抽象推理基准，涵盖局部、全局和层次图变换，支持大规模生成和系统评估泛化能力。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.01394v1",
+      "source": "arxiv",
+      "title": "UniD$^3$: A Knowledge Graph-Enhanced RAG Framework for Drug-Disease Discovery and Reasoning",
+      "abstract": "Systematic characterization of drug-disease relationships is essential for drug discovery and repurposing, yet is hindered by the heterogeneity and rapid growth of biomedical literature. Existing datasets rely on labor-intensive curation and are often incomplete, while LLM-only approaches suffer from hallucination and weak evidence grounding. We introduce UniD$^3$, a unified framework that integrates Large Language Models with Knowledge Graph-enhanced Retrieval-Augmented Generation (KG-RAG) to extract, organize, and validate drug-disease knowledge across Drug-Disease Matching (DDM), Drug Effectiveness Assessment (DEA), and Drug-Target Analysis (DTA). UniD$^3$ processes 157,849 PubMed articles with Llama 3.3-70B and constructs knowledge graphs via a dual-stage strategy combining paper-level extraction with KG-level consolidation centered on drug and disease entities. These graphs support KG-RAG-based generation of structured datasets, evaluated through external benchmarks, fuzzy matching with curated resources, and clinician review. UniD$^3$ produces six knowledge graphs and large-scale datasets, including 28,915 DDM, 15,042 DEA, and over 4,000 DTA QA pairs. External validation shows strong performance (F1: 0.85-0.87 for DDM/DEA; 0.82 for DTA), with clinician review confirming high reliability (AUROC = 0.90). KG-RAG-augmented models outperform standalone LLMs, and the UniD$^3$ chatbot enables interpretable, citation-supported exploration of drug-disease relationships. UniD$^3$ provides a scalable, extensible framework for transforming unstructured biomedical literature into high-quality, structured drug-disease knowledge, supporting AI-driven discovery, repurposing, and precision medicine.",
+      "authors": [
+        "Qing Wang",
+        "Tianshi Liu",
+        "Minghao Zhou",
+        "Jialu Liang",
+        "Sen Guo",
+        "Guangyu Wang",
+        "Jing Su",
+        "Qianqian Song"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-31T18:36:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.01394v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "knowledge graph-enhanced RAG framework, directly relevant to graph-based RAG",
+      "llm_evidence_cn": "知识图增强RAG框架，与图基RAG直接相关",
+      "llm_evidence": "知识图增强RAG框架，与图基RAG直接相关",
+      "canonical_evidence": "知识图增强RAG框架，与图基RAG直接相关",
+      "llm_tldr_en": "Proposes UniD3, a KG-RAG framework for drug-disease knowledge extraction and reasoning, processing 157k PubMed articles, demonstrating improved accuracy and evidence grounding.",
+      "llm_tldr_cn": "针对药物-疾病关系挖掘中数据不完整和LLM幻觉问题，论文提出UniD3框架，集成大语言模型与知识图增强检索生成。该框架自动处理15万篇PubMed文章，构建知识图，在药物匹配、有效性评估等任务上取得更精准的结果。尽管面向生物医学，其KG-RAG方法对电力系统工作票知识库的构建和检索具有参考价值。",
+      "llm_tldr": "针对药物-疾病关系挖掘中数据不完整和LLM幻觉问题，论文提出UniD3框架，集成大语言模型与知识图增强检索生成。该框架自动处理15万篇PubMed文章，构建知识图，在药物匹配、有效性评估等任务上取得更精准的结果。尽管面向生物医学，其KG-RAG方法对电力系统工作票知识库的构建和检索具有参考价值。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.01070v1",
+      "source": "arxiv",
+      "title": "Test-Time Training for Zero-Resource Dense Retrieval Reranking",
+      "abstract": "Dense retrievers excel at first-stage candidate generation but lack effective reranking in zero-resource settings. Existing approaches face a fundamental dilemma: cross-encoders deliver strong reranking quality but require costly supervised training and incur high latency, while unsupervised BM25 reranking consistently degrades dense retrieval performance on most of BEIR benchmarks. We propose DART (Dense Adaptive Reranking at Test-time), which resolves this dilemma by adapting the scoring function at inference time. For each query, the top-ranked documents serve as pseudo-positive examples and the bottom-ranked as pseudo-negative examples, providing noisy but readily available supervision to adapt a bilinear scoring matrix $W$ via a small number of gradient updates. We further introduce a confidence-weighted margin loss and a cross-query momentum buffer that warm-starts adaptation across queries. On six BEIR benchmarks, DART achieves a mean per-dataset relative NDCG@10 gain of +2.1% over the dense retrieval baseline with under 10ms additional latency per query, demonstrating a powerful capability for zero-shot performance enhancement and cross-domain generalization.",
+      "authors": [
+        "Shiyan Liu",
+        "Yichen Li"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-05-31T07:26:40+00:00",
+      "link": "https://arxiv.org/pdf/2606.01070v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "dense retrieval reranking method for RAG",
+      "llm_evidence_cn": "用于RAG的稠密检索重排方法",
+      "llm_evidence": "用于RAG的稠密检索重排方法",
+      "canonical_evidence": "用于RAG的稠密检索重排方法",
+      "llm_tldr_en": "DART adapts scoring function at test time using pseudo labels from top/bottom documents, achieving effective zero-resource reranking for dense retrievers.",
+      "llm_tldr_cn": "该论文提出DART，在测试时通过将顶部文档作为伪正例、底部文档作为伪负例来适配评分矩阵，实现零资源稠密检索重排。实验表明该方法在多种基准上显著提升检索质量，且无需监督训练。该工作解决了稠密检索在零资源环境下的重排瓶颈。",
+      "llm_tldr": "该论文提出DART，在测试时通过将顶部文档作为伪正例、底部文档作为伪负例来适配评分矩阵，实现零资源稠密检索重排。实验表明该方法在多种基准上显著提升检索质量，且无需监督训练。该工作解决了稠密检索在零资源环境下的重排瓶颈。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

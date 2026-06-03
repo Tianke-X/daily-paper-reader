@@ -1,0 +1,570 @@
+Title: Knowledge Graph-Enhanced Zero-Shot Topic Classification: A Multi-Strategy Comparative Study
+
+URL Source: https://arxiv.org/pdf/2605.30465v1
+
+Published Time: Mon, 01 Jun 2026 00:05:24 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+## Knowledge Graph-Enhanced Zero-Shot Topic Classification: A Multi-Strategy Comparative Study 
+
+Shahana Akter 1, Yatharth Vohra 2, Ankita Shukla 2
+
+Souvika Sarkar 11 A2I Lab, School of Computing, Wichita State University 
+
+sxakter7@shockers.wichita.edu souvika.sarkar@wichita.edu 
+
+> 2
+
+EIS Lab, College of Engineering, University of Nevada, Reno 
+
+yvohra@unr.edu, ankitas@unr.edu 
+
+Abstract 
+
+Multi-label topic classification without labeled training data is a challenging task, specially when documents contain complex relational information. We present a zero-shot multi-label topic classification framework and sys-tematically investigate how per-article knowl-edge graph augmentation affects its perfor-mance. The base framework classifies top-ics in documents without labeled training data and has four variants: article-only classifica-tion, keyword-enhanced classification, and self-consistency decoding variants of both. Then, we augment each base variant with per-article knowledge graph. This graph is extracted from the input document through a pipeline similar to KGGen based on subject-predicate-object triples. We test all eight methods, four base and four graph augmented on fifteen LLMs and eight multi-label datasets across different domains. For the base framework, keyword-enhanced classification (AK) is the best per-forming method, and six out of fifteen LLMs surpass the sentence-encoder baseline. Graph augmentation has positive and negative im-pacts on small and large models, respectively. This shows that larger models already contain enough relational information from pretrain-ing. Furthermore, the self-consistency decod-ing variant does not show performance im-provements in any experiment while increasing computation costs about fivefold. 
+
+1 Introduction 
+
+Text classification is a core task in natural lan-guage processing. It is concerned with assign-ing one or more labels to a document based on its content (Alghamdi and Alfalqi, 2015; Chauhan and Shah, 2021). Recent large language models (LLMs) have expanded the scope of this task by enabling zero-shot and few-shot classification from natural-language instructions alone (Brown et al., 2020; Yin et al., 2019). This is especially useful in settings where labeled training data is unavailable or where label sets must be defined dynamically at inference time. A particularly difficult variant is multi-label text classification, in which each document may belong to multiple categories (Veeranna et al., 2016). In realistic applications, a single article or review of-ten spans several related topics. For example, a health article may concern both Heart Health and 
+
+Women’s Health . Or a product review may discuss both Lens and Battery performance. In zero-shot settings, this problem becomes harder. That is be-cause the model must map documents to previously unseen or user-defined labels without task-specific fine-tuning. Recent work has shown that zero-shot multi-label topic inference is feasible using either sentence-encoder similarity or prompt-based LLM classification (Sarkar et al., 2023). In such set-tings, users provide a collection of documents to-gether with a set of candidate topic labels, and op-tionally short keyword descriptions for each topic, and the system must assign zero or more labels to each document. Prior results indicate that topic keywords substantially improve performance over topic names alone. They also show that strong sen-tence encoders such as Sentence-BERT are compet-itive embedding-based baselines, and that prompt-based LLM methods can outperform encoder-based similarity approaches on many datasets (Sarkar et al., 2023; Reimers and Gurevych, 2019). However, most existing zero-shot approaches represent documents and labels as largely flat text objects. Sentence-encoder methods collapse a doc-ument into a single embedding vector, while direct prompting methods typically supply only the raw article text and a list of candidate labels or key-words. In both cases, relational structure inside the document remains implicit. As a result, documents that contain overlapping vocabulary but differ in how concepts are related can be difficult to distin-guish. For example, two topics such as Mental 
+
+> arXiv:2605.30465v1 [cs.CL] 28 May 2026
+
+Health and Brain and Cognitive Health may be associated with similar terms, even when the un-derlying conceptual relationships in the document differ in meaningful ways. This paper addresses that limitation by aug-menting zero-shot multi-label topic classification with per-article knowledge graphs . For each input article, we extract a directed graph of subject–predicate–object triples using an LLM-based pipeline adapted from KGGen (Mo et al., 2025). The resulting graph provides a structured representation of entities and relations mentioned in the article. It captures information that is diffi-cult to preserve in a single pooled embedding or an unconstrained raw-text prompt. We then seri-alize this graph into a compact textual form and provide it to an LLM as an additional context for topic prediction. We evaluate our approach across fifteen LLMs and eight multi-label datasets, including the seven benchmark datasets used in prior zero-shot topic-inference work and the English subset of the SemEval-2018 Task 1 dataset (Mohammad et al., 2018; Sarkar et al., 2023). We compare against established sentence-encoder baselines and exam-ine whether structured relational context improves zero-shot multi-label classification performance. Specifically, our contributions are as follows. 1. We build a zero-shot multi-label topic clas-sification framework with four variants, Ar-ticle Only (AO), Article + Keywords (AK), and self-consistency decoding for both (AOS, AKS). We then evaluate it systematically across fifteen LLMs and eight datasets. 2. We propose a per-article knowledge graph con-struction pipeline adapted from KGGen (Mo et al., 2025) and define four graph-augmented variants (AG, AKG, AGS, AKGS) that add graph context to each base method. 3. We conduct a systematic study comparing all eight methods. The study demonstrates that graph augmentation consistently helps smaller models. It is most effective when com-bined with keyword-enhanced classification with self-consistency. 4. We provide a runtime and cost analysis that shows that self-consistency decoding increases computational cost approximately fivefold but does not help with classification performance in any of the settings. 
+
+2 Related Work 
+
+This work is built on prior research in topic mod-eling, supervised and zero-shot text classification, large language models, knowledge graph construc-tion, and knowledge-graph-enhanced text classifi-cation. We review the most relevant work in each area below and position our contribution relative to the existing literature. 
+
+2.1 Topic Modeling and Topic Classification Classical Topic Models: Probabilistic ap-proaches to topic discovery date back to PLSA (Hofmann, 1999). Blei et al. later in-troduced LDA, which added a document-level generative process and became the dominant unsupervised topic model (Blei et al., 2003). Subsequent work extended topic modeling in several directions, including document-relative similarity (Du et al., 2015), weakly supervised topic-label mapping (Hingmire and Chakraborti, 2014), and hierarchical Dirichlet processes (Wang et al., 2011). 
+
+Supervised and Weakly Supervised Topic Clas-sification: When labeled data is available, su-pervised methods can learn topic assignments di-rectly and often perform well on well-annotated corpora (Tuarob et al., 2015). Other work has stud-ied noisy category annotations (Iwata et al., 2009), used topic models to support document annota-tion (Poursabzi-Sangdeh and Boyd-Graber, 2015), and applied latent topic models to video catego-rization (Engels et al., 2010). Additional work has explored weakly supervised neural classifica-tion (Meng et al., 2018) and domain-specific super-vised classification tasks such as tracking sexual violence reports (Hassan et al., 2020). 
+
+Zero-Shot Topic Classification: A separate line of work considers settings in which no labeled examples are available at inference time. Kar-maker Santu et al. explored topic-modeling-based zero-shot methods (Santu et al., 2016), while Li et al. and Zha and Li studied dataless classifi-cation without annotated training data (Li et al., 2016; Zha and Li, 2019). Veeranna et al. mea-sured label-document similarity using pretrained word embeddings (Veeranna et al., 2016), and later work pursued zero-shot text classification through embedding-based and prompt-based ap-proaches (Rios and Kavuluru, 2018; Xia et al., 2018; Pushp and Srivastava, 2017; Puri and Catan-zaro, 2019; Chen et al., 2021; Gong and Eldardiry, 2021; Yin et al., 2019). The most directly relevant prior work is that of Sarkar et al. (2023), who formalized zero-shot multi-label topic inference and benchmarked sen-tence encoders and LLMs across seven datasets. Their results showed that keyword-augmented topic representations improved performance and that Sentence-BERT was the strongest embed-ding model among the sentence-encoder baselines they evaluated (Sarkar et al., 2023; Reimers and Gurevych, 2019). However, their framework re-duces each document and topic to a single vector representation, leaving relational structure within the document unmodeled. Van Nooten et al. (2026) further showed that fixed global thresholds perform poorly when similarity distributions vary across models and label sets. Our approach addresses these limitations by constructing per-article knowl-edge graphs that provide relational context unavail-able to flat embedding representations. 
+
+2.2 Large Language Models and Prompting 
+
+LLMs have shown strong zero-shot classification ability, assigning labels from natural-language task descriptions without task-specific training (Brown et al., 2020; Yin et al., 2019; Chae and Davidson, 2025; Vandemoortele et al., 2025). Prior work has also shown that prompting strategy matters: prompt design can substantially affect model behavior and downstream performance (Kojima et al., 2022; Sa-hoo et al., 2024; White et al., 2023; Reynolds and McDonell, 2021). Jang et al. (2023) further tested the limits of prompt understanding under negated instructions. Applying this approach to multi-label topic clas-sification introduces practical challenges. Plain-text prompts do not explicitly encode the relations among entities, events, and concepts mentioned in an article. To address this limitation, we serialize a per-article knowledge graph as a compact set of entities and subject–predicate–object triples, giv-ing the model relational context that raw text alone does not provide, which suggests that LLMs tend to treat graph-structured prompts more as contextual paragraphs than as explicit graph structures (Huang et al., 2024). 
+
+2.3 Knowledge Graph Construction from Text 
+
+Knowledge graph extraction from unstructured text is a longstanding problem in information extrac-tion and knowledge acquisition (Ji et al., 2022). Early rule-based systems such as YAGO (Suchanek et al., 2007) relied on hard-coded rules. Then Ope-nIE (Angeli et al., 2015) improved on this using dependency parsing to extract triples (subject, re-lation, object). However, both of them tend to produce overly specific, inconsistent predicates. More recent transformer-based extraction pipelines (Qiao et al., 2022) and external knowledge base approaches such as entity linking to Wikidata or ConceptNet offer better quality but they require fixed relation schemas, domain-specific supervi-sion, or entities present in a pre-built knowledge base. None of these are applicable in our open-domain, zero-shot setting. Hence, we adapt a more recent approach KGGen (Mo et al., 2025). KGGen uses LLMs to produce sub-ject–predicate–object triples in two stages: entity extraction and relation extraction based on the extracted entity list. It also includes clustering to merge similar entities. Because KGGen was designed for corpus-level extraction, we adapt it here to operate independently on each article to match the per-document setting of zero-shot multi-label topic classification. 
+
+2.4 Knowledge-Graph-Enhanced Text Classification 
+
+A growing body of work has explored how knowl-edge graphs can improve text classification. Wang et al. (2017) augmented a CNN-based classifier with concept mappings from an external knowledge base to address limited context in short texts. Chen et al. (2022) proposed S-BERT-KG, which enriches Sentence-BERT representations with ConceptNet-based knowledge for zero-shot social media clas-sification. Shi et al. (2023) introduced ChatGraph, which extracts knowledge graphs from text and uses the resulting graph representations to train an interpretable classifier. Liu et al. (2023) incorpo-rated external knowledge into a hierarchical text classification model through a knowledge-aware encoder and hierarchical label attention. Zang et al. (2025) proposed KG-HTC, which retrieves relevant subgraphs from a label-taxonomy knowledge graph and provides them to an LLM as structured context for zero-shot hierarchical text classification. Other related work has explored knowledge-graph-based data expansion under limited labeled data (Zhang and Shafiq, 2023) and graph-based similarity meth-ods enriched with external knowledge (Shanavas et al., 2021). Despite these advances, most existing ap-proaches rely on external knowledge bases or su-pervised training (Chen et al., 2022; Shi et al., 2023; Liu et al., 2023; Zang et al., 2025; Shanavas et al., 2021). In contrast, our approach constructs a knowledge graph directly from each article. This doesn’t require any labeled training data or external graph, and targets zero-shot classification. 
+
+2.5 Self-Consistency Decoding 
+
+Because LLM outputs are stochastic, a single de-coding pass may be unreliable. Wang et al. (2023) proposed self-consistency by sampling multiple outputs at non-zero temperature and aggregating them. We adapt that idea to two of our four classi-fication variants. We run the model five times and retain a topic only if it appears in at least two runs. To our knowledge, prior work has not di-rectly combined per-article knowledge graph ex-traction with LLM prompting for zero-shot multi-label topic classification. Embedding-based ap-proaches (Veeranna et al., 2016; Sarkar et al., 2023) and direct LLM prompting (Brown et al., 2020; Yin et al., 2019; Sarkar et al., 2023) both treat documents and topics as largely flat rep-resentations, leaving relational structure unmod-eled. Knowledge-graph-enhanced classifiers, as re-viewed above, used pre-built graphs as an external source of information. Our framework addresses this gap by extracting a knowledge graph from each article’s text and supplying it as structured context to a zero-shot LLM classifier. It has been evaluated across fifteen LLMs and eight multi-label datasets. 
+
+3 Problem Statement 
+
+In the traditional topic classification method, a la-beled training dataset and a set of predefined labels are given. This helps to fine-tune the model in a supervised manner (Alghamdi and Alfalqi, 2015). However, in real-life applications, the set of pre-defined labels is not always fixed. It is mostly application-dependent and differs from one user to another. Consequently, it is hard to anticipate the target set of labels and the corresponding labeled training dataset in advance. This is why we work on a zero-shot basis, as proposed in (Yin et al., 2019). In zero-shot classification, user gives the set of labels during the inference time. No labeled data is provided beforehand. We define our problem as follows: 
+
+Definition 1 Given a collection of documents D =
+
+{d1, d 2, . . . , d n} and a set of user-defined topics 
+
+Tx = {t1, . . . , t m} provided at inference time, as-sign zero or more topics from Tx to each document 
+
+di ∈ D . The model does not have access to any la-beled training data. Each topic t ∈ T x is expressed as a word or short phrase. The user optionally provides a list of associated keywords Kt per topic as an additional context. 
+
+The zero-shot method requires everything to be pro-cessed in real-time. The topic list Tx is defined by the user at the inference time. Therefore, no topic specific labeled data is provided beforehand (Yin et al., 2019). The multi-label requirement reflects that a single document may have several topics as-sociated with it. For example, a health article may talk about both Heart Health and Women’s Health ,or a product review may discuss both Lens and 
+
+Battery performance. The optional keyword list Kt helps the model to better understand user’s intent. For the same document, two different users can define entirely different topic lists Tx. In this case, keywords can help to clarify the meaning of each topic in a par-ticular context. A topic t may not appear by its name or phrase anywhere in a document di. For example, a text about Depression , Anxiety , and 
+
+Antidepressant Drugs may not contain the phrase 
+
+Mental Health anywhere. But it is obvious that the document is about Mental Health . It is important to identify such implicit topics. Conversely, if a keyword is present in a docu-ment, that does not necessarily mean that the doc-ument is about the corresponding topic. Similarly, the absence of keywords does not mean that the topic is not relevant. The keyword is given just as an additional detail. In summary, keywords are useful clues that the user provides to the model. However, the presence or absence of the keywords does not always determine the correct topic assign-ments for a particular document. 
+
+4 Methodology 
+
+Our framework consists of two components: a base classification pipeline that operates directly on ar-ticle text, and an optional knowledge graph aug-mentation that adds structured relational context to each classification variant. The graph augmented pipeline is illustrated in Figure 1. We describe the base methods first, then the knowledge graph con-struction, and finally the graph-augmented variants. 4.1 Base Classification Pipeline 
+
+In the base classification pipeline, the LLM is queried directly for topic(s) for a given document. The input to the model consists of the document text and a list of possible topics, which are ex-pected to generate zero or more topic labels in one (or more) forward pass(es) (depending on whether self-consistency versions are used). No labeled ex-amples are provided in the prompt, the pipeline is fully zero-shot. 
+
+4.1.1 Variant AO: Article Only 
+
+The model receives just the text of the article and the topic names without any additional information. The model has to completely depend on the knowl-edge it has about what each topic name means and also the information provided by the article. This is the toughest setting and also the most realistic sce-nario when neither keywords nor structured context are available. 
+
+4.1.2 Variant AK: Article + Keywords 
+
+The model is also provided with a per-topic key-word list. Every data set we test on (Sarkar et al., 2023) comes with a corresponding key-word file that contains keywords which have strong association with each topic, arranged as: topic (keywords: k1, k2, k3, . . . ) . The model is asked to make use of these keywords to under-stand what the topic means, compare the article content with them, and identify the appropriate top-ics. If there is no matching topic, the output will be 
+
+none . The keywords guide the model to connect the article content to the topic label. 
+
+4.1.3 Variant AOS: Article Only with Self-Consistency Decoding 
+
+Self-consistency (Wang et al., 2023) addresses the stochastic nature of single-pass LLM generation: the same prompt may produce different outputs on different runs. In AOS, the Article Only prompt is run N = 5 times at temperature 0.5. All topics predicted from all iterations are collected, and top-ics that appear in at least two out of five iterations are retained in the final prediction. In this way, self-consistency serves as noise reduction. Top-ics which repeat consistently are more likely to be valid, whereas those which occur in a single iteration are treated as noise. 
+
+4.1.4 Variant AKS: Article + Keywords with Self-Consistency Decoding 
+
+In AKS, keyword-based classification is used to-gether with self-consistency decoding based on the same majority voting mechanism as in AOS (N = 5 iterations, temperature 0.5, vote threshold 2). The input to the system includes the article and the topic list and the keywords. 
+
+4.2 Knowledge Graph Construction 
+
+After establishing our basic classification pipeline, we explore whether the incorporation of addi-tional structured relational information from the per-article knowledge graph improves classifica-tion results. Specifically, for each input article, we create a directed graph consisting of subject-predicate-object triples following a modified ver-sion of the KGGen pipeline (Mo et al., 2025). KGGen is a plain text to KG construction frame-work which utilizes LLMs to generate structured triples in a multi-stage process. The construction process follows four stages ap-plied independently to each article: 1. Entity Extraction: key entities (nouns, verbs, or sentiment-relevant adjectives) are extracted from the article text. 2. Relation Extraction: subject–predicate– object triples are extracted, grounded on the entity list from stage 1. 3. Entity Clustering: a sentence encoder (all-MiniLM-L6-v2 ) groups entities by co-sine similarity (threshold 0.75 ). Candidate clusters entities are validated by an LLM be-fore merging, to ensure clusters contain gen-uinely synonymous entities. 4. Graph Assembly: validated clusters are merged and the resulting triples form the per-article knowledge graph. Each of the fifteen LLMs acts as the base model for entity and relation extraction in any particu-lar experiment. The knowledge graph is created once for each LLM and stored in JSON format on disk so that the same graph will be used in every classification experiment for that particular LLM. 
+
+4.3 Graph-Augmented Variants 
+
+Each base variant has a corresponding graph-augmented variant that consists of using the se-rialized knowledge graph as an extra input. Classi-Article Text    
+
+> Topic List
+> Keywords
+> opioid, addiction, opioid painkillers, morphine,..
+> (opioid painkillers, include, morphine), (opioid, linked to, addiction),....
+> (opioid, include, morphine), (opioid, linked to, addiction),...
+> opioid
+> addiction …….
+> morphine
+> include
+> …….
+> linked to
+> Graph Assembly
+> Entity Extraction Relationship Extraction
+> Entity Clustering
+> Knowledge Graph Construction
+> "Perhaps as many as one in every......"
+> Women’s Health, Arthritis, Prostate, ..... etc.
+> [Women’s Health: pregnancy, birth, ....] .... etc. Zero-shot Inference
+> Arthritis, Pain Management
+> "Perhaps as many as one in every......"
+> Predicted Topics
+
+Figure 1: Overall architecture of the proposed KG-augmented zero-shot multi-label topic inference system. Each article first passes through a four-stage KG construction pipeline to produce a per-article knowledge graph. The graph, corresponding article, topic list and an optional keyword list are then fed into four classification variants: graph-only classification, keyword-enhanced classification, and self-consistency decoding for both graph-only classification and keyword-enhanced classification. 
+
+fication rule and self-consistency procedure remain the same for both variants. The above described one-to-one mapping is done on purpose so that we can observe how much the graph affects the per-formance of each model. Four graph-augmented variants include: • AG (Article + Graph): AO augmented with the graph. • AKG (Article + Keywords + Graph): AK aug-mented with the graph. • AGS (Article + Graph, Multi-pass): AOS aug-mented with the graph. • AKGS (Article + Keywords + Graph, Multi-pass): AKS augmented with the graph. 
+
+4.4 Zero-Shot Setting and Task Formulation 
+
+All methods operate in a strict zero-shot setting. No examples from the target evaluation dataset are used at any step of the pipeline. The system must generalise purely based on the information avail-able in the article, the topic names, the optional keyword list, and the knowledge encoded in the pretrained LLM or sentence encoder. 
+
+5 Experimental Setup 
+
+In this section we talk about the datasets, large lan-guage models, evaluation metrics, and implementa-tion details that were used in our experiments. 
+
+5.1 Datasets 
+
+Our system was evaluated on eight multi-label topic classification datasets, including five product re-view datasets (Cellular phone, Digital camera 1, Digital camera 2, DVD player, and Mp3 player) (Sarkar et al., 2023), two large datasets (Medical and News)(Sarkar et al., 2023), and the English sub-set of the SemEval 2018 dataset (Mohammad et al., 2018). An overview of the datasets is provided in Table 1. 
+
+Dataset Articles Avg. Article Length Topics Topics/ Article 
+
+Medical 2066 693 18 1.128 News 8940 589 12 0.805 Cellular phone 587 16 23 1.058 Digital camera 1 642 18 24 1.069 Digital camera 2 380 17 20 1.039 DVD player 839 15 23 0.781 Mp3 player 1811 17 21 0.956 SemEval 3259 16 11 2.415 
+
+Table 1: Statistics of the datasets 
+
+In zero-shot learning, the end user can provide auxiliary information about topic. All The seven datasets from (Sarkar et al., 2023) contain keyword files associated with each dataset. These keywords are the auxiliary information or words related to each topic of a specific dataset. The eighth dataset is SemEval-2018 Task 1 (Mo-hammad et al., 2018), a multi-label emotion classifi-cation benchmark. There was no keyword file asso-ciated with this dataset. So we generated per-topic keywords ourselves with the help of the concept-annotation framework of (Sarkar and Karmaker, 2022), following the same keyword format used in the other seven datasets. 
+
+5.2 Large Language Models 
+
+A significant experimental contribution of our study is a systematic comparison of fifteen large language models across the full end-to-end pipeline. We used each of the models for both knowledge graph extraction and topic classification, within the same experiment. The end-to-end design shows that each model’s classification performance reflects both the quality of the knowledge graph it extracts and the quality of its classification reasoning. The fifteen LLMs include LLaMA 3.3-70B In-struct, LLaMA 3.1-8B, Qwen 2.5-72B, Qwen 3-32B, Qwen 2.5-7B, Gemma 3-27B, and others. De-tailed performance comparisons are demonstrated in Table 2 and 3. 
+
+5.3 Evaluation Metrics 
+
+We used three widely used metrics–Precision, Re-call, and F1-score to evaluate our model. First, we take each model’s inferred topics and compare them against the ground-truth ("gold") topics to derive true positive, false positive, and false nega-tive counts. Then in the second step, we use these per-article statistics to produce the final scores for the entire dataset. We calculated micro-average of the F1-score by aggregating the global counts of true positives, false positives, and false negatives across all instances. 
+
+5.4 Implementation Details 
+
+We implemented all the experiments in Python 3.11. The libraries we used include–DSPy (version com-patible with Hugging Face and OpenAI backends) for LLM management and structured prompting; pandas for results management; and json for graph serialization and deserialization. Knowledge graphs are generated once per LLM, per dataset, and cached to disk as JSON files. This caching strategy ensures that the expensive KG construction step is performed only once, and that all downstream classification experiments for the same LLM use identical graph inputs. When an experiment is resumed after interruption, cached graphs are loaded directly without regeneration. All API calls are made sequentially (one article at a time), with a try-except block around each call to handle transient API errors. Failed calls result in an empty prediction for the affected article, which counts as all FNs and no TPs for that article in evaluation. The self-consistency variant makes N × (number of articles) API calls per experiment. Temperature is set to 0.3 for deterministic variants and 0.5 for self-consistency decoding. 
+
+6 Results and Analysis 
+
+We first present the performance of the four base methods (Section 6.1), then measure the effect of adding the knowledge graph, and finally analyse runtime and cost implications (Section 6.4). Ta-ble 2 reports F1-scores for the four base methods (AO, AK, AOS, AKS) across all fifteen LLMs and eight datasets. Table 3 reports F1-scores for the four graph-augmented methods (AG, AKG, AGS, AKGS). Both tables include the sentence encoder baseline from (Sarkar et al., 2023) for reference. 
+
+6.1 Base Classification Performance Article Only (AO). The Article Only method provides a strong competitive baseline for large and medium models. Among the large models, LLaMA 3.3-70B achieves the highest AO score on most datasets (e.g., Medical 0.669, News 0.643). Qwen models are competitive: Qwen 2.5-72B out-performs LLaMA on DVD player (0.602 vs. 0.549), and Qwen 3-32B outperforms LLaMA on News (0.660) and Cellular phone (0.693). GPT-4o per-forms strongly, achieving AO scores of 0.714 on Medical, 0.704 on News, and 0.672 on Mp3 player. Among medium models, most exceed the baseline on most datasets. Among small models ( ≤3B), models systematically fail to outperform the base-line on almost all datasets. 
+
+Article + Keywords (AK). Adding keywords re-sults in the largest improvements of any method we test. For all large models, AK yields an average F1 improvement of 0.06–0.11 over their AO scores. For example, LLaMA 3.3-70B improves by an av-erage of +0 .086 F1 (Mp3 player: 0.616 → 0.730 ;Digital cam. 1: 0.635 → 0.742 ), Qwen 2.5-72B by +0 .067 (DVD player: 0.602 → 0.692 ), and Qwen 3-32B by +0 .050 (Cellular phone: 0.693 →
+
+0.715 ). These improvements generalise across topic domains, suggesting that lexical guidance provides useful semantic insight that helps LLMs better align article content with the correct topic labels. 
+
+Article Only with Self-Consistency (AOS). 
+
+Adding self-consistency to the article-only setup Large models Medium size models Smaller models Dataset Base. Method LLaMA 3.3-70B Qwen 2.5-72B Qwen 3-32B Gemma 3-27B GPT-4o GPT-OSS 20B Mixtral 8x7B Gemma 2-9B LLaMA 3.1-8B Qwen 2.5-7B Gemma 3n-E4B LLaMA 3.2-3B Qwen 2.5-3B Ministral 3B DS-R1 1.5B 
+
+Medical 0.594  
+
+> AO
+
+0.669 0.636 0.622 0.707 0.714 0.646 0.616 0.634 0.676 0.698 0.574 0.565 0.539 0.528 0.488  
+
+> AK
+
+0.702 0.699 0.677 0.759 0.766 0.671 0.657 0.671 0.519 0.671 0.585 0.570 0.557 0.539 0.497  
+
+> AOS
+
+0.678 0.637 0.628 0.704 0.719 0.624 0.612 0.631 0.663 0.702 0.551 0.550 0.542 0.526 0.484  
+
+> AKS
+
+0.699 0.685 0.661 0.739 0.736 0.631 0.614 0.626 0.436 0.568 0.544 0.537 0.525 0.511 0.472 News 0.512  
+
+> AO
+
+0.643 0.643 0.660 0.636 0.704 0.675 0.632 0.649 0.622 0.613 0.503 0.498 0.477 0.463 0.422  
+
+> AK
+
+0.702 0.713 0.716 0.687 0.749 0.693 0.667 0.685 0.660 0.646 0.505 0.507 0.487 0.475 0.433  
+
+> AOS
+
+0.638 0.641 0.665 0.635 0.703 0.657 0.626 0.644 0.623 0.608 0.499 0.493 0.469 0.460 0.421  
+
+> AKS
+
+0.674 0.689 0.696 0.670 0.719 0.660 0.632 0.641 0.619 0.605 0.481 0.484 0.459 0.443 0.406 Cell. phone 0.520  
+
+> AO
+
+0.669 0.647 0.693 0.664 0.648 0.683 0.595 0.614 0.587 0.633 0.529 0.380 0.483 0.470 0.415  
+
+> AK
+
+0.763 0.698 0.715 0.713 0.758 0.752 0.635 0.648 0.619 0.643 0.554 0.345 0.495 0.594 0.429  
+
+> AOS
+
+0.688 0.658 0.681 0.663 0.676 0.695 0.589 0.607 0.584 0.672 0.507 0.529 0.482 0.399 0.409  
+
+> AKS
+
+0.702 0.689 0.677 0.693 0.736 0.680 0.588 0.605 0.582 0.666 0.494 0.314 0.464 0.510 0.398 Dig. cam. 1 0.500  
+
+> AO
+
+0.635 0.622 0.648 0.635 0.615 0.678 0.571 0.596 0.677 0.674 0.501 0.444 0.463 0.486 0.395  
+
+> AK
+
+0.742 0.714 0.705 0.687 0.750 0.724 0.607 0.635 0.696 0.712 0.527 0.411 0.478 0.514 0.401  
+
+> AOS
+
+0.639 0.643 0.652 0.635 0.631 0.678 0.565 0.593 0.649 0.644 0.482 0.477 0.458 0.372 0.388  
+
+> AKS
+
+0.672 0.701 0.655 0.663 0.716 0.577 0.564 0.596 0.650 0.665 0.478 0.269 0.447 0.415 0.379 Dig. cam. 2 0.603  
+
+> AO
+
+0.625 0.638 0.642 0.663 0.623 0.652 0.627 0.584 0.581 0.613 0.552 0.458 0.548 0.417 0.374  
+
+> AK
+
+0.737 0.571 0.697 0.621 0.707 0.683 0.653 0.622 0.614 0.649 0.580 0.466 0.562 0.480 0.387  
+
+> AOS
+
+0.631 0.653 0.638 0.649 0.644 0.660 0.621 0.578 0.639 0.624 0.560 0.538 0.549 0.382 0.367  
+
+> AKS
+
+0.756 0.585 0.664 0.690 0.676 0.571 0.614 0.575 0.641 0.482 0.547 0.439 0.537 0.454 0.357 DVD player 0.501  
+
+> AO
+
+0.549 0.602 0.592 0.549 0.578 0.580 0.505 0.513 0.502 0.564 0.479 0.265 0.431 0.397 0.339  
+
+> AK
+
+0.653 0.692 0.667 0.600 0.699 0.655 0.534 0.550 0.605 0.570 0.496 0.323 0.446 0.540 0.352  
+
+> AOS
+
+0.535 0.599 0.605 0.548 0.574 0.610 0.498 0.510 0.534 0.538 0.472 0.288 0.427 0.351 0.340  
+
+> AKS
+
+0.586 0.684 0.699 0.574 0.698 0.595 0.501 0.512 0.605 0.532 0.465 0.237 0.414 0.406 0.330 Mp3 player 0.521  
+
+> AO
+
+0.616 0.577 0.559 0.613 0.672 0.656 0.526 0.536 0.495 0.589 0.493 0.360 0.445 0.507 0.378  
+
+> AK
+
+0.730 0.644 0.610 0.667 0.717 0.804 0.557 0.573 0.620 0.641 0.512 0.394 0.457 0.641 0.385  
+
+> AOS
+
+0.615 0.575 0.560 0.615 0.668 0.662 0.526 0.536 0.606 0.610 0.487 0.347 0.440 0.406 0.372  
+
+> AKS
+
+0.648 0.621 0.594 0.642 0.698 0.705 0.520 0.536 0.627 0.647 0.480 0.375 0.429 0.522 0.358 SemEval 0.550  
+
+> AO
+
+0.642 0.609 0.624 0.639 0.655 0.614 0.559 0.576 0.564 0.578 0.521 0.446 0.470 0.456 0.404  
+
+> AK
+
+0.644 0.626 0.635 0.638 0.653 0.617 0.589 0.613 0.573 0.591 0.545 0.518 0.484 0.476 0.412  
+
+> AOS
+
+0.630 0.604 0.629 0.639 0.650 0.606 0.553 0.574 0.568 0.553 0.518 0.474 0.466 0.475 0.399  
+
+> AKS
+
+0.638 0.606 0.621 0.635 0.647 0.594 0.549 0.571 0.536 0.555 0.515 0.399 0.452 0.439 0.388 
+
+Table 2: F1-scores for the four base classification methods (AO, AK, AOS, AKS) across model sizes. AO = Article Only; AK = Article + Keywords; AOS = Article Only + Self-Consistency; AKS = Article + Keywords + Self-Consistency. DS-R1 1.5B = DeepSeek-R1-Distill-Qwen-1.5B. Bold values exceed the baseline (Sarkar et al., 2023) (Base. column). 
+
+has a negligible or slightly negative effect on av-erage. LLaMA 3.3-70B AOS scores lie within 
+
+±0.010 of the corresponding AO scores on six of the eight datasets, and fall noticeably below AO on DVD player ( 0.535 vs. 0.549 ) and SemEval ( 0.630 
+
+vs. 0.642 ). Qwen 2.5-72B and Qwen 3-32B show similar trends. These results suggest that running multiple AO predictions and applying majority vot-ing does not provide additional useful information compared to a single prediction, and can in some cases weaken correct predictions. 
+
+Article + Keywords with Self-Consistency (AKS). AKS consistently falls behind AK. On Digital cam. 1, the AKS score is 0.672 compared to 0.742 for AK; on Digital cam. 2 the scores are 
+
+0.756 vs. 0.737 (a rare exception). A similar pat-tern holds across Qwen and other models. We suspect that self-consistency introduces noise on each run, and majority voting selects a more conser-vative prediction than the keyword cue alone would produce. Nevertheless, AKS still outperforms AO by approximately +0 .04 F1 on average. 
+
+6.2 Effect of Knowledge Graph: With vs. Without Comparison 
+
+To determine the impact of the knowledge graph, we assessed each variant of classification in a graph-free manner. Here, the LLM is only fed the text of the articles and the topics list (optionally key-words).No graph information is sent to the LLM. Table 2 presents the F1-scores of the no graph meth-ods for each model and data size. 
+
+Size Dependency of Model Performance. The impact of knowledge graph varies considerably de-pending on model size. For larger models, there is a marginal average reduction in performance with the inclusion of the knowledge graph ( ∆ = −0.0121 ), while for smaller models, there is a consistent aver-age improvement in performance ( ∆ = +0 .0145 ). It seems that the larger models possess enough implicit relation structure learned from pretrain-ing, and the inclusion of the knowledge graph con-tributes very little to the models. This interferes with its performance since it introduces noise into the model. On the other hand, smaller models seem to benefit from the addition of knowledge graph. Large models Medium size models Smaller models Dataset Base. Method LLaMA 3.3-70B Qwen 2.5-72B Qwen 3-32B Gemma 3-27B GPT-4o GPT-OSS 20B Mixtral 8x7B Gemma 2-9B LLaMA 3.1-8B Qwen 2.5-7B Gemma 3n-E4B LLaMA 3.2-3B Qwen 2.5-3B Ministral 3B DS-R1 1.5B 
+
+Medical 0.594 AG 0.704 0.628 0.618 0.701 0.708 0.644 0.614 0.631 0.657 0.688 0.576 0.565 0.541 0.529 0.487 AKG 0.652 0.702 0.679 0.759 0.766 0.676 0.660 0.673 0.496 0.714 0.592 0.572 0.559 0.544 0.503 AGS 0.684 0.625 0.620 0.697 0.712 0.621 0.610 0.628 0.633 0.697 0.549 0.549 0.538 0.526 0.483 AKGS 0.599 0.685 0.663 0.739 0.738 0.651 0.638 0.649 0.424 0.703 0.567 0.561 0.548 0.535 0.495 News 0.512 AG 0.635 0.637 0.654 0.631 0.698 0.672 0.630 0.648 0.623 0.611 0.504 0.498 0.473 0.461 0.421 AKG 0.701 0.711 0.715 0.689 0.752 0.698 0.672 0.690 0.661 0.647 0.510 0.510 0.491 0.476 0.437 AGS 0.630 0.634 0.656 0.627 0.693 0.654 0.626 0.645 0.619 0.607 0.500 0.495 0.470 0.458 0.418 AKGS 0.677 0.694 0.699 0.669 0.721 0.679 0.651 0.666 0.639 0.626 0.502 0.507 0.480 0.467 0.428 Cellular phone 0.520 AG 0.662 0.637 0.684 0.658 0.641 0.684 0.592 0.611 0.587 0.631 0.528 0.381 0.481 0.469 0.413 AKG 0.763 0.701 0.716 0.716 0.756 0.753 0.637 0.653 0.625 0.644 0.555 0.351 0.499 0.600 0.431 AGS 0.677 0.651 0.672 0.654 0.668 0.692 0.588 0.608 0.583 0.670 0.508 0.529 0.478 0.397 0.408 AKGS 0.704 0.694 0.681 0.696 0.738 0.703 0.611 0.629 0.603 0.689 0.513 0.333 0.488 0.533 0.419 Digital cam. 1 0.500 AG 0.630 0.617 0.638 0.627 0.608 0.675 0.568 0.597 0.679 0.674 0.501 0.443 0.461 0.484 0.391 AKG 0.745 0.715 0.706 0.685 0.752 0.729 0.611 0.639 0.701 0.717 0.528 0.415 0.479 0.517 0.407 AGS 0.627 0.632 0.640 0.623 0.620 0.679 0.564 0.594 0.649 0.646 0.482 0.473 0.458 0.369 0.387 AKGS 0.675 0.701 0.654 0.665 0.717 0.601 0.587 0.615 0.671 0.686 0.498 0.293 0.468 0.437 0.398 Digital cam. 2 0.603 AG 0.624 0.623 0.637 0.653 0.618 0.653 0.626 0.582 0.582 0.555 0.553 0.455 0.549 0.416 0.372 AKG 0.725 0.660 0.698 0.621 0.707 0.684 0.658 0.624 0.619 0.615 0.584 0.469 0.567 0.485 0.389 AGS 0.627 0.610 0.632 0.640 0.632 0.656 0.623 0.579 0.639 0.639 0.556 0.535 0.546 0.382 0.368 AKGS 0.650 0.641 0.664 0.691 0.678 0.590 0.635 0.600 0.661 0.654 0.570 0.460 0.556 0.478 0.381 DVD player 0.501 AG 0.544 0.594 0.586 0.541 0.569 0.581 0.503 0.514 0.501 0.561 0.476 0.267 0.431 0.398 0.341 AKG 0.652 0.692 0.669 0.599 0.699 0.659 0.541 0.556 0.606 0.571 0.499 0.325 0.449 0.546 0.358 AGS 0.527 0.588 0.594 0.537 0.563 0.611 0.499 0.511 0.531 0.535 0.472 0.286 0.428 0.347 0.337 AKGS 0.586 0.685 0.699 0.579 0.699 0.618 0.520 0.532 0.624 0.552 0.488 0.257 0.438 0.425 0.349 Mp3 player 0.521 AG 0.610 0.568 0.552 0.607 0.663 0.657 0.528 0.537 0.495 0.586 0.489 0.361 0.443 0.507 0.374 AKG 0.730 0.642 0.613 0.665 0.719 0.805 0.562 0.579 0.624 0.643 0.517 0.397 0.461 0.645 0.388 AGS 0.607 0.565 0.554 0.603 0.659 0.660 0.524 0.534 0.606 0.612 0.485 0.347 0.440 0.403 0.370 AKGS 0.652 0.625 0.597 0.645 0.702 0.729 0.542 0.555 0.648 0.666 0.501 0.398 0.450 0.547 0.381 SemEval 0.550 AG 0.635 0.601 0.616 0.632 0.648 0.615 0.558 0.573 0.561 0.579 0.523 0.445 0.468 0.456 0.401 AKG 0.643 0.625 0.637 0.640 0.656 0.622 0.593 0.615 0.579 0.595 0.548 0.523 0.486 0.480 0.417 AGS 0.620 0.598 0.618 0.628 0.643 0.605 0.554 0.570 0.567 0.555 0.519 0.471 0.465 0.472 0.397 AKGS 0.637 0.608 0.621 0.635 0.649 0.614 0.571 0.591 0.557 0.574 0.535 0.421 0.475 0.462 0.409 
+
+Table 3: F1-scores for the four graph-augmented classification methods (AG, AKG, AGS, AKGS) across model sizes. AG = Article + Graph; AKG = Article + Keywords + Graph; AGS = AG + Self-Consistency; AKGS = AKG + Self-Consistency. DS-R1 1.5B = DeepSeek-R1-Distill-Qwen-1.5B. Bold values exceed the baseline (Sarkar et al., 2023) (Base. column). 
+
+Effect of Dataset Size. In both the larger article-based datasets (Medical, News) and the smaller product review datasets, the graph shows an aver-age improvement close to zero or even negative (∆ = −0.0025 and ∆ = −0.0017 , respectively). This suggests that the advantage provided by the knowledge graph is not dependent on the size of the dataset or its document lengths. Short and long documents exhibit similar effect in performance when the graph is included. 
+
+Method Sensitivity. The greatest divergence oc-curs between different classification methods. The AG and AGS methods have a minor impact ( ∆ = 
+
+−0.0087 and ∆ = −0.0102 , respectively) on their performance from the graph. The AKG method yields a slight benefit ( ∆ = +0 .0040 ). The AKGS method obtains the maximum gain ( ∆ = +0 .0241 )from the graph. Thus, we can conclude that the graph only contributes to the system’s performance if used in combination with the lexical information: without keywords, the graph does not contribute enough to the prediction and may even confuse the model. But if there are lexical clues, the graph also adds significant relational context to the problem. 
+
+6.3 Summary of Findings 
+
+1. Keyword enhancement (AK) is the best sin-gle method , dominating all others by a consid-erable margin, with average F1 improvements of 0.06 –0.11 over article-only classification (AO). 2. Self-consistency decoding does not improve performance in any setting. AOS ≈ AO and AKS < AK across all datasets and models, indicating a trade-off between sampling diver-sity and lexical precision. 3. Six of the fifteen LLMs consistently outper-form the baseline across all datasets and all four base classification variants: LLaMA 3.3-70B, Qwen 2.5-72B, Qwen 3-32B, Gemma 3-27B, GPT-4o, and Mixtral 8x7B. Medium models are competitive on most datasets. Small ( ≤3B) models generally fail to match the baseline. 4. Knowledge graph augmentation has mixed effects : it consistently helps smaller models (avg. +0 .015 F1) and slightly hurts large mod-els (avg. −0.012 F1). Large models appear to Large models Medium size models Smaller models Dataset Method LLaMA 3.3-70B Qwen 2.5-72B Qwen 3-32B Gemma 3-27B GPT-4o GPT-OSS 20B Mixtral 8x7B Gemma 2-9B LLaMA 3.1-8B Qwen 2.5-7B Gemma 3n-E4B LLaMA 3.2-3B Qwen 2.5-3B Ministral 3B DS-R1 1.5B 
+
+Medical  
+
+> AG
+
+14.19 13.42 6.33 5.54 12.87 3.17 2.23 1.99 1.71 2.65 0.81 0.77 0.85 0.69 0.51  
+
+> AKG
+
+15.63 14.76 6.92 6.09 14.18 3.45 2.41 2.19 1.93 2.91 0.89 0.85 0.93 0.72 0.56  
+
+> AGS
+
+70.97 67.03 31.55 27.61 64.35 15.79 11.06 9.87 8.65 13.26 3.96 3.92 4.16 3.37 2.53  
+
+> AKGS
+
+78.03 73.73 34.71 30.37 70.79 17.32 12.16 10.82 9.52 14.58 4.36 4.32 4.57 3.71 2.79 
+
+News  
+
+> AG
+
+14.21 13.38 6.29 5.50 12.91 3.13 2.19 1.95 1.75 2.61 0.77 0.81 0.81 0.65 0.49  
+
+> AKG
+
+15.59 14.72 6.96 6.05 14.22 3.49 2.45 2.15 1.89 2.95 0.85 0.89 0.89 0.76 0.54  
+
+> AGS
+
+70.93 67.05 31.51 27.57 64.41 15.75 11.02 9.83 8.69 13.18 3.92 3.96 4.12 3.33 2.49  
+
+> AKGS
+
+78.07 73.69 34.67 30.33 70.83 17.36 12.12 10.86 9.56 14.54 4.32 4.36 4.53 3.67 2.75 
+
+Cellular phone  
+
+> AG
+
+1.44 1.32 0.65 0.57 1.31 0.34 0.24 0.18 0.19 0.27 0.10 0.06 0.10 0.05 0.04  
+
+> AKG
+
+1.58 1.45 0.67 0.63 1.44 0.33 0.22 0.24 0.17 0.29 0.11 0.07 0.11 0.09 0.05  
+
+> AGS
+
+7.08 6.72 3.13 2.78 6.54 1.56 1.12 0.97 0.89 1.32 0.41 0.37 0.43 0.32 0.21  
+
+> AKGS
+
+7.82 7.35 3.49 3.06 7.17 1.75 1.19 1.10 0.93 1.45 0.45 0.41 0.48 0.39 0.23 
+
+Digital cam. 1  
+
+> AG
+
+1.40 1.36 0.61 0.53 1.29 0.30 0.20 0.22 0.15 0.25 0.06 0.10 0.06 0.09 0.04  
+
+> AKG
+
+1.54 1.49 0.71 0.59 1.42 0.37 0.26 0.20 0.21 0.31 0.07 0.11 0.07 0.05 0.05  
+
+> AGS
+
+7.12 6.68 3.17 2.74 6.58 1.60 1.08 1.01 0.85 1.28 0.37 0.41 0.39 0.36 0.22  
+
+> AKGS
+
+7.78 7.39 3.45 3.02 7.21 1.71 1.23 1.06 0.97 1.41 0.41 0.45 0.44 0.35 0.24 
+
+Digital cam. 2  
+
+> AG
+
+1.43 1.35 0.62 0.56 1.33 0.32 0.23 0.20 0.17 0.26 0.09 0.08 0.08 0.07 0.04  
+
+> AKG
+
+1.57 1.46 0.70 0.62 1.46 0.36 0.25 0.21 0.20 0.28 0.10 0.09 0.11 0.07 0.05  
+
+> AGS
+
+7.11 6.69 3.16 2.77 6.56 1.59 1.09 1.00 0.87 1.31 0.40 0.38 0.42 0.33 0.22  
+
+> AKGS
+
+7.81 7.36 3.48 3.05 7.19 1.74 1.20 1.09 0.94 1.43 0.44 0.42 0.47 0.38 0.24 
+
+DVD player  
+
+> AG
+
+1.41 1.33 0.64 0.54 1.30 0.33 0.21 0.19 0.16 0.24 0.08 0.09 0.09 0.06 0.03  
+
+> AKG
+
+1.55 1.48 0.68 0.60 1.43 0.35 0.23 0.23 0.18 0.30 0.09 0.10 0.08 0.08 0.05  
+
+> AGS
+
+7.09 6.71 3.14 2.75 6.52 1.57 1.11 0.98 0.88 1.29 0.38 0.40 0.40 0.35 0.21  
+
+> AKGS
+
+7.79 7.38 3.46 3.03 7.15 1.72 1.22 1.07 0.96 1.42 0.42 0.44 0.45 0.36 0.23 
+
+Mp3 player  
+
+> AG
+
+1.45 1.34 0.63 0.55 1.34 0.31 0.22 0.21 0.18 0.28 0.08 0.08 0.08 0.07 0.04  
+
+> AKG
+
+1.59 1.47 0.69 0.61 1.47 0.35 0.24 0.17 0.19 0.27 0.09 0.09 0.09 0.07 0.05  
+
+> AGS
+
+7.13 6.70 3.15 2.76 6.57 1.58 1.10 0.99 0.87 1.30 0.39 0.39 0.41 0.34 0.22  
+
+> AKGS
+
+7.83 7.37 3.47 3.04 7.20 1.73 1.21 1.08 0.95 1.44 0.43 0.43 0.46 0.37 0.24 
+
+SemEval  
+
+> AG
+
+1.42 1.36 0.62 0.56 1.32 0.32 0.22 0.20 0.16 0.26 0.08 0.08 0.07 0.07 0.04  
+
+> AKG
+
+1.56 1.49 0.70 0.60 1.45 0.36 0.26 0.22 0.20 0.32 0.10 0.09 0.10 0.08 0.05  
+
+> AGS
+
+7.10 6.72 3.16 2.77 6.55 1.60 1.12 1.01 0.86 1.33 0.40 0.37 0.43 0.32 0.21  
+
+> AKGS
+
+7.80 7.39 3.48 3.05 7.18 1.75 1.23 1.09 0.94 1.46 0.44 0.41 0.48 0.36 0.23 
+
+Table 4: Total runtime (seconds) per article across methods and model sizes. AG = Article + Graph; AKG = Article + Keywords + Graph; AGS = AG + Self-Consistency; AKGS = AKG + Self-Consistency. DS-R1 1.5B = DeepSeek-R1-Distill-Qwen-1.5B. Bold values indicate the self-consistency variants ( AGS and AKGS ), which require approximately five times more computation than their single-pass counterparts ( AG and AKG ) due to multiple runs. 
+
+already capture sufficient relational structure from pretraining. 5. The graph is most useful in combination with lexical information. AKGS gains the largest benefit from graph augmentation (+0 .024 F1 on average), while AG and AGS experience minor degradation. 
+
+6.4 Runtime and Cost Analysis 
+
+Table 4 presents total runtime (in seconds) per arti-cle across methods and model sizes. Self-consistency variants (AOS, AKS, AGS, AKGS) require approximately five times more com-putation than their single-pass counterparts due to 
+
+N = 5 inference runs. As discussed above, they offer no improvement in performance. In contrast, keyword-enhanced classification (AK) achieves the best balance between performance and computa-tional cost, with only a marginal increase in run-time compared to article-only classification. AK is therefore the most practical choice for real-world deployment. Runtime is also affected by document length and model size. The Medical and News datasets con-tain significantly longer documents, so all methods take more time on these datasets. Large models such as GPT-4o and LLaMA-70B require more inference time than smaller models due to higher computational complexity. For API-based models (e.g., GPT-4o), the mone-tary cost of self-consistency variants is five times that of single-pass methods, a cost not justified given that AKS consistently underperforms AK. For open-source models deployed locally (LLaMA, Qwen, Gemma), cost is measured in runtime rather than monetary terms, but the fivefold increase equally applies. 
+
+7 Conclusion 
+
+We introduced a zero-shot multi-label topic classi-fication framework evaluated across four variants, fifteen LLMs, and eight benchmark datasets. We then conducted a systematic ablation of the effect of per-article graph augmentation on each variant. The base framework, without any graph, already demonstrates strong performance: six of the fif-teen LLMs consistently outperform the sentence-encoder baseline, and keyword-enhanced classifi-cation (AK) achieves the best results among all methods tested. Knowledge graph addition improves perfor-mance for small models (avg. +0.015 F1), but does not help much with larger models due to the in-clusion of enough relational information during pre-training. The greatest improvement is achieved by AKGS (+0.024 F1). Self-consistency decoding degrades performance in most setups, while in-creasing costs five times. Model size and keyword guidance are the major factors that influence clas-sification performance, with graph augmentation providing complementary improvement to smaller models. 
+
+8 Limitations 
+
+Our approach has a number of practical limitations. Firstly, self-consistency methods need five infer-ence steps per article. It makes them much costlier than single-step methods and perhaps unafford-able without an API key. Secondly, the keyword-enriched methods were significantly better than the graph-only methods. This indicates that the per-formance of the methods still depends to a certain extent on the availability of keywords. Thirdly, we use the same model for both graph generation and classification. The quality of the graph reflects the quality of the model’s reasoning ability. Lastly, we only test our framework on English datasets while the generalization to other languages has not been explored. 
+
+References 
+
+Rubayyi Alghamdi and Khalid Alfalqi. 2015. A survey of topic modeling in text mining. International Jour-nal of Advanced Computer Science and Applications ,6(1). Gabor Angeli, Melvin Jose Johnson Premkumar, and Christopher D Manning. 2015. Leveraging linguistic structure for open domain information extraction. In 
+
+Proceedings of the 53rd Annual Meeting of the As-sociation for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing (Volume 1: Long Papers) , pages 344–354. David M. Blei, Andrew Y. Ng, and Michael I. Jordan. 2003. Latent Dirichlet allocation. Journal of Ma-chine Learning Research , 3:993–1022. Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D. Kaplan, Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell, and 1 others. 2020. Language models are few-shot learners. Advances in Neural Information Processing Systems , 33:1877–1901. Youngjin Chae and Thomas Davidson. 2025. Large lan-guage models for text classification: From zero-shot learning to instruction-tuning. Sociological Methods & Research .Uttam Chauhan and Apurva Shah. 2021. Topic model-ing using latent Dirichlet allocation: A survey. ACM Computing Surveys , 54(7):1–35. Jinglong Chen, Zhongqi Gong, and Wei Liu. 2021. Multi-label zero-shot text classification by exploiting label semantics. In ACL Findings .Qi Chen, Wei Wang, Kaizhu Huang, and Frans Coenen. 2022. Zero-shot text classification via knowledge graph embedding for social media data. IEEE Inter-net of Things Journal , 9(12):9205–9213. Jianguang Du, Jing Jiang, Dandan Song, and Lejian Liao. 2015. Topic modeling with document relative similarities. In IJCAI .Christian Engels, Koen Deschacht, and Marie-Francine Moens. 2010. Automatic categorization of videos using a latent topic model. Multimedia Tools and Applications , 49(1):77–90. Hongyu Gong and Hoda Eldardiry. 2021. Prompt-based zero-shot text classification. In NAACL .Naeemul Hassan, Amrit Poudel, Jason Hale, Claire Hubacek, Khandaker Tasnim Huq, Shubhra Kanti Karmaker Santu, and Syed Ishtiaque Ahmed. 2020. Towards automated sexual violence report tracking. In Proceedings of the International AAAI Conference on Web and Social Media , volume 14, pages 250–259. Swapnil Hingmire and Sutanu Chakraborti. 2014. Topic labeled text classification: A weakly supervised ap-proach. In SIGIR .Thomas Hofmann. 1999. Probabilistic latent semantic indexing. In Proceedings of the 22nd Annual Inter-national ACM SIGIR Conference on Research and Development in Information Retrieval , pages 50–57. Jin Huang, Xingjian Zhang, Qiaozhu Mei, and Jiaqi Ma. 2024. Can llms effectively leverage graph structural information through prompts, and why? Preprint ,arXiv:2309.16595. Tomoharu Iwata, Takeshi Yamada, and Naonori Ueda. 2009. Modeling social annotation data with content relevance using a topic model. In NeurIPS .Joel Jang, Seonghyeon Ye, and Minjoon Seo. 2023. Can large language models truly understand prompts? a case study with negated prompts. In Transfer Learning for Natural Language Processing Work-shop , pages 52–62. Shaoxiong Ji, Shirui Pan, Erik Cambria, Pekka Martti-nen, and Philip S Yu. 2022. A survey on knowledge graphs: Representation, acquisition, and applications. 
+
+IEEE TNNLS , 33(2):494–514. Omar Khattab, Arnav Singhvi, Paridhi Maheshwari, Zhiyuan Zhang, Keshav Santhanam, Sri Vard-hamanan, Saiful Haq, Ashutosh Sharma, Thomas T Joshi, Hanna Moazam, and 1 others. 2023. Dspy: Compiling declarative language model calls into self-improving pipelines. arXiv preprint arXiv:2310.03714 .Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yu-taka Matsuo, and Yusuke Iwasawa. 2022. Large lan-guage models are zero-shot reasoners. In NeurIPS .Chenliang Li, Jian Xing, Aixin Sun, and Zongyang Ma. 2016. Effective document labeling with very few seed words: A topic model approach. In Proceedings of the 25th ACM International on Conference on Information and Knowledge Management , pages 85– 94. Ye Liu, Kai Zhang, Zhenya Huang, Kehang Wang, Yang-hai Zhang, Qi Liu, and Enhong Chen. 2023. Enhanc-ing hierarchical text classification through knowledge graph integration. In Findings of the Association for Computational Linguistics: ACL 2023 , pages 5797– 5810. Yu Meng, Jiaming Shen, Chao Zhang, and Jiawei Han. 2018. Weakly-supervised neural text classification. In CIKM .Belinda Mo, Kyssen Yu, Joshua Kazdan, Joan Cabezas, Proud Mpala, Lisa Yu, Chris Cundy, Charilaos Kanat-soulis, and Sanmi Koyejo. 2025. KGGen: Extracting knowledge graphs from plain text with language mod-els. arXiv preprint arXiv:2502.09956 .Saif Mohammad, Felipe Bravo-Marquez, Mohammad Salameh, and Svetlana Kiritchenko. 2018. Semeval-2018 task 1: Affect in tweets. In Proceedings of the 12th international workshop on semantic evaluation ,pages 1–17. Forough Poursabzi-Sangdeh and Jordan Boyd-Graber. 2015. Speeding document annotation with topic mod-els. In NAACL .Raul Puri and Bryan Catanzaro. 2019. Zero-shot text classification with generative language models. 
+
+arXiv preprint arXiv:1912.10165 .Pushpankar Kumar Pushp and Muktabh Mayank Sri-vastava. 2017. Train once, test anywhere: Zero-shot learning for text classification. arXiv preprint arXiv:1712.05972 .Bo Qiao, Zhuoyang Zou, Yu Huang, Kui Fang, Xinghui Zhu, and Yiming Chen. 2022. A joint model for entity and relation extraction based on bert. Neural Computing and Applications , 34(5):3471–3481. Nils Reimers and Iryna Gurevych. 2019. Sentence-BERT: Sentence embeddings using Siamese BERT-networks. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing ,pages 3982–3992. Association for Computational Linguistics. Laria Reynolds and Kyle McDonell. 2021. Prompt programming for large language models: Beyond the few-shot paradigm. In CHI Extended Abstracts .Anthony Rios and Ramakanth Kavuluru. 2018. Few-shot and zero-shot multi-label learning for structured label spaces. In EMNLP .Pranab Sahoo, Ayush Kumar Singh, Sriparna Saha, Vinija Jain, Samrat Mondal, and Aman Chadha. 2024. A systematic survey of prompt engineering in large language models: Techniques and applications. 
+
+arXiv:2402.07927 .Shubhra Kanti Karmaker Santu, Saad Syed, and James Foulds. 2016. Generalized topic modeling. JMLR ,17(1):1–39. Souvika Sarkar, Dongji Feng, and Shubhra Kanti Kar-maker Santu. 2023. Zero-shot multi-label topic infer-ence with sentence encoders & LLMs. In Proceed-ings of the 2023 Conference on Empirical Methods in Natural Language Processing , pages 16218–16233. Association for Computational Linguistics. Souvika Sarkar and Shubhra Kanti Karmaker. 2022. Concept annotation from users perspective: A new challenge. In Companion proceedings of the web conference 2022 , pages 1180–1188. Niloofer Shanavas, Hui Wang, Zhiwei Lin, and Glenn Hawe. 2021. Knowledge-driven graph similarity for text classification. International Journal of Machine Learning and Cybernetics , 12(4):1067–1081. Yucheng Shi, Hehuan Ma, Wenliang Zhong, Gengchen Mai, Xiang Li, Tianming Liu, and Junzhou Huang. 2023. ChatGraph: Interpretable text classification by converting ChatGPT knowledge to graphs. In 
+
+ICDMW , pages 515–520. Fabian M Suchanek, Gjergji Kasneci, and Gerhard Weikum. 2007. Yago: a core of semantic knowledge. In Proceedings of the 16th international conference on World Wide Web , pages 697–706. Suppawong Tuarob, Conrad S. Tucker, Marcel Salathe, and Nilam Ram. 2015. An ensemble heterogeneous classification methodology for discovering health-related knowledge in social media messages. Journal of Biomedical Informatics , 55:73–89. Jens Van Nooten, Andriy Kosar, Guy De Pauw, and Walter Daelemans. 2026. One size does not fit all: Exploring variable thresholds for distance-based multi-label text classification. IEEE Transactions on Knowledge and Data Engineering .Nathan Vandemoortele, Bram Steenwinckel, Femke On-genae, and Sofie Van Hoecke. 2025. From haystack to needle: Label space reduction for zero-shot classi-fication. arXiv preprint arXiv:2502.08436 .Sappadla Prateek Veeranna, Jinseok Nam, Eneldo Loza Mencía, and Johannes Fürnkranz. 2016. Using se-mantic similarity for multi-label zero-shot classifica-tion of text documents. In European Symposium on Artificial Neural Networks (ESANN) , pages 423–428. Chong Wang, John Paisley, and David Blei. 2011. On-line variational inference for the hierarchical Dirich-let process. In AISTATS .Jin Wang, Zhongyuan Wang, Dawei Zhang, and Jun Yan. 2017. Combining knowledge with deep convo-lutional neural networks for short text classification. In Proceedings of the Twenty-Sixth International Joint Conference on Artificial Intelligence (IJCAI-17) , pages 2915–2921. Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc V. Le, Ed H. Chi, Sharan Narang, Aakanksha Chowd-hery, and Denny Zhou. 2023. Self-consistency im-proves chain of thought reasoning in language mod-els. In International Conference on Learning Repre-sentations .Jules White, Quchen Fu, Sam Hays, Michael Sandborn, Carlos Olea, Henry Gilbert, Ashraf Elnashar, Jesse Spencer-Smith, and Douglas C. Schmidt. 2023. A prompt pattern catalog to enhance prompt engineer-ing with ChatGPT. arXiv preprint arXiv:2302.11382 .Congying Xia, Chenwei Zhang, Xiaohui Yan, Yi Chang, and Philip S. Yu. 2018. Zero-shot user intent detec-tion via capsule neural networks. In EMNLP .Wenpeng Yin, Jamaal Hay, and Dan Roth. 2019. Bench-marking zero-shot text classification: Datasets, evalu-ation and entailment approach. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing , pages 3914–3923. Association for Computational Linguistics. Qianbo Zang, Christophe Zgrzendek, Igor Tchappi, Af-shin Khadangi, and Johannes Sedlmeir. 2025. KG-HTC: Integrating knowledge graphs into LLMs for effective zero-shot hierarchical text classification. 
+
+arXiv preprint arXiv:2505.05583 .Daochen Zha and Jing Li. 2019. Multi-label dataless text classification with topic modeling. Knowledge and Information Systems , 61(1):137–160. Hongzhi Zhang and Omair Shafiq. 2023. Towards im-proving text classification tasks based on knowledge graphs for limited labeled data. In Canadian AI .
+
+A Appendix 
+
+A.1 DSPy Signatures 
+
+All classification and graph construction steps are implemented as DSPy signatures (Khattab et al., 2023). A DSPy signature is a Python class where the doc string contains the task instruction and the typed fields declare what the model receives as input and what it must produce as output. DSPy au-tomatically constructs the prompt to the LLM from this schema. All variants are zero-shot: no labeled examples are provided and no DSPy optimizer is used. 
+
+A.1.1 Graph Construction Signatures Stage 1: Entity Extraction. 
+
+> class EntityExtractor(dspy.Signature): """Extract key entities from the given text. Extracted entities are nouns, verbs , or adjectives, particularly regarding sentiment. This is for an extraction task , please be thorough and accurate to the reference text. Return ONLY a valid JSON list format: ["entity1", "entity2", "entity3"]""" text = dspy.InputField(desc="The text to extract entities from") entities = dspy.OutputField(desc="List of extracted entities in JSON format")
+
+Stage 2 — Relation Extraction.  
+
+> class RelationExtractor(dspy.Signature): """Extract subject-predicate-object triples from the assistant message. A predicate (1-3 words) defines the relationship between subject and object. Subject and object are entities from the provided list. This is an extraction task ; be thorough, accurate, and faithful to the reference text. Return ONLY valid JSON format: [["subj1","pred1","obj1"],["subj2","pred2 ","obj2"]]""" text = dspy.InputField(desc="The text to extract relations from") entities = dspy.InputField(desc="List of available entities") triples = dspy.OutputField(desc="List of [subject, predicate, object] " "triples in JSON format")
+
+Stage 3 — Cluster Validation. After relation extraction, all-MiniLM-L6-v2 groups entities by cosine similarity (threshold 0.75). Candidate clus-ters of 2–4 entities are validated by the following signature before merging. 
+
+> class ClusterValidator(dspy.Signature): """Verify if these entities belong in the same cluster. A cluster should contain entities that are the same in meaning, with different tenses, plural forms, stem
+
+forms, upper/lower cases, or close semantic meanings. Return ONLY valid JSON: ["entity1", " entity2", ...] Return only entities you are confident belong together. If not confident, return empty list [].""" entities = dspy.InputField(desc="Entities to validate") valid_cluster = dspy.OutputField( desc="Validated cluster in JSON format") 
+
+A.1.2 Classification Signatures 
+
+The knowledge graph is serialized into the follow-ing format before being passed to any classification signature. If the graph has no edges, the field reads 
+
+"No knowledge graph available." 
+
+Knowledge Graph: Entities: entity1, entity2, entity3, ... Relationships: entity1 --[predicate]--> entity2 entity2 --[predicate]--> entity3 ... 
+
+Variant A — AG: 
+
+class KGOnlyTopicClassification(dspy. Signature): """Classify topics for this article using ONLY the article text and its knowledge graph. DO NOT use any external keyword information. Analyze: (1) entities in the KG, (2) relationships between entities, (3) the overall semantic structure, (4) the article text. Return 1-3 topics from the available list that best match the article. If no topics strongly match, return 'none '.""" article_text = dspy.InputField(desc="The article content") kg_summary = dspy.InputField(desc=" Knowledge graph: entities and relationships") available_topics = dspy.InputField(desc=" List of possible topic labels") predicted_topics = dspy.OutputField(desc ="1-3 relevant topics or 'none '." " ONLY names from available_topics.") 
+
+Variant B — AKG: Topics are passed as one entry per line, e.g. Mental Health (keywords: depression, anxiety, ...) , with up to 10 key-words per topic. 
+
+class TopicClassificationWithKeywords(dspy. Signature): """Given article text, its KG, and topics with keywords, determine which topics are most relevant. Use keywords to understand what each topic represents. Match article content and KG entities/ relations against keywords. Return only names from available_topics. Return NO MORE THAN 4 topics. If no topics meet strong evidence criteria, return 'none '.""" article_text : str = InputField( desc="The text content of the article ") knowledge_graph: str = InputField( desc="Knowledge graph: entities and relationships") available_topics_with_keywords: str = InputField( desc="Topics with keywords: " "'topic (keywords: kw1, kw2, ...) '") predicted_topics: str = OutputField( desc="Comma-separated topic NAMES. Max 4. " "If no match, return 'none '.") 
+
+Variant C — AGS: Called N =5 times at tem-perature 0.5. A topic is retained only if it appears in at least 2 of the 5 runs. 
+
+class ConsensusClassification(dspy.Signature) :"""Classify topics for this article. Be thoughtful and precise. Return 1-3 topics clearly discussed in the article.""" article_text : str = dspy.InputField(esc ="Article content") kg_summary: str = dspy.InputField(desc=" Knowledge graph summary") available_topics : str = dspy.InputField( desc=" Possible topics") predicted_topics : str = dspy.OutputField (desc="1-3 relevant topics or 'none '") 
+
+Variant D — AKGS: Same majority-vote aggre-gation as Variant C ( N =5 , temperature 0.5). 
+
+class ConsensusClassificationWithKeywords( dspy.Signature): """Classify topics using provided keywords as guidance. Keywords help understand what each topic represents. Match article content and KG against keywords. Be precise; return 1-3 topics CLEARLY discussed. If uncertain, be conservative.""" article_text : str = dspy.InputField(desc ="Article content") kg_summary : str = dspy.InputField(desc=" Knowledge graph summary") available_topics_with_keywords: str = dspy.InputField(desc="Topics with keywords: " "'topic (keywords: kw1, kw2, ...) '") predicted_topics: str = dspy.OutputField( desc="1-3 relevant topics or 'none '. " "ONLY names from available_topics.")

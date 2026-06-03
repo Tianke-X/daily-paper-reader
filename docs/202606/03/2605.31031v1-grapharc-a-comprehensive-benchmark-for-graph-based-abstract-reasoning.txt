@@ -1,0 +1,605 @@
+Title: GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning
+
+URL Source: https://arxiv.org/pdf/2605.31031v1
+
+Published Time: Mon, 01 Jun 2026 01:24:06 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning 
+
+# Saku Peltonen 
+
+speltonen@ethz.ch ETH Zürich Zürich, Switzerland 
+
+# August Bøgh Rønberg 
+
+ronberga@ethz.ch ETH Zürich Zürich, Switzerland 
+
+# Andreas Plesner 
+
+aplesner@ethz.ch ETH Zürich Zürich, Switzerland 
+
+# Roger Wattenhofer 
+
+wattenhofer@ethz.ch ETH Zürich Zürich, Switzerland 
+
+## Abstract 
+
+Relational reasoning lies at the heart of intelligence, but existing benchmarks are typically confined to formats such as grids or text. We introduce GraphARC , a benchmark for abstract reasoning on graph-structured data. GraphARC generalizes the few-shot transfor-mation learning paradigm of the Abstraction and Reasoning Corpus (ARC). Each task requires inferring a transformation rule from a few input-output pairs and applying it to a new test graph, covering local, global, and hierarchical graph transformations. Unlike grid-based ARC, GraphARC instances can be generated at scale across diverse graph families and sizes, enabling systematic evaluation of generalization abilities. We evaluate state-of-the-art language models on GraphARC and observe clear limitations. Models can an-swer questions about graph properties but often fail to solve the full graph transformation task, revealing a comprehension-execution gap. Performance further degrades on larger instances, exposing scaling barriers. More broadly, by combining aspects of node clas-sification, link prediction, and graph generation within a single framework, GraphARC provides a promising testbed for future graph foundation models. 
+
+## CCS Concepts 
+
+• Mathematics of computing → Graph theory ; • Computing methodologies → Logical and relational learning ; Rule learn-ing ; Natural language processing .
+
+## Keywords 
+
+few-shot, abstract reasoning, graph, scalability, benchmark, ARC, reasoning models, compositional generalization 
+
+ACM Reference Format: 
+
+Saku Peltonen, August Bøgh Rønberg, Andreas Plesner, and Roger Wat-tenhofer. 2026. GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning. In Proceedings of the 32nd ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.2 (KDD ’26), August 09–13,  
+
+> This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
+> KDD ’26, Jeju Island, Republic of Korea
+> ©2026 Copyright held by the owner/author(s). ACM ISBN 979-8-4007-2259-2/2026/08 https://doi.org/10.1145/3770855.3817591
+
+2026, Jeju Island, Republic of Korea. ACM, New York, NY, USA, 12 pages. https://doi.org/10.1145/3770855.3817591 
+
+## 1 Introduction 
+
+Relational reasoning—the ability to perceive and reason about rela-tionships between objects—is a core aspect of intelligence [ 10 , 12 ]. This capacity underlies many forms of higher cognition: we use it to appreciate analogies across different domains [ 11 ], to understand and learn language [ 21 ], and generally, to apply abstract rules to novel situations [ 24 ]. Achieving this kind of generalization is a central challenge for artificial intelligence [4, 15]. The Abstraction and Reasoning Corpus (ARC) [ 4] is a widely recognized benchmark for evaluating abstract reasoning in AI. ARC consists of grid-based visual puzzles that require systems to learn and apply transformation rules based on a few examples. While ARC puzzles are grid-based, many of the underlying rules are rela-tional—grouping identical objects, replicating subpatterns, or propa-gating attributes to neighboring objects. To capture such a structure more directly, we propose to use graphs as a more general repre-sentation that is not tied to a particular spatial layout. Inspired by ARC, we introduce GraphARC , a benchmark for few-shot abstract reasoning on graphs. Each task includes 2-3 input-output graph pairs demonstrating a transformation rule, and a test input where the rule should be applied. See Figure 1 for an exam-ple. The transformations are based on fundamental graph primi-tives: local structure (degree, neighborhoods, cliques), reachability (connected components, isolated nodes), or hierarchical relations (closest common ancestor in a tree). The transformations can be color-based (changing the color of some nodes) and structural mod-ifications, adding or removing nodes and edges. The instances are automatically generated across diverse graph families and sizes, pro-viding a virtually unlimited supply of instances. This setup allows testing whether models can generalize the same transformation across graphs of varying size and structure. GraphARC combines elements of traditional graph learning tasks, including node classification [ 14 ], graph classification [ 30 ], link prediction [ 31 ], and graph generation [ 23 ] within a single framework. Given the absence of broadly applicable Graph Founda-tion Models (GFMs) [ 17 , 27 ], we focus on evaluating Large Language Models (LLMs) that can process textual representations of graphs. To this end, we systematically test a range of encoding schemes  
+
+> arXiv:2605.31031v1 [cs.AI] 29 May 2026 KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Saku Peltonen, August Bøgh Rønberg, Andreas Plesner, and Roger Wattenhofer
+
+Figure 1: Two examples of GraphARC tasks demonstrating few-shot abstract reasoning on graphs. Each task presents two input-output graph pairs (top row and middle row) that illustrate a transformation rule, followed by a test input graph where the learned rule must be applied. In the example on the left-hand side, the transformation rule colors the shortest path connecting two colored nodes (shown in blue). This task is constrained to tree structures to ensure a unique shortest path between any two nodes. The example on the right-hand side shows a task where edges between nodes of different colors are removed. 
+
+and prompting choices. We also design two complementary evalu-ation pipelines for LLMs: one that measures performance on full graph transformation tasks, and another that uses targeted ques-tions about properties of the input and output graph. This allows us to disentangle a model’s ability to understand the transformation from its ability to execute it. Concretely, GraphARC provides (1) a scalable task generation framework that produces diverse graph transformation challenges across multiple graph fam-ilies at arbitrary scales, (2) a comprehensive evaluation methodology for LLMs, and (3) an extensive analysis of current LLM performance, revealing significant gaps in structural understanding and identify-ing key failure modes that highlight directions for future research. Our code is available on Github. 1
+
+## 2 Related work 
+
+The Abstraction and Reasoning Corpus. The ARC challenge, intro-duced by Chollet [4] , established a paradigm for few-shot abstract reasoning in which systems infer transformation rules from mini-mal input–output examples and apply them to new cases. Despite intensive effort, performance hovered near 33% for years before re-cent breakthroughs: top open-source entries in the ARC Prize com-bined neural reasoning with programmatic search to reach roughly 53% accuracy. At the same time, OpenAI’s o3 attained 75.7% on 
+
+> 1https://github.com/sakupeltonen/graph-arc
+
+ARC-AGI-1 [ 1 , 2]. However, the release of ARC-AGI-2 [ 5] in March 2025 largely reset the field, with frontier systems scoring about 16% versus human performance near 60%, underscoring that robust abstract reasoning remains open. Crucially for our setting, leading ARC solvers are tailored to grid-based vision puzzles and often rely on specialized pipelines or substantial compute, making direct application to GraphARC’s relational, graph-structured I/O unnec-essary or impractical. Accordingly, we evaluate general-purpose LLMs on GraphARC’s textual graph encodings to probe abstract relational reasoning without bespoke ARC-specific machinery. The impact of ARC has led to several extensions exploring dif-ferent modalities and task formulations. [ 29 ] created 1D-ARC tasks specifically for language model evaluation. Assouel et al . [3] de-veloped Arith-MNIST, containing reasoning tasks where models must infer arithmetic programs applied to colored digits. In this challenge, the output is a single digit containing the answer, rather than a transformed grid. 
+
+Large Language Models and Graph Reasoning. Recent work has explored applying LLMs to graph reasoning tasks with mixed re-sults. Fatemi et al . [8] explores various textual representations and their impact on LLM performance across different reasoning tasks. Wang et al . [26] examines whether language models can solve graph problems such as connectivity, cycle existence, and bipartite matching, when graphs are described in text. Dai et al . [6] evaluate how LLMs understand graph patterns through tasks such as detection, translation, and modification, with patterns specified in natural language or as edge lists. This work is GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+arguably the most similar to our work, but it focuses on reasoning about predefined motifs, whereas we target few-shot learning and the application of general graph transformations. Beyond inputting graphs in text, Zhao et al . [32] introduces GIMLET, using a cus-tomized positional encoding to integrate language models with graph-structured data for molecule property prediction. Sanford et al . [22] investigates how well transformers can solve graph-based reasoning problems at various model sizes. While they do not use natural language to represent the graphs, they do show that trans-formers can solve graph problems they are trained on. See [ 13 ] for a comprehensive survey on LLMs for graph problems. Chain-of-thought prompting (or test-time compute) has emerged as an effective way to improve reasoning abilities in language mod-els [ 20 , 25 , 28 ]. We will investigate this by using closed- and open-source models with reasoning abilities, such as OpenAI’s o3-mini and DeepSeek’s R1. 
+
+Graph Foundation Models. GFMs are an emerging class of models aimed at general-purpose graph reasoning. These approaches seek to combine GNN-style structural inductive biases with the broad knowledge and few-shot learning of foundation models [ 16 ]. Initial efforts have targeted specific domains, such as knowledge graphs [ 9] and molecular graphs [ 19 ]. See [ 17 ] for a survey outlining the opportunities and challenges. Notably, Google Research has announced a relational GFM that treats databases as graphs and generalizes to unseen tables, report-ing up to 40x precision gains on tasks like spam detection. Despite rapid progress, current GFMs largely target standard supervised ob-jectives (node/graph classification, link prediction) [ 16 , 17 , 27 ], and cannot be straightforwardly adapted to solve ARC style questions. Accordingly, we do not benchmark GFMs here; instead, GraphARC serves as a complementary proving ground for future GFMs that claim abstract, few-shot graph transformation capabilities. 
+
+## 3 GraphARC 3.1 Benchmark Definition 
+
+A GraphARC task consists of 2-3 input-output graph pairs that demonstrate a transformation rule. This is followed by a test input graph, where the learned rule must be applied. See Figure 1 for an example task. Formally, graphs are represented as a tuple 𝐺 = (𝑉 , 𝐸 ) where nodes have unique integer identifiers from 0 to |𝑉 | − 1. Node IDs remain consistent within each task instance. Each node 𝑣 ∈ 𝑉 
+
+carries a color attribute, with grey as the default color. We assume the graphs to be undirected. GraphARC contains 21 distinct transformations. A task is an instance of a transformation. We can generate multiple tasks per transformation by varying transformation parameters, size and family of the graphs, and the number of examples. Furthermore, by varying the test graph size, we can evaluate how well models generalize transformations to larger instances. Each transformation is designed to test a specific aspect of graph reasoning, such as local structure (e.g., degree-based coloring), reachability (connected com-ponents, paths), or hierarchical relations (e.g., common ancestors in trees). 
+
+Table 1: GraphARC transformations. The tasks are grouped into color-based transformations and structural transforma-tions.                          
+
+> Task Transformation rule
+> Color-based transformations
+> colorDegreeX Color all nodes with degree exactly 𝑋 .
+> colorMaxDegree Color all nodes with maximum degree.
+> colorMinDegree Color all nodes with minimum degree.
+> colorInternal Color all non-leaf nodes, i.e., nodes with de-gree greater than 1.
+> colorNeighbors Color all neighbors of nodes with a specified color.
+> colorPath Color all nodes on the shortest path between two colored nodes.
+> colorComponents Color nodes according to connected compo-nent membership.
+> colorDistanceAtLeast2 Color nodes at distance at least 2from marked nodes.
+> colorEquidistant Color nodes that are equidistant from two colored nodes.
+> bipartitionCompletion Complete a bipartite coloring from seed nodes.
+> Structural transformations
+> addHub Add a new node connected to all existing nodes.
+> edgeToNode Replace each edge by a new intermediate node.
+> removeDegreeX Remove all nodes with degree exactly 𝑋 .
+> blueSubgraph Return the subgraph induced by nodes of a given color.
+> mergeAtBlue Merge two connected components at their colored nodes.
+> complementGraph Return the complement graph.
+> removeSameColorEdges Remove edges between nodes of the same color.
+
+Transformations. See Table 1 for the list of transformations. We organize GraphARC transformations into two main categories: color-based transformations and structure modification transfor-mations. Color-based tasks modify node colors based on structural properties, whereas structure modification tasks alter the graph topology. A complete task specification includes: 
+
+• Transformation rule: The operation to be performed (e.g., “color all degree-3 nodes blue"). 
+
+• Required Properties: A list of preconditions the input graph must satisfy for the transformation to be meaningful. For instance, the “colorDegree3" task requires the input graph to have at least one node of degree 3. This prevents the generation of trivial examples where the transformation has no effect. 
+
+• Parameters: Configurable elements of the transformation, such as the target color or degree number. 
+
+• Pre-transformation Steps: Initial modifications to the input graph to set up the reasoning problem. For example, the “colorNeighbors" task first colors a random node orange, and KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Saku Peltonen, August Bøgh Rønberg, Andreas Plesner, and Roger Wattenhofer Incident  Encoding                                                                                        
+
+> Apply transformation
+> (e.g. AddHub)
+> Encode textually
+> Generate Input Graph Output Graph
+> Adjacency Encoding
+> In an undirected graph, (i,j) means that node iand node jare connected with an undirected edge.
+> Gdescribes agraph among nodes 0, 1, 2, 3.
+> The edges in Gare: (2,3).
+> None of the nodes are colored
+> Prompt
+> <System prompt>
+> Below are 2 examples of input graphs and their corresponding output graphs.
+> IMPORTANT: Structure your response using XML tags as follows:
+> <thinking> ... </thinking>
+> <answer> ... </answer>
+> .
+> Input 1: In an undirected graph, (i,j)
+> ...
+> Output 1: In an undirected graph, (i,j)
+> ...
+> .
+> Using these examples, and this final input graph, answer the following question:
+> Input 3: In an undirected graph, (i,j)
+> ...
+> <Question>
+> Dataset
+> Parse textual graph response
+> Incident Encoding
+> Encode textually
+> Adjacency Encoding
+> In an undirected graph, (i,j) means that node iand node jare connected with an undirected edge.
+> Gdescribes agraph among nodes 0, 1, 2, 3, 4.
+> The edges in Gare:(0,4),(1,4),(2,3),(2,4),(3,4).
+> The following nodes are colored: 4
+> Question Set
+> System Prompt Set
+> Full output prompts
+> Question prompts
+
+Results  Check answer          
+
+> Large Language Models
+> Isomorphism check against groundtruth
+> Full Output Graph
+> Reformat to IR graph
+> Adjacency Encoding
+> In an undirected graph...
+> Transformation Set
+> Question Answer
+> The output graph has 5edges
+> Parse
+> (e.g. edge_count)
+
+Figure 2: The GraphARC task generation and evaluation pipeline for LLMs. A task begins with a formal rule (e.g., “color all degree-3 nodes blue"), which is used to generate and textually encode a set of input-output graph examples. The pipeline then diverges into two distinct evaluation pathways: 1) The Full Output Path (blue arrows) requires the model to generate the complete transformed graph, testing both its ability to infer the rule and execute it correctly. 2) The Question-Based Path (green arrows) isolates comprehension by asking targeted questions about the input graph and the inferred output properties, disentangling understanding from execution. Solid arrows represent stages where analysis or transformations occur, while dashed arrows indicate the flow of data without modification. 
+
+the model must then infer the rule to color all of its neighbors blue. 
+
+Graph Generation and Validation. We generate graphs from mul-tiple families, including Erdős-Rényi, Watts-Strogatz, trees, star, bipartite, and multi-component. This ensures diversity in structural properties, and also allows us to test whether models can learn transformations that generalize across different graph types. The number of examples and their size is varied according to size patterns (see Appendix A.2). In the main dataset, we use small graphs with 5 to 15 nodes in both the examples and the test input. In the scaling dataset, we fix example graphs at 10 nodes, while testing on larger graphs up to 250 nodes. This allows us to evaluate how well models can generalize transformations to larger instances. To ensure that generated tasks are valid and solvable, we imple-ment a property-validation system that checks whether the gener-ated graphs satisfy necessary conditions for the transformation to be applied. It is also important that the combination of input exam-ples should uniquely determine the simplest consistent transforma-tion. Our system uses a three-state framework (True/False/Maybe) indicating whether a generator guarantees, precludes, or condition-ally satisfies the required properties, enabling efficient rejection of invalid instances. We also set the input graph size to be large enough to make the probability of multiple valid, simple transformations negligible. Full details appear in Appendix A. 
+
+## 3.2 LLM Evaluation Pipeline 
+
+Figure 2 illustrates our task generation and evaluation pipeline. It consists of four parts. The first part consists of choosing a transfor-mation ( Stage 1 ), and generating graphs and validating the examples (Stage 2 ), as detailed above. These two are independent of the eval-uation of LLMs and are used to generate the task instances. The last two stages are specific to the evaluation of LLMs. 
+
+Stage 3: Encoding and Prompt Assembly. We implement two tex-tual encoding schemes for presenting graphs to language models: adjacency list format (enumerate edges) and incidence list format (list of neighbors by node). Figure 2 illustrates the adjacency list format and an example incidence list can be found in Section B. We also test the effect of different system prompts. These en-courage different approaches to the task, such as a graph analyst GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+studying examples, a graph algorithm developer analyzing pat-terns, or a mathematics teacher explaining the pattern. We also include a baseline with no system prompt. See Appendix B for a full description of these variations. To achieve a fine-grained analysis of model capabilities, a sin-gle set of generated examples is used to create prompts for two complementary evaluation paths. 
+
+Stage 4 (Full Output Path): This pathway assesses a model’s abil-ity to infer the transformation rule from the examples and apply it to generate the complete output graph for a new input. The model’s response is parsed to reconstruct the output graph’s struc-ture and node colors. This reconstructed graph is then compared to the ground-truth output graph. The model’s output must be an exact match, verified via a graph isomorphism check (this is fast for labeled graphs). 
+
+Stage 4 (Question-Based Path): This pathway is designed to dis-entangle a model’s comprehension of graph properties from its ability to execute a full transformation. Instead of requesting the full output graph, the prompt poses a targeted question about a specific property. Crucially, we ask parallel questions about both the visible test input (e.g., How many blue nodes are in the input?") and the unseen, to-be-inferred output (e.g., How many blue nodes will be in the output?"). The model’s response, typically a numerical or categorical answer, is compared against the ground-truth value, which is computed from the actual input or output graphs. This pathway allows for a more granular diagnosis of failures, helping to distinguish between a failure to parse the input, a failure to understand the transformation, or a failure to reason about the output. 
+
+## 4 Experiments and Results 4.1 Dataset and Models 
+
+We evaluate a range of state-of-the-art AI systems to provide com-prehensive coverage of reasoning capabilities, including Qwen3 (1.7B to 32B), DeepSeek R1, OpenAI’s reasoning models o1-mini, o3-mini, o4-mini, and GPT 5 (all with medium reasoning effort), and GPT 4.1-nano as a direct-answer baseline. There are two regimes in the dataset: (i) our main experiments ,which span a range of tasks under multiple prompts and encoding variations, and (ii) scaling experiments , which assess performance as graph size increases. In the main experiments, we use small graphs, 
+
+𝑛 ∈ { 5, 10 , 15 } for both the example and test graphs. In the scaling experiments, examples are fixed at 𝑛 = 10 , while test inputs range up to 𝑛 = 250 with 𝑛 ∈ { 10 , 25 , 50 , 100 , 250 }.The total number of evaluations per model results from combin-ing different encodings, prompt variants, size patterns, transforma-tions, and question types. After filtering by task-generator compat-ibility, for Qwen3 models and GPT 4.1-nano, this gives around 18k evaluations each, while reasoning models—restricted to a single prompt—cover a proportionally smaller set. The scaling dataset adds 4.4k evaluations for reasoning models. 
+
+## 4.2 Results 
+
+Figure 3 reveals a stark performance hierarchy in full graph gener-ation tasks. The Qwen3 series shows clear scaling with model size (8.3% for 1.7B to 41.4% for 14B), while reasoning models achieve substantially higher performance (57.5% for o1-mini to 90.9% for GPT 5). GPT 4.1-nano achieves only 13.3% accuracy, performing similarly to the smallest Qwen3 model. Models are substantially better in question-answering tasks com-pared to full graph generation. This gap is most pronounced in smaller models, Qwen3 1.7B achieves 54.4% on questions but only 8.3% on full outputs (6.55x difference), while Qwen3 8B shows 72.2% vs 30.5% (2.36x difference). Even frontier models exhibit this pattern: o4-mini achieves 91.2% on questions versus 86.5% on full outputs. Models consistently perform better on questions about input graphs (which they can see) than output graphs (which they must infer). For example, Qwen3 8B has an accuracy of 89.2% on input questions versus 65.1% on output questions. 
+
+Task-Specific Performance. The task-level performance in Table 2 shows a wide range of difficulty across tasks. Some transformations, such as addHub , colorDegree1 , and colorNeighbors , are consis-tently solved with high accuracy. In contrast, others, including 
+
+removeDegree3 , colorEquidistant , and colorDegree3 , remain challenging even for the strongest models. Global transformations like bipartitionCompletion and mergeAtBlue exemplify the ar-chitectural divide between model families. Only reasoning models achieve meaningful performance ( ≥ 75% ), while all Qwen3 models and GPT 4.1-nano fail almost completely. See Appendix C for full results across all models. 
+
+Scaling Limitations. Table 3 summarizes performance across size patterns. The results reveal a performance drop as test graph size increases, particularly for o1-mini and o3-mini. For instance, o1-mini’s accuracy declines from 88% at 10 nodes to just 18% at 250 nodes, suggesting a limit in working memory or attention mecha-nisms. In contrast, GPT 5 maintains robust performance, achieving 91% accuracy even at 250 nodes. The scaling dataset patterns (last five rows) were only evaluated on reasoning models, as direct-answer models struggled even on the smallest graphs. Looking across tasks, Table 4 shows a consistent decline in ac-curacy when increasing the test graph size. The steepest drops are observed in tasks involving degree-based deletions or color-ings. For example, removeDegree3 falls from 96% accuracy at 10 nodes to just 25% at 250 nodes, and similar patterns are seen for 
+
+colorDegree2,3 . Surprisingly, some tasks with more global struc-ture, such as colorPath and colorComponents , exhibit stronger robustness, remaining near-perfect up to 100 nodes and only de-grading at the largest size. Some simpler local modifications, such as addHub and removeDegree1 , also show relatively stable perfor-mance compared to their higher-degree counterparts. These results highlight that scaling difficulties are not purely a function of local-ity: global transformations can scale well, while seemingly local ones can collapse under larger graphs, suggesting problems in how the models internalize and apply structural rules. 
+
+Performance in Question-Based Tasks. Besides full graph gener-ation, we also test model understanding with targeted questions, which isolate comprehension of graph properties from execution of transformations. Table 5 shows question-based performance for se-lected models and question types. In general, it is easier for models to answer questions about input graphs than output graphs. The KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Saku Peltonen, August Bøgh Rønberg, Andreas Plesner, and Roger Wattenhofer 
+
+Figure 3: Overall model performance on GraphARC. Bars show accuracy for full-output tasks (structured graph generation) and for question-based tasks, split into questions about the input (visible graph) and the output (inferred graph). For most models, we observe a comprehension–execution gap (question-based > full-output) and an input–output asymmetry (input >
+
+output). Reasoning models consistently outperform direct-answer baselines. Table 2: Accuracy on full-output tasks across a subset of the tested models. Values are mean accuracies, and bold highlights the best score per row. Tasks are ordered by increasing average difficulty. Appendix C shows results and confidence intervals for all models. 
+
+Task Qwen3 14b Qwen3 32b LLaMA3.1 8b DeepSeek-R1 LLaMA-8b Mistral 7b-v0.2 OLMo-2 7b GPT 4.1-nano o1 mini o3 mini o4 mini GPT 5 Avg removeDegree3 0.02 0.02 0.00 0.00 0.00 0.00 0.00 0.00 0.25 0.50 0.75 0.14 
+
+colorDegree3 0.29 0.06 0.00 0.10 0.00 0.00 0.00 0.00 0.67 0.42 0.58 0.19 
+
+colorEquidistant 0.00 0.16 0.00 0.00 0.00 0.03 0.00 0.38 0.50 0.75 0.75 0.23 
+
+colorDistanceAtLeast2 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.08 0.83 0.92 0.92 0.25 
+
+removeDegree2 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.42 0.75 0.92 1.00 0.28 
+
+colorMaxDegree 0.52 0.38 0.25 0.04 0.05 0.00 0.25 0.25 0.33 0.58 0.67 0.30 
+
+bipartitionCompletion 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.75 1.00 1.00 1.00 0.34 
+
+mergeAtBlue 0.00 0.12 0.00 0.00 0.00 0.00 0.00 0.75 1.00 1.00 1.00 0.35 
+
+edgeToNode 0.25 0.33 0.00 0.00 0.00 0.00 0.00 0.50 0.88 0.94 1.00 0.35 
+
+colorDegree2 0.42 0.15 0.00 0.06 0.00 0.00 0.04 0.42 0.92 1.00 1.00 0.36 
+
+complementGraph 0.19 0.17 0.17 0.16 0.00 0.00 0.05 0.69 1.00 0.94 1.00 0.40 
+
+colorMinDegree 0.58 0.60 0.02 0.29 0.00 0.00 0.12 0.67 0.75 0.67 0.83 0.41 
+
+removeSameColorEdges 0.46 0.48 0.02 0.21 0.00 0.00 0.02 0.75 0.75 1.00 1.00 0.43 
+
+colorInternal 0.44 0.27 0.23 0.20 0.04 0.05 0.25 0.62 1.00 0.88 1.00 0.45 
+
+blueSubgraph 0.75 0.73 0.03 0.56 0.00 0.03 0.17 0.75 0.75 0.75 0.75 0.48 
+
+removeDegree1 0.41 0.36 0.19 0.34 0.10 0.03 0.19 0.75 1.00 1.00 1.00 0.49 
+
+colorPath 0.41 0.50 0.16 0.09 0.03 0.00 0.31 0.88 1.00 1.00 1.00 0.49 
+
+colorComponents 0.62 0.50 0.06 0.44 0.07 0.00 0.19 1.00 0.75 1.00 1.00 0.51 
+
+addHub 0.66 0.66 0.38 0.50 0.06 0.00 0.20 0.75 1.00 1.00 1.00 0.56 
+
+colorNeighbors 0.88 0.88 0.19 0.14 0.04 0.03 0.44 0.94 0.94 1.00 0.88 0.58 
+
+colorDegree1 0.88 0.72 0.25 0.45 0.04 0.05 0.27 0.88 1.00 1.00 1.00 0.59 
+
+average 0.37 0.34 0.09 0.17 0.02 0.01 0.12 0.58 0.81 0.87 0.91 0.39 
+
+gap between high input accuracy and substantially lower output accuracy highlights that even when models can recognize graph properties, they struggle to learn the transformation or cannot ap-ply it to new graphs reliably. See Appendix C, Table 7 for full results across all models and question types. GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+Table 3: Performance by size pattern (full output; aggregated across tasks). The first two columns indicate the example and test graph sizes (in nodes), and the third column gives the number of evaluated samples. Values are accuracies, with the best-performing model for each pattern in bold. The first two rows correspond to main dataset patterns; the last five rows to scaling patterns. 
+
+Example sizes Test size 𝑛 GPT 4.1-nano o1 mini o3 mini o4 mini GPT 55,10,15 15 1007 0.14 0.60 0.85 0.90 0.95 
+
+5,10 15 1008 0.12 0.56 0.79 0.83 0.87 
+
+10,10 10 224 — 0.88 1.00 1.00 1.00 
+
+10,10 25 224 — 0.54 0.79 0.96 1.00 
+
+10,10 50 176 — 0.45 0.82 0.89 0.98 
+
+10,10 100 176 — 0.34 0.64 0.80 0.93 
+
+10,10 250 176 — 0.18 0.41 0.43 0.91 Table 4: Task performance by scaling pattern. Cells are ac-curacies averaged over selected models (GPT-5, o1-mini, o3-mini, and o4-mini). Column headers show the example graph sizes (before the arrow) and the test graph size (after the ar-row). 
+
+Task 10,10 
+
+→ 10 10,10 
+
+→ 25 10,10 
+
+→ 50 10,10 
+
+→ 100 10,10 
+
+→ 250 removeDegree3 0.96 0.67 0.50 0.44 0.25 
+
+removeDegree2 0.92 0.75 0.62 0.38 0.25 
+
+bipartitionCompletion 0.88 0.62 0.75 0.62 0.25 
+
+colorDegree3 1.00 0.62 0.62 0.56 0.31 
+
+colorDegree2 1.00 0.83 0.75 0.62 0.38 
+
+addHub 1.00 0.81 0.84 0.66 0.53 
+
+removeDegree1 0.91 0.94 0.83 0.88 0.58 
+
+colorComponents 1.00 1.00 1.00 1.00 0.38 
+
+colorDegree1 1.00 0.94 0.96 0.79 0.71 
+
+colorPath 1.00 1.00 0.88 0.81 0.81 
+
+Average 0.97 0.82 0.78 0.68 0.44 
+
+We also observe a systematic bias in reasoning models: when asked about input graphs, they often answer as if the question referred to the output graph instead. Advanced reasoning models show dramatically higher transfer rates, indicating they apply trans-formations even when not requested. The strength of this effect correlates positively with model capability: GPT 5: 55–85%, O4-mini: 45–75%, O3-mini: 40–70%, Qwen3 models: < 20 %. It is most pro-nounced in tasks with many coloring changes ( bipartitionCompletion 
+
+and blueSubgraph ), and weakest in structural modifications ( addHub 
+
+and removeDegree ). 
+
+Effect of Graph Encoding. Encoding choice has little average impact (performance ratio near 1.0 for most models), though pref-erences vary by model and task type. Most differences are minor, but Qwen3-4b is a clear outlier: for full output tasks, it achieves 31.7% better performance with incident encoding (0.407 vs. 0.309), while for question-based tasks, it performs 24.7% better with adja-cency encoding (0.735 vs. 0.589). Overall, encoding effects appear minor on average but can be important for particular model-task combinations. 
+
+## 4.3 Case Study: Failure Modes of GPT 5 
+
+We manually analyzed the answers for GPT 5 on full output tasks. We observe that errors generally fall into the four categories: Output parsing mismatches, Threshold misinterpretation, Concept substi-tution, and Encoding sensitivity. 
+
+(1) Output parsing mismatches. In some cases the model descrip-tion of the solution matched the intended subgraph, but the output failed to parse correctly and was marked wrong.   
+
+> “I can’t share step-by-step reasoning, but the task is to take the induced subgraph on the colored nodes and list only edges between those colored nodes.”
+> <answer> G describes a graph among nodes 4, 11 . . . </answer>
+
+Takeaway: The semantics were correct, but formatting (e.g. edge listing or section tags) caused evaluation failure. 
+
+(2) Threshold misinterpretation. Tasks requiring the coloring or removal of nodes of degree 𝑥 (e.g. 3) led to conflicting rules: some-times interpreted as “degree exactly 3,” and sometimes as “degree at least 3.” The examples were unambiguous, since in at least one case a node of degree four was present but left untouched, clearly indicating that the rule was “degree exactly 3.” 
+
+> “. . . removes all nodes with degree 3 or more . . . ” “. . . remove every node with degree exactly 3 . . . ” “I identify and color the node(s) with the highest degree (most connections).”
+
+Takeaway: Even when the examples uniquely determined the thresh-old, the model occasionally chose a looser interpretation (“ ≥ 3”) instead of the intended exact one. 
+
+(3) Concept substitution. Sometimes, the model substituted the intended property with a different but superficially related graph concept. For example: 
+
+> “. . . identified the articulation points (cut vertices) . . . ”
+
+Takeaway: Instead of following the intended rule, the model some-times defaulted to alternative structural notions that seemed plau-sible in one of the examples. 
+
+(4) Encoding sensitivity. Usually the two encoding formats (ad-jacency list vs. incidence list) yielded similar results. However, in some cases, particularly tasks involving distance-based reasoning and paths, the model succeeded under one encoding but failed under the other. 
+
+> “. . . find the unique shortest path between them. Color the path’s center node red and also color any neighbors of that center . . . ” “. . . red if and only if it is equidistant to both blue seeds; ties occur at nodes 11, 10, 9, 8, 5, 7, 4, 6, 3.”
+
+Takeaway: The correct reasoning was present, but the execution depended on encoding format. KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Saku Peltonen, August Bøgh Rønberg, Andreas Plesner, and Roger Wattenhofer 
+
+Table 5: Performance by question type (question-based; input vs. output). Values are accuracies; bold indicates the best model per question for input and for output.                                                                                                                          
+
+> Qwen3 32b LLaMA3.1 8b DeepSeek-R1 LLaMA-8b GPT 4.1-nano GPT 5Avg. Question type Input Output Input Output Input Output Input Output Input Output Input Output component count 0.83 0.54 0.24 0.26 0.61 0.27 0.77 0.59 0.87 0.89 0.66 0.51
+> edge count 0.75 0.55 0.15 0.11 0.26 0.11 0.80 0.46 0.97 0.98 0.59 0.44
+> has cycles 0.76 0.66 0.58 0.53 0.49 0.49 0.69 0.62 0.97 0.97 0.70 0.65
+> is connected 0.94 0.76 0.67 0.64 0.76 0.59 0.88 0.77 0.96 0.94 0.84 0.74
+> is tree 0.82 0.50 0.57 0.53 0.50 0.32 0.80 0.64 0.98 0.98 0.73 0.59
+> max degree 0.96 0.57 0.46 0.33 0.43 0.28 0.94 0.64 0.99 0.96 0.75 0.56
+> min degree 0.96 0.56 0.58 0.37 0.49 0.25 0.96 0.62 0.98 0.90 0.80 0.54
+> node count 0.97 0.49 0.63 0.32 0.34 0.15 0.96 0.49 1.00 0.61 0.78 0.41
+> full output —0.37 —0.11 —0.19 —0.13 —0.91 —0.34
+
+## 5 Discussion 
+
+Our results reveal three insights about graph reasoning in language models. First, we observe a persistent comprehension–execution gap :models can parse structural properties and answer questions about them with high accuracy, but often fail to apply transformations consistently, highlighting that recognition of graph features is eas-ier than generating coherent transformed outputs. This mirrors findings in other domains where transformers succeed at local operations but fail to compose them into globally consistent solu-tions [7]. Secondly, scaling barriers emerge even for strong models. Mid-tier reasoning models collapse between 50–100 nodes, while GPT 5 maintains robust performance up to 250 nodes yet still struggles on seemingly local tasks such as degree-based transformations. This shows that scaling difficulty is not tied purely to locality but to how reliably models internalize and generalize transformation rules. Thirdly, we observe a paradox of capability : more advanced mod-els increasingly apply transformations even when not asked, an-swering questions about the input graphs as if they referred to the output. This “transformation bias” indicates that instruction fol-lowing can degrade with capability, creating a failure mode where models over-apply their reasoning ability. This phenomenon has been observed in other contexts where highly capable models “over-think" simple tasks [ 28 ] or exhibit “inverse scaling" behaviors [ 18 ]. 
+
+## 5.1 Comparison with Grid-Based ARC 
+
+GraphARC reveals complementary challenges to the original ARC benchmark: 
+
+Task Structure. While ARC uses fixed small grids with visual patterns, GraphARC tests relational reasoning without spatial con-straints. The absence of visual cues forces models to rely purely on structural understanding. The graph-based format allows us to automatically generate a virtually unlimited variety of instances. 
+
+Interpretability. Our decomposition into question types provides clearer failure analysis than ARC’s binary success/failure. We can identify specific capabilities (input understanding, output under-standing, and transformation execution) and trace failure modes to particular reasoning steps. 
+
+Scaling. While ARC uses fixed small grids, our scalable approach reveals performance degradation patterns with size, exposing ar-chitectural limitations that remain hidden in fixed-size evaluations. GraphARC’s ability to automatically generate large test cases al-lows controlled evaluation of scaling behavior and identification of failure thresholds across models. 
+
+Human vs. AI Focus. ARC was conceived as a human-intelligence challenge that is solvable for people but difficult for machines. Its grid layout provides visual cues that humans naturally exploit. In contrast, GraphARC is designed as an AI benchmark: the under-lying graph structure is presented without spatial layout, since models should not depend on visualization but on reasoning over the graph’s relational properties. Informal testing confirms that GraphARC tasks (for example those in Figure 1) are easily solvable by humans, but this relies on having access to an appropriate graph visualization. 
+
+## 6 Conclusion and Future Work 
+
+GraphARC provides a new benchmark for studying few-shot ab-stract reasoning on graphs. By generating diverse input-output transformations across graph families and sizes, it exposes system-atic limitations of current language models that remain hidden in standard reasoning benchmarks. Our evaluation of over 125,000 responses identifies three consis-tent phenomena: (1) a comprehension-execution gap where models can recognize graph properties but fail to reliably apply transfor-mations, (2) scaling barriers that cause mid-tier models to collapse beyond 50-100 nodes, and (3) a paradoxical failure mode where more capable models over-apply transformations, even when not requested. We see two promising directions for future work. First, GraphARC can serve as a testbed for models explicitly designed for relational reasoning, including graph neural networks and emerging graph foundation models. Second, the benchmark invites new training strategies that move toward compositional generalization, such as curriculum design, modular reasoning approaches, or hybrid symbolic-neural methods. By making failure modes transparent and scalable, GraphARC aims to guide the development of systems that can reason robustly GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+over structured data—a necessary step toward broader abstract reasoning capabilities. 
+
+## References 
+
+[1] ARC Prize Foundation. 2024. 2024 Progress on ARC-AGI-Pub. https://arcprize. org/blog/2024-progress-arc-agi-pub. Accessed: 2025-09-01. [2] ARC Prize Foundation. 2024. OpenAI O3 Breakthrough High Score on ARC-AGI-PUB. https://arcprize.org/blog/oai-o3-pub-breakthrough. Accessed: 2025-01-01. [3] Rim Assouel, Pau Rodriguez, Perouz Taslakian, David Vazquez, and Yoshua Ben-gio. 2022. Object-centric compositional imagination for visual abstract reasoning. In ICLR2022 Workshop on the Elements of Reasoning: Objects, Structure and Causal-ity .[4] François Chollet. 2019. On the measure of intelligence. arXiv preprint arXiv:1911.01547 (2019). [5] Francois Chollet, Mike Knoop, Gregory Kamradt, Bryan Landers, and Henry Pinkard. 2025. Arc-agi-2: A new challenge for frontier ai reasoning systems. 
+
+arXiv preprint arXiv:2505.11831 (2025). [6] Xinnan Dai, Haohao Qu, Yifen Shen, Bohang Zhang, Qihao Wen, Wenqi Fan, Dongsheng Li, Jiliang Tang, and Caihua Shan. 2024. How do large language mod-els understand graph patterns? a benchmark for graph pattern comprehension. 
+
+arXiv preprint arXiv:2410.05298 (2024). [7] Nouha Dziri, Ximing Lu, Melanie Sclar, Xiang Lorraine Li, Liwei Jiang, Bill Yuchen Lin, Peter West, Chandra Bhagavatula, Ronan Le Bras, Jena D. Hwang, Soumya Sanyal, Sean Welleck, Xiang Ren, Allyson Ettinger, Zaid Harchaoui, and Yejin Choi. 2023. Faith and fate: limits of transformers on compositionality. In Proceed-ings of the 37th International Conference on Neural Information Processing Systems 
+
+(New Orleans, LA, USA) (NIPS ’23) . Curran Associates Inc., Red Hook, NY, USA, Article 3081, 40 pages. [8] Bahare Fatemi, Jonathan Halcrow, and Bryan Perozzi. 2024. Talk like a Graph: Encoding Graphs for Large Language Models. [9] Michael Galkin, Jincheng Zhou, Bruno Ribeiro, Jian Tang, and Zhaocheng Zhu. 2024. A foundation model for zero-shot logical query reasoning. Advances in Neural Information Processing Systems 37 (2024), 54137–54160. [10] Graeme S Halford, William H Wilson, and Steven Phillips. 2010. Relational knowledge: The foundation of higher cognition. Trends in cognitive sciences 14, 11 (2010), 497–505. [11] Keith J Holyoak. 2012. 13 Analogy and Relational Reasoning. The Oxford handbook of thinking and reasoning (2012), 234. [12] John E Hummel and Keith J Holyoak. 2003. A symbolic-connectionist theory of relational inference and generalization. Psychological review 110, 2 (2003), 220. [13] Bowen Jin, Gang Liu, Chi Han, Meng Jiang, Heng Ji, and Jiawei Han. 2024. Large Language Models on Graphs: A Comprehensive Survey. IEEE Trans. on Knowl. and Data Eng. 36, 12 (Dec. 2024), 8622–8642. doi:10.1109/TKDE.2024.3469578 [14] Thomas N. Kipf and Max Welling. 2017. Semi-Supervised Classification with Graph Convolutional Networks. In 5th International Conference on Learning Representations, ICLR 2017, Toulon, France, April 24-26, 2017, Conference Track Proceedings . OpenReview.net. https://openreview.net/forum?id=SJU4ayYgl [15] Brenden M Lake, Tomer D Ullman, Joshua B Tenenbaum, and Samuel J Gershman. 2017. Building machines that learn and think like people. Behavioral and brain sciences 40 (2017), e253. [16] Jiawei Liu, Cheng Yang, Zhiyuan Lu, Junze Chen, Yibo Li, Mengmei Zhang, Ting Bai, Yuan Fang, Lichao Sun, Philip S Yu, et al . 2023. Towards graph foundation models: A survey and beyond. arXiv preprint arXiv:2310.11829 (2023). [17] Jiawei Liu, Cheng Yang, Zhiyuan Lu, Junze Chen, Yibo Li, Mengmei Zhang, Ting Bai, Yuan Fang, Lichao Sun, Philip S Yu, et al . 2025. Graph foundation models: Concepts, opportunities and challenges. IEEE Transactions on Pattern Analysis and Machine Intelligence (2025). [18] Ian R McKenzie, Alexander Lyzhov, Michael Pieler, Alicia Parrish, Aaron Mueller, Ameya Prabhu, Euan McLean, Aaron Kirtland, Alexis Ross, Alisa Liu, et al . 2023. Inverse scaling: When bigger isn’t better. arXiv preprint arXiv:2306.09479 (2023). [19] Oscar Méndez-Lucio, Christos A Nicolaou, and Berton Earnshaw. 2024. MolE: a foundation model for molecular graphs using disentangled attention. Nature Communications 15, 1 (2024), 9431. [20] Parsa Mirtaheri, Ezra Edelman, Samy Jelassi, Eran Malach, and Enric Boix-Adsera. 2025. Let Me Think! A Long Chain-of-Thought Can Be Worth Exponentially Many Short Ones. arXiv preprint arXiv:2505.21825 (2025). [21] Steven Pinker. 1998. Words and rules. Lingua 106, 1-4 (1998), 219–242. [22] Clayton Sanford, Bahare Fatemi, Ethan Hall, Anton Tsitsulin, Mehran Kazemi, Jonathan Halcrow, Bryan Perozzi, and Vahab Mirrokni. 2024. Understanding transformer reasoning capabilities via graph algorithms. Advances in Neural Information Processing Systems 37 (2024), 78320–78370. [23] Martin Simonovsky and Nikos Komodakis. 2018. Graphvae: Towards generation of small graphs using variational autoencoders. In International conference on artificial neural networks . Springer, 412–422. [24] Edward E Smith, Christopher Langston, and Richard E Nisbett. 1992. The case for rules in reasoning. Cognitive science 16, 1 (1992), 1–40. [25] Charlie Victor Snell, Jaehoon Lee, Kelvin Xu, and Aviral Kumar. 2025. Scaling LLM test-time compute optimally can be more effective than scaling parameters for reasoning. In The Thirteenth International Conference on Learning Representations .[26] Heng Wang, Shangbin Feng, Tianxing He, Zhaoxuan Tan, Xiaochuang Han, and Yulia Tsvetkov. 2023. Can language models solve graph problems in natural language? Advances in Neural Information Processing Systems 36 (2023), 30840– 30861. [27] Zehong Wang, Zheyuan Liu, Tianyi Ma, Jiazheng Li, Zheyuan Zhang, Xingbo Fu, Yiyang Li, Zhengqing Yuan, Wei Song, Yijun Ma, et al . 2025. Graph Foundation Models: A Comprehensive Survey. arXiv preprint arXiv:2505.15116 (2025). [28] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, Ed H. Chi, Quoc V. Le, and Denny Zhou. 2022. Chain-of-thought prompting elicits reasoning in large language models. In Proceedings of the 36th International Conference on Neural Information Processing Systems (New Orleans, LA, USA) 
+
+(NIPS ’22) . Curran Associates Inc., Red Hook, NY, USA, Article 1800, 14 pages. [29] Yudong Xu, Wenhao Li, Pashootan Vaezipoor, Scott Sanner, and Elias B Khalil. 2023. Llms and the abstraction and reasoning corpus: Successes, failures, and the importance of object-based representations. arXiv preprint arXiv:2305.18354 
+
+(2023). [30] Zhitao Ying, Jiaxuan You, Christopher Morris, Xiang Ren, Will Hamilton, and Jure Leskovec. 2018. Hierarchical graph representation learning with differentiable pooling. Advances in neural information processing systems 31 (2018). [31] Muhan Zhang and Yixin Chen. 2018. Link prediction based on graph neural networks. Advances in neural information processing systems 31 (2018). [32] Haiteng Zhao, Shengchao Liu, Ma Chang, Hannan Xu, Jie Fu, Zhihong Deng, Ling-peng Kong, and Qi Liu. 2023. Gimlet: A unified graph-text model for instruction-based molecule zero-shot learning. Advances in neural information processing systems 36 (2023), 5850–5887. 
+
+## A Instance Generation Framework A.1 Graph Generators 
+
+We employ multiple graph generators to ensure comprehensive coverage of structural patterns: 
+
+• Random : Erdős-Rényi 𝐺 (𝑛, 𝑝 ) model with edge probability 
+
+𝑝 = 0.3
+
+• Connected : Watts-Strogatz small-world graphs (guaranteed connected) 
+
+• Trees : Generated by extracting a BFS spanning tree from a connected Watts–Strogatz small-world graph 
+
+• Star : Center node connected to 𝑛 − 1 leaves 
+
+• Bipartite : Two-partition graphs with random inter-partition edges 
+
+• Multi-Component : Exactly 2 disconnected components 
+
+## A.2 Size Patterns 
+
+Size patterns control how few-shot learning occurs by varying both the number of examples and their size . We design two pattern groups to isolate different learning challenges: 
+
+Main Dataset Patterns (varying number of examples): 
+
+• scale_up_3 [5, 10, 15]: Test on 15-node graph after seeing a 5-node and a 10-node example 
+
+• scale_up_4 [5, 10, 15, 15]: Test on 15-node graph after see-ing a 5-node, a 10-node, and a 15-node example 
+
+Scaling Dataset Patterns (testing final graph size): 
+
+• cap10_3 [10, 10, 10]: Baseline with all 10-node graphs 
+
+• cap25_3 [10, 10, 25]: Test on 25-node graph after seeing two 10-node examples 
+
+• cap50_3 [10, 10, 50]: Test on 50-node graph after 2 10-node examples 
+
+• cap100_3 [10, 10, 100]: Test on 100-node graph after seeing two 10-node examples 
+
+• cap250_3 [10, 10, 250]: Test on 250-node graph after seeing two 10-node examples KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Saku Peltonen, August Bøgh Rønberg, Andreas Plesner, and Roger Wattenhofer 
+
+Role Prompt 
+
+Analyst "You are a graph analyst. Study the following graph examples carefully and answer the ques-tion that follows." Programmer "You are a graph algorithm developer. Analyze the example graphs and their patterns, then answer the question about the given input." Teacher "You are a mathematics teacher. Examine these graph examples to understand any patterns, then answer the question clearly and methodically." None No system prompt provided 
+
+## A.3 Property validation system 
+
+To ensure task validity and meaningful evaluation, we implement a comprehensive property validation system. Each task declares required graph properties (e.g., connectivity, specific degree dis-tributions), and our generation pipeline validates that produced graphs satisfy these constraints. The validation system uses a three-state property framework: 
+
+• TRUE : Property is guaranteed by the generator 
+
+• FALSE : Property is incompatible with the generator 
+
+• MAYBE : Property may or may not hold depending on ran-dom generation This framework enables efficient validation by skipping guaran-teed properties and immediately rejecting incompatible generator-transformation combinations. Additionally, we verify that each transformation produces well-defined transformations on the ex-ample graphs, ensuring that the learning problem is neither trivial nor ill-posed. 
+
+## B Experimental Design for LLM Evaluation 
+
+This section outlines how we evaluate GraphARC on language mod-els. We test the models separately on the full output and question-based pathways. We also test the effect of graph encoding schemes and system prompts on model performance. 
+
+## B.1 Graph Encoding Schemes 
+
+Graph structures must be converted to text for language model processing. We implement two encoding schemes that emphasize different structural properties: 
+
+Adjacency List Format : This encoding lists all edges as node pairs. It may facilitate reasoning about paths and global properties. An example encoding for a path graph is shown below: In an undirected graph, (i,j) means that node i and node j are connected with an undirected edge. G describes a graph among nodes 0, 1, 2, 3, 4. The edges in G are: (0,1) (1,2) (2,3) (3,4). The following nodes are colored: 1, 2, 3. 
+
+Incidence List Format : This encoding lists all nodes in the immediate neighborhood for each node. Degree and local transfor-mation based tasks may benefit from this format. G describes a graph among nodes 0, 1, 2, 3, 4. In this graph: Node 0 is connected to nodes 1. Node 1 is connected to nodes 0, 2. Node 2 is connected to nodes 1, 3. Node 3 is connected to nodes 2, 4. Node 4 is connected to nodes 3. The following nodes are colored: 1, 2, 3. 
+
+## B.2 System Prompt Variation 
+
+We experiment with 3 different system prompts that frame the task from different professional perspectives, as well as a baseline with no system prompt. Analyst emphasizes systematic analysis, 
+
+Programmer invokes algorithmic thinking, and Teacher encourages explanation. The full prompts are shown below: System prompts show minimal and inconsistent effects across models. Most models vary less than 5% between prompts, with no prompt consistently outperforming others. Qwen3-4b again shows highest sensitivity (up to 23.8% variation), but the pattern is model-specific rather than systematic. Notably, the “none" baseline equals or exceeds role-based prompts several times, suggesting that explicit role assignment may interfere with models’ natural reasoning strategies for abstract tasks. 
+
+## C Full results GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+Table 6: Accuracy on full-output tasks across models. Values are mean accuracies with 95% confidence intervals (computed using scipy.stats.bootstrap with percentile method). 
+
+Task LLaMA3 8b LLaMA3.1 8b DeepSeek-R1 LLaMA-8b GPT 4.1-nano o1 mini o3 mini o4 mini GPT 5removeDegree3 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.25 ± 0.25 0.50 ± 0.29 0.75 ± 0.23 
+
+colorDegree3 0.00 ± 0.00 0.00 ± 0.00 0.10 ± 0.09 0.00 ± 0.00 0.00 ± 0.00 0.67 ± 0.27 0.42 ± 0.25 0.58 ± 0.25 
+
+colorEquidistant 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.38 ± 0.31 0.50 ± 0.38 0.75 ± 0.31 0.75 ± 0.25 
+
+colorMaxDegree 0.03 ± 0.05 0.25 ± 0.14 0.04 ± 0.05 0.25 ± 0.12 0.25 ± 0.25 0.33 ± 0.25 0.58 ± 0.25 0.67 ± 0.27 
+
+colorDistanceAtLeast2 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.08 ± 0.12 0.83 ± 0.21 0.92 ± 0.12 0.92 ± 0.12 
+
+removeDegree2 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.42 ± 0.29 0.75 ± 0.25 0.92 ± 0.12 1.00 ± 0.00 
+
+edgeToNode 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.50 ± 0.25 0.88 ± 0.16 0.94 ± 0.09 1.00 ± 0.00 
+
+colorMinDegree 0.00 ± 0.00 0.02 ± 0.03 0.29 ± 0.12 0.12 ± 0.09 0.67 ± 0.25 0.75 ± 0.25 0.67 ± 0.25 0.83 ± 0.21 
+
+colorDegree2 0.00 ± 0.00 0.00 ± 0.00 0.06 ± 0.07 0.04 ± 0.05 0.42 ± 0.25 0.92 ± 0.12 1.00 ± 0.00 1.00 ± 0.00 
+
+mergeAtBlue 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.75 ± 0.38 1.00 ± 0.00 1.00 ± 0.00 1.00 ± 0.00 
+
+removeSameColorEdges 0.00 ± 0.00 0.02 ± 0.04 0.21 ± 0.10 0.02 ± 0.03 0.75 ± 0.23 0.75 ± 0.25 1.00 ± 0.00 1.00 ± 0.00 
+
+bipartitionCompletion 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.75 ± 0.38 1.00 ± 0.00 1.00 ± 0.00 1.00 ± 0.00 
+
+blueSubgraph 0.00 ± 0.00 0.03 ± 0.04 0.56 ± 0.12 0.17 ± 0.09 0.75 ± 0.20 0.75 ± 0.20 0.75 ± 0.19 0.75 ± 0.19 
+
+complementGraph 0.08 ± 0.07 0.17 ± 0.09 0.16 ± 0.09 0.05 ± 0.05 0.69 ± 0.22 1.00 ± 0.00 0.94 ± 0.12 1.00 ± 0.00 
+
+colorInternal 0.23 ± 0.13 0.23 ± 0.09 0.20 ± 0.10 0.25 ± 0.09 0.62 ± 0.22 1.00 ± 0.00 0.88 ± 0.16 1.00 ± 0.00 
+
+colorComponents 0.00 ± 0.00 0.06 ± 0.09 0.44 ± 0.25 0.19 ± 0.19 1.00 ± 0.00 0.75 ± 0.38 1.00 ± 0.00 1.00 ± 0.00 
+
+colorNeighbors 0.02 ± 0.04 0.19 ± 0.09 0.14 ± 0.08 0.44 ± 0.12 0.94 ± 0.09 0.94 ± 0.09 1.00 ± 0.00 0.88 ± 0.16 
+
+colorPath 0.15 ± 0.15 0.16 ± 0.12 0.09 ± 0.09 0.31 ± 0.16 0.88 ± 0.19 1.00 ± 0.00 1.00 ± 0.00 1.00 ± 0.00 
+
+removeDegree1 0.13 ± 0.10 0.19 ± 0.09 0.34 ± 0.10 0.19 ± 0.10 0.75 ± 0.22 1.00 ± 0.00 1.00 ± 0.00 1.00 ± 0.00 
+
+colorDegree1 0.09 ± 0.09 0.25 ± 0.11 0.45 ± 0.12 0.27 ± 0.11 0.88 ± 0.16 1.00 ± 0.00 1.00 ± 0.00 1.00 ± 0.00 
+
+addHub 0.12 ± 0.09 0.38 ± 0.12 0.50 ± 0.12 0.20 ± 0.09 0.75 ± 0.20 1.00 ± 0.00 1.00 ± 0.00 1.00 ± 0.00 
+
+average 0.04 0.09 0.17 0.12 0.58 0.81 0.87 0.91 
+
+Task Qwen3 1.7b Qwen3 4b Qwen3 8b Qwen3 14b Qwen3 32b Mistral 7b-v0.2 OLMo-2 7b bipartitionCompletion 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 
+
+removeDegree2 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 
+
+colorDistanceAtLeast2 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 
+
+removeDegree3 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.02 ± 0.03 0.02 ± 0.03 0.00 ± 0.00 0.00 ± 0.00 
+
+mergeAtBlue 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.12 ± 0.16 0.00 ± 0.00 0.00 ± 0.00 
+
+colorEquidistant 0.03 ± 0.05 0.00 ± 0.00 0.00 ± 0.00 0.00 ± 0.00 0.16 ± 0.12 0.00 ± 0.00 0.03 ± 0.05 
+
+colorDegree3 0.02 ± 0.03 0.10 ± 0.08 0.10 ± 0.09 0.29 ± 0.12 0.06 ± 0.06 0.00 ± 0.00 0.00 ± 0.00 
+
+complementGraph 0.02 ± 0.02 0.11 ± 0.08 0.11 ± 0.07 0.19 ± 0.09 0.17 ± 0.09 0.00 ± 0.00 0.00 ± 0.00 
+
+colorDegree2 0.00 ± 0.00 0.04 ± 0.05 0.02 ± 0.03 0.42 ± 0.15 0.15 ± 0.09 0.00 ± 0.00 0.00 ± 0.00 
+
+edgeToNode 0.00 ± 0.00 0.02 ± 0.02 0.08 ± 0.06 0.25 ± 0.11 0.33 ± 0.12 0.00 ± 0.00 0.00 ± 0.00 
+
+removeSameColorEdges 0.00 ± 0.00 0.17 ± 0.09 0.23 ± 0.12 0.46 ± 0.14 0.48 ± 0.14 0.00 ± 0.00 0.00 ± 0.00 
+
+removeDegree1 0.16 ± 0.09 0.30 ± 0.10 0.28 ± 0.11 0.41 ± 0.12 0.36 ± 0.11 0.10 ± 0.08 0.03 ± 0.04 
+
+colorInternal 0.20 ± 0.09 0.34 ± 0.12 0.38 ± 0.11 0.44 ± 0.12 0.27 ± 0.10 0.04 ± 0.05 0.05 ± 0.05 
+
+colorMinDegree 0.08 ± 0.07 0.27 ± 0.13 0.40 ± 0.14 0.58 ± 0.14 0.60 ± 0.12 0.00 ± 0.00 0.00 ± 0.00 
+
+colorMaxDegree 0.10 ± 0.08 0.48 ± 0.12 0.46 ± 0.14 0.52 ± 0.14 0.38 ± 0.13 0.05 ± 0.06 0.00 ± 0.00 
+
+colorPath 0.25 ± 0.16 0.44 ± 0.17 0.47 ± 0.15 0.41 ± 0.17 0.50 ± 0.18 0.03 ± 0.05 0.00 ± 0.00 
+
+colorComponents 0.00 ± 0.00 0.31 ± 0.22 0.62 ± 0.25 0.62 ± 0.22 0.50 ± 0.25 0.07 ± 0.10 0.00 ± 0.00 
+
+colorDegree1 0.12 ± 0.08 0.55 ± 0.12 0.62 ± 0.12 0.88 ± 0.09 0.72 ± 0.11 0.04 ± 0.04 0.05 ± 0.05 
+
+blueSubgraph 0.22 ± 0.10 0.67 ± 0.12 0.70 ± 0.12 0.75 ± 0.11 0.73 ± 0.11 0.00 ± 0.00 0.03 ± 0.04 
+
+colorNeighbors 0.05 ± 0.05 0.73 ± 0.11 0.56 ± 0.12 0.88 ± 0.09 0.88 ± 0.08 0.04 ± 0.05 0.03 ± 0.04 
+
+addHub 0.25 ± 0.11 0.83 ± 0.09 0.77 ± 0.10 0.66 ± 0.12 0.66 ± 0.11 0.06 ± 0.07 0.00 ± 0.00 
+
+average 0.07 0.26 0.28 0.37 0.34 0.02 0.01 KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Saku Peltonen, August Bøgh Rønberg, Andreas Plesner, and Roger Wattenhofer 
+
+Table 7: Performance on question-based tasks on the input and output graphs across models. Values are mean accuracies. 
+
+Qwen3 1.7b Qwen3 4b Qwen3 8b Qwen3 14b Qwen3 32b Question type Input Output Input Output Input Output Input Output Input Output component count 0.71 0.59 0.93 0.55 0.94 0.62 0.96 0.56 0.83 0.54 
+
+edge count 0.33 0.27 0.82 0.54 0.91 0.61 0.98 0.67 0.75 0.55 
+
+has cycles 0.63 0.53 0.65 0.57 0.88 0.80 0.91 0.85 0.76 0.66 
+
+is connected 0.81 0.61 0.80 0.68 0.99 0.86 1.00 0.90 0.94 0.76 
+
+is tree 0.65 0.58 0.67 0.45 0.93 0.67 0.98 0.70 0.82 0.50 
+
+max degree 0.62 0.46 0.88 0.50 0.96 0.62 0.98 0.62 0.96 0.57 
+
+min degree 0.78 0.51 0.93 0.54 0.98 0.59 0.98 0.63 0.96 0.56 
+
+node count 0.62 0.39 0.92 0.30 0.99 0.62 0.99 0.39 0.97 0.49 
+
+full output — 0.08 — 0.29 — 0.30 — 0.41 — 0.37 
+
+GPT 4.1-nano o1 mini o3 mini o4 mini GPT 5Question type Input Output Input Output Input Output Input Output Input Output component count 0.77 0.59 0.94 0.65 0.95 0.79 0.91 0.89 0.87 0.89 
+
+edge count 0.80 0.46 0.92 0.76 1.00 0.94 1.00 0.98 0.97 0.98 
+
+has cycles 0.69 0.62 0.97 0.90 0.99 0.95 0.96 0.94 0.97 0.97 
+
+is connected 0.88 0.77 1.00 0.92 1.00 0.98 0.98 0.97 0.96 0.94 
+
+is tree 0.80 0.64 0.94 0.93 0.98 0.99 0.99 0.98 0.98 0.98 
+
+max degree 0.94 0.64 1.00 0.85 1.00 0.92 1.00 0.97 0.99 0.96 
+
+min degree 0.96 0.62 0.99 0.79 1.00 0.93 1.00 0.95 0.98 0.90 
+
+node count 0.96 0.49 0.99 0.63 1.00 0.83 1.00 0.69 1.00 0.61 
+
+full output — 0.13 — 0.58 — 0.82 — 0.87 — 0.91 
+
+LLaMA3 8b LLaMA3.1 8b DeepSeek-R1 LLaMA-8b Mistral 7b-v0.2 OLMo-2 7b Question type Input Output Input Output Input Output Input Output Input Output component count 0.12 0.16 0.24 0.26 0.61 0.27 0.19 0.24 0.20 0.28 
+
+edge count 0.07 0.06 0.15 0.11 0.26 0.11 0.14 0.04 0.11 0.04 
+
+has cycles 0.44 0.48 0.58 0.53 0.49 0.49 0.61 0.36 0.37 0.44 
+
+is connected 0.55 0.54 0.67 0.64 0.76 0.59 0.59 0.22 0.57 0.56 
+
+is tree 0.49 0.55 0.57 0.53 0.50 0.32 0.48 0.44 0.49 0.58 
+
+max degree 0.19 0.14 0.46 0.33 0.43 0.28 0.35 0.17 0.37 0.20 
+
+min degree 0.24 0.17 0.58 0.37 0.49 0.25 0.54 0.19 0.65 0.34 
+
+node count 0.35 0.12 0.63 0.32 0.34 0.15 0.55 0.19 0.38 0.19 
+
+full output — 0.05 — 0.11 — 0.19 — 0.02 — 0.01
