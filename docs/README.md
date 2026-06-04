@@ -6,52 +6,50 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-03
-- 运行时间：2026-06-03 22:39:52 UTC
+- 最新运行日期：2026-06-04
+- 运行时间：2026-06-04 21:25:03 UTC
 - 运行状态：成功
-- 本次总论文数：9
-- 精读区：0
+- 本次总论文数：10
+- 精读区：1
 - 速读区：9
 
 ### 今日简报（AI）
-今日速读3篇7分论文，聚焦检索增强生成（RAG）的前沿问题与安全风险。
-
-最值得关注《The Coverage Illusion》揭示生产RAG系统中检索前路由失败导致的级联错误，以及《SilentRetrieval》展示通过语义保持的对抗投毒劫持RAG的威胁。
-
-建议普通读者重点关注RAG系统的路由稳定性与数据投毒防御。
-- 详情：[/202606/03/README](/202606/03/README)
+今日重点精读《Generalizing Graph Foundation Models via Hyperbolic Retrieval-Augmented Generation》，并速读9篇RAG相关论文，涵盖自适应检索组合、对抗攻击与高效分块策略。最值得关注的是双曲空间方法在RAG中的前沿应用，以及针对黑盒RAG的隐式攻击新范式。建议深入研读精读论文中的双曲几何与检索增强融合思路，同时留意RAG系统在安全性上的潜在漏洞。
+- 详情：[/202606/04/README](/202606/04/README)
 
 ### 精读区论文标签
-- 本次无精读推荐。
+1. [Generalizing Graph Foundation Models via Hyperbolic Retrieval-Augmented Generation](/202606/04/2606.03307v2-generalizing-graph-foundation-models-via-hyperbolic-retrieval-augmented-generation)  
+   标签：评分：9.0/10、query:power-ticket
+   evidence：双曲空间检索增强生成用于图基础模型
 
 ### 速读区论文标签
-1. [ICICLE: Expanding Retrieval with In-Context Documents](/202606/03/2605.26902v1-icicle-expanding-retrieval-with-in-context-documents)  
+1. [Retriever Portfolios: A Principled Approach to Adaptive RAG](/202606/04/2605.31176v1-retriever-portfolios-a-principled-approach-to-adaptive-rag)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：上下文索引用于生成式检索
-2. [The Coverage Illusion: From Pre-retrieval Routing Failure to Post-retrieval Cascades in a Production RAG System](/202606/03/2605.27220v1-the-coverage-illusion-from-pre-retrieval-routing-failure-to-post-retrieval-cascades-in-a-production-rag-system)  
+   evidence：多检索器自适应RAG方法，可迁移至工作票场景
+2. [DiscourseFlip: An Oblique Discourse-Level Opinion Manipulation Attack against Black-box Retrieval-Augmented Generation](/202606/04/2606.01212v1-discourseflip-an-oblique-discourse-level-opinion-manipulation-attack-against-black-box-retrieval-augmented-generation)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：生产RAG系统分析与查询增强策略
-3. [SilentRetrieval: Hijacking Retrieval-Augmented Generation via Semantically-Preserving Adversarial Data Poisoning](/202606/03/2605.28074v1-silentretrieval-hijacking-retrieval-augmented-generation-via-semantically-preserving-adversarial-data-poisoning)  
+   evidence：基于图引导的RAG攻击方法
+3. [Efficient RAG with Intent-Aware Retrieval and Semantics-Preserving Chunking](/202606/04/2606.01240v1-efficient-rag-with-intent-aware-retrieval-and-semantics-preserving-chunking)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：检索增强生成攻击方法
-4. [GraphARC: A Comprehensive Benchmark for Graph-Based Abstract Reasoning](/202606/03/2605.31031v1-grapharc-a-comprehensive-benchmark-for-graph-based-abstract-reasoning)  
+   evidence：基于意图感知检索和语义保留分块的RAG方法
+4. [Structures Facilitate Retrieve, Rerank, and Generate](/202606/04/2606.03247v1-structures-facilitate-retrieve-rerank-and-generate)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：图结构抽象推理基准
-5. [Test-Time Training for Zero-Resource Dense Retrieval Reranking](/202606/03/2606.01070v1-test-time-training-for-zero-resource-dense-retrieval-reranking)  
+   evidence：面向文档对话的结构增强检索重排与生成
+5. [Automating Information Extraction and Retrieval for Industrial Spare Parts Pooling](/202606/04/2606.03367v1-automating-information-extraction-and-retrieval-for-industrial-spare-parts-pooling)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：用于RAG的稠密检索重排方法
-6. [Co-creation of AI technology, empowering curators of cultural heritage information and guarding research commons](/202606/03/2605.28481v1-co-creation-of-ai-technology-empowering-curators-of-cultural-heritage-information-and-guarding-research-commons)  
+   evidence：面向工业备件池化的混合RAG，可类比用于工作票检索
+6. [Chunking Methods on Retrieval-Augmented Generation - Effectiveness Evaluation Against Computational Cost and Limitations](/202606/04/2606.00881v1-chunking-methods-on-retrieval-augmented-generation---effectiveness-evaluation-against-computational-cost-and-limitations)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：文化遗产领域的RAG应用
-7. [RAISE: RAG Design as an Architecture Search Problem](/202606/03/2605.30029v1-raise-rag-design-as-an-architecture-search-problem)  
+   evidence：可迁移至工作票的RAG分块方法
+7. [RCEM: Embedder Equipped with Query Rewriting Skill for Robust Conversational Search in Distributional Shift](/202606/04/2606.01697v1-rcem-embedder-equipped-with-query-rewriting-skill-for-robust-conversational-search-in-distributional-shift)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：RAG超参数优化框架，可应用于工作票RAG
-8. [Knowledge Graph-Enhanced Zero-Shot Topic Classification: A Multi-Strategy Comparative Study](/202606/03/2605.30465v1-knowledge-graph-enhanced-zero-shot-topic-classification-a-multi-strategy-comparative-study)  
+   evidence：基于查询重写蒸馏的会话搜索RAG方法
+8. [MM-BizRAG: Rethinking Multimodal Retrieval-Augmented Generation for General Purpose Enterprise Q&A](/202606/04/2606.04231v1-mm-bizrag-rethinking-multimodal-retrieval-augmented-generation-for-general-purpose-enterprise-qa)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：使用知识图谱增强分类
-9. [UniD$^3$: A Knowledge Graph-Enhanced RAG Framework for Drug-Disease Discovery and Reasoning](/202606/03/2606.01394v1-unid3-a-knowledge-graph-enhanced-rag-framework-for-drug-disease-discovery-and-reasoning)  
+   evidence：面向企业问答的文档结构感知RAG，可用于电力系统文档
+9. [LazyAttention: Efficient Retrieval-Augmented Generation with Deferred Positional Encoding](/202606/04/2606.04302v1-lazyattention-efficient-retrieval-augmented-generation-with-deferred-positional-encoding)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：知识图增强RAG框架，与图基RAG直接相关
+   evidence：面向RAG的高效注意力机制
 
 
 <div class="dpr-home-promo-card">
