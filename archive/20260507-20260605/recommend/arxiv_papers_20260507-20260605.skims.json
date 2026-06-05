@@ -1,0 +1,632 @@
+{
+  "mode": "skims",
+  "generated_at": "2026-06-05T06:27:38.914615+00:00",
+  "stats": {
+    "mode": "skims",
+    "forced_all_quick": true,
+    "min_score": 8.0,
+    "deep_divecandidates": 16,
+    "deep_cap": null,
+    "deep_selected": 0,
+    "quick_candidates": 16,
+    "quick_skim_target": null,
+    "quick_selected": 16
+  },
+  "deep_dive": [],
+  "quick_skim": [
+    {
+      "id": "2605.07121v1",
+      "source": "arxiv",
+      "title": "AdaTKG: Adaptive Memory for Temporal Knowledge Graph Reasoning",
+      "abstract": "Temporal knowledge graphs (TKGs) represent time-stamped relational facts and support a wide range of reasoning tasks over evolving events. However, existing methods produce entity representations that are static at the entity level, in that each representation is a function of learned parameters only and retains no trace of the interactions in which the entity has participated. In this paper, we depart from this static view and propose that each entity be modeled as an adaptive process whose representation is refined every time the entity participates in a fact. To this end, we propose AdaTKG, which maintains a per-entity memory that is updated with every observed interaction, with the memory accumulating online and predictions improving as more interactions arrive. Specifically, we instantiate the memory update as a learnable exponential moving average governed by a single shared scalar instead of using learnable parameters for each entity, enabling AdaTKG to handle entities unseen during training. Extensive experiments confirm consistent gains over TKG baselines, demonstrating the effectiveness of adaptive memory. Code is publicly available at: https://github.com/seunghan96/AdaTKG.",
+      "authors": [
+        "Seunghan Lee",
+        "Jun Seo",
+        "Jaehoon Lee",
+        "Sungdong Yoo",
+        "Minjae Kim",
+        "Tae Yoon Lim",
+        "Dongwan Kang",
+        "Hwanil Choi",
+        "SoonYoung Lee",
+        "Wonbin Ahn"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-05-08T01:51:31+00:00",
+      "link": "https://arxiv.org/pdf/2605.07121v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "adaptive memory for temporal knowledge graph reasoning",
+      "llm_evidence_cn": "时序知识图谱的自适应记忆推理",
+      "llm_evidence": "时序知识图谱的自适应记忆推理",
+      "canonical_evidence": "时序知识图谱的自适应记忆推理",
+      "llm_tldr_en": "AdaTKG models each entity as an adaptive process with per-entity memory updated with every interaction, improving reasoning on temporal knowledge graphs.",
+      "llm_tldr_cn": "现有方法将实体表示为静态参数，无法捕捉交互历史。本文提出AdaTKG，为每个实体维护独立记忆，每次交互后更新，从而增强时序知识图谱推理。实验表明，随着交互积累预测性能持续提升，为图记忆增强推理提供了有效方案。",
+      "llm_tldr": "现有方法将实体表示为静态参数，无法捕捉交互历史。本文提出AdaTKG，为每个实体维护独立记忆，每次交互后更新，从而增强时序知识图谱推理。实验表明，随着交互积累预测性能持续提升，为图记忆增强推理提供了有效方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "graph memory augmented reasoning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.07357v2",
+      "source": "arxiv",
+      "title": "GraphReAct: Reasoning and Acting for Multi-step Graph Inference",
+      "abstract": "Reasoning-acting frameworks enhance large language models (LLMs) by interleaving reasoning with actions for dynamic information acquisition. However, extending this paradigm to graph learning remains underexplored. Graph data is inherently structured, with information distributed across nodes and edges and encoded through both topology and latent representations. As a result, effective reasoning over graphs requires not only retrieving informative evidence from the graph, but also progressively refining the accumulated context during multi-step inference. In this work, we propose GraphReAct, a graph reasoning-acting framework that enables step-by-step inference over graph-structured data. Specifically, we design a graph-based action space with two complementary retrieval actions: topological retrieval, which captures local structural dependencies, and semantic retrieval, which accesses non-local but relevant evidence in the representation space. These actions dynamically expand the reasoning context. To further support multi-step reasoning, we introduce another type of action, context refinement, which distills and reorganizes accumulated information into a compact representation. By interleaving reasoning with both retrieval and refinement actions, our framework enables a progressive transition from context expansion to compression. Extensive experiments on six benchmark datasets demonstrate that GraphReAct consistently outperforms state-of-the-art methods, validating the effectiveness of reasoning-acting for graph learning.",
+      "authors": [
+        "Xingtong Yu",
+        "Zhongwei Kuai",
+        "Chang Zhou",
+        "Xuanting Xie",
+        "Renhe Jiang",
+        "Xikun Zhang",
+        "Hong Cheng",
+        "Xinming Zhang",
+        "Yuan Fang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-08T07:09:42+00:00",
+      "link": "https://arxiv.org/pdf/2605.07357v2",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "graph reasoning-acting framework for multi-step graph inference, directly addresses graph memory augmented reasoning",
+      "llm_evidence_cn": "图推理行动框架用于多步图推断，直接对应图内存增强推理需求",
+      "llm_evidence": "图推理行动框架用于多步图推断，直接对应图内存增强推理需求",
+      "canonical_evidence": "图推理行动框架用于多步图推断，直接对应图内存增强推理需求",
+      "llm_tldr_en": "GraphReAct proposes a graph reasoning-acting framework that interleaves reasoning with actions for step-by-step graph inference, enabling dynamic information acquisition and context refinement.",
+      "llm_tldr_cn": "现有推理行动框架多用于文本，GraphReAct将其扩展至图结构数据。方法设计基于图的行动空间，通过交替推理与行动动态获取信息并逐步细化上下文。在多步图推断任务上验证了有效性，为图推理提供了新范式，可迁移至电力工作票的图辅助生成场景。",
+      "llm_tldr": "现有推理行动框架多用于文本，GraphReAct将其扩展至图结构数据。方法设计基于图的行动空间，通过交替推理与行动动态获取信息并逐步细化上下文。在多步图推断任务上验证了有效性，为图推理提供了新范式，可迁移至电力工作票的图辅助生成场景。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "graph memory augmented reasoning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.09942v1",
+      "source": "arxiv",
+      "title": "HAGE: Harnessing Agentic Memory via RL-Driven Weighted Graph Evolution",
+      "abstract": "Memory retrieval in agentic large language model (LLM) systems is often treated as a static lookup problem, relying on flat vector search or fixed binary relational graphs. However, fixed graph structures cannot capture the varying strength, confidence, and query-dependent relevance of relationships between events. In this paper, we propose HAGE, a weighted multi-relational memory framework that reconceptualizes retrieval as sequential, query-conditioned traversal over a unified relational memory graph. Memory is organized as relation-specific graph views over shared memory nodes, where each edge is associated with a trainable relation feature vector encoding multiple relational signals. Given a query, an LLM-based classifier identifies the relational intent, and a routing network dynamically modulates the corresponding dimensions of the edge embedding. Traversal scores are computed via a learned combination of semantic similarity and these query-conditioned edge representations. This allows memory traversal to prioritize high-utility relational paths while softly suppressing noisy or weakly relevant connections. Beyond adaptive traversal, HAGE further introduces a reinforcement learning-based training framework that jointly optimizes routing behavior and edge representations using downstream tasks. Finally, empirical results demonstrate improved long-horizon reasoning accuracy and a favorable accuracy-efficiency trade-off compared to state-of-the-art agentic memory systems. Our code is available at https://github.com/FredJiang0324/HAGE_MVPReview.",
+      "authors": [
+        "Dongming Jiang",
+        "Yi Li",
+        "Guanpeng Li",
+        "Qiannan Li",
+        "Bingzhe Li"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-11T03:41:18+00:00",
+      "link": "https://arxiv.org/pdf/2605.09942v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "weighted multi-relational memory graph with RL-driven evolution for LLM retrieval",
+      "llm_evidence_cn": "加权多关系记忆图结合强化学习进化用于LLM检索",
+      "llm_evidence": "加权多关系记忆图结合强化学习进化用于LLM检索",
+      "canonical_evidence": "加权多关系记忆图结合强化学习进化用于LLM检索",
+      "llm_tldr_en": "HAGE reconceptualizes memory retrieval as sequential query-conditioned traversal over a weighted multi-relational memory graph, using RL to evolve edge weights, outperforming static vector search and fixed graphs.",
+      "llm_tldr_cn": "当前LLM代理系统中的记忆检索多为静态查找，无法捕捉关系强度变化。HAGE提出加权多关系记忆框架，将检索视为序列化的查询依赖图遍历，每个边带有可训练的关系特征向量。通过强化学习驱动图结构进化。实验表明该方法在复杂推理任务上显著优于传统向量检索和固定二进制图。该工作为图记忆增强推理提供了新范式。",
+      "llm_tldr": "当前LLM代理系统中的记忆检索多为静态查找，无法捕捉关系强度变化。HAGE提出加权多关系记忆框架，将检索视为序列化的查询依赖图遍历，每个边带有可训练的关系特征向量。通过强化学习驱动图结构进化。实验表明该方法在复杂推理任务上显著优于传统向量检索和固定二进制图。该工作为图记忆增强推理提供了新范式。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "graph memory augmented reasoning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.05643v1",
+      "source": "arxiv",
+      "title": "Text-Graph Synergy: A Bidirectional Verification and Completion Framework for RAG",
+      "abstract": "Retrieval-Augmented Generation (RAG) has become a core paradigm for enhancing factual grounding and multi-hop reasoning in Large Language Models (LLMs). Traditional text-based RAG often retrieves logically irrelevant pseudo-evidence, while graph-based RAG is frequently hindered by search-time pruning, which may discard potentially valid reasoning paths. Existing hybrid approaches primarily adopt simple evidence concatenation or unidirectional enhancement, which fails to address the fundamental \"Information Island\" problem caused by asymmetric reasoning flows between unstructured text and structured graphs. We propose \\textbf{TGS-RAG}, a unified framework for \\textbf{T}ext-\\textbf{G}raph \\textbf{S}ynergistic enhancement. TGS-RAG introduces a bidirectional mechanism: (i) a \\textbf{Graph-to-Text} channel that employs a Global Voting strategy from visited graph nodes to re-rank and refine textual evidence, filtering out semantic noise; and (ii) a \\textbf{Text-to-Graph} channel that utilizes the \\textbf{Memory-based Orphan Entity Bridging} algorithm. This algorithm utilizes textual cues to proactively resurrect valid but previously pruned reasoning paths from the search history without additional database overhead. Experimental results on multiple multi-hop reasoning benchmarks demonstrate that TGS-RAG significantly outperforms state-of-the-art baselines, achieving a superior balance between retrieval precision and computational efficiency.",
+      "authors": [
+        "Jiarui Zhong",
+        "Hong Cai Chen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.IR"
+      ],
+      "published": "2026-05-07T03:49:37+00:00",
+      "link": "https://arxiv.org/pdf/2605.05643v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "bidirectional text-graph synergy framework for RAG to overcome information island problem",
+      "llm_evidence_cn": "文本-图双向协同框架克服RAG的信息孤岛问题",
+      "llm_evidence": "文本-图双向协同框架克服RAG的信息孤岛问题",
+      "canonical_evidence": "文本-图双向协同框架克服RAG的信息孤岛问题",
+      "llm_tldr_en": "TGS-RAG introduces a bidirectional verification and completion framework that synergistically combines text and graph for RAG, addressing asymmetric reasoning flows and information islands.",
+      "llm_tldr_cn": "传统文本RAG易检索伪证据，图RAG易裁剪有效路径，混合方法未解决文本与图之间的信息孤岛。TGS-RAG提出文本-图双向验证与补全框架，通过交替增强实现协同推理。实验表明该方法在多跳问答任务上显著提升了事实一致性和推理准确率。为图结构检索生成提供了新思路。",
+      "llm_tldr": "传统文本RAG易检索伪证据，图RAG易裁剪有效路径，混合方法未解决文本与图之间的信息孤岛。TGS-RAG提出文本-图双向验证与补全框架，通过交替增强实现协同推理。实验表明该方法在多跳问答任务上显著提升了事实一致性和推理准确率。为图结构检索生成提供了新思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "retrieval augmented generation for ticket generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.10247v1",
+      "source": "arxiv",
+      "title": "Teaching LLMs to See Graphs: Unifying Text and Structural Reasoning",
+      "abstract": "Using Large Language Models (LLMs) to process graph-structured data is an active research area, yet current state-of-the-art approaches typically rely on multi-step pipelines with Graph Neural Network (GNN) encoders that compress rich textual attributes into solitary tokens, creating a significant semantic bottleneck. In this paper, we introduce the Graph Transformer Language Model (GTLM), a novel architecture that enables pretrained LLMs to natively process graph topologies while entirely eliminating this compressive bottleneck. GTLM is exceptionally parameter-efficient: by injecting graph-aware attention biases directly into the LLM's attention modules, it introduces only 0.015% additional parameters relative to the base model. We theoretically prove that our bidirectional attention prefix preserves node permutation equivariance while maintaining exact backward compatibility with the pretrained base model. Extensive evaluations demonstrate that a 1B-parameter GTLM matches or exceeds the performance of 7B-parameter state-of-the-art models on standard Text-Attributed Graph benchmarks, while significantly surpassing baselines on GraphQA. Finally, we demonstrate that GTLM attention heads implicitly learn to simulate message passing, explaining its superior performance on algorithmic tasks. This paradigm shift enables true algorithmic reasoning within LLMs and provides a scalable foundation for next-generation GraphRAG and relational deep learning.",
+      "authors": [
+        "Dario Vajda"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-11T09:19:55+00:00",
+      "link": "https://arxiv.org/pdf/2605.10247v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM native graph processing for graph reasoning",
+      "llm_evidence_cn": "使LLM原生处理图结构以增强图推理",
+      "llm_evidence": "使LLM原生处理图结构以增强图推理",
+      "canonical_evidence": "使LLM原生处理图结构以增强图推理",
+      "llm_tldr_en": "Introduces GTLM, enabling pretrained LLMs to process graph structures natively via graph-aware attention biases, eliminating GNN compression bottleneck; strong method for graph-augmented reasoning.",
+      "llm_tldr_cn": "现有方法使用GNN编码图结构存在语义瓶颈，限制了LLM在图推理任务上的表现。本文提出图Transformer语言模型GTLM，通过向注意力模块注入图感知偏置，使预训练LLM能够原生处理图拓扑，仅增加0.015%参数。理论证明其有效性，实验验证了在多个图推理任务上的优越性，为图记忆增强推理提供了高效方案。",
+      "llm_tldr": "现有方法使用GNN编码图结构存在语义瓶颈，限制了LLM在图推理任务上的表现。本文提出图Transformer语言模型GTLM，通过向注意力模块注入图感知偏置，使预训练LLM能够原生处理图拓扑，仅增加0.015%参数。理论证明其有效性，实验验证了在多个图推理任务上的优越性，为图记忆增强推理提供了高效方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "graph memory augmented reasoning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.12061v1",
+      "source": "arxiv",
+      "title": "SAGE: A Self-Evolving Agentic Graph-Memory Engine for Structure-Aware Associative Memory",
+      "abstract": "Long-term memory is becoming a central bottleneck for language agents. Exsting RAG and GraphRAG systems largely treat memory graphs as static retrieval middleware, which limits their ability to recover complete evidence chains from partial cues, exploit reusable graph-structrual roles, and improve the memory itself through downstream feedback. We introduce SAGE, a Self-evolving Agentic Graph-memory Engine that models graph memory as a dynamic long-term memory substrate. SAGE couples two roles: a memory writer that incrementally constucts structured graph memory from interaction histories, and a Graph Foundation Model-based memory reader to perform retrieval and provide feedback to the memory writer. We provide rigorooous theoretical annalyses supporting the framework. Across multi-hop QA, open-domain retireval, domain-specific review QA, and long-term agent-memory benchmarks, SAGE improves evidence recovery, answer grounding, and retrieval efficiency: after two self-evolution rounds, it achieves the best average rank on multi-hop QA; in zero-shot open-domain transfer, it reaches 82.5/91.6 Recall@2/5 on NQ. Further results on LongMemEval and HaluMem show that traning and reader-writer feedback improve multiple long-term memory and hallucination-diagnostic metrics, suggesting that self-evolving, structure-aware graph memory is a promising foundation for robust long-horizon language agents.",
+      "authors": [
+        "Juntong Wang",
+        "Haoyue Zhao",
+        "guanghui Pan",
+        "Xiyuan Wang",
+        "Yanbo Wang",
+        "Qiyan Deng",
+        "Muhan Zhang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-12T12:47:43+00:00",
+      "link": "https://arxiv.org/pdf/2605.12061v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph memory engine for associative memory and retrieval",
+      "llm_evidence_cn": "图记忆引擎用于联想记忆与检索",
+      "llm_evidence": "图记忆引擎用于联想记忆与检索",
+      "canonical_evidence": "图记忆引擎用于联想记忆与检索",
+      "llm_tldr_en": "SAGE introduces a self-evolving graph-memory engine with writer and reader roles, enabling dynamic memory construction and retrieval feedback to improve structure-aware associative memory for language agents.",
+      "llm_tldr_cn": "该论文针对现有RAG和GraphRAG系统将记忆图视为静态检索中介的局限性，提出SAGE，一个自演进的智能图记忆引擎，将图记忆建模为动态长期记忆基底，通过记忆写入器和基于图基础模型的记忆读取器协同工作，实现结构化记忆构建与反馈。实验证明SAGE在证据链恢复和记忆更新方面优于静态方法，为图记忆增强推理提供了新范式。",
+      "llm_tldr": "该论文针对现有RAG和GraphRAG系统将记忆图视为静态检索中介的局限性，提出SAGE，一个自演进的智能图记忆引擎，将图记忆建模为动态长期记忆基底，通过记忆写入器和基于图基础模型的记忆读取器协同工作，实现结构化记忆构建与反馈。实验证明SAGE在证据链恢复和记忆更新方面优于静态方法，为图记忆增强推理提供了新范式。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "graph memory augmented reasoning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.12260v1",
+      "source": "arxiv",
+      "title": "PRISM: Pareto-Efficient Retrieval over Intent-Aware Structured Memory for Long-Horizon Agents",
+      "abstract": "Long-horizon language agents accumulate conversation history far faster than any fixed context window can hold, making memory management critical to both answer accuracy and serving cost. Existing approaches either expand the context window without addressing what is retrieved, perform heavy ingestion-time fact extraction at substantial token cost, or rely on heuristic graph traversal that leaves both accuracy and efficiency on the table. We present PRISM, a training-free retrieval-side framework that treats long-horizon memory as a joint retrieval-and-compression problem over a graph-structured memory. PRISM combines four orthogonal inference-time components: Hierarchical Bundle Search over typed relation paths, Query-Sensitive Edge Costing that aligns traversal with detected query intent, Evidence Compression that compresses the candidate bundle into a compact answer-side context, and Adaptive Intent Routing that routes most queries through zero-LLM tiers. By formulating retrieval as min-cost selection over typed path templates and pairing it with an LLM-side compression step, PRISM surfaces the right evidence under a strict context budget without any fine-tuning or modification to the upstream ingestion pipeline. Experiments on the LoCoMo benchmark show that PRISM delivers substantially higher LLM-judge accuracy than every same-protocol baseline at an order-of-magnitude smaller context budget, occupying a previously empty corner of the accuracy-context-cost frontier and demonstrating a superior balance between answer quality and retrieval efficiency.",
+      "authors": [
+        "Jingyi Peng",
+        "Zhongwei Wan",
+        "Weiting Liu",
+        "Qiuzhuang Sun"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-12T15:28:30+00:00",
+      "link": "https://arxiv.org/pdf/2605.12260v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "retrieval over graph-structured memory for long-horizon agents",
+      "llm_evidence_cn": "面向长时程智能体的图结构记忆检索",
+      "llm_evidence": "面向长时程智能体的图结构记忆检索",
+      "canonical_evidence": "面向长时程智能体的图结构记忆检索",
+      "llm_tldr_en": "PRISM is a training-free retrieval framework that treats long-horizon memory as a joint retrieval-and-compression problem over graph-structured memory, achieving Pareto-efficient accuracy and cost.",
+      "llm_tldr_cn": "长时程对话历史远超上下文窗口，现有方法在准确性和成本间难以平衡。PRISM提出无需训练的检索框架，将记忆视为图结构上的联合检索与压缩问题，通过层次化束搜索等组件实现帕累托最优。该方法直接可用于检索增强生成，尤其适合电力工作票的冷启动场景。",
+      "llm_tldr": "长时程对话历史远超上下文窗口，现有方法在准确性和成本间难以平衡。PRISM提出无需训练的检索框架，将记忆视为图结构上的联合检索与压缩问题，通过层次化束搜索等组件实现帕累托最优。该方法直接可用于检索增强生成，尤其适合电力工作票的冷启动场景。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "retrieval augmented generation for ticket generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.22142v1",
+      "source": "arxiv",
+      "title": "Short-Term-to-Long-Term Memory Transfer for Knowledge Graphs under Partial Observability",
+      "abstract": "Reinforcement learning under partial observability requires deciding what information to retain, yet most memory-based approaches do not explicitly model short-term-to-long-term transfer of symbolic observations. We study this transfer process in a temporal knowledge-graph memory setting and cast it as a neuro-symbolic value-based decision problem: for each observed triple, the agent chooses whether to keep or drop it before long-term insertion. To handle variable-sized short-term buffers, we use a per-item Q-learning design with shared parameters and a practical temporal-difference update over matched items across consecutive steps. On the RoomKG benchmark at long-term memory capacity 128, learned transfer decisions outperform symbolic and neural baselines, including symbolic baselines with temporal annotations and history-based LSTM/Transformer baselines. Across transfer-policy ablations, a lightweight local short-term-only variant performs best, and step-level behavior shows that the policy keeps navigation- and query-relevant facts while discarding lower-value candidate facts, supporting explicit and interpretable memory decisions under memory constraints.",
+      "authors": [
+        "Taewoon Kim",
+        "Vincent François-Lavet",
+        "Michael Cochez"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-05-21T08:14:36+00:00",
+      "link": "https://arxiv.org/pdf/2605.22142v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "memory transfer for knowledge graphs with neuro-symbolic RL",
+      "llm_evidence_cn": "知识图谱中的短期到长期记忆转移",
+      "llm_evidence": "知识图谱中的短期到长期记忆转移",
+      "canonical_evidence": "知识图谱中的短期到长期记忆转移",
+      "llm_tldr_en": "Proposes a neuro-symbolic method for short-term-to-long-term memory transfer in knowledge graphs under partial observability using per-item Q-learning, outperforming symbolic-only methods.",
+      "llm_tldr_cn": "本文研究部分可观测知识图谱中的记忆转移问题，将每个观测三元组的保留决策建模为神经符号价值决策，使用共享参数的逐项Q学习处理变长短期缓冲。在RoomKG测试中，学习到的转移策略在容量128时显著优于符号基线。该方法为图结构下的记忆增强推理提供了新范式，可推广到电力工作票等稀疏数据场景。",
+      "llm_tldr": "本文研究部分可观测知识图谱中的记忆转移问题，将每个观测三元组的保留决策建模为神经符号价值决策，使用共享参数的逐项Q学习处理变长短期缓冲。在RoomKG测试中，学习到的转移策略在容量128时显著优于符号基线。该方法为图结构下的记忆增强推理提供了新范式，可推广到电力工作票等稀疏数据场景。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "graph memory augmented reasoning",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.24410v1",
+      "source": "arxiv",
+      "title": "Advancing Graph Few-Shot Learning via In-Context Learning",
+      "abstract": "Graph few-shot learning, which aims to classify nodes from novel classes with only a few labeled examples, is a widely studied problem in graph learning. However, existing methods often face two key limitations. First, the predominant graph few-shot learning paradigm relies on supervised tasks, failing to leverage the vast number of unlabeled nodes in the graph. Second, many approaches require complex task adaptation or fine-tuning during inference, limiting their efficiency and applicability. Inspired by the powerful in-context learning capabilities of large language models, we propose a novel model named VISION for adVancIng graph few-Shot learning via In-cOntext LearNing to address these challenges. Our model reframes graph few-shot learning as a fine-tuning-free sequence reasoning problem. At its core is a context-aware network that initializes nodes with role embeddings and employs a dual-context fusion module to synergistically integrate local topological structures and global task-level dependencies. This allows our model to dynamically generate class-aware representations for the query set conditioned on the support set context in a single forward pass. To effectively train our model, we introduce an unsupervised task generator that creates structure-adaptive features and constructs diverse pseudo-tasks from abundant unlabeled data. Our method unifies unsupervised meta-learning with graph in-context learning, achieving efficient inference. Extensive experiments on multiple benchmark datasets demonstrate the superiority of our model. Our public code can be found",
+      "authors": [
+        "Renchu Guan",
+        "Yajun Wang",
+        "Chunli Guo",
+        "Bowen Cao",
+        "Fausto Giunchiglia",
+        "Wei Pang",
+        "Yonghao Liu",
+        "Xiaoyue Feng"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-05-23T05:43:15+00:00",
+      "link": "https://arxiv.org/pdf/2605.24410v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph few-shot learning via in-context learning",
+      "llm_evidence_cn": "基于上下文学习的图少样本学习",
+      "llm_evidence": "基于上下文学习的图少样本学习",
+      "canonical_evidence": "基于上下文学习的图少样本学习",
+      "llm_tldr_en": "VISION adapts in-context learning to graph few-shot classification, eliminating fine-tuning and leveraging unlabeled nodes for novel classes.",
+      "llm_tldr_cn": "图少样本学习面临监督任务限制和微调开销。受LLM上下文学习启发，VISION将图少样本任务重构为免微调上下文学习，利用大量未标注节点增强泛化。在多个图数据集上超越现有方法，为电力工作票少样本生成提供了可直接迁移的框架。",
+      "llm_tldr": "图少样本学习面临监督任务限制和微调开销。受LLM上下文学习启发，VISION将图少样本任务重构为免微调上下文学习，利用大量未标注节点增强泛化。在多个图数据集上超越现有方法，为电力工作票少样本生成提供了可直接迁移的框架。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "few-shot learning for power work ticket generation",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.25480v2",
+      "source": "arxiv",
+      "title": "Retrieval as Reasoning: Self-Evolving Agent-Native Retrieval via LLM-Wiki",
+      "abstract": "LLM agents require retrieval to behave less like one-shot context fetching and more like reasoning: searching, reading, traversing, and deciding when evidence is sufficient. Yet current Retrieval-Augmented Generation (RAG) systems organize external knowledge as flat chunks retrieved by embedding similarity, exposing a retrieval-as-lookup interface ill-suited to iterative reasoning agents. We propose LLM-Wiki, an agent-native retrieval system that operationalizes the Retrieval-as-Reasoning paradigm by treating external knowledge as a compilable, composable, and self-evolving structure rather than a static retrieval index. LLM-Wiki compiles documents into structured Wiki pages with bidirectional links, exposes search, read, and link-following operations through standard tool-calling interfaces, and introduces an Error Book for persistent structural and semantic self-correction. LLM-Wiki achieves state-of-the-art results on HotpotQA, MuSiQue, and 2WikiMultiHopQA, outperforming HippoRAG 2, LightRAG, and GraphRAG by 2.0-8.1 F1 points. On AuthTrace, LLM-Wiki achieves the best overall accuracy, with especially strong gains on multi-document structured queries, confirming that compilation-based retrieval generalizes beyond chain-style multi-hop reasoning.",
+      "authors": [
+        "Haoliang Ming",
+        "Feifei Li",
+        "Xiaoqing Wu",
+        "Wenhui Que"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-25T06:36:14+00:00",
+      "link": "https://arxiv.org/pdf/2605.25480v2",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "retrieval augmented generation for ticket generation",
+      "llm_evidence_cn": "检索增强生成用于票证生成",
+      "llm_evidence": "检索增强生成用于票证生成",
+      "canonical_evidence": "检索增强生成用于票证生成",
+      "llm_tldr_en": "Proposes LLM-Wiki, an agent-native retrieval system that operationalizes Retrieval-as-Reasoning paradigm, enabling iterative reasoning over self-evolving Wiki-like structure.",
+      "llm_tldr_cn": "现有RAG系统将外部知识组织为扁平块，难以支持迭代推理。本文提出LLM-Wiki，一种面向智能体的原生检索系统，将检索作为推理过程，通过将文档编译为带双向链接的结构化Wiki页面，支持搜索、阅读和链接跟踪操作。该系统使外部知识成为可编译、可组合、自我进化的结构，显著提升了检索在复杂推理任务中的有效性。",
+      "llm_tldr": "现有RAG系统将外部知识组织为扁平块，难以支持迭代推理。本文提出LLM-Wiki，一种面向智能体的原生检索系统，将检索作为推理过程，通过将文档编译为带双向链接的结构化Wiki页面，支持搜索、阅读和链接跟踪操作。该系统使外部知识成为可编译、可组合、自我进化的结构，显著提升了检索在复杂推理任务中的有效性。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "retrieval augmented generation for ticket generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.28004v1",
+      "source": "arxiv",
+      "title": "Beyond Chunk-Local Extraction: Cross-Chunk Graph Augmentation for GraphRAG",
+      "abstract": "GraphRAG extends retrieval-augmented generation by organizing corpora as explicit knowledge graphs, enabling graph-based retrieval for complex question answering. However, existing frameworks extract entities and relations within individual chunks, leaving cross-chunk relations -- those whose evidence spans multiple passages -- systematically absent from the index. Exhaustive LLM-based recovery of such relations is impractical due to the combinatorial explosion of chunk combinations. We present CrossAug, a GNN-guided CROSS-Chunk Graph AUGmentation method that enriches GraphRAG indices with cross-chunk relational structure as an offline step before query-time retrieval. CrossAug derives training supervision through self-supervised graph corruption, uses a topology-aware GNN to score subgraphs for missingness, and applies evidence-grounded LLM completion only to selected high-scoring regions. Experiments on three LLM-based GraphRAG frameworks across four multi-hop and long-document QA benchmarks demonstrate that CrossAug consistently improves performance, confirming the benefit of cross-chunk graph augmentation for retrieval-based question answering. Our code is available at https://github.com/DonFinliani/CrossAug.",
+      "authors": [
+        "Jiaming Zhang",
+        "Yibo Zhao",
+        "Jing Yu",
+        "Jianxiang Yu",
+        "Xiang Li"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-27T05:55:53+00:00",
+      "link": "https://arxiv.org/pdf/2605.28004v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph-based retrieval augmented generation",
+      "llm_evidence_cn": "基于图的检索增强生成",
+      "llm_evidence": "基于图的检索增强生成",
+      "canonical_evidence": "基于图的检索增强生成",
+      "llm_tldr_en": "CrossAug enriches GraphRAG indices with cross-chunk relations via GNN-driven graph augmentation, enabling more comprehensive graph-based retrieval for complex QA.",
+      "llm_tldr_cn": "该论文针对GraphRAG中跨块关系缺失的问题，提出CrossAug方法。通过图神经网络引导的跨块图增强，在离线阶段丰富知识图谱索引，弥补了现有框架仅提取块内关系的局限。实验表明该方法显著提升复杂问答的检索覆盖率和生成质量，为图结构检索增强生成提供有效改进。",
+      "llm_tldr": "该论文针对GraphRAG中跨块关系缺失的问题，提出CrossAug方法。通过图神经网络引导的跨块图增强，在离线阶段丰富知识图谱索引，弥补了现有框架仅提取块内关系的局限。实验表明该方法显著提升复杂问答的检索覆盖率和生成质量，为图结构检索增强生成提供有效改进。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.30237v1",
+      "source": "arxiv",
+      "title": "GRASP: Plan-Guided Graph Retrieval with Adaptive Fusion and Reranking on Semi-Structured Knowledge Bases",
+      "abstract": "Semi-structured knowledge bases (SKBs) embed textual documents in a typed graph of entities and relations, and underpin applications such as product search, academic paper search, and precision-medicine inquiries. Existing hybrid retrieval systems on SKBs either use the graph only for query expansion, mix textual and structural branches under a global weighting, or rely on fine-tuned graph-traversal generators. We present GRASP, a three-stage SKB retrieval framework unifying plan-based graph retrieval, plan-conditioned fusion with a dense retriever, and a fine-tuned reranker over the fused candidates. GRASP substantially advances the state of the art on every metric across the three STaRK benchmarks, lifting average Hit@1 from 62.0 to 73.9. Ablation and sensitivity studies further confirm the effectiveness and robustness of GRASP.",
+      "authors": [
+        "Yicheng Tao",
+        "Yiqun Wang",
+        "Xiangchen Song",
+        "Xin Luo",
+        "Kai Liu",
+        "Jie Liu"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-05-28T17:07:32+00:00",
+      "link": "https://arxiv.org/pdf/2605.30237v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "knowledge graph reasoning for work tickets",
+      "llm_evidence_cn": "知识图谱推理用于工作票",
+      "llm_evidence": "知识图谱推理用于工作票",
+      "canonical_evidence": "知识图谱推理用于工作票",
+      "llm_tldr_en": "Proposes GRASP, a three-stage graph retrieval framework with plan-based graph retrieval, adaptive fusion, and reranking, advancing state-of-the-art on STaRK benchmarks.",
+      "llm_tldr_cn": "半结构化知识库上的混合检索通常只利用图进行查询扩展或全局加权。本文提出GRASP，一个三阶段框架：基于计划的图检索、条件融合稠密检索器、以及精细排序。在STaRK基准上各项指标均达到新最优。",
+      "llm_tldr": "半结构化知识库上的混合检索通常只利用图进行查询扩展或全局加权。本文提出GRASP，一个三阶段框架：基于计划的图检索、条件融合稠密检索器、以及精细排序。在STaRK基准上各项指标均达到新最优。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "knowledge graph reasoning for work tickets",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.30343v1",
+      "source": "arxiv",
+      "title": "Unlocking the Working Memory of Large Language Models for Latent Reasoning",
+      "abstract": "To improve the reasoning capabilities of large language models, test-time compute is typically scaled by generating intermediate tokens before the final answer. However, this couples reasoning to autoregressive generation and thereby conflates internal computation with external communication. In contrast, human cognition can use working memory to hold and manipulate information internally without the need to externalize intermediate thoughts. Drawing on this principle, we introduce Reasoning in Memory (RiM), a latent reasoning method that replaces the autoregressive generation of reasoning steps with memory blocks. These memory blocks are fixed sequences of special tokens that unlock the working-memory capacity of large language models. Since they are fixed rather than generated, they can be processed in a single forward pass, enabling compute-efficient latent reasoning. To operationalize these memory blocks, we employ a two-stage curriculum. First, we ground them by predicting explicit reasoning steps after each memory block. Second, we discard this step-level supervision and iteratively refine the final answer after each memory block. Our experiments on reasoning benchmarks show that, across language models of different families and sizes, RiM matches or exceeds existing latent reasoning methods while avoiding the autoregressive generation of thoughts. These results demonstrate that large language models can be trained to use working memory as an effective mechanism for latent reasoning.",
+      "authors": [
+        "Lukas Aichberger",
+        "Sepp Hochreiter"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-05-28T17:59:49+00:00",
+      "link": "https://arxiv.org/pdf/2605.30343v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "latent reasoning method replacing CoT with memory blocks",
+      "llm_evidence_cn": "用记忆块替代CoT的潜在推理方法",
+      "llm_evidence": "用记忆块替代CoT的潜在推理方法",
+      "canonical_evidence": "用记忆块替代CoT的潜在推理方法",
+      "llm_tldr_en": "RiM replaces autoregressive generation of reasoning steps with fixed memory blocks, leveraging working memory for latent reasoning, achieving efficient and effective reasoning without explicit chain-of-thought.",
+      "llm_tldr_cn": "针对大语言模型推理中中间token生成与自回归生成耦合的问题，本文提出RiM（记忆推理）方法，用固定序列的特殊记忆块替代思维链的显式生成，解锁模型工作记忆进行潜在推理。实验表明，RiM在保持甚至提升推理性能的同时，显著减少了推理长度和通信开销，为替代CoT推理提供了全新范式。",
+      "llm_tldr": "针对大语言模型推理中中间token生成与自回归生成耦合的问题，本文提出RiM（记忆推理）方法，用固定序列的特殊记忆块替代思维链的显式生成，解锁模型工作记忆进行潜在推理。实验表明，RiM在保持甚至提升推理性能的同时，显著减少了推理长度和通信开销，为替代CoT推理提供了全新范式。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Alternatives to chain of thought reasoning for cold start in power work ticket generation",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2605.31010v1",
+      "source": "arxiv",
+      "title": "MoG: Mixture of Experts for Graph-based Retrieval-Augmented Generation",
+      "abstract": "Retrieval-augmented generation is intensively studied to ground large language models on external evidence. However, retrieving from a unified knowledge base could inevitably introduce irrelevant information that may mislead generation for complex reasoning. Inspired by the conditional computation of mixture of experts (MoE), where a router sparsely selects specialized experts alongside shared ones for each input, we propose \\textbf{M}ixture \\textbf{o}f experts for \\textbf{G}raph-based Retrieval-Augmented Generation, i.e., \\textbf{MoG}. It organizes knowledge into two core components: (i) diverse, always-accessible hub graphs that encode semantically and structurally central knowledge and provide contextual clues for expert activation, and (ii) sparsely activated expert graphs that contain domain-specific evidence. MoG first accesses hub graphs to identify general evidence and derive contextual clues. Then, a topology-aware router dynamically activates a limited set of expert graphs conditioned on the query, thereby confining retrieval to a focused evidence subspace. Extensive experiments on challenging benchmarks show that MoG consistently outperforms strong baselines, with over 20\\% relative improvement on MuSiQue. Our code is available in https://github.com/DEEP-PolyU/MoG.",
+      "authors": [
+        "Zheng Yuan",
+        "Chuang Zhou",
+        "Linhao Luo",
+        "Siyu An",
+        "Di Yin",
+        "Xing Sun",
+        "Xiao Huang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-29T08:43:12+00:00",
+      "link": "https://arxiv.org/pdf/2605.31010v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "proposes mixture of experts for graph-based retrieval-augmented generation",
+      "llm_evidence_cn": "提出基于图的检索增强生成的混合专家方法",
+      "llm_evidence": "提出基于图的检索增强生成的混合专家方法",
+      "canonical_evidence": "提出基于图的检索增强生成的混合专家方法",
+      "llm_tldr_en": "MoG uses mixture-of-experts to organize knowledge into hub graphs and sparse specialized experts, improving retrieval-augmented generation by reducing irrelevant information and enabling complex reasoning.",
+      "llm_tldr_cn": "针对统一知识库检索可能引入无关信息误导生成的问题，该论文提出MoG，将混合专家机制引入图基检索增强生成。MoG将知识组织为始终可访问的枢纽图和稀疏的专门专家，通过路由器稀疏选择，有效减少了无关信息干扰，提升了复杂推理能力。实验表明该方法在多个QA基准上优于基线，为检索增强生成在低资源场景（如小样本工单生成）提供了新思路。",
+      "llm_tldr": "针对统一知识库检索可能引入无关信息误导生成的问题，该论文提出MoG，将混合专家机制引入图基检索增强生成。MoG将知识组织为始终可访问的枢纽图和稀疏的专门专家，通过路由器稀疏选择，有效减少了无关信息干扰，提升了复杂推理能力。实验表明该方法在多个QA基准上优于基线，为检索增强生成在低资源场景（如小样本工单生成）提供了新思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "retrieval augmented generation for ticket generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-05-05-723022-v1",
+      "source": "biorxiv",
+      "title": "A brain-inspired framework for memory prioritization in neural networks based on valence",
+      "abstract": "Improving long-term memory in artificial neural networks remains an open challenge. To address this, we developed a novel brain-inspired framework for memory prioritization based on the principle of emotional valence. Our framework includes: (i) a valence-weighted cross-entropy loss that scales the learning signal by the valence magnitude, analogous to neuromodulation; (ii) an amygdala-inspired module that learns high-dimensional valence embeddings; and (iii) a hippocampus-inspired module that integrates valence embeddings into the attention mechanism to modulate information retrieval. We demonstrated the generalization of our framework across spatial, episodic, and language-based memory tasks, consistently improving memory prioritization and long-term retention of high-salience information. In addition to improving long-term memory, we also showed that our framework can help mitigate the \"lost-in-the-middle\" problem in language modeling. More generally, this research provides further evidence of the potential of brain-inspired algorithms to advance the field of machine learning.",
+      "authors": [
+        "Zbaranska, S.",
+        "Rajeev, A.",
+        "Josselyn, S.",
+        "Laschowski, B."
+      ],
+      "primary_category": "neuroscience",
+      "categories": [
+        "neuroscience"
+      ],
+      "published": "2026-05-08T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.05.05.723022v1.full.pdf",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "brain-inspired memory prioritization framework using valence, integrates memory into attention, relevant to memory-augmented neural networks for reasoning",
+      "llm_evidence_cn": "脑启发记忆优先化框架利用效价，将记忆集成到注意力机制，与记忆增强神经网络推理相关",
+      "llm_evidence": "脑启发记忆优先化框架利用效价，将记忆集成到注意力机制，与记忆增强神经网络推理相关",
+      "canonical_evidence": "脑启发记忆优先化框架利用效价，将记忆集成到注意力机制，与记忆增强神经网络推理相关",
+      "llm_tldr_en": "Proposes a brain-inspired memory prioritization framework using valence-weighted loss and hippocampus-like module to modulate attention, improving long-term memory across multiple tasks.",
+      "llm_tldr_cn": "针对人工神经网络长时记忆不足的问题，论文提出基于情感效价的脑启发记忆优先化框架。包含效价加权交叉熵损失、杏仁核模块和类海马模块，将效价嵌入集成到注意力机制以调控信息检索。在空间、情景和语言记忆任务上均提升记忆优先化，为增强模型推理中的记忆使用提供了新思路，可应用于少样本生成场景。",
+      "llm_tldr": "针对人工神经网络长时记忆不足的问题，论文提出基于情感效价的脑启发记忆优先化框架。包含效价加权交叉熵损失、杏仁核模块和类海马模块，将效价嵌入集成到注意力机制以调控信息检索。在空间、情景和语言记忆任务上均提升记忆优先化，为增强模型推理中的记忆使用提供了新思路，可应用于少样本生成场景。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "memory augmented neural network for reasoning",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-05-10-724161-v1",
+      "source": "biorxiv",
+      "title": "Thoughts-as-Planning: Latent World Models for Chain-of-Thoughts Optimization via Reinforcement Planning",
+      "abstract": "The success of large language models (LLMs) across diverse NLP tasks has elevated the importance of reasoning chain optimization as a critical step in aligning model behavior with task objectives. Existing reasoning chain tuning methods often rely on black-box heuristics or gradient-free search, which lack interpretability, generalization, and sample efficiency. In this work, we introduce Thoughts-as-Planning, a novel framework that formalizes reasoning chain optimization as a sequential decision-making process over a latent semantic space. We model the LLM as a partially observable environment and learn a latent world model that simulates the effect of reasoning chain edits on downstream outputs. A proximity-preserving embedding space is constructed to encode reasoning chain-response dynamics, enabling planning via gradient descent or reinforcement learning. Our method supports multi-scale abstraction, allowing reasoning chain edits at token, segment, and instruction levels to be integrated into a unified planner. Through extensive experiments on language understanding and generation tasks, we demonstrate that Thoughts-as-Planning outperforms state-of-the-art reasoning chain tuning baselines in efficiency, robustness, and generalization, while offering interpretability through its structured planning trajectory. Our code is available at https://github.com/FastLM/Thoughts-as-Planning.",
+      "authors": [
+        "Liu, D.",
+        "Yu, Y.",
+        "Wu, Y. N."
+      ],
+      "primary_category": "neuroscience",
+      "categories": [
+        "neuroscience"
+      ],
+      "published": "2026-05-15T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.05.10.724161v1.full.pdf",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Alternatives to chain of thought reasoning for cold start",
+      "llm_evidence_cn": "思维链推理的替代方法用于冷启动",
+      "llm_evidence": "思维链推理的替代方法用于冷启动",
+      "canonical_evidence": "思维链推理的替代方法用于冷启动",
+      "llm_tldr_en": "Proposes Thoughts-as-Planning framework that formalizes reasoning chain optimization as sequential decision-making over latent semantic space, learning a world model for edits.",
+      "llm_tldr_cn": "现有思维链优化方法依赖黑箱启发式，缺乏泛化性。本文提出Thoughts-as-Planning框架，将推理链优化形式化为潜在语义空间上的序贯决策过程。通过学习潜在世界模型模拟推理链编辑对下游输出的影响，实现高效优化。该方法在多个任务上优于基线，为改进推理提供了新途径。",
+      "llm_tldr": "现有思维链优化方法依赖黑箱启发式，缺乏泛化性。本文提出Thoughts-as-Planning框架，将推理链优化形式化为潜在语义空间上的序贯决策过程。通过学习潜在世界模型模拟推理链编辑对下游输出的影响，实现高效优化。该方法在多个任务上优于基线，为改进推理提供了新途径。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Alternatives to chain of thought reasoning for cold start in power work ticket generation",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch"
+    }
+  ]
+}
