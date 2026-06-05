@@ -1,0 +1,1760 @@
+Title: Scaling Higher-Order Graph Learning with Maximal Clique Complexes
+
+URL Source: https://arxiv.org/pdf/2605.31373v1
+
+Published Time: Mon, 01 Jun 2026 01:21:44 GMT
+
+Number of Pages: 30
+
+Markdown Content:
+# Scaling Higher-Order Graph Learning with Maximal Clique Complexes 
+
+Antoine Vialle 
+
+LTCI, Télécom Paris Institut Polytechnique de Paris 91120 Palaiseau, France 
+
+antoine.vialle@telecom-paris.fr 
+
+Aref Einizade 
+
+SAMOVAR, Télécom SudParis Institut Polytechnique de Paris 91120 Palaiseau, France 
+
+aref.einizade@telecom-sudparis.eu 
+
+Fragkiskos D. Malliaros 
+
+CentraleSupélec, Inria Université Paris-Saclay 91190 Gif-sur-Yvette, France 
+
+fragkiskos.malliaros@centralesupelec.fr 
+
+Jhony H. Giraldo 
+
+LTCI, Télécom Paris Institut Polytechnique de Paris 91120 Palaiseau, France 
+
+jhony.giraldo@telecom-paris.fr 
+
+## Abstract 
+
+Graph neural networks (GNNs) are limited to modeling pairwise interactions, while higher-order models based on cell complexes achieve greater expressivity but often suffer from poor scalability. We introduce simplified and factored cellular Weisfeiler–Leman tests (sCWL and fCWL), which preserve the expressivity of the CWL test while improving computational efficiency. We further introduce the maximal clique complex, enabling scalable CWNs with reduced time and memory complexity while retaining strong empirical performance. To avoid explicit clique enumeration, we propose CliqueWalk, a biased random walk that samples maximal cliques and scales linearly with graph size. These contributions yield a scalable topological learning framework for higher-order graph representation. 
+
+## 1 Introduction 
+
+Graphs provide a natural way to represent interactions between entities, and graph neural networks (GNNs) have become the standard approach for learning on such data [ 33 , 14 ]. GNNs have achieved strong performance in diverse domains, including social network analysis [ 20 ], molecular property prediction [ 16 ], and computer vision [ 34 ]. However, conventional GNNs are limited to modeling pairwise interactions between nodes, which constrains their ability to capture complex multi-way relationships [ 1 ]. To address this limitation, recent work explores higher-order structures such as simplicial complexes [18, 4, 19], cell complexes [25, 3], and hypergraphs [22]. Hypergraphs generalize graphs by allowing edges, called hyperedges, to connect more than two nodes [ 22 ]. A hyperedge thus represents a group interaction, for example, a set of coauthors of the same paper in a co-authorship network [ 55 ]. Beyond hypergraphs, cell complexes provide a general combinatorial framework that organizes higher-order structures [ 29 ]. A cell complex contains cells of different dimensions: nodes (0-cells), edges (1-cells), triangles (2-cells), and so on [ 3]. Simplicial complexes are a special case of cell complexes in which all subsets of a cell are also included, ensuring closure under subset operations [ 19 ]. In this setting, entities interact whenever they differ by the addition or deletion of a single node. Several approaches lift graphs into higher-order structures, allowing the use of simplicial and cell complexes for learning tasks [ 4, 45 , 44 ]. One of these strategies is the clique lifting, where simplicial or cell complexes are built by including all cliques of the graph up to a fixed size ( e.g., edges 
+
+> Preprint.
+> arXiv:2605.31373v1 [cs.LG] 29 May 2026
+
+or triangles) [ 3]. While effective for capturing higher-order information, these methods are often computationally expensive and require significant memory resources. Furthermore, the clique problem is well-known to require algorithms with exponential runtime in the worst case [12]. In this paper, we address two central questions: ( i) how to simplify cellular Weisfeiler networks (CWNs) without sacrificing expressivity , and ( ii ) how to exploit clique-based higher-order structure in a scalable manner .Graph Maximal Clique Complex 
+
+Figure 1: Maximal clique complex. To address the first question, we introduce the sim-plified and factored cellular Weisfeiler–Leman tests (sCWL and fCWL), together with their correspond-ing neural architectures (sCWNs and fCWNs). We show that these variants preserve the full expressive power of the original CWL test of [ 3 ], while exhibit-ing improved scalability properties. These simplified architectures enable the use of more efficient higher-order constructions in specific graph regimes. In par-ticular, in graphs with few large, weakly overlapping cliques, clique-based aggregation is more scalable than classical message passing, reducing quadratic intra-clique message passing to linear complexity via a node–clique–node scheme. Motivated by this observation and to answer the sec-ond question, we propose the maximal clique complex , a simplified cell complex that encodes only the maximal cliques of the graph (Figure 1). Since enumerating all maximal cliques is computa-tionally expensive and becomes infeasible for large graphs, we further introduce CliqueWalk, a biased random-walk procedure that efficiently samples maximal cliques and scales linearly with the number of edges. The sampled cliques define the higher-order cells used in our architectures, enabling scalable models with competitive performance on node and graph classification benchmarks. The main contributions of this paper are: • We introduce the sCWL and fCWL tests and prove that they are as expressive as the regular CWL test, while offering better scaling properties. • We present the maximal clique complex, a simplified higher-order structure encoding maximal cliques, and show that the resulting sCWN and fCWN are more memory- and computationally efficient than standard CWNs, while preserving expressivity. • Since enumerating maximal cliques can take exponential time, we propose CliqueWalk, a biased random walk that efficiently samples maximal cliques and scales linearly with the number of edges, enabling clique-based methods on large graphs. • We show competitive performance on graph and node classification benchmarks, matching existing GNNs while achieving gains in scalability and efficiency compared to expressive baselines. 
+
+## 2 Related Work 
+
+The expressive power of GNNs has been extensively studied, particularly through their ability to distinguish non-isomorphic graphs [ 56 , 40 ]. It is well established that message-passing GNNs with injective aggregation are as powerful as the 1-Weisfeiler–Lehman (1-WL) test [ 56 ], and architectures such as the graph isomorphism network (GIN) are explicitly designed to match this expressivity. However, these models remain limited in capturing higher-order interactions, as they rely on local aggregation over pairwise edges [ 6, 21 ]. To address this, several approaches have been proposed. Some extend the Weisfeiler–Lehman hierarchy to higher orders, yielding k-WL-based GNNs with increased expressive power but much higher computational complexity [ 40 , 36 ]. Others enrich the graph structure by modeling higher-order relations directly. For instance, simplicial neural networks [ 4] operate on simplicial complexes, enabling message passing over higher-dimensional simplices and expressivity beyond 1-WL. Similarly, CWN [ 3] generalizes this idea to arbitrary cell complexes, with message passing through boundary, co-boundary, and adjacency relations. These methods are formalized by the Cell-WL (CWL) test, which is strictly more expressive than 1-WL in specific settings and has shown strong empirical performance, particularly in molecular graph learning [ 3, 23 ]. 2Despite these theoretical advances, simplicial and cell complex models suffer from limited scalability. Constructing higher-order complexes often requires enumerating large numbers of cliques, leading to prohibitive memory and time costs and preventing their efficient application to large-scale graphs. In contrast, we introduce the maximal clique complex as a simplified higher-order structure that preserves CWL-level expressivity while enabling efficient clique-based neural architectures. Combined with our CliqueWalk sampling strategy, this yields a scalable approach to higher-order graph learning with strong theoretical guarantees and competitive performance. 
+
+## 3 Preliminaries 
+
+Notation. Calligraphic letters denote sets, with |X | their cardinality. Lowercase boldface letters (e.g., 
+
+x) denote vectors. À denotes a mapping from sets of vectors to a vector, e.g., aggregation functions. 
+
+Definition 1 (Regular cell complex [ 28 , 3]) . A regular cell complex is a topological space X that can be divided into a collection of subspaces tXσ uσPPX , called cells , where PX is the set of cells induced by the topological space X. These cells satisfy the following properties: 
+
+• Every x P X has an open neighborhood that intersects only a finite number of cells. 
+
+• For any two cells Xσ and Xτ , Xτ X Xσ ‰ H , if and only if Xτ is contained in Xσ .
+
+• Each cell is topologically equivalent (homeomorphic) to Rn for some dimension n.
+
+• For each σ P PX , there exists a homeomorphism φ from a closed ball in Rnσ onto Xσ , where the restriction of φ to the interior of the ball gives a homeomorphism onto the interior of Xσ .
+
+A graph G “ p V, Eq can be interpreted as a special case of a cell complex, where vertices V and edges E correspond to 0-cells and 1-cells, respectively. 
+
+Definition 2 (Cell complex adjacencies [ 3]) . Let X be a cell complex and σ P PX a cell. We define the following adjacency relations: 
+
+• Boundary cells Bpσq: cells that make up the boundary of σ (e.g., the vertices of an edge). 
+
+• Co-boundary cells Cpσq: cells having σ in their boundary (e.g., edges incident to a vertex). 
+
+• Lower adjacent cells NÓpσq: cells that share a boundary (e.g., edges meeting at a common node). 
+
+• Upper adjacent cells NÒpσq: cells that share a co-boundary (e.g., two nodes linked by an edge). 
+
+WL test. A key challenge in graph theory is the graph isomorphism problem, which concerns deciding whether two graphs have the same structure. Finding exact solutions is often computationally demanding, so faster approximate techniques, such as graph hashing, are commonly employed. A classical and widely used technique for graph isomorphism test is the WL test [ 35 ]. The WL test provides an efficient heuristic for the graph isomorphism problem. The formal definition of the WL test is provided in Appendix A. Beyond graphs, it can be naturally extended to regular cell complexes, capturing richer combinatorial structures. 
+
+Definition 3 (CWL test [3]) . Let X be a regular cell complex. The CWL test is defined as: 
+
+• Initialization: All cells σ P PX are assigned the same initial color. 
+
+• Color refinement: At iteration t ` 1, the color of each cell σ is updated according to ct`1 
+
+> σ
+
+“
+
+HASH pctσ , c t
+
+> Bpσq
+
+, c t
+
+> Cpσq
+
+, c t
+
+> NÓpσq
+
+, c t
+
+> NÒpσq
+
+q, where HASH is an injective function combining the color of σ with those of its boundary, co-boundary, and adjacent cells. 
+
+• Termination: The process is repeated until the coloring stabilizes. Two cell complexes are considered non-isomorphic if their color histograms differ. 
+
+The CWL test is invariant under cell-complex isomorphisms. Given a graph-to-cell-complex map that preserves isomorphisms, CWL can be used to test graph isomorphism, see Figure 6 for an example. This corresponds to the cellular lifting map of [ 3] (their Definition 8). Similarly, CWL relates to the WL test under skeleton-preserving lifting maps: 
+
+Definition 4 (Skeleton preserving lifting [ 3 ]) . A lifting map f p¨q is skeleton-preserving if for any graph G “ p V, Eq: ( i) f pGq contains V and E as cells, ( ii ) the cell complex f pGq restricted to 
+
+3node and edge sets is isomorphic to G, i.e., the incidence matrices of G and f pGq are equal up to permutation. 
+
+The CWL scheme is more expressive than the standard WL test for skeleton-preserving lifting maps [ 3]. We next introduce a new cell test that also achieves better expressivity than the WL test without requiring such lifting maps, along with the structures studied in this work. All proofs are provided in Appendix B. 
+
+## 4 Scaling Cell Complex Models and Maximal Cliques 
+
+4.1 Cell Complex Expressivity Theory 
+
+Bodnar et al. [3] show we can simplify the CWL test while retaining the same expressivity. 
+
+Theorem 1 (Bodnar et al. [3] ). The CWL update rule restricted to boundary and upper adjacency messages is equivalent in expressive power to the full CWL update rule. 
+
+We also demonstrate that a different simplified version retains the same expressivity. 
+
+Theorem 2. The CWL update rule restricted to boundary and co-boundary messages, called the simplified CWL (sCWL) test, is equivalent in expressive power to the full CWL update rule. 
+
+This restricted scheme is useful in practice, as it leads to more computationally efficient models. We also introduce a new test on cell complexes that, while keeping the node structure, enables at least the same expressivity as the CWL, sCWL, and WL tests. 
+
+Definition 5 (Factored CWL (fCWL) test) . Let pG, X q be a graph and a cell complex constructed from a cellular lifting map that preserves the node set. The fCWL scheme is defined as follows: 
+
+• Initialization: All cells are assigned the same initial color. 
+
+• Color refinement: At iteration t ` 1, the color of each non-node cell σ is updated according to ct`1 
+
+> σ
+
+“ HASH pctσ , c t
+
+> Bpσq
+
+, c t
+
+> Cpσq
+
+q. The color of each node i is updated according to ct`1 
+
+> i
+
+“
+
+HASH pcti, c t
+
+> Cpiq
+
+, c t 
+
+> Npiq
+
+q.
+
+• Termination: The process is repeated until the coloring stabilizes. Two cell complexes are considered non-isomorphic if their color histograms differ. 
+
+Theorem 3. fCWL is at least as expressive as WL and CWL. 
+
+We use the ideas from sCWL and fCWL tests to introduce cellular neural networks with the same guarantees and better scaling properties than CWN [3]. 
+
+4.2 Neural Network Models 
+
+We describe neural network architectures based on the CWL framework that perform message passing along the cell hierarchy via boundary, co-boundary, and adjacency relations. 
+
+Definition 6 (CWNs) . Following [ 3, Section 4], CWNs aggregate messages along both upper adjacency and boundary relations (Theorem 1). For a cell σ, the updates are defined as: 
+
+mÒpσq “ à    
+
+> τPNÒpσq
+> δPCpσqŞCpτq
+
+MÒ
+
+`xσ , xτ , xδ
+
+˘, mBpσq “ à 
+
+> τPBpσq
+
+MB
+
+`xσ , xτ
+
+˘, xσ “ à pxσ , mBpσq, mÒpσqq ,
+
+(1) 
+
+where xσ is the feature vector of cell σ. We write mÒpσq for the aggregated message to cell σ from all tuples formed by σ, one of its upper neighbors, and a parent they share. Similarly, mBpσq denotes the aggregated message to cell σ from all of its children. 
+
+We now introduce a model that scales more efficiently. 
+
+Definition 7 (Simplified CWNs (sCWN)) . Based on the restricted CWL update using only boundary and co-boundary messages (Theorem 2), we define a simplified message-passing scheme: 
+
+mC pσq “ à 
+
+> τPCpσq
+
+MC pxτ q, mBpσq “ à 
+
+> τPBpσq
+
+MBpxτ q, xσ “ àpxσ , mC pσq, mBpσqq . (2) 4Figure 2 shows an example of the aggregation functions in Definition 7. This simplified variant reduces computational and memory requirements while retaining the expressive power of the full CWL update. Messages are propagated only along boundary and co-boundary relations, making sCWN efficient for large complexes (see Proposition 2). We also introduce a cell model that has a complexity between sCWN and CWN, but has better expressivity guarantees (Theorem 3, Proposition 2). We use both the clique structure and the neighborhood structure from the graph. 
+
+Definition 8 (Factored CWNs (fCWN)) . fCWNs aggregate messages using the cell complex and graph structures: 
+
+mC pσq “ à 
+
+> τPCpσq
+
+MC pxσ , xτ q , mBpσq “ à 
+
+> τPBpσq
+
+MBpxσ , xτ q , mN piq “ à 
+
+> jPNpiq
+
+MN pxi, xj q ,
+
+xi “ à pxi, mC piq, mN piqq , xσ “ à pxσ , mBpσq, mC pσqq .
+
+(3) 
+
+Figure 2: Simplified cellular message passing in sCWN as described in Definition 7. This model has better memory and time complex-ity than CWN in practical cases and also better expressivity guarantees (Theorem 3). Under certain constraints, we can provide expres-sivity guarantees for these models. 
+
+Proposition 1. sCWN and CWN are at most as expressive as CWL. If they use injective aggrega-tion, they are equally expressive as CWL. fCWN with injective aggregation is at least as expressive as CWL and WL. 
+
+We can further scale the sCWN and fCWN mod-els to large graphs while still exploiting higher-order topology. We propose to use clique-based cell complexes, where maximal cliques serve as higher-dimensional cells that compactly summa-rize multiple nodes and edges. 
+
+4.3 CliqueWalk Definition 9 (Maximal clique complex) . Given a graph G “ p V, Eq, the maximal clique complex 
+
+is defined as a cell complex where the 0-cells correspond to the vertices V of G, and the higher-dimensional cells correspond to the maximal cliques of G. The set of non-0-cells (i.e., maximal cliques) is denoted by X .
+
+An example of a maximal clique complex constructed from a graph is shown in Figure 1. If we impose closure under subset operations, the maximal clique complex becomes the clique complex [32 ], that is, the simplicial complex induced by including all subsets of each clique. 
+
+Proposition 2. The time and memory complexities of the different CWN variants on maximal clique complexes are: 
+
+• CWN has time and memory complexity Opn ` ř 
+
+> σPX
+
+|σ|2q.
+
+• fCWN has time complexity Op| E| ` ř 
+
+> σPX
+
+|σ|q and memory complexity Opn ` ř 
+
+> σPX
+
+|σ|q .
+
+• sCWN has time complexity Opř 
+
+> σPX
+
+|σ|q and memory complexity Opn ` | X |q .Here, n is the number of nodes, X is the set of maximal cliques, and E is the set of edges. A table of all complexities can be found in the Appendix B.3. 
+
+Remark 1. These models can be simplified to reduce time and memory, for example, by using only incoming information during aggregation. These simplified versions keep the same theoretical expressivity but may capture less complex interactions between cells. 
+
+Remark 2. We conjecture that CWL on maximal cliques is more expressive than WL. A discussion on this conjecture is present in Appendix C. 
+
+5Graph CliqueWalk Figure 3: Illustration of a CliqueWalk starting at node 1. The walk grows a clique by repeatedly sampling nodes adjacent to all current clique members, successively adding nodes 3, 4, and 2 to reach the maximal clique t1, 2, 3, 4u.Identifying all maximal cliques in a graph is computationally infeasible, as the clique enumeration problem might have exponential runtime. 
+
+Proposition 3 (Moon and Moser [39] ). A graph with n nodes can contain up to 3n{3 maximal cliques. 
+
+To circumvent this challenge, we propose a biased random walk method for efficient clique sampling, which we refer to as CliqueWalk. Our approach is inspired by maximal-clique enumeration algorithms [ 7, 50 , 9]. The key idea is to grow cliques incrementally while maintaining an efficient lookup of candidate nodes that can extend the current clique, continuing until no further extension is possible. The method is summarized in Algorithm 1 in Appendix E, and is illustrated in Figure 3. CliqueWalk enables us to sample a representative subset of cliques without exhaustively enumerating all of them. A discussion comparing CliqueWalk with other clique sampling schemes can be found in Appendix E. 
+
+Proposition 4. If ωmax ą ωpGq, each random walk generated by CliqueWalk produces a maximal clique of the graph, where ωpGq is the maximum clique size and ωmax is the maximum walk length. 
+
+We denote our random walk method as CliqueWalk pnwalk , ω max q, where nwalk specifies the number of walks sampled per node and ωmax corresponds to maximum size of walks. 
+
+Proposition 5. The time complexity of CliqueWalk pnwalk , ω max q on a graph G is Opn¨nwalk ¨dmax pGq¨ 
+
+max pωpGq, ω max qq , where n is the number of nodes, dmax pGq is the maximum node degree, and ωpGq
+
+is the size of the largest clique in G. (i.e., linear in the number of edges at fixed ωmax and nwalk )
+
+CliqueWalk is motivated by the prohibitive cost of enumerating all cliques in large graphs. By sampling a sufficiently large number of cliques, we can approximate local clique structure, enabling efficient higher-order learning with performance comparable to, or better than, full enumeration. 
+
+## 5 Experiments and Results 
+
+In this section, we describe the datasets and experimental setups used for graph and node classification tasks. We compare sCWN and fCWN with: GCN [ 33 ], GIN [ 56 ], SAGEConv [ 27 ], SGC [ 54 ], HGNN [22], SCCN [58], CIN, CWN [3], PPGN [36] and G2N2 [46]. 
+
+5.1 Datasets Graph classification datasets. We perform experiments on two social network datasets (IMDB-BINARY, IMDB-MULTI) [ 57 ] and four molecular or biological datasets (MUTAG, PROTEINS, NCI1, NCI109) from the TUDataset [41]. 
+
+Node classification datasets. We evaluate our models on two topological datasets (contact-primary-school and contact-high-school) [ 11 , 37 ], three citation networks (Citeseer, Cora, and PubMed) [ 47 ,42 ], and purchase networks like Amazon Photo network [ 38 , 48 ] and OGBN-Products (OGBN-P) [ 2]. In addition, we propose a new synthetic dataset, the stochastic clique model (SCM), derived from the stochastic block model (SBM). SCM is a special case of the SBM [ 30 ] with inward probability set to 
+
+1. Graphs are generated by assembling cliques, each assigned a label inherited by its nodes. Node 6features are sampled from a Gaussian distribution with label-dependent means and fixed diagonal variance. Topological noise is introduced by randomly connecting nodes across cliques, so the task can be viewed as label denoising. 
+
+Synthetic cliques. To compare the inference time and memory footprint of clique-based methods, we also construct a synthetic dataset of isolated cliques. This dataset allows us to systematically evaluate the computational scaling of CWN models with respect to clique size. 
+
+5.2 Experimental Setup Experiments. For graph classification, we follow the protocol of [ 56 ], using 10 -fold cross-validation, reporting the best mean accuracy across folds at each epoch and selecting the epoch with the highest mean accuracy for final evaluation. For PPGN [ 36 ], G2N2 [ 46 ], and CIN [ 3], we report the results directly from the original papers as they follow the same protocol. For node classification, we hold out 20% of nodes as a final test set. The remaining nodes are split into 60%/20%/20% for training, validation, and internal testing during hyperparameter tuning. We select the checkpoint with the highest validation accuracy and report its performance on the final test set. For OGBN-Products, we use the public splits. 
+
+Implementation details. In all experiments, we use a shared architecture and vary only the con-volutional module corresponding to the method under evaluation. We run SCCN on the standard lifted simplicial complex up to triangles [ 58 ]. For our decomposition-based methods, we evaluate CWN, sCWNc ( i.e. , sCWN applied to cliques), fCWN, and HGNN on complexes obtained via the CliqueWalk sampling procedure with 8 walks per node and initialize clique features using clique size. We choose 8 walks as it provides a good trade-off between accuracy and computational cost across datasets. The sampled cliques are generated once and kept fixed throughout training ( i.e. , no resampling). To ensure a fair comparison with CIN [ 3], we follow its original setup: we evaluate sCWNr (sCWN on rings) using the same topological lifting (node–edge–cycle) and readout scheme described in [ 3]. For graph classification, all models use five layers (including the input convolution) and a hidden dimension of 64 , while grid search is limited to dropout t0, 0.5u, batch size t32 , 128 u,and with or without BatchNorm. To ensure a fair comparison of memory usage across models, all reported peak memory values are measured under a unified setting with the same architecture and hyperparameters (three layers, hidden dimension 64 , and batch size 32 ). This emphasizes that the observed differences stem from the underlying model design rather than tuning choices. For node classification, except OGBN-Products, we perform a grid search over learning rate 
+
+t10 ´2, 10 ´3u, number of layers t2, 4u, hidden dimension t32 , 64 u, dropout t0, 0.2, 0.5u and with or without BatchNorm for all models. For contact-school datasets, we also include GraphNorm 1
+
+[ 8]. Models are trained for 200 epochs on standard datasets and 500 epochs on topological ones 2,with each grid search repeated five times using different random seeds. Final evaluation is based on 
+
+20 independent runs with new seeds. For OGBN-Products, we tune hyperparameters for our clique models, use typical hyperparameters for GNN baselines, and train all models for 1000 epochs and average over 5 runs (see Appendix H for further details). 
+
+5.3 Results and Discussion Graph classification. Table 1 summarizes the results of the graph classification task. On social network datasets such as IMDB-B and IMDB-M, topological models achieve strong performance, consistent with prior work [ 3]. In particular, higher-order methods such as CIN and G2N2 often yield the best accuracies. However, this improved performance comes at a substantial computational cost: these models exhibit significantly higher peak memory usage, even on relatively small datasets. In contrast, our methods (sCWN and fCWN) achieve competitive performance while maintaining a memory footprint comparable to standard GNNs. This highlights a key trade-off: while dense higher-order models can perform better, their poor scalability limits their applicability to large-scale graphs. On molecular datasets, clique-based methods tend to underperform. This can be explained by the structural properties of these graphs: the average maximal clique size is close to 2 (see Table 9), making clique sampling effectively similar to edge sampling and limiting the benefit of higher-order clique-based features. 
+
+> 1The estimation of the statistics with BatchNorm on small datasets degrades model performance.
+> 2GNNs converge more slowly on topological datasets, hence the larger number of epochs.
+
+7Table 1: Graph classification accuracy (%) and peak GPU memory (MB). Best accuracy in bold ,second best underlined . ♦ GNNs, ♠ hypergraph NNs, ✠ CW-networks, ♣ dense higher-order models, 
+
+‹ fCWN, sCWNc, sCWNr (ours). OOM = out of memory. 
+
+Model IMDB-B IMDB-M MUTAG NCI1 NCI109 PROTEINS 
+
+Acc. Mem. Acc. Mem. Acc. Mem. Acc. Mem. Acc. Mem. Acc. Mem. 
+
+♦ GCN 74 .3˘4.6 19 52 .4˘4.1 18 84 .1˘8.8 18 80 .4˘1.8 19 76 .9˘1.7 19 77 .0˘5.1 20 
+
+♦ GAT 74 .8˘3.0 26 51 .6˘3.7 25 84 .6˘8.6 19 79 .6˘3.1 21 73 .8˘1.3 21 76 .5˘3.2 27 
+
+♦ GIN 72 .1˘3.8 19 49 .7˘3.4 18 89 .4˘7.8 18 80 .8˘2.1 20 74 .8˘2.4 19 75 .8˘3.4 21 
+
+♦ SAGEConv 74 .3˘4.1 19 52 .9˘4.0 18 84 .6˘9.5 18 81 .5˘1.8 19 78 .0˘1.5 19 76 .3˘4.5 20 
+
+♠ HGNN 75 .5˘4.3 19 52 .3˘4.8 18 86 .2˘8.2 18 79 .2˘3.1 20 76 .2˘1.9 20 76 .5˘3.9 21 
+
+✠ CWN 66 .0˘7.8 40 50 .5˘3.4 35 85 .1˘7.3 22 63 .7˘1.9 26 63 .1˘2.0 26 77 .0˘3.4 40 
+
+✠ CIN 75 .6˘3.7 454 52 .7˘3.1 517 92 .7˘6.1 31 83 .6˘1.4 42 84 .0˘1.6 41 77 .0˘4.3 137 
+
+♣ PPGN 73 .0˘5.8 2193 50 .5˘3.6 950 90 .6˘8.7 110 83 .2˘1.1 1467 82 .2˘1.4 1467 77 .2˘4.7 45277 
+
+♣ G2N2 76 .8˘2.8 846 54 .0˘2.9 400 92 .5˘5.5 189 82 .8˘0.9 858 – 829 80 .1˘3.7 16188 
+
+‹ fCWN 71 .9˘4.1 19 52 .8˘2.6 19 85 .1˘8.1 20 79 .2˘2.4 22 62 .3˘4.5 22 75 .9˘3.3 24 
+
+‹ sCWNc 75 .0˘4.5 19 52 .3˘4.2 19 85 .7˘8.2 20 66 .3˘8.9 22 64 .1˘2.8 22 77 .5˘3.5 25 
+
+‹ sCWNr 74 .6˘3.5 139 51 .3˘3.6 178 91 .7˘6.2 22 83 .8˘1.6 26 84 .1˘1.2 26 75 .9˘4.9 38 
+
+Table 2: Node classification accuracy (%) with standard deviation. Best results are in bold , second best are underlined . HighSchool = contact-high-school, PrimarySchool = contact-primary-school. 
+
+♦ GNNs, ♣ simplicial neural networks, ♠ hypergraph neural networks, ✠ CWN, and ‹ fCWN, sCWNc (ours). 
+
+Model Citeseer Cora Photo PubMed HighSchool PrimarySchool SCM OGBN-P 
+
+♦ GCN 73 .7˘0.76 88 .7˘0.61 93 .9˘0.27 88 .3˘0.33 98 .2˘2.6 88 .9˘3.1 OOM 76 .3˘0.4
+
+♦ GAT 72 .2˘1.3 87 .5˘1.2 93 .7˘0.26 87 .2˘0.33 19 .1˘7.3 13 .9˘7.8 OOM OOM 
+
+♦ GIN 69 .3˘1.1 86 .2˘0.62 88 .0˘2.2 86 .7˘0.42 94 .5˘3.5 85 .9˘4.6 OOM 76 .4˘0.4
+
+♦ SAGEConv 72 .4˘1.2 88 .7˘0.99 95 .0˘0.29 89 .5˘0.6 14 .6˘4.2 6.53 ˘4.5 OOM 78 .5˘0.1
+
+♦ SGC 73 .7˘0.74 88 .4˘0.86 89 .8˘0.39 89 .2˘0.21 6.3˘4.1 3.57 ˘3.0 65 .6˘0.01 76 .1˘0.07 
+
+♣ SCCN 46 .4˘1.4 64 .4˘1.9 64 .8˘2.6 73 .4˘0.7 93 .0˘2.5 74 .1˘3.7 OOM OOM 
+
+♠ HGNN 72 .9˘1.1 88 .5˘0.9 94 .2˘0.5 88 .5˘0.39 95 .4˘3.8 80 .4˘5.3 68 .1˘0.3 78 .3˘0.4
+
+✠ CWN 72 .0˘1.6 81 .1˘1.0 94 .7˘0.37 89 .3˘0.35 94 .6˘2.2 90 .7˘1.9 OOM OOM 
+
+‹ fCWN 72 .5˘1.4 88 .1˘0.79 95 .1˘0.35 89 .4˘0.31 99 .5˘0.9 89 .5˘2.3 OOM 80 .1˘0.2
+
+‹ sCWNc 72 .9˘1.3 87 .3˘0.87 95 .3˘0.39 89 .7˘0.35 96 .0˘2.4 86 .4˘4.4 77 .7˘0.05 76 .6˘0.22.5 5.0 7.5 10.0 
+
+Mean maximal clique size 
+
+−2 
+
+−1 
+
+0
+
+1
+
+2 
+
+> Accuracy gain over best GNN
+> Citeseer
+> Cora
+> PubMed Photo
+> Primary
+> High
+> Products
+> Binary
+> Multi
+> Mutag
+> NCI1
+> NCI109
+> Proteins
+> Citation
+> Purchase/contact
+> Social
+> Bio/Chem
+
+Figure 4: Accuracy gain over the best GNN base-line as a function of mean clique size. Larger cliques tend to favor clique-based models. 
+
+Node classification. Table 2 reports node classi-fication results. The SCM dataset, with approxi-mately 6M nodes and 276 M edges, is substantially larger than standard benchmarks; for this dataset, we use only one CliqueWalk random walk. Ad-ditional dataset statistics are provided in Table 9 (Appendix H). On topological datasets such as contact-high-school and contact-primary-school, topological models are competitive, while clas-sical GNNs with GraphNorm perform similarly, with fCWN slightly better. On citation bench-marks (Citeseer, Cora), differences are small, in-dicating no clear advantage for topological meth-ods. On OGBN-Products, fCWN and HGNN with CliqueWalk are competitive with GNNs that only use the edges. In contrast to other methods that run out of memory (OOM), sCWN and fCWN scale efficiently. 
+
+Remark 3. Across graph and node classification, topological models perform better on datasets with larger cliques. Table 9 in Appendix H reports average clique sizes, and Figure 4 reveals a clear correlation between larger cliques and improved topological performance. 
+
+5.4 Sensitivity Analysis and Ablation Study Sampling effect for CliqueWalk. We evaluate the impact of clique density on performance by scaling the sampling rate from nearly zero to 10 CliqueWalks per node (Figure 5a) in contact-primary-810 −3 10 −2 10 −1 10 0 10 1
+
+> CliqueWalk fraction
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> Accuracy
+> sCWN
+> fCWN
+
+(a) Accuracy of sCWN and fCWN on contact-primary-school vs. CliqueWalk sampling rates. Cor 
+
+> Cit
+> Pub
+> HiS
+> PrS
+> Pho
+> SCM
+> 10 −2
+> 10 −1
+> 10 0
+> 10 1
+> Time (s)
+> 8 CliqueWalk
+> 64 CliqueWalk
+> Cliques
+> Simplicial Complex
+
+(b) Computation time of different lifting strategies measured on an NVIDIA RTX 3090 GPU. 
+
+Figure 5: Sensitivity analysis of CliqueWalk. (a) Accuracy versus sampled walks. (b) Runtime comparison between CliqueWalk and exact lifting methods. Cor = Cora, Cit = Citeseer, Pub = PubMed, HiS = contact-high-school, PrS = contact-primary-school, Pho = Photo. school. On this topological dataset, we observe that predictive accuracy scales directly with the number of sampled cliques; higher sampling rates capture richer structural information, leading to better predictions. We observe a different effect on classical datasets like Photo, as shown in Appendix F. 
+
+CliqueWalk compute time. We compare CliqueWalk with 8 and 64 walks to exact clique enumer-ation and triangle-based simplicial lifting (Figure 5b). Across all datasets, CliqueWalk achieves substantially lower runtimes; even with 64 walks per node, it is close to an order of magnitude faster while maintaining competitive accuracy. This demonstrates that CliqueWalk is an efficient and scalable alternative to exact methods. Table 3: Ablation sampling CliqueWalk.       
+
+> Strategy PrimarySchool Photo
+> Re-sampling 87 .1˘3.895 .4˘0.44
+> No re-sampling 86 .4˘4.495 .3˘0.39
+
+Ablation study, resampling in CliqueWalk. Ta-ble 3 compares the performance when using 8-walk CliqueWalk with or without re-sampling at each train-ing epoch on the contact-primary-school and Photo 
+
+datasets. We observe that the results are slightly bet-ter across both datasets when re-sampling, while it introduces a slight increase in runtime (see PrS and Pho in Figure 5b). This suggests that using resampling can be a more practical way to trade better generalization against computational cost. 
+
+5.5 Limitations 
+
+While our work establishes a scalable framework for clique-based higher-order learning, it has some limitations. First, we restrict our evaluation to node and graph classification tasks; extending the approach to other settings, such as hyperedge prediction, link prediction, or generative modeling, remains an open direction. Second, our method does not explicitly expand the receptive field of nodes, and thus may not fully capture long-range dependencies compared to approaches that incorporate multi-hop information. Finally, we focus on clique-based sampling strategies, whereas exploring alternative lifting procedures or hybrid strategies could further improve performance and generalization. Addressing these limitations offers promising avenues for future research. 
+
+## 6 Conclusion 
+
+We introduced the maximal clique complex as a simplified higher-order structure that connects clique-based representations to the CWL test, and showed that a sCWN operating on this complex achieves CWL-level expressivity while remaining computationally efficient. To address scalability, we proposed CliqueWalk, a biased random walk algorithm that samples cliques efficiently and scales quasi-linearly with the number of nodes. Together, these contributions enable the design of clique-based neural architectures that are both expressive and scalable. Extensive experiments on node 9and graph classification benchmarks demonstrate that our models achieve competitive performance compared to GNNs and other higher-order approaches, while maintaining substantially lower memory and runtime requirements. This work establishes random walk clique-based lifting as a practical path toward scalable higher-order graph learning. It opens the door for future research on efficient sampling strategies and domain-specific applications. 
+
+## Acknowledgments 
+
+The authors acknowledge the French National Research Agency (ANR) for its financial support of the JCJC project DeSNAP ANR-24-CE23-1895-01. This work is also supported by Hi! PARIS and ANR/France 2030 program (Grants ANR-23-IACL-0005 and ANR-23-CMAS-0033). 
+
+## References 
+
+[1] Claudio Battiloro, Lucia Testa, Lorenzo Giusti, Stefania Sardellitti, Paolo Di Lorenzo, and Sergio Barbarossa. Generalized simplicial attention neural networks. IEEE Transactions on Signal and Information Processing over Networks , 2024. [2] K. Bhatia, K. Dahiya, H. Jain, P. Kar, A. Mittal, Y. Prabhu, and M. Varma. The extreme classification repository: Multi-label datasets and code, 2016. [3] Cristian Bodnar, Fabrizio Frasca, Nina Otter, Yuguang Wang, Pietro Lio, Guido F Montufar, and Michael Bronstein. Weisfeiler and Lehman go cellular: CW networks. In Advances in Neural Information Processing Systems , 2021. [4] Cristian Bodnar, Fabrizio Frasca, Yuguang Wang, Nina Otter, Guido F Montufar, Pietro Lio, and Michael Bronstein. Weisfeiler and Lehman go topological: Message passing simplicial networks. In International Conference on Machine Learning , 2021. [5] Karsten M Borgwardt, Cheng Soon Ong, Stefan Schönauer, SVN Vishwanathan, Alex J Smola, and Hans-Peter Kriegel. Protein function prediction via graph kernels. Bioinformatics , 21: i47–i56, 2005. [6] Giorgos Bouritsas, Fabrizio Frasca, Stefanos Zafeiriou, and Michael M Bronstein. Improving graph neural network expressivity via subgraph isomorphism counting. IEEE Transactions on Pattern Analysis and Machine Intelligence , 45(1):657–668, 2022. [7] Coen Bron and Joep Kerbosch. Algorithm 457: finding all cliques of an undirected graph. 
+
+Communications of the ACM , 16(9):575–577, 1973. [8] Tianle Cai, Shengjie Luo, Keyulu Xu, Di He, Tie-Yan Liu, and Liwei Wang. GraphNorm: A principled approach to accelerating graph neural network training. In International Conference on Machine Learning , 2020. [9] Frédéric Cazals and Chinmay Karande. A note on the problem of reporting maximal cliques. 
+
+Theoretical Computer Science , 407(1-3):564–568, 2008. [10] Guangyong Chen, Pengfei Chen, Chang-Yu Hsieh, Chee-Kong Lee, Benben Liao, Renjie Liao, Weiwen Liu, Jiezhong Qiu, Qiming Sun, Jie Tang, et al. Alchemy: A quantum chemistry dataset for benchmarking AI models. arXiv preprint arXiv:1906.09427 , 2019. [11] Philip S Chodrow, Nate Veldt, and Austin R Benson. Generative hypergraph clustering: From blockmodels to modularity. Science Advances , 7(28):eabh1303, 2021. [12] Thomas H Cormen, Charles E Leiserson, Ronald L Rivest, and Clifford Stein. Introduction to algorithms . MIT press, 2022. [13] Asim Kumar Debnath, Rosa L. Lopez de Compadre, Gargi Debnath, Alan J. Shusterman, and Corwin Hansch. Structure-activity relationship of mutagenic aromatic and heteroaromatic nitro compounds. correlation with molecular orbital energies and hydrophobicity. Journal of Medicinal Chemistry , 34(2):786–797, 1991. 10 [14] Michaël Defferrard, Xavier Bresson, and Pierre Vandergheynst. Convolutional neural networks on graphs with fast localized spectral filtering. Advances in Neural Information Processing Systems , 2016. [15] Paul D Dobson and Andrew J Doig. Distinguishing enzyme structures from non-enzymes without alignments. Journal of Molecular Biology , 330(4):771–783, 2003. [16] David K Duvenaud, Dougal Maclaurin, Jorge Iparraguirre, Rafael Bombarell, Timothy Hirzel, Alán Aspuru-Guzik, and Ryan P Adams. Convolutional networks on graphs for learning molecular fingerprints. In Advances in Neural Information Processing Systems , 2015. [17] Marco D’Elia, Irene Finocchi, and Maurizio Patrignani. Maximal cliques summarization: Principles, problem classification, and algorithmic approaches. Computer Science Review , 58: 100784, 2025. [18] Stefania Ebli, Michaël Defferrard, and Gard Spreemann. Simplicial neural networks. In NeurIPS Workshop Topological Data Analysis and Beyond , 2020. [19] Aref Einizade, Dorina Thanou, Fragkiskos D Malliaros, and Jhony H Giraldo. Continuous simplicial neural networks. In Advances in Neural Information Processing Systems , 2025. [20] Wenqi Fan, Yao Ma, Qing Li, Yuan He, Eric Zhao, Jiliang Tang, and Dawei Yin. Graph neural networks for social recommendation. In The World Wide Web Conference , 2019. [21] Jiarui Feng, Yixin Chen, Fuhai Li, Anindya Sarkar, and Muhan Zhang. How powerful are k-hop message passing graph neural networks. In Advances in Neural Information Processing Systems , 2022. [22] Yifan Feng, Haoxuan You, Zizhao Zhang, Rongrong Ji, and Yue Gao. Hypergraph neural networks. In AAAI Conference on Artificial Intelligence , 2019. [23] Lorenzo Giusti, Teodora Reu, Francesco Ceccarelli, Cristian Bodnar, and Pietro Liò. CIN++: Enhancing topological message passing. arXiv preprint arXiv:2306.03561 , 2023. [24] Willem H Haemers and Edward Spence. The pseudo-geometric graphs for generalized quadran-gles of order (3, t). European Journal of Combinatorics , 22(6):839–845, 2001. [25] Mustafa Hajij, Kyle Istvan, and Ghada Zamzmi. Cell complex neural networks. In NeurIPS Workshop Topological Data Analysis and Beyond , 2020. [26] Mustafa Hajij, Mathilde Papillon, Florian Frantzen, Jens Agerberg, Ibrahem AlJabea, Rubén Ballester, Claudio Battiloro, Guillermo Bernárdez, Tolga Birdal, Aiden Brent, et al. TopoX: a suite of Python packages for machine learning on topological domains. Journal of Machine Learning Research , 25(374):1–8, 2024. [27] Will Hamilton, Zhitao Ying, and Jure Leskovec. Inductive representation learning on large graphs. In Advances in Neural Information Processing Systems , 2017. [28] Jakob Hansen and Robert Ghrist. Toward a spectral theory of cellular sheaves. Journal of Applied and Computational Topology , 3(4):315–358, 2019. [29] Allen Hatcher. Algebraic topology . Cambridge University Press, Cambridge, 2002. [30] Paul W. Holland, Kathryn Blackmond Laskey, and Samuel Leinhardt. Stochastic blockmodels: First steps. Social Networks , 5(2):109–137, 1983. [31] Ningyuan Teresa Huang and Soledad Villar. A short tutorial on the weisfeiler-lehman test and its variants. In IEEE International Conference on Acoustics, Speech and Signal Processing ,2021. [32] Matthew Kahle. Topology of random clique complexes. Discrete Mathematics , 309(6):1658– 1671, 2009. [33] Thomas N. Kipf and Max Welling. Semi-supervised classification with graph convolutional networks. In International Conference on Learning Representations , 2017. 11 [34] Maciej Krzywda, Szymon Łukasik, and Amir H Gandomi. Graph neural networks in computer vision-architectures, datasets and common approaches. In International Joint Conference on Neural Networks , 2022. [35] Andrei Leman and Boris Weisfeiler. A reduction of a graph to a canonical form and an algebra arising during this reduction. Nauchno-Technicheskaya Informatsiya , 2(9):12–16, 1968. [36] Haggai Maron, Heli Ben-Hamu, Hadar Serviansky, and Yaron Lipman. Provably powerful graph networks. In Advances in Neural Information Processing Systems , 2019. [37] Rossana Mastrandrea, Julie Fournet, and Alain Barrat. Contact patterns in a high school: A comparison between data collected using wearable sensors, contact diaries and friendship surveys. PloS One , 10(9):e0136497, 2015. [38] Julian McAuley, Christopher Targett, Qinfeng Shi, and Anton Van Den Hengel. Image-based recommendations on styles and substitutes. In International ACM SIGIR Conference on Research and Development in Information Retrieval , 2015. [39] John W Moon and Leo Moser. On cliques in graphs. Israel Journal of Mathematics , 3(1):23–28, 1965. [40] Christopher Morris, Martin Ritzert, Matthias Fey, William L Hamilton, Jan Eric Lenssen, Gaurav Rattan, and Martin Grohe. Weisfeiler and Leman go neural: Higher-order graph neural networks. In AAAI Conference on Artificial Intelligence , 2019. [41] Christopher Morris, Nils M Kriege, Franka Bause, Kristian Kersting, Petra Mutzel, and Marion Neumann. TUDataset: A collection of benchmark datasets for learning with graphs. In ICML Workshop Graph Representation Learning and Beyond , 2020. [42] Galileo Namata, Ben London, Lise Getoor, Bert Huang, and U Edu. Query-driven active surveying for collective classification. In International Workshop on Mining and Learning with Graphs , 2012. [43] Francesco Orsini, Paolo Frasconi, and Luc De Raedt. Graph invariant kernels. In International Joint Conference on Artificial Intelligence , 2015. [44] Theodore Papamarkou, Tolga Birdal, Michael Bronstein, Gunnar Carlsson, Justin Curry, Yue Gao, Mustafa Hajij, Roland Kwitt, Pietro Lio, Paolo Di Lorenzo, et al. Position: Topological deep learning is the new frontier for relational learning. In International Conference on Machine Learning , 2024. [45] Mathilde Papillon, Sophia Sanborn, Mustafa Hajij, and Nina Miolane. Architectures of topolog-ical deep learning: A survey of message-passing topological neural networks. arXiv preprint arXiv:2304.10031 , 2023. [46] Jason Piquenot, Aldo Moscatelli, Maxime Berar, Pierre Héroux, Romain Raveaux, Jean-Yves RAMEL, and Sébastien Adam. G 2N2 : Weisfeiler and Lehman go grammatical. In International Conference on Learning Representations , 2024. [47] Prithviraj Sen, Galileo Namata, Mustafa Bilgic, Lise Getoor, Brian Galligher, and Tina Eliassi-Rad. Collective classification in network data. AI Magazine , 29(3):93–93, 2008. [48] Oleksandr Shchur, Maximilian Mumme, Aleksandar Bojchevski, and Stephan Günnemann. Pitfalls of graph neural network evaluation. In NeurIPS Workshop Relational Representation Learning , 2018. [49] Nino Shervashidze, Pascal Schweitzer, Erik Jan, Van Leeuwen, Kurt Mehlhorn, and Karsten Borgwardt. Weisfeiler-Lehman graph kernels. Journal of Machine Learning Research , 1:1–48, 01 2010. [50] Etsuji Tomita, Akira Tanaka, and Haruhisa Takahashi. The worst-case time complexity for generating all maximal cliques and computational experiments. Theoretical Computer Science ,363(1):28–42, 2006. 12 [51] Nikil Wale, Ian A Watson, and George Karypis. Comparison of descriptor spaces for chemical compound retrieval and classification. Knowledge and Information Systems , 14(3):347–375, 2008. [52] Jia Wang, James Cheng, and Ada Wai-Chee Fu. Redundancy-aware maximal cliques. In ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , 2013. [53] Yanbo Wang and Muhan Zhang. Towards better evaluation of gnn expressiveness with brec dataset, 04 2023. [54] Felix Wu, Amauri Souza, Tianyi Zhang, Christopher Fifty, Tao Yu, and Kilian Weinberger. Simplifying graph convolutional networks. In International Conference on Machine Learning ,2019. [55] Hanrui Wu, Yuguang Yan, and Michael Kwok-Po Ng. Hypergraph collaborative network on vertices and hyperedges. IEEE Transactions on Pattern Analysis and Machine Intelligence , 45 (3):3245–3258, 2022. [56] Keyulu Xu, Weihua Hu, Jure Leskovec, and Stefanie Jegelka. How powerful are graph neural networks? In International Conference on Learning Representations , 2019. [57] Pinar Yanardag and SVN Vishwanathan. Deep graph kernels. In ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , 2015. [58] Ruochen Yang, Frederic Sala, and Paul Bogdan. Efficient representation learning for higher-order data with simplicial complexes. In Learning on Graphs Conference , 2022. 13 Appendix Table of Contents 
+
+A Weisfeiler-Leman Graph Isomorphism Test 15 B Proofs 15 
+
+B.1 Proof of Theorem 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15 B.2 Proof of Theorem 3 and Proposition 1 . . . . . . . . . . . . . . . . . . . . . . . 16 B.3 Proof of Proposition 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17 B.4 Proof of Proposition 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19 B.5 Proof of Proposition 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19 
+
+C Conjecture discussion 21 D Maximal Clique CWL 22 E Clique Sampling 25 F Ablations 25 G Permutation Equivariance of sCWN 26 H Datasets 27 I Model and Layer Details 29 J Compute Resources 30 
+
+14 A Weisfeiler-Leman Graph Isomorphism Test 
+
+Definition 10. Let Ap¨q and Bp¨q be graph hashing functions. We say that A is more expressive than 
+
+B if, for any pair of graphs G and G1, if the following condition holds: 
+
+BpGq ‰ BpG1q ùñ ApGq ‰ ApG1q. (4) Intuitively, a more expressive hashing can distinguish a wider range of non-isomorphic graphs. A classical and widely used technique for graph isomorphism testing is the Weisfeiler–Leman (WL) test [35], which is based on iterative color refinement: 
+
+Definition 11. The WL test constructs, in an iterative manner, a mapping c from the nodes of a graph to a finite set of colors as follows: 
+
+• Initialization: All nodes are assigned the same initial color. 
+
+• Color refinement: At iteration t ` 1, the color of each node i is updated according to 
+
+ct`1 
+
+> i
+
+“ HASH `cti, tt ctj : j „ iuu ˘, where j „ i denotes that node j is adjacent to node i,and HASH is an injective function. 
+
+• Termination: The process continues until the coloring no longer changes. Two graphs are considered non-isomorphic if their color histograms differ; otherwise, the test does not provide a conclusive answer. 
+
+The WL test provides an efficient heuristic for the graph isomorphism problem [31]. 
+
+## B Proofs 
+
+B.1 Proof of Theorem 2 
+
+First, we introduce the same notations, definitions, and propositions as in [ 3] to manipulate cellular coloring. 
+
+Definition 12. A cellular coloring is a function c that maps a cell complex X and one of its cells σ
+
+to a finite set (color set). We denote this color as cXσ .
+
+Definition 13. Let X, Y be two cell complexes and c a coloring. We say that X and Y are c-similar, denote as cX “ cY if tt cXσ , σ P Xuu “ tt cYτ , τ P Y uu . Otherwise, we have cX ‰ cY .
+
+Definition 14. A coloring c is said to refine another coloring d, denoted c Ď d, if for all cell complexes X, Y and all σ P X, τ P Y , we have: 
+
+cXσ “ cYτ ùñ dXσ “ dYτ .
+
+If both c Ď d and d Ď c, then the two colorings are said to be equivalent , denoted c ” d.
+
+Proposition 6. Let X, Y be cell complexes with A Ď X and B Ď Y . Consider two colorings c, d 
+
+such that c Ď d.
+
+tt cXσ , σ P Auu “ tt cYτ , τ P Buu ùñ tt dXσ , σ P Auu “ tt dYτ , τ P Buu .
+
+Proof. Suppose that tt cXσ , σ P Auu “ tt cYτ , τ P Buu . It means that there exists a bijection 
+
+f : A Ñ B such that for all σ P A, cXσ “ cYf pσq.As c Ď d, dXσ “ dYf pσq i.e., tt dXσ , σ P Auu “ tt dYτ , τ P Buu .
+
+Corollary 1. If c Ď d, then for all cell complexes X, Y ,
+
+cX “ cY ùñ dX “ dY .
+
+All non-distinguished cell complexes by c are not distinguished by d. In other words, c is a more powerful isomorphic test than d.
+
+15 Proof of Theorem 2. We show that CWL with coloring HASH pctσ , c t
+
+> B
+
+, c t 
+
+> C
+
+q is as powerful as HASH pctσ , c t
+
+> B
+
+, c t
+
+> Ò
+
+q . at denotes the colouring at step t using CWL with HASH pctσ , c t
+
+> B
+
+, c t
+
+> Ò
+
+q and bt
+
+the one using HASH pctσ , c t
+
+> B
+
+, c t 
+
+> C
+
+q. We know that the coloring at is as powerful as the original CWL (Theorem 7, in [ 3]). Since bt uses a subset of the CWL coloring relationships, it can be shown by induction that it is less powerful than the original CWL. Therefore, we have a Ď b.We show that b Ď a.We show by induction that b2t Ď at for all t P N.
+
+Base case. b0 Ď a0 as they follow the same color initialization scheme. 
+
+Inductive step. Assume b2t Ď at. We prove that b2t`2 Ď at`1.let pσ1, σ 2q P X ˆ Y such that b2t`2 
+
+> σ1
+
+“ b2t`2 
+
+> σ2
+
+. By construction, 
+
+b2t`1 
+
+> σ1
+
+“ b2t`1 
+
+> σ2
+
+, b2t`1 
+
+> B
+
+pσ1q “ b2t`1 
+
+> B
+
+pσ2q, b2t`1 
+
+> C
+
+pσ1q “ b2t`1 
+
+> C
+
+pσ2q,
+
+as b2t`1 
+
+> C
+
+pσ1q “ b2t`1 
+
+> C
+
+pσ2q, there exist a bijective map f : Cpσ1q Ñ Cpσ2q that preserve the b2t`1
+
+coloring ie b2t`1 
+
+> τ
+
+“ b2t`1   
+
+> fpτq
+
+for τ P Cpσ1q.As b2t`1 
+
+> τ
+
+“ b2t`1   
+
+> fpτq
+
+, we have b2t 
+
+> B
+
+pτ q “ b2t 
+
+> B
+
+pf pτ qq , i.e. ,
+
+tt b2tγ , γ P Bpτ quu “ tt b2tγ , γ P Bpf pτ qquu .
+
+We can add the color of τ on both sides, the multisets would still stay equal: 
+
+ttp b2tγ , b 2tτ q, γ P Bpτ quu “ ttp b2tγ , b 2tτ q, γ P Bpf pτ qquu .
+
+As this is true for all τ in Cpσ1q, we can take the union: 
+
+ď 
+
+> τPCpσ1q
+
+ttp b2tγ , b 2tτ q, γ P Bpτ quu “ ď 
+
+> τPCpσ1q
+
+ttp b2tγ , b 2tτ q, γ P Bpf pτ qquu ,
+
+i.e. ,
+
+ttp b2tγ , b 2tτ q, τ P Cpσ1q, γ P Bpτ quu “ ttp b2tγ , b 2tτ q, τ P Cpσ1q, γ P Bpf pτ qquu ,
+
+as b2tτ “ b2tf pτ q and f is bijective, the right term can be simplified: 
+
+ttp b2tγ , b 2tτ q, τ P Cpσ1q, γ P Bpf pτ qquu “ ttp b2tγ , b 2tf pτ qq, τ P Cpσ1q, γ P Bpf pτ qquu “ ttp b2tγ , b 2tδ q, δ P Cpσ2q, γ P Bpδquu ,
+
+i.e. ,
+
+ttp b2tγ , b 2tτ q, τ P Cpσ1q, γ P Bpτ quu “ ttp b2tγ , b 2tδ q, δ P Cpσ2q, γ P Bpδquu .
+
+Thus b2t 
+
+> Ò
+
+pσ1q “ b2t 
+
+> Ò
+
+pσ2q. Using the induction hypothesis b2t Ď at with proposition 6, we have 
+
+atσ1 “ atσ2 at
+
+> Ò
+
+pσ1q “ at
+
+> Ò
+
+pσ2q at
+
+> B
+
+pσ1q “ at
+
+> B
+
+pσ2q at 
+
+> C
+
+pσ1q “ at 
+
+> C
+
+pσ2q,
+
+i.e. ,
+
+at`1 
+
+> σ1
+
+“ at`1 
+
+> σ2
+
+.
+
+From our induction b2t Ď at for all t P N, hence b Ď a.
+
+B.2 Proof of Theorem 3 and Proposition 1 
+
+In this section, we prove that fCWL is at least as expressive as CWL and 1-WL on cell complexes that kept node set. Once this is established, the remaining correspondences between models with injective aggregation and their associated tests follow identically from the proof of equivalence between CWL and CWN in [3]. 
+
+Proposition 7. fCWL is at least as expressive as sCWL. 
+
+16 Proof. pV1, X1q and pV2, X2q correspond to two cell complexes that keep node sets. Let at denote the coloring at step t using sCWL, and bt the coloring at step t using fCWL. We prove by induction that bt Ď at.
+
+Base case. b0 Ď a0 since both follow the same initialization scheme. 
+
+Induction step. Assume bt Ď at. We show that bt`1 Ď at`1.Let pσ1, σ 2q P X1 ˆ X2 such that bt`1 
+
+> σ1
+
+“ bt`1 
+
+> σ2
+
+. By construction, we have: 
+
+btσ1 “ btσ2 , bt
+
+> B
+
+pσ1q “ bt
+
+> B
+
+pσ2q, bt 
+
+> C
+
+pσ1q “ bt 
+
+> C
+
+pσ2q.
+
+Using Proposition 6 with the induction hypothesis, it follows that: 
+
+atσ1 “ atσ2 , at
+
+> B
+
+pσ1q “ at
+
+> B
+
+pσ2q, at 
+
+> C
+
+pσ1q “ at 
+
+> C
+
+pσ2q
+
+i.e. , at`1 
+
+> σ1
+
+“ at`1 
+
+> σ2
+
+.By induction, bt Ď at for all t P N, hence b Ď a.Since sCWL is as expressive as CWL (Theorem 2), it follows as a corollary that fCWL is at least as expressive as CWL. 
+
+Proposition 8. fCWL is at least as expressive as WL Proof. pV1, X1q and pV2, X2q correspond to two cell complexes that keep node sets. Let at denote the coloring of nodes at step t using WL, bt the coloring of cells at step t using fCWL, and bt 
+
+> V
+
+the coloring of nodes in the cell complex colored at step t by fCWL. We prove by induction that bt 
+
+> V
+
+Ď at on the nodes. 
+
+Base case. b0 Ď a0 since both initialize all nodes with the same constant color. 
+
+Induction step. Assume bt 
+
+> V
+
+Ď at on nodes. We show that bt`1 
+
+> V
+
+Ď at`1.Let pi1, i 2q P V1 ˆ V2 such that bt`1 
+
+> i1
+
+“ bt`1 
+
+> i2
+
+.We have: 
+
+bti1 “ bti2 , bt 
+
+> Cpi1q
+
+“ bt
+
+> Cpi2q
+
+, bt  
+
+> Npi1q
+
+“ bt 
+
+> Npi2q
+
+.
+
+Using the induction hypothesis: ati1 “ ati2 . as bt  
+
+> Npi1q
+
+“ bt 
+
+> Npi2q
+
+, we can only consider the color of the first component, we get: 
+
+tt btj , j P N pi1quu “ tt btj , j P N pi2quu ,
+
+i.e. , by using proposition 6 and the induction hypothesis: 
+
+tt atj , j P N pi1quu “ tt atj , j P N pi2quu .
+
+From WL update, we get at`1 
+
+> i1
+
+“ at`1 
+
+> i2
+
+.By induction. bt 
+
+> V
+
+Ď at for all t P N, thus bV Ď a.
+
+B.3 Proof of Proposition 2 
+
+In this section, we analyse the theoretical time and memory complexity of CWN, fCWN, and sCWN on maximal clique complexes. We first remind some notations: • V represents the set of nodes • n is the number of nodes of our graphs • Ni represents the neighborhood of node i.• X is the set of maximal cliques. 17 We now detail one by one each message passing scheme’s complexity. 
+
+Boundary messages. Each node in the graph sends a message to the clique containing it. The total number of messages sent is: 
+
+|tp i, σ q P V ˆ X , i P σu| “ ÿ
+
+> pi,σ qP VˆX
+
+1iPσ “ ÿ
+
+> σPX
+
+ÿ
+
+> iPV
+
+1iPσ “ ÿ
+
+> σPX
+
+|σ|.
+
+Co-boundary messages. Each clique sends a message to each node it contains. The total number of messages sent is: 
+
+|tp i, σ q P V ˆ X , i P σu| “ ÿ
+
+> σPX
+
+|σ|.
+
+Upper-adjacency CWN. Each node i aggregate message for all tuple pj, σ q such that ti, j u Ă σ.The total number of messages sent is: 
+
+ÿ
+
+> iPV
+
+ˇˇtp j, σ q P V ˆ X : ti, j u P σuˇˇ “ ÿ
+
+> iPV
+
+ÿ
+
+> jPV
+
+ÿ
+
+> σPX
+
+1ti,j uĂ σ
+
+“ ÿ
+
+> σPX
+
+ÿ
+
+> iPV
+
+ÿ
+
+> jPV
+
+1ti,j uĂ σ
+
+“ ÿ
+
+> σPX
+
+ˇˇtp i, j q P V2 : ti, j u Ă σuˇˇ
+
+“ ÿ
+
+> σPX
+
+ˆ|σ|
+
+2
+
+˙
+
+“ ÿ
+
+> σPX
+
+|σ|2 ´ | σ|
+
+2 .
+
+Upper-adjacency fCWN. For each tuple pi, σ q P V ˆ X we create a message. Then we do an adjacency update. The total number of messages is the sum of each: 
+
+ÿ
+
+> pi,σ qP VˆX
+
+1iPσ ` ÿ
+
+> lPNi
+
+1 “ ÿ
+
+> σPX
+
+|σ| ` | E|.
+
+We can now finish the proof of proposition 2. 
+
+CWN. Every message passes through an MLP MÒ. The memory complexity is the same as the number of messages plus the data on the node and cliques: • Time complexity : Op ř
+
+> σPX
+
+|σ|2q.• Memory complexity : Opn ` ř
+
+> σPX
+
+|σ|2q.
+
+fCWN. Only the first messages go through an MLP MÒ.• Time complexity : Op ř
+
+> σPX
+
+|σ| ` | E|q .• Memory complexity : Opn ` ř
+
+> σPX
+
+|σ|q .
+
+sCWN. Here, MLPs are only applied to node or clique data. The messages are based on boundary and co-Boundary. • Time complexity : Op ř
+
+> σPX
+
+|σ|q .• Memory complexity : Opn ` | X |q .18 Summary. For clarity, we summarize below: Model Time Complexity Memory Complexity CWN Op ÿ
+
+> σPX
+
+|σ|2q Opn ` ÿ
+
+> σPX
+
+|σ|2q
+
+fCWN Op ÿ
+
+> σPX
+
+|σ| ` | E|q Opn ` ÿ
+
+> σPX
+
+|σ|q 
+
+sCWN Op ÿ
+
+> σPX
+
+|σ|q Opn ` | X |q 
+
+B.4 Proof of Proposition 4 
+
+We show that at every step of Algorithm 1, the nodes in the walk always form a clique. 
+
+Notations. Let Walk t denote the nodes in the walk at step t, and neighbor t the set of nodes that can be added next. We claim that: neighbor t “ t l P V, l „ j @j P Walk tu,
+
+i.e. , neighbor t contains exactly the nodes connected to all nodes in the current walk. 
+
+Induction. 
+
+Base case. Initially, Walk 0 “ r is and neighbor 0 “ Ni. By definition, Ni contains all nodes connected to i, i.e., all nodes that form a clique with Walk 0. Thus, the property holds at the first step. 
+
+Inductive step. Assume the property holds at step t, and let jnew P neighbor t be the next node added to the walk. The neighbor set is updated as neighbor t`1 “ neighbor t X Njnew .
+
+By construction, neighbor t`1 contains only nodes connected to jnew and to all nodes in Walk t, i.e., nodes connected to all nodes in Walk t`1 “ Walk t Y t jnew u.
+
+The property holds at step t ` 1.
+
+Conclusion. By induction, all nodes in the walk are connected to each other, i.e. , the walk always forms a clique. Since the walk is a clique, its size cannot exceed ωpGq, the size of the largest clique in the graph. Therefore, the walk can only stop when neighbor t becomes empty, i.e. , when there is no node that can be added to extend the clique. As a result, the clique produced by the walk is maximal with respect to set inclusion. 
+
+B.5 Proof of Proposition 5 
+
+CliqueWalk builds a maximal clique by growing it step by step. At each step, the algorithm: (i) samples a neighbor, (ii) intersects the neighborhoods of the current and newly visited node to restrict the walk, and (iii) continues until either the walk length reaches ωmax or it cannot be expanded. We can now break down the cost of one walk: (i) Neighbor sampling. Selecting a random neighbor is constant-time: Op1q.(ii) Neighborhood intersection. Intersecting two neighborhoods A and B takes Op| A| ` | B|q .Since each neighborhood is bounded by the maximum degree dmax pGq, this step costs at most 
+
+Opdmax pGqq .(iii) Walk length. The maximum length of a walk is bounded by 
+
+L ď max `ωpGq, ω max 
+
+˘,
+
+where ωpGq is the maximum clique size of the graph and ωmax is the cutoff imposed by the algorithm. 19 The complexity of one CLiqueWalk is thus : 
+
+Op
+
+> L
+
+ÿ
+
+> j“0
+
+dmax pGqq “ O pdmax pGq ¨ max pωpGq, ω max qq .
+
+As we launch from each node nwalks walks, the total complexity is 
+
+Opn ¨ nwalks ¨ dmax pGq ¨ max pωpGq, ω max qq .WL Step 0 Maximal Clique CWL Step 0 Step 1 Step 1 Step 2 Step 2 Conclusion Conclusion 
+
+Figure 6: Illustration of the WL and maximal clique CWL test. At each iteration, every node updates its color based on its own color and the colors of its neighboring structures (see Steps 1 and 2). After Step 2, the colors become stable ( i.e., invariant under further updates), and the algorithm stops. A histogram of colors is then computed. Since the two graphs produce identical histograms for WL, the test cannot distinguish between them, and the WL test is therefore inconclusive. In contrast, the maximal-clique CWL algorithm yields different histograms for the two graphs, allowing us to conclude that they are not isomorphic. 20 C Conjecture discussion 
+
+Let G “ p V, Eq be a graph and X the set of its maximal cliques. From Theorem 2, Cellular Weisfeiler– Lehman (CWL) is equivalent to its simplified variant (sCWL) on the same complex. This yields an equivalent formulation as 1-WL applied to the bipartite incidence graph 
+
+B “ p V Y X , EB q,
+
+where pv, C q P EB if and only if v P C.Under this formulation, node colors evolve as 
+
+ct`1 
+
+> v
+
+“ HASH 
+
+´
+
+ctv , tt ctσ | σ P X , v P σuu 
+
+¯
+
+,
+
+and clique colors are defined by 
+
+ctC “ HASH `tt ct´1 
+
+> u
+
+| u P Cuu ˘.
+
+A Sufficient Condition for CWL Ě 1-WL A key question is whether CWL is at least as expressive as 1-WL. This depends on whether neighborhood information can be recovered from clique-based aggregation. 
+
+Definition 15 (C2N Identification Property) . A vertex v P V satisfies the C2N identification property 
+
+if the multiset of neighbor colors 
+
+tt cu | u P N pvquu 
+
+is uniquely determined by the multiset of colors of maximal cliques containing v,
+
+tt cC | v P Cuu .
+
+Proposition 9. If every vertex in two graphs G and G1 satisfies the C2N identification property, then CWL is at least as expressive as 1-WL for distinguishing G and G1.Proof sketch. The proof proceeds by induction over refinement steps. Assuming CWL colors are at least as refined as 1-WL at step t, the C2N property ensures that clique-based aggregation at step 
+
+t ` 2 uniquely determines the 1-WL neighborhood histogram at step t, thereby recovering the 1-WL update at step t ` 1.
+
+A Structural Regime Where C2N Holds. For graphs with simple clique structures, we can naturally show that the C2N property. 
+
+Proposition 10. If every edge pu, v q P E belongs to exactly one maximal clique, then the C2N identification property holds for all vertices. Proof. In this setting, the neighborhood of a vertex v decomposes as a disjoint union of the maximal cliques containing v (excluding v itself). Let Xv “ t σ P X | v P σu.Suppose two node colorings c and c1 are consistent with the same maximal clique coloring: 
+
+tt cσ | σ P Xv uu “ tt c1 
+
+> σ
+
+| σ P Xv uu .
+
+Substituting the definition of clique colors, 
+
+tttt cw | w P σuu | σ P Xv uu “ tttt c1 
+
+> w
+
+| w P σuu | σ P Xv uu .
+
+Taking the union over all such cliques (excluding v) yields 
+
+ď
+
+> σPXv
+
+tt cw | w P σzt vuuu “ ď
+
+> σPXv
+
+tt c1 
+
+> w
+
+| w P σzt vuuu ,
+
+which implies 
+
+tt cw | w P N pvquu “ tt c1 
+
+> w
+
+| w P N pvquu .
+
+Thus, the neighborhood color histogram is uniquely determined. 21 Clique Partition Ambiguity. The C2N property does not hold in general. At n “ 9, we identify a structural failure where overlapping cliques obscure neighborhood information. In particular, there exist vertices that: • are distinguished by 1-WL through different neighbor color histograms, • but receive identical CWL colors due to identical multisets of incident clique colors. We refer to this phenomenon as clique partition ambiguity . It shows that recovering neighborhood information from clique structure is not always locally possible, preventing a direct inductive proof that CWL implies 1-WL. 
+
+Empirical Evaluation for n ď 9. We performed an exhaustive evaluation over all connected, non-isomorphic graphs up to n “ 9 (261,080 graphs in total). Table 4: Isomorphism resolution results for 1-WL and CWL. 
+
+n Total Graphs 1-WL Identifies CWL Identifies 1–5 31 31 31 6 112 109 112 7 853 836 853 8 11,117 10,897 11,106 9 261,080 258,632 260,960 CWL consistently matches or exceeds the distinguishing power of 1-WL and strictly improves upon it for n ě 6. Importantly, we observe no counterexample where 1-WL distinguishes two graphs that CWL fails to separate. These results provide strong empirical evidence for the conjecture 
+
+CWL Ě 1-WL .
+
+From a theoretical perspective, the conjecture remains non-trivial. CWL operates over maximal cliques rather than direct neighborhoods, and clique partition ambiguity shows that neighborhood information is not always locally recoverable. Nevertheless, such local ambiguities do not appear to translate into global failures for graph iso-morphism in our experiments. Establishing or refuting the conjecture in full generality remains an interesting non trivial open problem. 
+
+## D Maximal Clique CWL 
+
+We propose some experiments and illustrations to better understand the maximal clique CWL and its differences with WL. See Figure 6. It is known that CWL is more expressive than WL when using cell lifting methods that preserve the full node and edge sets of the graph [ 3]. However, since we only consider maximal cliques and remove edges from the representation, we no longer have this guarantee over WL. We introduce two simple coloring schemes to make sense of CWL’s expressive power. 
+
+Definition 16. The CountClique test hashes the set of all clique lengths. 
+
+Table 5: Number of distinct hashes found by each method on graph classification datasets. Abbrevi-ated dataset names: ENZ = ENZYMES, FRANK = FRANKENSTEIN, IMDB-B = IMDB-BINARY, IMDB-M = IMDB-MULTI, PROT = PROTEINS, ALC = alchemy_full.                                         
+
+> Method DD ENZ FRANK IMDB-B IMDB-M NCI1 PROT ALC
+> 1WL 1178 595 2766 537 387 3837 996 12343 CWL 1178 595 2767 537 387 3837 996 12396 CountClique 1178 547 216 432 309 254 799 23 TopoCount 1178 595 1272 537 387 2188 992 727
+
+22 Table 6: Number of graphs in each strongly regular family. 
+
+Family Number of graphs 
+
+16-6-2-2 225-12-5-6 15 26-10-3-4 10 28-12-6-4 429-14-6-7 41 35-18-9-9 3854 
+
+Family Number of graphs 
+
+36-14-4-6 180 40-12-2-4 28 45-12-3-3 78 50-21-8-9 18 64-18-2-6 167 
+
+Definition 17. The TopoCount test assigns a unique color to each node by hashing the set of lengths of the cliques containing it. 
+
+It is clear that CWL is at least as expressive as TopoCount and CountClique. We empirically compare the expressivity of CWL, WL, and other tests on various datasets. Table 5 shows the number of distinct hashes produced by each method. CWL matches or slightly exceeds WL in most cases. For several datasets [ 15 , 10 , 43 ], access to clique neighborhood information allows CWL to distinguish more graphs. For chemical datasets such as alchemy_full , WL schemes produce significantly more hashes than one-shot methods like TopoCount, highlighting the benefit of multi-layer models on those datasets. 16-6-2-2     
+
+> 25-12-5-6
+> 26-10-3-4
+> 28-12-6-4
+> 29-14-6-7
+> 35-18-9-9
+> 36-14-4-6
+> 40-12-2-4
+> 45-12-3-3
+> 50-21-8-9
+> 64-18-2-6
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Percentage (%)
+> Graph Isomorphism Tests (Percentage per Graph)
+> 1WL 3WL CountClique TopoCount CWL cliques
+
+(a) Clique CWL against other tests 16-6-2-2   
+
+> 25-12-5-6
+> 26-10-3-4
+> 28-12-6-4
+> 29-14-6-7
+> 35-18-9-9
+> 36-14-4-6
+> 40-12-2-4
+> 45-12-3-3
+> 50-21-8-9
+> 64-18-2-6
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Percentage (%)
+> Graph Isomorphism Tests (Percentage per Graph)
+> CWL cliques CWL cycles
+
+(b) Clique CWL against cycle CWL 
+
+Figure 7: Comparison of Percentage of Unique Graph Hashes on strongly regular datasets: (a) compare CWL on maximal cliques against other isomorphic tests, (b) compare CWL on maximal cliques against CWL on node, edge, cycle lifting. We also evaluate these tests on strongly regular graphs (see Figure 7a and Table 6). We use strongly regular datasets from https://www.maths.gla.ac.uk/~es/srgraphs.php [ 24 ], which include non-isomorphic strongly regular graphs with up to 64 nodes. For many strongly regular graph families, clique topology alone is sufficient to distinguish most graphs. In contrast, 1WL and 3WL fail to discriminate any graphs in these families, which aligns with known results [6, 3]. 
+
+Clique against cycle lifting. Figure 7b compares CWL with node and maximal clique lifting against CWL with node, edge, and cycle lifting. Both approaches achieve similar graph discriminative power, though they are not directly comparable: in some cases, cliques distinguish more graphs, while in others, cycles do. A classical approach for enumerating all maximal cliques is the Bron-Kerbosch method [ 7], explained in Algorithm 2. R is the current clique being grown, P contains nodes adjacent to all vertices in 
+
+R, and X contains nodes already processed that are also adjacent to every vertex in R. Clique summarization has been widely studied [ 17 ]. Most of those approaches modify the Brun-Kerbosch algorithm to enumerate or sample a subset of the maximal clique set that verifies specific properties. For instance, Wang et al. [52] prunes branches based on a heuristic to construct a subset of maximal cliques that partially covers all maximal cliques. 
+
+BREC Benchmark. To provide a standardized comparison of expressivity, we evaluate CWN on the maximal clique complex against the BREC benchmark [ 53 ], which tests the ability of GNNs to 23 Algorithm 1 CliqueWalk  
+
+> 1:
+
+function CLIQUE WALK (i, N , ω max ) 
+
+> 2:
+
+W alk Ð r is 
+
+> 3:
+
+neighbor Ð Ni 
+
+> 4:
+
+while neighbor ‰ H |W alk | ă ωmax do  
+
+> 5:
+
+choose j P neighbor  
+
+> 6:
+
+append j to W alk  
+
+> 7:
+
+neighbor Ð neighbor X Nj 
+
+> 8:
+
+end while  
+
+> 9:
+
+return W alk  
+
+> 10:
+
+end function 
+
+distinguish 400 structurally diverse graph pairs across four categories: Basic, Regular, Extension, and CFI. Table 7: BREC benchmark results: number of correctly distinguished graph pairs (out of the total per category). CWN is evaluated on the maximal clique complex.                                                     
+
+> Category Model Basic (60) Regular (140) Ext. (100) CFI (100) Total (400)
+> Ours CWN (max. clique) 55 119 28 0202
+> k-WL GNNs PPGN 60 50 100 23 233
+> ∆-LGNN 60 50 100 6216 Subgraph GNNs NGNN 59 48 59 0166 DS-GNN 58 48 100 16 222 Substructure GSN 60 99 95 0254 Transformer Graphormer 16 12 41 10 79 Non-GNN N2 60 138 100 0298
+
+CWN on the maximal clique complex achieves particularly strong discrimination on Regular graphs, correctly distinguishing 119 out of 140 pairs overall, and improving to 119 out of 120 pairs when restricted to regular graphs of degree greater than 2 (i.e., those containing cliques larger than single edges). This places CWN as the second-best method on this category among those evaluated. Performance is weaker on CFI graphs and Extension graphs. The CFI result is expected: CFI graphs contain no cliques larger than edges, effectively reducing CWN to a 1-WL baseline. Extension graphs have an average maximal clique size of 2.9, suggesting that the exclusive reliance on maximal cliques is insufficient to separate these specific structures, pointing to a direction for future work. 
+
+Algorithm 2 Bron–Kerbosch  
+
+> 1:
+
+function BRON KERBOSCH (R, P, X ) 
+
+> 2:
+
+if P “ H X “ H then  
+
+> 3:
+
+report R as a maximal clique  
+
+> 4:
+
+else  
+
+> 5:
+
+for each u in a copy of P do  
+
+> 6:
+
+P Ð P zt uu 
+
+> 7:
+
+Rnew Ð R Y t uu 
+
+> 8:
+
+Pnew Ð P X N puq 
+
+> 9:
+
+Xnew Ð X X N puq 
+
+> 10:
+
+BRON KERBOSCH (Rnew , P new , X new ) 
+
+> 11:
+
+X Ð X Y t uu 
+
+> 12:
+
+end for  
+
+> 13:
+
+end if  
+
+> 14:
+
+end function 
+
+24 10 20 30 40 50 60 70   
+
+> Clique Size
+> 10 3
+> 10 2
+> Inference Time (s)
+> Inference Time vs. Clique Size
+> CWN
+> sCWN
+> fCWN
+
+(a) Inference time with growing cliques. 10 20 30 40 50 60 70  
+
+> Clique Size
+> 10 6
+> 10 7
+> 10 8
+> Memory Footprint
+> Memory Usage vs. Clique Size
+> CWN
+> sCWN
+> fCWN
+
+(b) Memory footprint with growing cliques. 
+
+Figure 8: Comparison of CWN, sCWN, and fCWN with increasing clique size: (a) inference time and (b) memory footprint. 
+
+## E Clique Sampling 
+
+Our method, CliqueWalk , explained in Algorithm 1, is also inspired by Bron-Kerbosch but differs in two important ways: ( i) We sample rather than full enumeration. CliqueWalk does not attempt to enumerate all maximal cliques but samples a subset of them. Therefore, ( ii ) we do not need the X set. We simply grow a clique by iteratively sampling a vertex from the candidate set P .Conceptually, CliqueWalk performs an upward random walk in the clique complex (see Figure 3). While exact clique sampling might require exploring a geometric number of recursive branches (see Proposition 3), CliqueWalk runs in linear time with respect to the number of nodes (see Proposition 5) and efficiently produces summaries of the clique topology with the following sampling guarantees: (i) The sampling process tends to sample larger cliques. For instance, given a node v and a maximal clique σ containing v, the probability of sampling σ is at most p| σ| ´ 1q{ deg pvq. ( ii ) Performing CliqueWalk with multiple walks per node ensures that each node is included in several sampled cliques, which is relevant for node-level learning tasks. 
+
+## F Ablations 
+
+Table 8: Ablation cell input features. Table report test accuracy after training. input type size emb sum mean dataset Photo 94.7% 94.5% 94.9% contact-high-school 95.4% 97.6% 7.0% 
+
+Scalability of CWN models. Figure 8 illustrates how CWN, fCWN, and sCWN scale with increas-ing clique size. Consistent with Proposition 2, both fCWN and sCWN require substantially less mem-ory and runtime than CWN. Among them, sCWN achieves the best efficiency, confirming that restrict-ing message passing to boundary and co-boundary relations provides a favorable tradeoff between ex-pressivity and computational cost. 
+
+Cell input feature choice. Table 8 compares the performance of sCWN on Photo and contact-primary-school depending on the type of input used. We observe that size embedding and sum embedding obtain very similar accuracy, whereas mean embedding provides much worse results on contact-high-school. 
+
+Sampling effects. We compare exact enumeration of maximal cliques with CliqueWalk sampling using between 1 and 256 walks per node on Photo (Figure 9a) and contact-primary-school (Figure 9b). On Photo , increasing the number of sampled cliques does not improve model accuracy. We further study more aggressive subsampling of cliques (Figure 10b). We observe that fCWN is largely insensitive to the number of sampled cliques, with a slight performance increase once at least one clique per node is sampled. For sCWN, performance improves with the number of walks, but the gains become marginal beyond 4 walks per node. On contact-primary-school , the behavior differs between the two models. As shown in Section 5.4 (Figure 5a), both fCWN and sCWN initially gain performance as the number of walks per node increases. Extending this analysis to a larger number of sampled cliques reveals the full picture: fCWN remains stable even at very high sampling rates, whereas sCWN accuracy begins to drop when 25 10 0 10 1          
+
+> Inference Time (s)
+> 0.90
+> 0.92
+> 0.94
+> 0.96
+> 0.98
+> 1.00
+> Accuracy
+> 1256 4exact 8216 64 32 128
+> 264 16 128 32 exact 1256 48
+> sCWN
+> fCWN
+
+(a) Accuracy of sCWN and fCWN at different CliqueWalk sampling rates on Photo. 10 0 
+
+> Inference Time (s)
+> 0.60
+> 0.65
+> 0.70
+> 0.75
+> 0.80
+> 0.85 Accuracy
+> 8256 4116 64 32 exact 128 21256 48232 16 128 exact 64
+> sCWN fCWN
+
+(b) Accuracy of sCWN and fCWN at different CliqueWalk sampling rates on contact-primary-school. 
+
+Figure 9: Ablation studies on large clique sampling versus full clique enumeration. more than 32 random walks per node are used. This suggests that excessive redundancy in sampled cliques can dilute useful information for sCWN, while fCWN’s message-passing scheme is more robust to the amount of sampled structure. 
+
+Number of layers effects. Figure 10a shows the evolution of the accuracy for deeper models. As depth increases, test accuracy degrades at some point, indicating that deep models struggle to learn effectively. Training and testing accuracy remain similar at large depths (not shown in the figure); this decline is unlikely due to over-fitting and is consistent with the over-smoothing effect known in graph learning [19]. 5 10 15 20 25 30 
+
+Number of Layers 
+
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> Accuracy
+
+Effect of Increasing Number of Layers 
+
+(a) Accuracy of trained sCWN model without batchnorm on Photo depending on the number of layers. 10 3 10 2 10 1 10 0 10 1
+
+> CliqueWalk Fraction
+> 0.92
+> 0.93
+> 0.94
+> 0.95
+> Accuracy
+> sCWN
+> fCWN
+
+(b) Accuracy of sCWN and fCWN on Photo vs. CliqueWalk sampling rates. 
+
+Figure 10: Ablation studies on model depth and clique sampling. 
+
+## G Permutation Equivariance of sCWN 
+
+For a fixed cell complex, sCWN is permutation equivariant by construction. Because CliqueWalk is a stochastic sampling procedure, however, two isomorphic graphs may yield non-isomorphic lifted complexes for a single sample. We now show that the expected output ofsCWN is permutation equivariant. 
+
+Proposition 11 (Expected equivariance of sCWN) . Let ΦpG, ˆX q denote the sCWN mapping for a graph G and a sampled clique complex ˆX . The expected output ErΦpG, ¨qs is permutation equivariant. 
+
+26 Table 9: Dataset statistics for node and graph classification. Reported are the number of nodes, number of edges, mean degree, and clique statistics ( μ: mean size, σ: standard deviation).                                                                              
+
+> Dataset Nodes Edges Mean degree Clique μClique σ
+> Node classification datasets
+> SCM 6 002 010 276 089 116 46.0 6.51 6.55 Cora 2 708 10 556 7.80 2.37 0.59 PubMed 19 717 88 648 8.99 2.28 0.59 Citeseer 3 327 9 104 5.47 2.26 0.58 Photo 7 650 238 162 62.26 10.75 4.89 Contact-Primary-School 242 16 634 137.47 11.36 2.88 Contact-High-School 327 11 636 71.17 9.28 3.73 OGBN-Products 2 449 029 123 718 024 50.5 8.3 6.6
+> Graph classification datasets
+> IMDB-BINARY 19 773 96 531 9.76 7.02 3.80 IMDB-MULTI 19 502 98 903 10.14 7.61 4.30 MUTAG 3 371 3 721 2.21 2.00 0.00 NCI1 122 747 132 753 2.16 2.00 0.04 NCI109 122 494 132 604 2.17 2.00 0.04 Proteins 43 471 81 044 3.73 2.53 0.63
+
+Proof. Let π be any permutation of the vertex set V , and let πpGq and πp ˆX q denote the permuted graph and complex, respectively. Since CliqueWalk depends only on the adjacency structure and not on node indexing, the sampling distribution is equivariant: 
+
+P
+
+´ ˆX | G
+
+¯
+
+“ P
+
+´
+
+πp ˆX q | πpGq
+
+¯
+
+. (5) The expected output on the permuted graph is 
+
+ErΦpπpGq, ¨qs “ ÿ 
+
+> ˆX1
+
+Φ
+
+´
+
+πpGq, ˆX 1
+
+¯
+
+P
+
+´ ˆX 1 | πpGq
+
+¯
+
+. (6) Applying the change of variables ˆX 1 “ πp ˆX q and the equivariance of Φ for fixed complexes (ΦpπpGq, π p ˆX qq “ πpΦpG, ˆX qq ): 
+
+ErΦpπpGq, ¨qs “ ÿ
+
+> ˆX
+
+π
+
+´
+
+ΦpG, ˆX q
+
+¯
+
+P
+
+´
+
+πp ˆX q | πpGq
+
+¯
+
+“ ÿ
+
+> ˆX
+
+π
+
+´
+
+ΦpG, ˆX q
+
+¯
+
+P
+
+´ ˆX | G
+
+¯
+
+“ π
+
+¨˝ÿ
+
+> ˆX
+
+ΦpG, ˆX qP
+
+´ ˆX | G
+
+¯˛‚“ πpErΦpG, ¨qsq . (7) Thus, the expectation of the sCWN mapping commutes with the permutation map. 
+
+## H Datasets 
+
+Topological networks [ 11 , 37 ]. The contact-high-school and contact-primary-school datasets record proximity between students. Hyperedges are created at fixed time intervals from these interactions. We then project all interactions into a static graph. In this graph, an edge links two students if they have interacted at least once. The resulting graphs are topological complex networks (See Figures 11a and 11b) 
+
+Citation networks. In these datasets, node features are given by a Bag-of-Words representation of the documents. Cora and Citeseer are citation networks extracted from machine learning publications [ 47 ]. The labels correspond to the research topic of each paper. The PubMed citation network consists of articles related to diabetes. [42] The labels indicate the type of diabetes discussed in the article. 
+
+Purchase network. The Amazon Photo dataset is a subset of the Amazon co-purchase network [ 38 ]. In this graph, nodes represent products, and edges connect items that are frequently purchased 27 together. node features are given by a Bag-of-Words representation of product reviews, and the labels are the product category. The OGBN-Products dataset follows the same methodology, but the Bag-of-Words features have been reduced to 100 dimensions using PCA, providing a more compact representation of the node features. 
+
+Stochastic clique model. It is a special case of Stochastic Block Model [ 30 ] where inward probability is set to 1. Graphs are generated by assembling cliques, with nodes inside each clique fully connected. Each clique is assigned a label, which is inherited by all its nodes, and node features are generated from a Gaussian distribution with a mean determined by the node label and a fixed diagonal variance. To introduce topological noise, each node is connected to nodes outside its clique with a fixed probability, perturbing the clique structure. The task can thus be interpreted as a form of label denoising. For our experiments reported in table For experiments reported in Table 2, cliques had random sizes between 10 and 20 . Node features had a standard deviation of 2, and topological noise was such that approximately two out of three neighbors came from outside the clique. Each clique was assigned one of five possible labels. 
+
+Social networks. A network of actors and actresses is constructed from IMDB, where edges indicate collaboration in the same film. The IMDB-BINARY and IMDB-MULTI datasets [ 57 ] consist of the 1-hop neighborhoods around each actor. Graph labels correspond to the movie genre associated with the actor. 
+
+Bioinformatics. The bioinformatics datasets include four widely used molecular and protein graph collections. MUTAG [ 13 ] contains nitroaromatic compounds with 7 different labels indicating mutagenic activity. PROTEINS [ 5] represents protein structures; the task is to predict if a protein is an enzyme or not. NCI1 and NCI109 [ 51 , 49 ] are collections of chemical compounds tested for activity against lung cancer and ovarian cancer cells, respectively. Each dataset is available through the TUDataset [41] repository and is commonly used to benchmark graph-based learning methods. 
+
+Remark. Dataset statistics can be found in Table 9. Clique size was approximated using CliqueWalk for OGBN-Products. Figure 4 shows a correlation between larger mean clique sizes and better performance for clique-based models. 
+
+OGBN-Products. We train our model on cliques (HGNN, sCWN, fCWN) for 1000 epochs with 200 hidden dimensions. For sCWN and fCWN, clique data are initialized using mean node features. We tune the learning rate, dropout rate, weight decay, and the number of layers. Tuning is performed on 300 epochs using the Optuna library with the Tree-structured Parzen Estimator algorithm and a 
+
+30 -trial budget. For HGNN on OGBN-Products, we used an implementation with mean aggregation instead of symmetric normalized aggregation. For GNN models, we do not tune hyperparameters and use typical ones. The results we obtain in GNNs are aligned with public leaderboards for full-batch models. Table 10: Hyperparameter Configurations on OGBN-products 
+
+Model Layers Hidden Dim Learning Rate Weight Decay Dropout 
+
+GCN 4 200 3 ˆ 10 ´3 1 ˆ 10 ´3 0.50 GAT N/A N/A N/A N/A N/A GIN 3 64 1 ˆ 10 ´3 5 ˆ 10 ´4 0.50 SAGEConv 3 64 1 ˆ 10 ´3 5 ˆ 10 ´4 0.50 SGC 3 64 1 ˆ 10 ´3 5 ˆ 10 ´4 0.50 SCCN N/A N/A N/A N/A N/A HGNN 4 200 2.4 ˆ 10 ´3 2 ˆ 10 ´6 0.15 CWN N/A N/A N/A N/A N/A fCWN 5 200 3 ˆ 10 ´3 1.3 ˆ 10 ´6 0.17 sCWN 5 200 2.7 ˆ 10 ´3 1 ˆ 10 ´6 0.09 28 I Model and Layer Details 
+
+In this section, we describe the layers and model implementations used for our benchmarks. Through-out, we use the following notation: • MLP: a 2-layer multilayer perceptron with ReLU activation. • W: a learnable linear layer. • H P t 0, 1unˆm: the hypergraph incidence matrix. • Dv P Rnˆn, De P Rmˆm: diagonal degree matrices of nodes and hyperedges (cliques): 
+
+Dv pi, i q “ 
+
+> m
+
+ÿ
+
+> e“1
+
+Hi,e , Depe, e q “ 
+
+> n
+
+ÿ
+
+> i“1
+
+Hi,e .
+
+• X : the set of cliques. • xNi : features of node i P V.• xCσ : features of clique σ P X .
+
+HGNN. We follow [22]. The layer propagation is: 
+
+xNi Ð Wx Ni ` WD ´ 12 
+
+> v
+
+HD ´1 
+
+> e
+
+HJD´ 12 
+
+> v
+
+WpxNi q,
+
+where W is a learnable weight matrix, and σp¨q is a non-linear activation function ( e.g. , ReLU). The addition of Xplq implements a residual (skip) connection. 
+
+CWN. We implemented the layer from [3]: 
+
+xCσ Ð MLP 
+
+´
+
+xCσ ` 1
+
+|σ|
+
+ÿ
+
+> iPσ
+
+xNi
+
+¯
+
+,
+
+xNi Ð Wx Ni ` 1
+
+|tp j, σ q : i, j P σu| 
+
+ÿ
+
+> pj,σ q
+> i,j Pσ
+
+MLP `xNi ` xNj ` xCσ
+
+˘.
+
+sCWN. This model is a simple boundary, co-boundary aggregation. Most of the weights are used to update clique representation, while node representations are updated from the average of clique features. On maximal clique complexes, the model is implemented as follows: 
+
+xCσ Ð MLP 
+
+´
+
+Wx Cσ ` 1
+
+|σ|
+
+ÿ
+
+> iPσ
+
+MLP pxNi q
+
+¯
+
+,
+
+xNi Ð Wx Ni ` 1
+
+|t σ P X : i P σu| 
+
+ÿ
+
+> σQi
+
+xCσ .
+
+fCWN. This model mixes an sCWN model with a graph aggregation layer at the node level. On maximal clique complexes, the model is implemented as follows: 
+
+xCσ Ð MLP 
+
+´
+
+Wx Cσ ` 1
+
+|σ|
+
+ÿ
+
+> iPσ
+
+MLP pxNi q
+
+¯
+
+,
+
+xNi Ð Wx Ni ` W 1
+
+|Ni|
+
+ÿ
+
+> jPNi
+
+xj ` 1
+
+|t σ P X : i P σu| 
+
+ÿ
+
+> σQi
+
+xCσ .
+
+SCCN. We used the TopoModelX [26] implementation of the SCCN layer from [58]. 
+
+Global architecture .Each model begins with a layer normalization of the input. Each subsequent layer is composed as follows: 
+
+Conv Ñ LayerNorm/Batchnorm pwith or without q Ñ ReLU Ñ Dropout .
+
+Where Conv can be replaced with any convolutional layer under evaluation ( e.g. sCWN, SCCN, GAT, etc.). 29 (a) (b) 
+
+Figure 11: Projected datasets: (a) contact-primary-school and (b) contact-high-school. 
+
+Graph models. We experiment with several standard graph neural networks: Simple Graph Con-volution (SGC), Graph Convolutional Network (GCN), GraphSAGE, Graph Attention Network (GAT), and Graph Isomorphism Network (GIN). For SGC, we use a modified version with shift operator S :“ D´1A, concatenating x, Sx , . . . , SK x and feeding the result into an MLP. For the other models, we use the PyTorch Geometric implementations with standard hyperparameters. 
+
+Node classification. The final layer applies a convolution followed by Softmax. 
+
+Graph classification. The final layer applies a convolution followed by a global add pooling operation to aggregate node features into a graph-level embedding. Then, it is followed by Softmax. 
+
+## J Compute Resources 
+
+All experiments were conducted using NVIDIA GPUs, primarily RTX 3090 , L40S and H100 .
+
+Node classification. Node classification experiments are relatively lightweight and computationally efficient. Individual training runs typically complete within minutes to a few hours depending on the dataset and hyperparameter configuration. As a result, full hyperparameter sweeps across all node classification benchmarks can be completed within a few GPU-days. 
+
+Graph classification. Graph classification experiments are more computationally demanding due to the need for repeated training across multiple datasets and hyperparameter configurations. A full sweep over all graph classification datasets typically requires approximately between 1 hour to 1
+
+GPU-day. 
+
+Total compute budget. Taking into account all reported experiments, including hyperparameter searches and repeated runs for statistical significance, we estimate the total compute usage to be on the order of two months of single-GPU time . This estimate includes both successful runs and preliminary experiments that informed the final experimental design. 30
