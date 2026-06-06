@@ -1,0 +1,1498 @@
+Title: Safe-Subspace Pseudo-Label Refinement for Source-Free Graph Domain Adaptation
+
+URL Source: https://arxiv.org/pdf/2606.00808v1
+
+Published Time: Tue, 02 Jun 2026 01:10:11 GMT
+
+Number of Pages: 27
+
+Markdown Content:
+> 1
+
+# Safe-Subspace Pseudo-Label Refinement for Source-Free Graph Domain Adaptation 
+
+Yingxu Wang, Xinwang Liu, Siyang Gao, Nan Yin 
+
+Abstract —Source-free graph domain adaptation (SF-GDA) aims to adapt source-trained graph models to unlabeled target graphs when source graphs are no longer accessible. A central obstacle is pseudo-label reliability: under feature and topolog-ical shifts, source-induced predictions may become confidently wrong, and indiscriminate self-training can amplify systematic errors through graph message passing. This paper studies SF-GDA from a selective pseudo-labeling perspective. Instead of assuming globally bounded pseudo-label noise over the entire target domain, we identify a confidence-consistent safe subspace on which pseudo-label noise can be controlled under restricted posterior discrepancy, and derive a target-risk decomposition that separates safe-subspace fitting error, selected-label noise, and uncertain-set risk. Guided by this analysis, we propose Safe-Subspace Pseudo-Label Refinement (S 2PLR), a source-free graph adaptation framework that applies hard pseudo-label supervision only to target graphs supported by both semantic and structural evidence. Specifically, S 2PLR estimates semantic reliability using source-committee confidence and disagreement, learns a target-intrinsic structural representation via graph contrastive learning, verifies pseudo-labels through neighborhood consistency, and exploits the remaining uncertain samples with noise-tolerant soft regularization rather than unreliable hard labels. Experiments on image and real-world graph benchmarks under different domain shifts demonstrate that S 2PLR achieves robust and competitive performance across diverse source-free transfer settings. 
+
+Index Terms —Graph Neural Networks, Source-Free Domain Adaptation, Noisy Label Learning 
+
+I. I NTRODUCTION 
+
+Graph data are ubiquitous in social networks, biological systems, and molecular discovery, yet models trained on one graph domain often suffer substantial performance degradation when deployed on another because distribution shifts may arise in both node attributes and topology [1–6]. Graph domain adaptation (GDA) addresses this challenge by transferring knowledge from labeled source graphs to unlabeled target graphs and has become an important paradigm for robust graph representation learning [7–10]. However, most existing GDA methods assume that source graphs remain accessible during adaptation, which is often unrealistic because of privacy, proprietary, and storage constraints. This limitation motivates source-free domain adaptation, where adaptation is performed using only a pretrained source model and unlabeled target 
+
+Yingxu Wang is with Department of Computer Science and Engineering, Chinese University of Hong Kong. E-mail: yingxv.wang@gmail.com. Xinwang Liu is with College of Computer, National University of Defense Technology, Changsha, 410073, China. E-mail: xinwangliu@nudt.edu.cn. Siyang Gao is with Department of Data Science, City University of Hong Kong. E-mail: siyangao@city.edu.hk. Nan Yin is with The Education University of Hong Kong, Hong Kong. E-mail: yinnan8911@gmail.com. 
+
+data [11–13]. Extending this setting to graph-structured data gives rise to source-free graph domain adaptation (SF-GDA), a substantially more challenging problem because domain shift affects not only feature distributions but also relational structures and message-passing behavior [14–18]. A central difficulty in SF-GDA is that target adaptation must rely on pseudo supervision induced by a fixed source hypothesis. Such pseudo-labels can be systematically biased under target-side structural shift, and recent source-free adap-tation analyses show that full-domain self-training may enter an unbounded-noise regime in which a source classifier is confidently wrong on part of the target domain [19–21]. This failure mode is especially consequential for graph data: an erroneous pseudo-label is not an isolated classification mis-take, but can be propagated through neighborhood aggregation and may distort both local structural consistency and global representation geometry. Thus, the key question in SF-GDA is not merely how to refine pseudo-labels, but which target samples can be trusted for hard supervision and which should be handled only through softer target-side regularization. Existing SF-GDA methods have made important empir-ical progress through topology-aware alignment, collabora-tive pseudo-label refinement, and structure-preserving self-supervision [15–17, 22]. Nevertheless, most of them do not explicitly characterize the reliability region on which pseudo-label training is theoretically justified. Confidence filtering alone is insufficient because a source model may make overconfident target errors, whereas neighborhood consistency alone can be misleading if the target representation is geomet-rically distorted. Moreover, discarding all uncertain samples wastes target distributional information, while assigning hard pseudo-labels to them risks negative transfer. These observa-tions call for a selective adaptation framework that (i) identifies a reliable target subspace using both semantic confidence and structural evidence, (ii) learns a compact target-intrinsic geometry for neighborhood verification, and (iii) regularizes the remaining uncertain samples without treating their pseudo-labels as ground truth. In this work, we develop such a framework by revisiting pseudo-label noise in source-free graph domain adaptation from a selective-risk perspective. Rather than claiming that pseudo-label noise is globally bounded over the entire target domain, we establish sufficient conditions under which it is bounded on a confidence-consistent safe subspace. Our analy-sis explicitly separates two aspects that are often conflated: source confidence and posterior discrepancy determine the population-level pseudo-label noise bound, while neighbor-hood consistency and geometric compactness provide target-
+
+> arXiv:2606.00808v1 [cs.LG] 30 May 2026 2
+
+only evidence for identifying reliable samples in practice. This distinction avoids overclaiming beyond the assumptions and leads to an actionable risk decomposition: hard pseudo-label supervision should be restricted to the safe subspace, and the residual uncertain set should be controlled by soft regularization. Motivated by this selective-risk analysis, we propose Safe-Subspace Pseudo-Label Refinement (S 2PLR), a selective-risk-guided framework for source-free graph domain adaptation. S 2PLR first estimates reliable target supervision through multi-expert uncertainty quantification, then learns a target-intrinsic structural manifold via self-supervised graph contrastive learning, and subsequently performs dual-view nested pseudo-label refinement to identify safe target samples. For the remaining uncertain samples, S 2PLR applies noise-tolerated regularization so that their distributional information can still be exploited without propagating incorrect hard pseudo-labels. In this way, S 2PLR connects selective bounded-noise analysis with structure-aware graph adaptation, moving beyond purely empirical pseudo-label refinement or topology alignment [15–17]. The main contributions of this work are summarized as follows:  
+
+> •
+
+We provide a selective theoretical analysis of pseudo-label noise in SF-GDA. Under an explicit restricted posterior-discrepancy assumption, the analysis derives a pseudo-label noise bound on a confidence-qualified target subset and decomposes the resulting target risk into safe-subspace fitting error, selected-label noise, and uncertain-set risk.  
+
+> •
+
+We propose S 2PLR, a source-free graph domain adaptation framework that integrates multi-expert uncertainty quantifi-cation, target-intrinsic structure learning, dual-view nested pseudo-label refinement, and noise-tolerated regularization according to the reliability and risk factors identified by the analysis.  
+
+> •
+
+We evaluate S 2PLR on image and graph benchmarks un-der different domain shifts. The results show that S 2PLR achieves competitive performance in most transfer settings. II. R ELATED WORK 
+
+a) Source-Free Domain Adaptation and Graph Domain Adaptation: Source-free domain adaptation (SFDA) transfers a source-trained model to an unlabeled target domain when source samples are no longer accessible during adaptation [23– 27]. Existing SFDA methods commonly rely on information maximization, self-training, pseudo-label refinement, feature consistency, or confidence calibration to adapt the source de-cision boundary to the target distribution [19, 27–30]. Source-free graph domain adaptation (SF-GDA) extends this setting to graph-structured data, where domain shifts may affect both node attributes and graph topology [11, 15, 17, 31–33]. This makes adaptation more challenging than in Euclidean data be-cause message passing can amplify local structural mismatch and propagate pseudo-label errors across graph neighborhoods. Recent SF-GDA methods address these issues through topol-ogy reconstruction, contrastive learning, graph collaborative training, and structure-aware representation alignment [7, 34– 36]. Different from topology-alignment methods that pri-marily reduce representation mismatch, S 2PLR focuses on the reliability of the pseudo-supervision used during source-free adaptation. It explicitly separates target samples into a safe subspace for hard pseudo-label supervision and an uncertain set for soft regularization. This selective formulation differs from conventional confidence filtering because target-side structural consistency is used as an additional label-free certificate before a pseudo-label is allowed to affect supervised adaptation. 
+
+b) Learning with Noisy Labels and Pseudo-Label Relia-bility: Learning with noisy labels has been widely studied in supervised learning, where common strategies include robust losses, sample selection, label correction, co-training, and uncertainty-aware reweighting [37–41]. In SFDA, pseudo-label noise differs from ordinary annotation noise because it is induced by applying a fixed source hypothesis to a shifted target distribution. Such noise can be systematic rather than random, and recent analyses show that full-domain source-free self-training may suffer from unbounded pseudo-label noise under severe domain shift [19, 20]. For graph data, the issue is further complicated by structural heterogeneity: overconfident pseudo-labels may be locally unsupported, while neighborhood agreement may be unreliable if the target repre-sentation is geometrically distorted. S 2PLR therefore combines multi-expert uncertainty estimation, target-intrinsic structural learning, and nested pseudo-label refinement to identify a confidence-consistent safe subspace. This design is comple-mentary to existing noisy-label learning methods because it treats pseudo-label reliability as a selective adaptation problem under source-free graph shifts rather than as a standard label-corruption problem. III. R EVISITING THEORETICAL ANALYSIS OF LABEL 
+
+NOISE IN SF-GDA 
+
+A. Source-Free Graph Domain Adaptation 
+
+We consider source-free graph domain adaptation (SF-GDA) for graph-level classification [11, 15–17]. Let a graph be denoted by G = ( V, E, X), where V and E ⊆ V × V are the node and edge sets, respectively, and X ∈ R|V |× d is the node-feature matrix. During source pretraining, a classifier hS is learned from a labeled source domain DS = {(GSi , y Si )}nS 
+
+> i=1
+
+∼
+
+PS (G, Y ). During adaptation, source graphs are unavailable, and the learner only has access to the pretrained source model 
+
+hS and an unlabeled target domain DT = {GTj }nT 
+
+> j=1
+
+∼ PT (G),where the two domains share the same label space Y =
+
+{1, . . . , C } but follow different graph distributions due to shifts in both node attributes and topology [7, 8]. The objective of SF-GDA is to learn a target model hT that adapts hS to 
+
+DT without revisiting source data and minimizes the target risk RT (hT ) = Pr (G,Y )∼PT
+
+hT (G)̸ = Y .
+
+B. Setup and Theoretical Question 
+
+We analyze source-free graph domain adaptation in the induced target representation space, as commonly adopted in prior SF-GDA methods [15–17]. Specifically, each target graph G ∈ D T is mapped to a representation x = ϕ(G) ∈ X ,and we denote the set of target representations by XT =
+
+{ϕ(G) | G ∈ D T }. In the source-free setting, a source model 3
+
+hS is trained on the labeled source domain and then deployed on unlabeled target samples only. The learner has no access to source graphs during adaptation and must rely on pseudo-labels induced by the source model, 
+
+˜y(x) = arg max  
+
+> y∈Y
+
+pS (y | x),
+
+where pS (y | x) denotes the posterior predicted by the source model. Therefore, the success of source-free adaptation fun-damentally depends on whether these source-induced pseudo-labels remain reliable under domain shift [11, 19, 20]. To formalize this issue, we define the instance-wise pseudo-label noise rate on the target domain as 
+
+η(x) = Pr   
+
+> Y∼pT(·| x)
+
+[˜ y(x)̸ = Y ] = 1 − pT (˜ y(x) | x),
+
+where pT (y | x) denotes the target posterior. In conventional learning with label noise, effective training typically relies on the bounded-noise premise that the corrupted label remains positively correlated with the ground truth. In source-free adaptation, however, the pseudo-label ˜y(x) is produced by a fixed source classifier on a shifted target distribution, so the resulting noise is a structured consequence of domain mismatch rather than random corruption [19, 20]. For graph data, this issue is further entangled with target geometry and local structural relations, since neighborhood consistency may either support or contradict a pseudo-label in the learned representation space. These observations lead to the central theoretical question of this work: Can pseudo-label noise in SF-GDA be bounded under domain and structural shifts, and if so, on which subset of target samples can such a guarantee be established? 
+
+Equivalently, rather than assuming that there exists a constant 
+
+¯η < 1/2 such that 
+
+η(x) ≤ ¯η, ∀x ∈ X T ,
+
+we ask whether one can identify a restricted subset H ⊆ X T
+
+on which the bounded-noise condition is restored, while the remaining samples are handled more cautiously. Answering this question is essential for justifying pseudo-label-based adaptation in SF-GDA. In the following, we first revisit the existing unbounded-noise theory in source-free adaptation, then analyze its scope, and finally establish a bounded-noise result within a confidence-consistent safe subspace. 
+
+C. Existing Unbounded-Noise Theory 
+
+To answer the question raised above, we revisit recent theoretical analyses of label noise in source-free adaptation through the lens of learning with label noise [19, 20]. In conventional learning with noisy labels, a standard premise is that the noisy supervision remains bounded, namely, there exists a constant ¯η < 1/2 such that 
+
+η(x) ≤ ¯η, ∀x ∈ X T .
+
+This condition ensures that the observed label is still positively correlated with the ground-truth label, which underlies the va-lidity of robust loss correction and noise-tolerant optimization. In source-free adaptation, however, the pseudo-label ˜y(x) is not generated by random corruption. Instead, it is induced by applying a fixed source classifier to a shifted target distri-bution, making the resulting noise structurally determined by domain mismatch rather than stochastic perturbation [19, 20]. Following [20], consider a binary classification setting in which the source domain is modeled as a Gaussian mixture: 
+
+x | y = k ∼ N (μk, σ 2Id), k ∈ { 1, 2},
+
+while the target domain is a globally shifted version of the source: 
+
+x | y = k ∼ N (μk + ∆ , σ 2Id), k ∈ { 1, 2},
+
+where ∆ ∈ Rd denotes the class-invariant translation vector. A key quantity governing the noise behavior is the projection of the domain shift onto the class-separation direction, 
+
+α = ∆⊤(μ2 − μ1)
+
+∥μ2 − μ1∥2 .
+
+Under this setup, the pseudo-label noise is shown to be unbounded in a precise conditional sense. 
+
+Theorem 1 (Unbounded Label Noise in SFDA [20]) . Suppose 
+
+α̸ = 0 . Then there exists a non-empty region R ⊆ X T , referred to as a mislabeling area, such that for any δ ∈ (0 , 1) , if 
+
+α > 1
+
+d log 1 − δδ ,
+
+the conditional error of the source classifier on R satisfies 
+
+Pr 
+
+> (x,y )∼PT
+
+hS (x)̸ = y | x ∈ R  ≥ 1 − δ. 
+
+Theorem 1 shows that, under domain shift, the source classifier can be not merely uncertain but systematically and even confidently wrong on a non-empty target region. In other words, the pseudo-label error rate may exceed the usual learnable regime and can approach one within the mislabeling area. This result provides a rigorous explanation for why naive self-training on the full target domain may fail in source-free adaptation. It also indicates that robust objectives developed under the bounded-noise premise may lose their effectiveness once the pseudo-labels are dominated by systematic target-side bias rather than random label corruption [19, 20]. Although Theorem 1 reveals a genuine failure mode of source-free adaptation, it is derived under a highly structured global-shift model and analyzes pseudo-label behavior over the entire target domain. These assumptions are stronger than the selective and structure-aware adaptation protocols typically used in SF-GDA. Therefore, before concluding that pseudo-label-based graph adaptation is universally unsafe, it is necessary to examine the scope and limitations of the existing theory. 
+
+D. Limitations of Existing Theory 
+
+Although Theorem 1 reveals a genuine failure mode of source-free adaptation, its conclusion should be interpreted with caution when transferred to source-free graph domain adaptation. The theorem establishes an impossibility result for 4
+
+a highly structured worst-case regime, whereas practical SF-GDA is conducted under selective adaptation protocols rather than full-domain self-training [15–17, 20]. First, the existing analysis assumes a class-invariant global translation model, 
+
+x | y = k ∼ N (μk + ∆ , σ 2Id), k ∈ { 1, 2},
+
+where all classes share the same shift vector ∆. This particular structure is crucial for constructing the mislabeling area in which the source decision boundary becomes systematically misaligned with the target distribution. In realistic graph adap-tation scenarios, domain shift is often heterogeneous across classes and intertwined with variations in graph size, sub-structure composition, connectivity patterns, and neighborhood statistics [7, 15, 16]. Second, the theorem requires that the projected shift mag-nitude 
+
+α = ∆⊤(μ2 − μ1)
+
+∥μ2 − μ1∥2
+
+be sufficiently large to guarantee that the conditional error on the mislabeling area approaches one. This requirement char-acterizes a severe and highly directional domain discrepancy. When the shift is moderate, or when ∆ is largely orthogonal to the class-separation direction, the condition for near-certain mislabeling is no longer satisfied [20]. Third, and most importantly for SF-GDA, the unbounded-noise theorem analyzes pseudo-label behavior over the entire target domain. In contrast, practical SF-GDA methods rarely update the model using all target samples uniformly. Instead, they typically rely on confidence screening, neighborhood ver-ification, topology-aware refinement, or consistency regular-ization to restrict training to a filtered subset of target samples that is more likely to provide trustworthy supervision [15–17]. In graph domains, this distinction is particularly consequential because local topology provides additional relational evidence that can either support or invalidate a pseudo-label. As a result, the effective adaptation distribution is often a restricted subset of XT , rather than the full target space analyzed by Theorem 1. Taken together, these observations suggest that the exist-ing unbounded-noise theory should be viewed as a valid characterization of full-domain source-free self-training under strong global-shift assumptions. It does not rule out the possibility that pseudo-label noise becomes bounded on a carefully filtered target subset whose samples satisfy both high prediction confidence and local structural consistency. Therefore, the more relevant theoretical question for SF-GDA is not whether pseudo-label noise is bounded everywhere on 
+
+XT , but whether one can identify a confidence-consistent safe subspace Hτ,ρ ⊆ X T on which the bounded-noise condition is restored. 
+
+E. Safe Subspace and Bounded Pseudo-Label Noise 
+
+Motivated by the above discussion, we now analyze a restricted adaptation protocol that operates on target samples supported by both source confidence and local structural agreement. Let 
+
+s(x) = max  
+
+> c∈Y
+
+pS (c | x), ˜y(x) = arg max  
+
+> c∈Y
+
+pS (c | x)
+
+denote the source confidence and the corresponding pseudo-label. Let N (x) be the local neighborhood of x in the target representation space. We define the confidence-qualified consistent neighborhood of x as 
+
+N τ
+
+> same
+
+(x) = {x′ ∈ N (x) | ˜y(x′) = ˜ y(x), s (x′) ≥ τ } .
+
+The corresponding confidence-consistency ratio is 
+
+rτ (x) = |N τ
+
+> same
+
+(x)||N (x)| ,
+
+and the average radius of the confidence-qualified consistent neighborhood is 
+
+¯r(x) = 1
+
+|N τ
+
+> same
+
+(x)|
+
+X 
+
+> x′∈N τ
+> same (x)
+
+d(x, x ′),
+
+where d(·, ·) denotes the metric in the target representation space. If N τ
+
+> same
+
+(x) = ∅, we set ¯r(x) = + ∞.
+
+Definition 1 (Confidence-Consistent Safe Subspace). Given thresholds τ ∈ (0 , 1) and ρ ∈ (0 , 1] , the safe subspace is 
+
+Hτ,ρ = {x ∈ X T | s(x) ≥ τ, r τ (x) ≥ ρ} . (1) Thus, Hτ,ρ contains target samples whose pseudo-labels are supported by both source confidence and local neighborhood agreement. The threshold τ controls the population reliability of a selected pseudo-label, while ρ is an observable target-only certificate that prevents isolated high-confidence samples from dominating adaptation. To analyze the noise behavior inside Hτ,ρ , we use the following two assumptions. 
+
+Assumption 1 (Restricted Posterior Discrepancy). For a confidence threshold τ , there exists βτ (α) ≥ 0 such that every confidence-qualified target point z satisfies 
+
+pT (˜ y(z) | z) ≥ pS (˜ y(z) | z) − βτ (α).
+
+Here, α denotes the severity of the source-target shift, and 
+
+βτ (α) summarizes the residual posterior mismatch on the confidence-qualified region. This assumption is explicitly local to the selected region. Without some target-side posterior regularity of this form, no source-free method can certify pseudo-label correctness from unlabeled target samples alone. 
+
+Assumption 2 (Target-Manifold Smoothness). The target posterior is L-Lipschitz continuous on XT :
+
+|pT (y | x) − pT (y | x′)| ≤ Ld (x, x ′), ∀x, x ′ ∈ X T , y ∈ Y .
+
+The following theorem gives a bounded-noise guarantee on the safe subspace and clarifies the respective roles of confidence, posterior discrepancy, neighborhood consistency, and geometry. 
+
+Theorem 2 (Bounded Pseudo-Label Noise in the Safe Sub-space) . Suppose Assumptions 1 and 2 hold. For every x ∈Hτ,ρ , the instance-wise pseudo-label noise satisfies 
+
+η(x) ≤ 1 − τ + βτ (α). (2) Moreover, the confidence-qualified consistent neighborhood provides the following structural certificates: 
+
+1
+
+|N (x)|
+
+X 
+
+> x′∈N (x)
+
+pT (˜ y(x) | x′) ≥ ρ τ − βτ (α), (3) 5
+
+pT (˜ y(x) | x) ≥ τ − βτ (α) − L¯r(x). (4) Consequently, if τ −βτ (α) > 1/2, then pseudo-labels on Hτ,ρ 
+
+satisfy the Massart bounded-noise condition. Theorem 2 should be read as a selective rather than global guarantee. The pointwise part follows from high source con-fidence and restricted posterior discrepancy; its role is not to claim global correctness of pseudo-labels, but to identify the condition under which hard pseudo-label supervision is justified on a selected target subset. It does not contradict the full-domain unbounded-noise result in Theorem 1. The structural quantities ρ and L¯r(x) should not be interpreted as artificially multiplying the pointwise posterior lower bound. Their role is to provide target-only evidence for identifying reliable samples and to prevent adaptation from relying on isolated high-confidence predictions. 
+
+Proposition 1 (Finite-Sample Reliability of the Structural Gate) . For a fixed target graph representation x, suppose its 
+
+knn neighbors are sampled from the local target-neighborhood distribution, and let ˆrτ (x) be the empirical confidence-consistency ratio computed from these neighbors. Let rτ (x) = 
+
+E[ˆ rτ (x)] be the corresponding population ratio. Then, for any 
+
+ϵ > 0, with probability at least 1 − δ,
+
+|ˆrτ (x) − rτ (x)| ≤ 
+
+s
+
+log(2 /δ )2knn 
+
+. (5) 
+
+Consequently, if ˆrτ (x) ≥ ρmin + ϵ and knn ≥ log(2 /δ )/(2 ϵ2),then rτ (x) ≥ ρmin with probability at least 1 − δ.Proof. The empirical ratio ˆrτ (x) is an average of knn Bernoulli indicators specifying whether a neighbor has the same pseudo-label and confidence at least τ . Hoeffding’s inequality gives Eq. (5). The second statement follows by subtracting the concentration radius from ˆrτ (x).
+
+F. Learnability and Target-Risk Implications 
+
+Theorem 2 becomes algorithmically meaningful when the pseudo-label noise inside the safe subspace falls into a learn-able regime. Let 
+
+¯ητ = min {1, 1 − τ + βτ (α)}.
+
+By Theorem 2, ¯ητ is a uniform upper bound of the instance-wise pseudo-label noise on Hτ,ρ .
+
+Corollary 1 (Learnability on the Safe Subspace) . If 
+
+τ − βτ (α) > 12 , (6) 
+
+then ¯ητ < 1/2, and the pseudo-labels on Hτ,ρ lie in the bounded-noise regime. Consequently, minimizing aclassification-calibrated loss on pseudo-labeled samples from 
+
+Hτ,ρ remains statistically learnable under standard noisy-label learning arguments [42, 43]. 
+
+Corollary 1 shows that reliable source-free adaptation does not require pseudo-label noise to be bounded everywhere on the target domain. It is sufficient that the bounded-noise con-dition holds on the confidence-consistent subset that actually drives hard pseudo-label supervision. The size of this subset, controlled in practice by ρ, determines the coverage of reliable supervision and creates a quality-coverage trade-off. The above bound can be improved in practice when pseudo-labels are produced by a diverse committee rather than a single source model. The following result formalizes the idealized case and also states its limitation. 
+
+Corollary 2 (Multi-Expert Voting Bound) . Suppose that the pseudo-label for each x ∈ H τ,ρ is produced by majority voting among Ke conditionally independent experts, each having error at most ¯e < 1/2 on Hτ,ρ . Then the voting error satisfies 
+
+ηvote (x) ≤ exp −2Ke
+
+ 12 − ¯e
+
+2!
+
+, ∀x ∈ H τ,ρ . (7) The conditional-independence assumption in Corollary 2 is an idealization. In implementation, source experts trained from the same source domain may be correlated. Therefore, we do not rely on Eq. (7) as an unconditional guarantee. Instead, the algorithm uses ensemble consensus and predictive variance as observable diagnostics: only samples with high agreement and low variance are admitted into the semantic candidate set before structural verification. Beyond learnability, the safe-subspace view yields a simple target-risk decomposition. Let 
+
+πH = Pr 
+
+> x∼PT
+
+[x ∈ H τ,ρ ] , πU = 1 − πH,
+
+where U = XT \ H τ,ρ denotes the uncertain set. Define the pseudo-label risk on the safe subspace as 
+
+eRH(h) = Pr 
+
+> x∼PT
+
+[h(x)̸ = ˜ y(x) | x ∈ H τ,ρ ] ,
+
+and the clean conditional risk on the uncertain set as 
+
+RU (h) = Pr 
+
+> (x,y )∼PT
+
+[h(x)̸ = y | x ∈ U ] .
+
+Proposition 2 (Target-Risk Bound Under Safe-Subspace De-composition) . For any classifier h, the target risk satisfies 
+
+RT (h) ≤ πH
+
+ eRH(h) + ¯ ητ
+
+
+
++ πU RU (h). (8) 
+
+Furthermore, if the uncertain-set risk is controlled by aregularizer-induced upper bound RU (h) ≤ ΓU (h), then 
+
+RT (h) ≤ πH
+
+ eRH(h) + ¯ ητ
+
+
+
++ πU ΓU (h). (9) 
+
+Proof. Decompose the target risk over Hτ,ρ and U. On Hτ,ρ ,the event h(x)̸ = y is contained in the union of the events 
+
+h(x)̸ = ˜ y(x) and ˜y(x)̸ = y. Taking conditional probabilities and using the bound Pr[˜ y(x)̸ = y | x ∈ H τ,ρ ] ≤ ¯ητ gives Eq. (8). Replacing RU (h) by its regularized upper bound gives Eq. (9). Proposition 2 reveals that the target risk is governed by three factors: the fitting error to reliable pseudo-labels on Hτ,ρ ,the intrinsic pseudo-label noise level ¯ητ of the safe subspace, and the residual risk on the uncertain set U. This result directly motivates the use of hard pseudo-label supervision only on Hτ,ρ , while controlling uncertain samples through soft regularization rather than discarding them or assigning hard labels. 6
+
+G. Roles of the Bounding and Certification Factors 
+
+The preceding analysis identifies four quantities: confidence 
+
+τ , restricted posterior discrepancy βτ (α), neighborhood con-sistency ρ, and geometric compactness L¯r. Their roles are different. The population noise bound in Eq. (2) is determined by τ and βτ (α): if confidence is low or the source-target posterior discrepancy is large, no bounded-noise guarantee can be obtained. By contrast, ρ and L¯r are target-only certification factors. They do not create correctness by themselves; rather, they improve the reliability of the selected subset by excluding isolated high-confidence predictions and by ensuring that local neighborhood evidence is geometrically meaningful. This distinction is important for a rigorous interpretation of the theory. We do not claim that all four quantities are mathematically necessary for a pointwise posterior bound once high source confidence and restricted posterior discrepancy already hold at the center point. Instead, we use ρ and L¯r to bridge the gap between population assumptions and a practical label-free algorithm: they determine which target samples are sufficiently supported by the learned target manifold to be used for hard pseudo-label training. 
+
+H. Implications for Algorithm Design 
+
+The theoretical analysis prescribes the following design principles. First, the algorithm should increase the reliability of source-induced pseudo-labels by selecting high-confidence, low-variance predictions, corresponding to the terms τ and 
+
+βτ (α). Second, it should learn a compact and smooth target representation so that neighborhood evidence is meaningful, corresponding to the geometric term L¯r. Third, it should en-force a local consistency gate ρ to avoid isolated overconfident errors. Fourth, it should handle the residual uncertain set U
+
+through soft regularization, as required by Proposition 2. Guided by this correspondence, we develop in the next section a selective-risk-guided SF-GDA framework with four modules. The first module uses a committee of source experts to construct reliable semantic candidates with high consensus and low predictive variance. The second module learns a target-intrinsic structural manifold to reduce geometric distor-tion and improve local smoothness. The third module identifies the safe subspace Hτ,ρ by enforcing consistency between semantic confidence and structural neighborhoods. The fourth module handles the remaining uncertain samples through soft regularization, thereby controlling residual transfer risk without propagating erroneous hard pseudo-labels. IV. M ETHODOLOGY 
+
+A. Overview 
+
+Motivated by the selective-risk analysis in Section III-H, we propose Safe-Subspace Pseudo-Label Refinement (S 2PLR) for source-free graph domain adaptation. The framework follows a simple principle: hard pseudo-label supervision is used only on target graphs that pass both semantic and structural relia-bility checks, while the remaining target graphs are exploited through soft regularization. This design avoids full-domain self-training and directly matches the safe-subspace decom-position in Proposition 2. Operationally, S 2PLR implements this principle through multi-expert uncertainty quantification, target-intrinsic structure learning, dual-view nested pseudo-label refinement, and noise-tolerated regularization. Let Dt = {Gtj }nt 
+
+> j=1
+
+be the unlabeled target set. The source provider releases a committee of Ke pretrained source hypotheses M = {f kS }Ke
+
+> k=1
+
+, which may be obtained from dif-ferent random seeds or heterogeneous graph encoders before the source data are discarded. During target adaptation, no source graph or source label is accessed. In the algorithmic implementation, ζ is the empirical counterpart of the the-oretical confidence threshold τ , and ρmin is the empirical neighborhood-consistency threshold used to construct Hζ,ρ .Unless otherwise stated, the adapted target classifier fT is initialized from a primary source checkpoint and is the only model used at inference; auxiliary source experts are frozen and used only for reliability estimation. When Ke = 1 , S 2PLR reduces to a single-expert variant by disabling the ensemble-variance gate. 
+
+B. Module I: Multi-Expert Uncertainty Quantification 
+
+Corollary 2 motivates the use of a diverse source committee, while also making clear that correlated experts cannot be treated as independent without verification. We therefore use the committee not only to average predictions but also to estimate predictive disagreement. For a target graph Gtj , the ensemble consensus is 
+
+¯pj = 1
+
+KeKeX
+
+> k=1
+
+σ f kS (Gtj ), (10) where σ(·) denotes the softmax function. The corresponding pseudo-label and confidence are 
+
+ˆyj = arg max  
+
+> c∈Y
+
+¯pj,c , sj = max  
+
+> c∈Y
+
+¯pj,c .
+
+To reject samples whose apparent confidence is caused by one unstable expert rather than shared semantic evidence, we compute the predictive variance 
+
+uj = 1
+
+KeKeX
+
+> k=1
+
+σ f kS (Gtj ) − ¯pj 
+
+> 22
+
+. (11) The semantic candidate set is then defined as 
+
+Ssem = Gtj ∈ D t sj ≥ ζ, u j ≤ ν , (12) where ζ is the confidence threshold and ν is the variance threshold. We set ν by a target-side percentile rule, ν =
+
+Qqu ({uj }nt
+
+> j=1
+
+), where Qqu is the qu-th percentile of predictive variance on the unlabeled target set. This rule is label-free and avoids tuning ν with target labels. This module opera-tionalizes the confidence requirement in Theorem 2; only high-confidence and low-disagreement target graphs are allowed to enter the next verification stage. 
+
+C. Module II: Target-Intrinsic Structure Learning 
+
+The structural certificates in Theorem 2 require a target representation in which neighborhoods are meaningful and compact. Directly using the source feature space may be 7
+
+unreliable because the source encoder can preserve source-specific topology. We therefore introduce a target-intrinsic explicit branch gψ , trained only with unlabeled target graphs, to provide the metric space used for neighborhood verification. For each mini-batch B, we generate two stochastic graph views ˜G1 
+
+> i
+
+, ˜G2 
+
+> i
+
+∼ T (Gi) using edge dropping, feature masking, and subgraph sampling. Their normalized embeddings are 
+
+zvi = gψ ( ˜Gvi )
+
+∥gψ ( ˜Gvi )∥2
+
+, v ∈ { 1, 2}. (13) We train gψ with the graph contrastive objective 
+
+Dvi =
+
+> |B|
+
+X
+
+> m=1 2
+
+X
+
+> w=1
+
+I[( m, w )̸ = ( i, v )] exp 
+
+ sim( zvi , z wm)
+
+τg
+
+
+
+,
+
+LGCL = − 12|B| 
+
+> |B|
+
+X
+
+> i=1 2
+
+X
+
+> v=1
+
+log exp  sim( zvi , z 3−vi )/τ g
+
+
+
+Dvi
+
+. (14) Here, Dvi denotes the contrastive normalization term for anchor zvi . By pulling augmented views of the same graph together and separating different graphs, this branch reduces local dispersion and improves the practical reliability of the neighborhood radius ¯r used in the safe-subspace construction. 
+
+D. Module III: Dual-View Nested Pseudo-Label Refinement 
+
+Module I provides a semantic view from the source com-mittee, whereas Module II provides a structural view from the target-intrinsic manifold. The nested refinement module intersects these two views to identify the empirical safe subspace. Specifically, we build a knn -nearest-neighbor graph in the embedding space produced by gψ . For each candidate 
+
+Gtj ∈ Ssem , let Nj be its knn nearest target graphs. We compute the local confidence-consistency score 
+
+ρj = 1
+
+|N j |
+
+X
+
+> Gtℓ∈N j
+
+I [ˆ yℓ = ˆ yj , s ℓ ≥ ζ, u ℓ ≤ ν] . (15) The safe subspace used for hard pseudo-label supervision is 
+
+Hζ,ρ = Gtj ∈ S sem ρj ≥ ρmin , (16) and the uncertain set is U = Dt \ H ζ,ρ . This selection rule implements the safe-subspace definition at the sample level and is supported by the finite-sample concentration result in Proposition 1. It does not assume that neighborhood consis-tency alone proves correctness; rather, it uses local consistency as a target-only certificate that screens out isolated high-confidence predictions before they influence model updates. 
+
+E. Module IV: Noise-Tolerated Regularization 
+
+The uncertain set U still contains useful information about the target distribution, but Theorem 2 does not justify as-signing hard pseudo-labels to these samples. We therefore regularize them softly. Let fT be the target model initialized from the primary source checkpoint, while auxiliary experts remain frozen for reliability estimation, and let 
+
+pj = σ fT (Gtj ) (17) be its current target prediction. For uncertain samples, we minimize 
+
+Lreg = 1
+
+|U| 
+
+X 
+
+> Gtj∈U
+
+H(pj ) + λkl DKL 
+
+  sg(¯ pj ) ∥ pj
+
+ , (18) where H(·) denotes entropy, DKL is the Kullback-Leibler divergence, and sg( ·) stops gradients through the source ensemble anchor. The entropy term encourages low-density decision boundaries on the target domain, while the KL term prevents the target model from drifting arbitrarily far from source knowledge. Since no hard label is imposed on U, this module controls the residual term ΓU (h) in Proposition 2 without propagating unverified pseudo-label errors. 
+
+F. Overall Optimization and Training Protocol 
+
+For a mini-batch B ⊂ D t, define BH = B ∩ H ζ,ρ and BU =
+
+B ∩ U . The hard-supervision loss on the safe subspace is 
+
+LH = 1
+
+|B H|
+
+X 
+
+> Gtj∈B H
+
+Lce (pj , ˆyj ), (19) with LH = 0 when BH is empty. The total objective is 
+
+Ltotal = LH + λreg Lreg (BU ) + λstruct LGCL (B). (20) We optimize Eq. (20) in an alternating manner. At the be-ginning of each epoch, S 2PLR updates ensemble predictions, target structural embeddings, nearest-neighbor relations, and the safe subspace. It then updates fT and gψ using mini-batch stochastic optimization. The details of the algorithm are introduced in Algorithm 1. 
+
+G. Complexity Analysis 
+
+The additional cost of S 2PLR comes from ensemble in-ference, target contrastive learning, and nearest-neighbor con-struction. Ensemble inference for reliability estimation costs 
+
+O(KentC) after the forward representations are computed, where C is the number of classes. Unless an ensemble variant is explicitly reported, test-time prediction uses only the adapted target model fT , so the default inference cost is that of a single graph classifier. Exact nearest-neighbor construction in a d-dimensional embedding space costs O(n2 
+
+> t
+
+d), and can be replaced by approximate search for large target sets. The contrastive branch has the same order of graph encoder cost as a standard GNN forward pass on augmented views. Since source graphs are never loaded during adaptation, the mem-ory cost is dominated by target mini-batches, cached target embeddings, and the released source checkpoints. V. E XPERIMENTS 
+
+A. Experimental Settings 
+
+Datasets. We evaluate S 2PLR on image-derived graph bench-marks, i.e., MNIST [44] and CIFAR10 [45], and real-world graph benchmarks from TUDataset 1 and OGB 2. Follow-ing [8, 16, 46], we consider two types of domain shifts. 
+
+> 1https://chrsmrrs.github.io/datasets/
+> 2https://ogb.stanford.edu/
+
+8
+
+TABLE I: Graph classification results (in %) under node and edge density domain shifts on Mutagenicity, and feature domain shifts on DD, PROTEINS, BZR, BZR MD, COX2, and COX2 MD. For convenience, PROTEINS, DD, COX2, COX2 MD, BZR, and BZR MD are abbreviated as P, D, C, CM, B, and BM, respectively. Bold results indicate the best performance. 
+
+Methods Node Shift Edge Shift Feature Shift 
+
+M0 →M1 M0 →M2 M0 →M3 M0 →M1 M0 →M2 M0 →M3 P→D D→P C→CM CM →C B→BM BM →BWL subtree 34.3 40.4 52.7 34.4 47.6 52.7 43.0 42.2 53.1 58.2 51.3 44.0 GCN 64.1 ±1.4 65.5 ±2.0 56.9 ±2.1 66.3 ±1.7 63.6 ±1.4 56.0 ±1.4 48.9 ±2.0 60.9 ±2.3 51.0 ±1.8 66.9 ±1.8 48.7 ±2.0 78.8 ±1.7 
+
+GIN 66.5 ±2.1 52.0 ±1.7 53.7 ±1.7 67.1 ±1.7 54.2 ±2.6 55.4 ±1.9 57.3 ±2.2 61.9 ±1.9 53.8 ±2.5 55.6 ±2.0 49.9 ±2.4 79.2 ±2.8 
+
+GMT 65.7 ±1.8 62.1 ±2.1 59.0 ±2.0 67.9 ±1.3 61.5 ±1.8 58.2 ±2.4 59.5 ±2.5 50.7 ±2.2 49.3 ±1.8 58.2 ±2.0 50.2 ±2.3 74.4 ±1.8 
+
+CIN 65.1 ±1.7 66.0 ±1.7 55.2 ±1.5 66.3 ±1.8 60.8 ±1.7 55.8 ±2.4 59.1 ±2.6 58.0 ±2.7 51.2 ±2.0 55.6 ±1.5 49.2 ±1.4 74.2 ±1.9 
+
+PathNN 70.2 ±1.5 67.1 ±2.0 58.0 ±1.9 68.9 ±1.9 62.9 ±1.7 58.1 ±1.6 57.9 ±1.8 53.8 ±3.3 49.8 ±1.7 66.9 ±2.5 50.3 ±2.3 75.3 ±2.2 
+
+SFDA LLN 70.7 ±1.6 68.1 ±1.2 60.4 ±1.3 67.7 ±1.5 66.5 ±2.6 58.8 ±2.1 59.2 ±1.1 59.9 ±1.5 56.9 ±1.9 74.2 ±2.0 53.5 ±2.2 77.3 ±1.8 
+
+SF(DA) 2 72.0 ±1.5 69.7 ±1.9 62.0 ±1.8 71.7 ±1.9 68.8 ±2.3 61.9 ±2.0 62.2 ±1.7 63.2 ±1.8 51.7 ±2.3 74.6 ±2.6 48.9 ±1.4 78.8 ±2.0 
+
+NVC LLN 71.4 ±1.3 67.8 ±1.1 62.1 ±1.5 70.4 ±2.2 67.0 ±2.2 62.2 ±1.7 59.2 ±2.1 60.0 ±1.8 56.6 ±3.1 76.7 ±2.0 53.8 ±1.8 78.2 ±2.0 
+
+Ucon SFDA 73.2 ±0.8 69.6 ±2.1 62.9 ±3.2 74.1 ±1.1 68.2 ±1.2 63.5 ±3.7 64.3 ±0.7 66.0 ±2.1 51.2 ±1.9 78.3 ±1.7 53.1 ±2.5 77.9 ±2.0 
+
+SOGA 73.5 ±1.3 69.4 ±2.5 63.1 ±2.1 72.3 ±2.2 69.8 ±1.9 63.1 ±1.8 64.4 ±1.3 65.4 ±1.8 51.5 ±2.0 76.9 ±2.5 53.3 ±3.2 78.9 ±2.3 
+
+GraphCTA 73.7 ±1.8 70.7 ±1.5 65.2 ±1.7 72.0 ±2.2 70.5 ±1.6 62.8 ±1.8 60.6 ±1.9 61.7 ±1.8 56.8 ±3.5 77.3 ±2.0 54.2 ±2.7 79.0 ±2.6 
+
+GALA 75.1 ±2.1 70.8 ±1.6 64.0 ±2.1 72.2 ±1.2 70.3 ±1.7 63.4 ±1.8 65.6 ±1.3 66.0 ±2.5 61.8 ±2.7 77.0 ±2.6 57.4 ±2.3 78.8 ±1.8 
+
+GraphATA 75.2 ±2.1 69.9 ±1.3 62.1 ±1.0 74.4 ±1.3 69.0 ±0.9 61.9 ±2.2 64.8 ±1.5 63.7 ±2.1 59.2 ±2.0 77.9 ±2.1 55.1 ±1.3 78.0 ±3.6 
+
+S2PLR 77.1 ±0.5 71.6 ±2.0 65.8 ±1.1 75.8 ±2.1 69.9 ±1.6 66.2 ±1.4 66.3 ±1.9 61.8 ±2.2 59.1 ±1.5 78.6 ±0.9 58.3 ±1.8 79.3 ±0.8 
+
+TABLE II: Image classification results (in %) on MNIST and CIFAR-10 under edge density domain shifts. Bold results indicate the best performance. 
+
+Methods MNIST CIFAR-10 
+
+S0 →S1 S1 →S0 S0 →S2 S2 →S0 S1 →S2 S2 →S1 C0 →C1 C1 →C0 C0 →C2 C2 →C0 C1 →C2 C2 →C1 WL subtree 29.5 15.8 9.5 8.7 18.0 13.9 10.1 10.2 9.9 10.0 9.9 10.2 GCN 82.4 ±0.3 84.7 ±0.3 60.9 ±1.9 70.5 ±4.0 81.5 ±1.0 83.2 ±0.9 44.9 ±0.4 46.5 ±0.2 42.0 ±1.2 43.0 ±1.8 44.1 ±0.3 45.2 ±0.3 
+
+GIN 86.2 ±1.5 79.8 ±2.3 81.4 ±2.6 83.9 ±2.1 83.2 ±1.6 84.8 ±2.2 44.4 ±2.2 43.1 ±1.1 43.3 ±2.1 44.7 ±1.7 42.4 ±1.1 42.0 ±2.8 
+
+GMT 83.3 ±1.3 83.5 ±1.4 58.2 ±0.8 68.3 ±2.4 80.9 ±1.4 84.6 ±1.1 52.2 ±0.4 53.6 ±0.1 44.1 ±2.7 50.0 ±7.6 49.6 ±0.7 50.0 ±0.9 
+
+CIN 85.8 ±2.0 86.4 ±1.8 82.2 ±1.5 82.8 ±1.5 86.5 ±1.7 86.3 ±2.3 51.0 ±0.5 55.4 ±1.9 48.1 ±3.0 51.9 ±0.8 47.1 ±0.4 47.2 ±0.6 
+
+PathNN 80.2 ±2.8 87.9 ±1.4 39.3 ±2.0 53.7 ±1.6 79.9 ±1.7 89.6 ±2.5 43.7 ±2.0 46.5 ±1.5 47.6 ±2.3 52.1 ±1.6 44.5 ±2.1 47.7 ±2.0 
+
+SFDA LLN 93.3 ±0.3 92.6 ±1.5 89.7 ±4.1 88.3 ±2.0 92.7 ±1.5 92.1 ±1.3 56.5 ±3.4 55.4 ±1.2 55.2 ±2.0 53.8 ±1.5 58.1 ±0.9 56.7 ±1.5 
+
+SF(DA) 2 93.7 ±1.0 93.8 ±1.3 90.6 ±0.7 90.1 ±1.3 93.1 ±1.2 93.3 ±1.1 56.7 ±1.4 56.4 ±1.3 55.1 ±0.8 53.3 ±1.4 57.7 ±1.4 57.4 ±1.8 
+
+NVC LLN 93.4 ±1.3 93.2 ±1.0 88.9 ±4.8 83.0 ±1.9 93.2 ±1.2 92.4 ±1.5 56.9 ±1.5 55.9 ±1.2 55.5 ±1.4 54.1 ±2.8 57.8 ±1.3 57.8 ±1.0 
+
+Ucon SFDA 93.8 ±1.7 93.8 ±0.8 88.5 ±0.9 90.9 ±2.2 92.9 ±0.7 93.8 ±1.4 57.3 ±1.7 56.1 ±2.2 56.6 ±1.6 54.4 ±1.5 58.3 ±0.8 57.5 ±1.3 
+
+SOGA 93.9 ±1.1 94.3 ±1.7 91.5 ±1.3 90.1 ±2.0 93.2 ±1.1 93.8 ±1.0 57.6 ±1.1 57.0 ±1.3 56.3 ±1.7 56.8 ±1.4 57.9 ±0.9 58.1 ±2.2 
+
+GraphCTA 93.8 ±1.0 94.5 ±2.1 91.1 ±0.9 88.2 ±1.7 94.1 ±2.0 93.5 ±1.4 57.9 ±0.9 57.4 ±0.8 57.0 ±1.5 56.7 ±2.2 57.7 ±1.1 58.4 ±1.3 
+
+GALA 94.1 ±1.7 94.9 ±0.9 91.8 ±1.1 89.2 ±0.6 93.9 ±0.8 94.0 ±0.7 58.1 ±1.2 57.6 ±0.8 57.4 ±0.7 56.9 ±2.2 58.3 ±1.3 58.8 ±1.5 
+
+GraphATA 93.2 ±2.1 94.5 ±1.0 91.7 ±1.5 89.5 ±1.7 93.3 ±2.2 94.1 ±0.9 57.2 ±1.3 56.7 ±2.8 58.8 ±1.9 54.4 ±1.6 59.3 ±1.7 57.6 ±2.5 
+
+S2PLR 94.7 ±1.4 95.8 ±0.3 92.5 ±1.3 91.6 ±1.0 94.3 ±0.6 94.5 ±0.8 58.7 ±1.1 57.8 ±1.4 56.4 ±0.7 57.9 ±2.2 58.0 ±1.2 59.0 ±2.0 
+
+For structural domain shifts, MNIST, CIFAR10, DD, Mu-tagenicity, NCI1, FRANKENSTEIN, and ogbg-molhiv are partitioned into quantile-based subdomains according to the number of nodes |V | or edges |E|, and each ordered pair of distinct subdomains is treated as a source-free transfer task. For feature domain shifts, we evaluate PROTEINS ↔DD, COX2 ↔COX2 MD, and BZR ↔BZR MD, where source and target domains share the same label space but differ in node-feature distributions. More details of these datasets are provided in Appendix C. 
+
+Baselines. We compare S 2PLR with three groups of baselines. The first group consists of source-only graph learning meth-ods, including the graph kernel WL [47] and representative graph neural networks, i.e., GCN [48], GIN [49], CIN [50], GMT [51], and PathNN [52]. These methods are trained on the labeled source domain and directly evaluated on the target domain without source-free adaptation. The second group includes general source-free domain adaptation meth-ods, namely SFDA LLN [19], SF(DA) 2 [28], NVC LLN [20], and Ucon SFDA [53]. The third group contains graph-specific source-free domain adaptation methods, including SOGA [15], GraphCTA [54], GALA [16], and GraphATA [32]. More details of baselines are provided in Appendix D. 
+
+Implementation Details. We implement S 2PLR and all base-lines in PyTorch 3 and run all experiments on NVIDIA A100 GPUs. Source models are trained only with labeled source graphs, and source graphs and labels are inaccessible during target adaptation. Unless otherwise specified, the target en-coder is a 3-layer GNN with hidden dimension 256, optimized by Adam with learning rate 10 −4 and weight decay 10 −12 .For S 2PLR, we fix Ke = 3 source experts for all datasets. All hyperparameters are determined without using target labels, which are used only for final evaluation. We report classi-fication accuracy on image and TUDataset benchmarks, and ROC-AUC on OGB benchmarks. All results are averaged over five independent runs with different random seeds and reported with standard deviation. 
+
+B. Performance Comparison 
+
+We report the performance of S 2PLR and all baselines under the source-free graph domain adaptation setting in Tables I, II, and XVI–XXV. Overall, the results show that source-only 
+
+> 3
+
+https://pytorch.org/ 9
+
+(a) SF(DA) 2 (b) NVC LLN (c) GraphCTA (d) GALA (e) S 2PLR 
+
+Fig. 1: T-SNE visualizations of S 2PLR and baselines on the Mutagenicity dataset. TABLE III: Aggregate comparison across all reported transfer tasks. Bold results indicate the best performance.                                                                                 
+
+> Method Node Avg. Edge Avg. Overall Avg. Avg. Rank S2PLR W/T/L WL 49.29 43.23 46.10 13.60 138/0/0 GCN 51.36 53.39 52.76 12.55 134/4/0 GIN 51.79 54.25 53.42 12.61 134/4/0 GMT 53.62 55.12 54.55 11.97 137/1/0 CIN 51.65 54.83 53.58 12.40 134/4/0 PathNN 56.15 57.32 56.89 11.11 135/3/0 SFDA LLN 64.67 66.42 65.53 8.01 94/44/0 SF(DA) 265.68 67.25 66.39 6.85 89/48/1 NVC LLN 65.27 66.81 66.02 7.46 90/48/0 Ucon SFDA 66.11 67.94 67.02 5.75 80/56/2 SOGA 67.08 68.45 67.71 4.91 68/69/1 GraphCTA 67.60 68.69 68.06 4.26 66/71/1 GALA 67.92 69.22 68.59 3.21 63/72/3 GraphATA 68.66 69.88 69.20 3.53 54/80/4 S2PLR 71.81 72.77 72.11 1.80 –
+
+graph models, including WL, GCN, GIN, CIN, GMT, and PathNN, often degrade under structural domain shifts because they cannot adapt to the target distribution after source graphs become unavailable. General source-free domain adaptation methods, such as SF(DA) 2 and Ucon SFDA, improve over source-only models but remain less stable on graph-structured shifts, as they do not explicitly model graph topology or lo-cal structural consistency. Graph-specific adaptation methods, including GALA and GraphATA, provide stronger baselines and can be competitive on some transfer pairs, especially when the shift is mild or pseudo-labels are relatively reliable. In contrast, S 2PLR achieves the best or empirically com-parable performance in most settings. Its advantage comes from jointly using multi-expert semantic reliability estimation, target-intrinsic structural learning, and nested safe-subspace refinement, which restricts hard supervision to reliable target samples while regularizing uncertain ones. We also provide t-SNE visualizations on Mutagenicity in Fig. 1. Compared with baselines, S 2PLR produces more compact and better separated target representations, whereas the baselines, e.g., NVC LLN and GALA, show stronger class mixing or scattered local structure. This qualitative evidence is consistent with the quantitative results and suggests that S 2PLR improves target-domain discriminability under structural shifts. More results on other datasets can be found in Appendix F1. We further summarize the aggregate results in Table III. Node Avg. and Edge Avg. are computed over the correspond-ing node-density and edge-density transfer tasks, while Overall Avg. and Avg. Rank are computed over all unique transfer tasks, including feature-shift settings. For W/T/L, S 2PLR is compared with each baseline on every task using the reported mean ± standard-deviation intervals, where overlapping inter-vals are treated as ties. The aggregate results show that S 2PLR achieves the best performance across Node Avg., Edge Avg., Overall Avg., and Avg. Rank, indicating that its improvements are consistent across diverse domain shifts rather than concen-trated on a few favorable tasks. The newly added baselines, especially GraphATA and Ucon SFDA, further strengthen the comparison and improve over several previous source-free adaptation methods. Nevertheless, S 2PLR still maintains the strongest overall robustness. The W/T/L statistics also show that S2PLR rarely underperforms existing methods, while many comparisons with strong graph adaptation baselines are counted as ties due to overlapping uncertainty intervals. These results further confirm the effectiveness of reliability-guided safe-subspace selection under node-density, edge-density, and feature-domain shifts. 
+
+C. Pseudo-Label Quality Diagnostics 
+
+Since the core design of S 2PLR lies in reliable pseudo-label selection, final classification performance alone cannot fully reveal whether the selected target samples are trustworthy. We therefore report post-hoc pseudo-label quality diagnos-tics in Table IV to directly evaluate the selective-learning mechanism. Candidate Cov. and Candidate Prec. denote the coverage |S sem |/n t and pseudo-label precision of the semantic candidate set, respectively. Safe Cov. and Safe Prec. denote the coverage |H ζ,ρ |/n t and pseudo-label precision of the final safe subspace. We further report Precision Gain and Coverage Drop to quantify how much neighborhood-consistency refine-ment improves pseudo-label reliability at the cost of reducing selected-sample coverage. Target labels are used only for this post-hoc diagnostic analysis. The results reveal a consistent precision–coverage trade-off across the reported datasets and shift types. Compared with the initial semantic candidate set, the final safe subspace con-sistently achieves higher pseudo-label precision, confirming that neighborhood-consistency verification effectively filters out unreliable samples that pass confidence-based semantic selection alone. This improvement is especially evident on structurally shifted graph datasets such as DD, NCI1, and FRANKENSTEIN, where confidence-only pseudo-labels are more vulnerable to topology-induced bias; Mutagenicity also shows clear gains under both node- and edge-density shifts. For ogbg-molhiv and MNIST, the candidate pseudo-labels are already highly reliable, so the additional gain from safe-subspace refinement is relatively smaller but remains positive. CIFAR10 is more challenging, with lower candidate reliabil-ity and limited safe coverage, suggesting that conservative 10 
+
+TABLE IV: Post-hoc coverage–precision diagnostics for semantic candidates and the final safe subspace across datasets and shift types. 
+
+Dataset Shift Type Candidate Cov. Candidate Prec. Safe Cov. Safe Prec. Precision Gain Coverage Drop Mutagenicity Node 35.06% 86.32% 23.25% 92.46% +6.14% 11.81% Mutagenicity Edge 29.70% 80.43% 15.96% 89.60% +9.16% 13.75% NCI1 Node 24.34% 77.60% 13.05% 88.06% +10.46% 11.30% NCI1 Edge 20.25% 82.21% 11.49% 93.22% +11.01% 8.76% FRANKENSTEIN Node 50.00% 68.82% 12.73% 84.06% +15.24% 37.27% FRANKENSTEIN Edge 50.00% 71.96% 12.82% 84.89% +12.94% 37.18% DD Node 50.17% 58.11% 14.92% 70.45% +12.35% 35.25% DD Edge 45.08% 57.89% 10.17% 73.33% +15.44% 34.92% ogbg-molhiv Node 49.97% 97.88% 12.61% 99.15% +1.27% 37.36% ogbg-molhiv Edge 50.00% 97.22% 8.10% 98.92% +1.70% 41.90% MNIST Edge 49.74% 98.04% 20.37% 99.28% +1.25% 29.37% CIFAR10 Edge 35.40% 63.71% 10.56% 69.95% +6.24% 24.84% 
+
+TABLE V: Controlled comparison of source-hypothesis budgets among S 2PLR and baselines on the Mutagenicity dataset.                                                                                                                                                                              
+
+> Method Source Hyp. Committee Type Trainable Target Models Test Models Node Shift Edge Shift Avg. Rank M0 →M1 M0 →M2 M0 →M3 M0 →M1 M0 →M2 M0 →M3 GraphATA-Single 1None 1174.1 ±1.4 69.3 ±1.7 59.7 ±0.9 73.8 ±1.3 70.0 ±0.7 60.6 ±2.5 10.25 GraphATA-Homo3 3Homogeneous 3374.4 ±1.8 68.7 ±2.0 60.1 ±0.7 74.1 ±2.3 68.9 ±0.5 61.6 ±1.3 10.50 GraphATA-Hetero3 3Heterogeneous 3375.2 ±2.1 69.9 ±1.3 62.1 ±1.0 74.4 ±1.3 69.0 ±0.9 61.9 ±2.2 8.50 GALA-Single 1None 1175.1 ±2.1 70.8 ±1.6 64.0 ±2.1 72.2 ±1.2 70.3 ±1.7 63.4 ±1.8 6.00 GALA-Homo3 3Homogeneous 3375.7 ±0.1 68.4 ±0.4 63.1 ±0.5 73.7 ±0.2 67.7 ±2.7 60.3 ±1.3 10.75 GALA-Hetero3 3Heterogeneous 3375.7 ±1.0 70.0 ±0.6 63.7 ±2.2 74.7 ±0.8 69.5 ±1.5 61.4 ±1.9 6.67 GraphCTA-Single 1None 1173.7 ±1.8 70.7 ±1.5 65.2 ±1.7 72.0 ±2.2 70.5 ±1.6 62.8 ±1.8 6.83 GraphCTA-Homo3 3Homogeneous 3374.5 ±2.1 67.8 ±1.3 64.2 ±1.6 73.9 ±1.1 67.0 ±0.8 61.7 ±1.3 10.42 GraphCTA-Hetero3 3Heterogeneous 3375.5 ±1.8 70.1 ±2.2 63.8 ±1.4 74.4 ±1.3 69.0 ±2.1 62.5 ±1.8 6.50 SOGA-Single 1None 1173.5 ±1.3 69.4 ±2.5 63.1 ±2.1 72.3 ±2.2 69.8 ±1.9 63.1 ±1.8 9.25 SOGA-Homo3 3Homogeneous 3372.8 ±2.5 67.4 ±1.1 59.7 ±0.6 73.3 ±0.4 68.7 ±0.5 62.2 ±0.5 12.58 SOGA-Hetero3 3Heterogeneous 3375.7 ±1.1 70.3 ±0.5 65.5 ±1.6 74.7 ±1.8 69.5 ±1.2 62.0 ±1.9 4.67 S2PLR-Single 1None 1175.3 ±1.6 67.9 ±2.3 63.3 ±1.8 73.7 ±2.5 67.7 ±1.3 63.2 ±1.9 9.33 S2PLR-Homo3 3Homogeneous 1176.3 ±0.1 67.8 ±3.2 64.7 ±0.7 74.6 ±0.4 68.6 ±1.0 64.8 ±2.3 6.25 S2PLR-Hetero3 3Heterogeneous 1177.1 ±0.5 71.6 ±2.0 65.8 ±1.1 75.8 ±2.1 69.9 ±1.6 66.2 ±1.4 1.50
+
+pseudo-label selection is harder on complex image-derived graphs. Overall, these diagnostics show that S 2PLR prioritizes pseudo-label reliability over pseudo-label quantity: it selects a smaller but more trustworthy safe subspace for hard supervi-sion, while leaving uncertain samples to be handled by noise-tolerated regularization. 
+
+D. Source-Hypothesis Budget and Committee Design 
+
+The source committee in S 2PLR is introduced to provide re-liable uncertainty signals rather than simply to increase model capacity. To examine the effects of source-hypothesis budget, encoder diversity, and reliability-guided refinement, we report a controlled comparison in Table V. For S 2PLR, S 2PLR-Single uses one GMT source hypothesis, S 2PLR-Homo3 uses three GMT hypotheses trained with different random seeds, and S2PLR-Hetero3 uses a heterogeneous committee composed of GMT, GIN, and PathNN. All three variants use only one train-able target model and one test model, and the released source hypotheses are used only for semantic reliability estimation. For comparison, we apply analogous Single, Homo3, and Hetero3 settings to baselines, including GraphATA, GALA, GraphCTA, and SOGA, where the heterogeneous baseline setting uses GIN, SAGE, and GMT source models. The results show that increasing the number of source hypotheses alone does not guarantee better adaptation. For 
+
+(a) M0 →M1 (b) M0 →M2 (c) M0 →M3 
+
+Fig. 2: High-confidence false pseudo-labels on Mutagenicity. S2PLR, the homogeneous three-GMT committee improves over the single-GMT variant in most transfer tasks, while the heterogeneous GMT/GIN/PathNN committee achieves the best average rank and the strongest overall performance. This indicates that complementary graph encoders provide more in-formative disagreement signals for identifying reliable pseudo-label candidates. In contrast, the multi-hypothesis variants of GraphATA, GALA, GraphCTA, and SOGA show less consis-tent improvements, and some Homo3 or Hetero3 variants even underperform their single-model counterparts despite using more trainable target models and test-time models. These ob-servations suggest that the advantage of S 2PLR is not merely due to a larger source-hypothesis budget or increased test-time capacity. Rather, the key benefit comes from integrating multi-expert disagreement with target-structural verification 11 
+
+TABLE VI: Per-class safe-subspace diagnostics on the Mutagenicity dataset.                                                     
+
+> Dataset Domain Shift Type Safe Coverage Target Distribution Safe-Subspace Pseudo-labels Per-Class Safe Prec. Class 0 Class 1 Class 0 Class 1 Class 0 Class 1 Mutagenicity Node M0 →M1 23.25% 67.34% 32.66% 76.19% 23.81% 94.79% 85.00% M0 →M2 21.86% 59.87% 40.13% 71.31% 28.69% 89.35% 80.88% M0 →M3 30.14% 46.73% 53.27% 37.31% 62.69% 76.23% 71.71% Edge M0 →M1 29.89% 66.70% 33.30% 75.31% 24.69% 94.67% 86.25% M0 →M2 15.96% 57.01% 42.99% 56.65% 43.35% 86.73% 93.33% M0 →M3 18.34% 46.36% 53.64% 46.73% 53.27% 73.12% 76.42%
+
+TABLE VII: The results of ablation studies on the Mutagenicity dataset (source → target).                                                                                     
+
+> Methods M0 →M1 M1 →M0 M0 →M2 M2 →M0 M0 →M3 M3 →M0 M1 →M2 M2 →M1 M1 →M3 M3 →M1 M2 →M3 M3 →M2 S2PLR w/o ME 76.4 75.1 68.5 73.0 61.1 68.0 77.1 84.3 67.1 79.5 70.4 76.6 S2PLR w/o CF 76.2 74.0 68.9 74.8 64.7 71.2 79.0 86.2 70.3 80.1 71.3 80.8 S2PLR w/o TS 76.0 74.5 68.2 73.6 64.6 70.2 78.5 86.0 69.0 79.8 70.7 80.2 S2PLR w/o NC 76.8 75.4 69.1 74.0 64.8 70.3 78.6 85.7 68.8 80.1 70.5 80.7 S2PLR w/o SR 74.5 72.5 69.5 73.5 58.8 70.2 76.7 81.8 66.9 75.9 67.5 79.9 S2PLR 77.1 75.3 71.6 75.4 65.8 72.0 79.9 87.2 70.8 82.4 71.9 81.6
+
+and safe-subspace supervision. 
+
+E. Failure Analysis of Safe-Subspace Selection 
+
+We further conduct a failure analysis on the Mutagenicity dataset to examine the limitations of safe-subspace selection under severe structural shifts. Table VI reports the target class distribution, the pseudo-label distribution within the selected safe subspace, and the class-wise pseudo-label precision after safe selection. Here, Per-Class Safe Prec. measures the preci-sion of selected safe samples conditioned on each predicted pseudo-label class, and target labels are used only for post-hoc analysis. The results show that the safe subspace is generally reliable under mild or moderate shifts, but its class com-position and class-wise reliability may become biased when the structural shift becomes severe. This issue can be further amplified by class-prior variation induced by density-based partitioning, since the selection process may favor the class whose structural patterns are more confidently recognized by the source hypothesis. For example, under the node-density shift M0 →M3, the safe pseudo-label distribution becomes more skewed toward Class 1 than the true target distribution, while the class-wise precision also drops. This suggests that some Class-0 target graphs can be absorbed into the Class-1 prediction region, even after confidence-based filtering and neighborhood-consistency verification. For edge-density shifts, the selected class distribution can remain relatively balanced, but class-wise precision still decreases under harder transfers, indicating that class balance alone is insufficient to guarantee pseudo-label correctness. Additionally, Fig. 2 visualizes representative high-confidence failure cases where Class-0 target graphs are predicted as Class 1. These graphs contain local dense or branched structural patterns that may resemble source-domain Class-1 cues, suggesting that the source hypothesis can rely on shortcut structural signals under topology shift. Such cases explain why aggressive pseudo-label expansion is risky: even highly confident predictions may be systematically wrong in certain target regions. This analysis supports the design of S2PLR, which restricts hard supervision to a verified safe subspace and handles the remaining uncertain samples through noise-tolerated regularization. 
+
+F. Ablation Study 
+
+We conduct ablation studies to evaluate the contribution of each component in S 2PLR, with variants corresponding to the four modules in Section IV. S 2PLR w/o ME removes multi-expert uncertainty quantification and uses a single source hy-pothesis, disabling the predictive-variance-based disagreement criterion. S 2PLR w/o CF removes confidence-based semantic filtering and admits pseudo-labels without the threshold ζ.S2PLR w/o TS removes the target-intrinsic structure learning branch and graph contrastive objective, so neighborhoods are not constructed from a target-specific structural manifold. S2PLR w/o NC removes neighborhood-consistency filtering and disables the structural gate ρmin . S 2PLR w/o SR removes soft regularization on the uncertain set U, leaving only hard pseudo-label supervision on the safe subspace. Experimental results are shown in Table VII. The results show that each component contributes to robust adaptation. First, removing ME or CF weakens semantic reliability estima-tion: the former loses ensemble-disagreement filtering, while the latter admits low-confidence samples, both increasing pseudo-label noise. Second, removing TS degrades perfor-mance because the model can no longer learn target-specific structural neighborhoods, making refinement more dependent on source-biased representations. Third, removing NC allows semantic candidates to be used for hard supervision without local structural verification, confirming that confidence alone is insufficient for reliable graph pseudo-labeling. Finally, remov-ing SR underutilizes uncertain target samples, indicating that noise-tolerated regularization helps exploit target distribution information without assigning unreliable hard labels. More results on other datasets are provided in Appendix F2. 
+
+G. Sensitivity Analysis 
+
+We conduct a sensitivity analysis on two key thresh-olds in S 2PLR, namely the confidence threshold ζ and the neighborhood-consistency threshold ρmin , as illustrated in 12    
+
+> (a) ζ(b) ρmin
+
+Fig. 3: Sensitivity analysis of the confidence threshold ζ and neighborhood-consistency threshold ρmin in S 2PLR on the Mutagenicity dataset. Fig. 3. The confidence threshold ζ controls the semantic con-fidence required for selecting pseudo-label candidates, while 
+
+ρmin determines the minimum local neighborhood agreement needed for a sample to be admitted into the safe subspace. To evaluate the robustness of S 2PLR with respect to these thresholds, we vary one parameter at a time while fixing the other hyperparameters to their default settings. Specifically, both ζ and ρmin are varied over {0.5, 0.6, 0.7, 0.8, 0.9}.As shown in Fig. 3, both thresholds exhibit a clear quality– coverage trade-off. For ζ, increasing the threshold gener-ally improves pseudo-label reliability by filtering out low-confidence predictions, but an overly strict threshold may reduce the safe-subspace coverage and limit the amount of hard supervision. On the Mutagenicity dataset, ζ = 0.8
+
+provides a favorable balance between pseudo-label quality and selected-sample coverage. For ρmin , smaller values may admit locally inconsistent samples into the safe subspace, whereas larger values may discard useful target samples whose neighborhoods are only partially consistent under domain shift. The setting ρmin = 0 .6 achieves a stable compromise between structural reliability and effective target coverage. Overall, the results indicate that S 2PLR is reasonably robust to threshold choices when the semantic and structural filters are set within a moderate range. Additional sensitivity results on other datasets are provided in Appendix F3. VI. C ONCLUSION 
+
+This paper revisited source-free graph domain adaptation from the perspective of selective adaptation under systematic pseudo-label noise. Instead of assuming that source-induced pseudo-labels are reliable over the entire target domain, we characterized a confidence-consistent safe subspace where hard pseudo-label supervision can be more cautiously justified. Based on this view, we proposed S 2PLR, which integrates source-committee uncertainty estimation, target-intrinsic struc-tural representation learning, semantic-structural pseudo-label verification, and noise-tolerant regularization for uncertain target samples. Extensive experiments on image and graph benchmarks under node-density, edge-density, and feature shifts demonstrate that S 2PLR improves pseudo-label reliabil-ity and achieves robust performance across diverse source-free transfer settings. Further diagnostic, ablation, sensitivity, and source-hypothesis budget analyses show that the gains mainly come from reliability-guided safe-subspace supervision rather than simply from additional source hypotheses. A remaining limitation is that safe-subspace selection may become overly conservative or class-biased under severe structural shifts, suggesting future work on adaptive coverage control and class-aware reliability estimation for broader SF-GDA scenarios. REFERENCES 
+
+[1] M. Long, Y. Cao, Z. Cao, J. Wang, and M. I. Jordan, “Transferable representation learning with deep adapta-tion networks,” IEEE transactions on pattern analysis and machine intelligence , vol. 41, no. 12, pp. 3071–3085, 2018. [2] Z. Wu, S. Pan, F. Chen, G. Long, C. Zhang, and S. Y. Philip, “A comprehensive survey on graph neural networks,” IEEE Transactions on Neural Networks and Learning Systems , vol. 32, no. 1, pp. 4–24, 2020. [3] Y. Xie, Z. Xu, J. Zhang, Z. Wang, and S. Ji, “Self-supervised learning of graph neural networks: A unified review,” IEEE transactions on pattern analysis and ma-chine intelligence , vol. 45, no. 2, pp. 2412–2429, 2022. [4] W. Jin, T. Zhao, J. Ding, Y. Liu, J. Tang, and N. Shah, “Empowering graph representation learning with test-time graph transformation,” arXiv preprint arXiv:2210.03561 , 2022. [5] W. Jin, Y. Ma, X. Liu, X. Tang, S. Wang, and J. Tang, “Graph structure learning for robust graph neural networks,” in Proceedings of the International ACM SIGKDD Conference on Knowledge Discovery & Data Mining , 2020, pp. 66–74. [6] Y. Wang, S. Liu, M. Wang, S. Liang, and N. Yin, “Degree distribution based spiking graph networks for domain adaptation,” arXiv preprint arXiv:2410.06883 , 2024. [7] M. Liu, Z. Zhang, J. Tang, J. Bu, B. He, and S. Zhou, “Revisiting, benchmarking and understanding unsuper-vised graph domain adaptation,” Proceedings of the Conference on Neural Information Processing Systems ,vol. 37, pp. 89 408–89 436, 2024. [8] N. Yin, L. Shen, M. Wang, L. Lan, Z. Ma, C. Chen, X.-S. Hua, and X. Luo, “Coco: A coupled contrastive frame-work for unsupervised domain adaptive graph classifica-tion,” in Proceedings of the International Conference on Machine Learning , 2023, pp. 40 040–40 053. [9] Y. Wang, K. Zhang, J. Huang, M. Wang, M. Xiao, S. Gao, and N. Yin, “Dsbd: Dual-aligned structural basis distillation for graph domain adaptation,” arXiv preprint arXiv:2604.03154 , 2026. [10] Y. Wang, X. Liu, M. Wang, S. Gao, and N. Yin, “Rie-mannian flow matching for disentangled graph domain adaptation,” arXiv preprint arXiv:2602.00656 , 2026. [11] J. Li, Z. Yu, Z. Du, L. Zhu, and H. T. Shen, “A com-prehensive survey on source-free domain adaptation,” 
+
+IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 46, no. 8, pp. 5743–5762, 2024. [12] D. Zhao, S. Wang, Q. Zang, L. Jiao, N. Sebe, and Z. Zhong, “Stable neighbor denoising for source-free domain adaptive segmentation,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 23 416–23 427. [13] S. Tang, W. Su, M. Ye, and X. Zhu, “Source-free domain adaptation with frozen multimodal foundation model,” 13 
+
+in The IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2024, pp. 23 711–23 720. [14] Y. Kim, D. Cho, K. Han, P. Panda, and S. Hong, “Domain adaptation without source data,” IEEE Transactions on Artificial Intelligence , vol. 2, no. 6, pp. 508–518, 2021. [15] H. Mao, L. Du, Y. Zheng, Q. Fu, Z. Li, X. Chen, S. Han, and D. Zhang, “Source free graph unsupervised domain adaptation,” in Proceedings of the International ACM Conference on Web Search & Data Mining , 2024, pp. 520–528. [16] J. Luo, Y. Gu, X. Luo, W. Ju, Z. Xiao, Y. Zhao, J. Yuan, and M. Zhang, “Gala: Graph diffusion-based alignment with jigsaw for source-free domain adaptation,” IEEE Transactions on Pattern Analysis and Machine Intelli-gence , vol. 46, no. 12, pp. 9038–9051, 2024. [17] J. Luo, Z. Xiao, Y. Wang, X. Luo, J. Yuan, W. Ju, L. Liu, and M. Zhang, “Rank and align: Towards effec-tive source-free graph domain adaptation,” arXiv preprint arXiv:2408.12185 , 2024. [18] Y. Wang, M. Wang, Z. Huang, S. Liu, and N. Yin, “Nested graph pseudo-label refinement for noisy label domain adaptation learning,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 40, no. 31, 2026, pp. 26 697–26 705. [19] L. Yi, G. Xu, P. Xu, J. Li, R. Pu, C. Ling, A. I. McLeod, and B. Wang, “When source-free domain adap-tation meets learning with noisy labels,” arXiv preprint arXiv:2301.13381 , 2023. [20] G. Xu, L. Yi, P. Xu, J. Li, R. Pu, C. Shui, C. Ling, A. I. McLeod, and B. Wang, “Unraveling the mysteries of label noise in source-free domain adaptation: Theory and practice,” IEEE Transactions on Pattern Analysis and Machine Intelligence , 2025. [21] J. Wang, X. Xia, L. Lan, X. Wu, J. Yu, W. Yang, B. Han, and T. Liu, “Tackling noisy labels with network parameter additive decomposition,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 46, no. 9, pp. 6341–6354, 2024. [22] S. Yang, J. Van de Weijer, L. Herranz, S. Jui et al. , “Ex-ploiting the intrinsic neighborhood structure for source-free domain adaptation,” Advances in neural information processing systems , vol. 34, pp. 29 393–29 405, 2021. [23] J. N. Kundu, N. Venkat, R. V. Babu et al. , “Universal source-free domain adaptation,” in The IEEE/CVF Con-ference on Computer Vision and Pattern Recognition ,2020, pp. 4544–4553. [24] S. Yang, Y. Wang, J. Van De Weijer, L. Herranz, and S. Jui, “Generalized source-free domain adaptation,” in 
+
+The IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2021, pp. 8978–8987. [25] Z. Wen, Q. Li, Y. Wang, H. Shao, and G. Sun, “Fg-plfa: Fine-grained pseudo-labeling and feature alignment for source-free unsupervised domain adaptation,” IEEE Transactions on Neural Networks and Learning Systems ,2025. [26] S. Qu, T. Zou, L. He, F. R¨ ohrbein, A. Knoll, G. Chen, and C. Jiang, “Lead: Learning decomposition for source-free universal domain adaptation,” in The IEEE/CVF Conference on Computer Vision and Pattern Recognition ,2024, pp. 23 334–23 343. [27] Y. Wang, K. Zhang, M. Wang, S. Gao, and N. Yin, “Usbd: Universal structural basis distillation for source-free graph domain adaptation,” arXiv preprint arXiv:2602.08431 , 2026. [28] U. Hwang, J. Lee, J. Shin, and S. Yoon, “Sf(da) 2:Source-free domain adaptation through the lens of data augmentation,” arXiv preprint arXiv:2403.10834 , 2024. [29] H. Xia, H. Zhao, and Z. Ding, “Adaptive adversar-ial network for source-free domain adaptation,” in The IEEE/CVF Conference on Computer Vision and Pattern Recognition , 2021, pp. 9010–9019. [30] S. Roy, M. Trapp, A. Pilzer, J. Kannala, N. Sebe, E. Ricci, and A. Solin, “Uncertainty-guided source-free domain adaptation,” in European conference on computer vision . Springer, 2022, pp. 537–555. [31] X. Yu, Z. Gong, C. Zhou, Y. Fang, and H. Zhang, “Samgpt: Text-free graph foundation model for multi-domain pre-training and cross-domain adaptation,” in 
+
+Proceedings of the ACM Web Conference , 2025, pp. 1142–1153. [32] Z. Zhang and B. He, “Aggregate to adapt: Node-centric aggregation for multi-source-free graph domain adapta-tion,” in Proceedings of the ACM Web Conference , 2025, pp. 4420–4431. [33] J. Luo, H. Tao, X. Luo, Y. Zhao, Z. Xiao, D. He, W. Ju, C. Chen, X.-S. Hua, and M. Zhang, “Robust cross supervision with target mining for source-free graph domain adaptation,” IEEE Transactions on Knowledge and Data Engineering , 2026. [34] Y. Luo, Z. Wang, Z. Chen, Z. Huang, and M. Bak-tashmotlagh, “Source-free progressive graph learning for open-set domain adaptation,” IEEE Transactions on Pat-tern Analysis and Machine Intelligence , vol. 45, no. 9, pp. 11 240–11 255, 2023. [35] Z. Zeng, J. Xie, Z. Yang, T. Ma, and D. Chen, “To-ugda: target-oriented unsupervised graph domain adaptation,” 
+
+Scientific Reports , vol. 14, no. 1, p. 9165, 2024. [36] W. Chen, G. Ye, Y. Wang, Z. Zhang, L. Zhang, D. Wang, Z. Zhang, and F. Zhuang, “Smoothness really matters: A simple yet effective approach for unsupervised graph domain adaptation,” in Proceedings of the AAAI Confer-ence on Artificial Intelligence , vol. 39, no. 15, 2025, pp. 15 875–15 883. [37] S. Yang, S. Wu, E. Yang, B. Han, Y. Liu, M. Xu, G. Niu, and T. Liu, “A parametrical model for instance-dependent label noise,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 45, no. 12, pp. 14 055–14 068, 2023. [38] Y. Zhu, L. Feng, Z. Deng, Y. Chen, R. Amor, and M. Witbrock, “Robust node classification on graph data with graph and label noise,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 38, 2024, pp. 17 220–17 227. [39] H. Song, M. Kim, D. Park, Y. Shin, and J.-G. Lee, “Learning from noisy labels with deep neural networks: A survey,” IEEE transactions on neural networks and 14 
+
+learning systems , vol. 34, no. 11, pp. 8135–8153, 2022. [40] B. Han, Q. Yao, T. Liu, G. Niu, I. W. Tsang, J. T. Kwok, and M. Sugiyama, “A survey of label-noise representa-tion learning: Past, present and future,” arXiv preprint arXiv:2011.04406 , 2020. [41] N. Yin, L. Shen, C. Chen, X.-S. Hua, and X. Luo, “Sport: A subgraph perspective on graph classification with label noise,” ACM Transactions on Knowledge Discovery from Data , vol. 18, no. 9, pp. 1–20, 2024. [42] D. Angluin and P. Laird, “Learning from noisy exam-ples,” Machine learning , vol. 2, no. 4, pp. 343–370, 1988. [43] N. Natarajan, I. S. Dhillon, P. K. Ravikumar, and A. Tewari, “Learning with noisy labels,” Advances in neural information processing systems , vol. 26, 2013. [44] Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner, “Gradient-based learning applied to document recogni-tion,” Proceedings of the IEEE , 2002. [45] A. Krizhevsky, G. Hinton et al. , “Learning multiple layers of features from tiny images,” 2009. [46] N. Yin, L. Shen, M. Wang, X. Liu, C. Chen, and X.-S. Hua, “Dream: a dual variational framework for unsuper-vised graph domain adaptation,” IEEE Transactions on Pattern Analysis and Machine Intelligence , 2025. [47] N. Shervashidze, P. Schweitzer, E. J. Van Leeuwen, K. Mehlhorn, and K. M. Borgwardt, “Weisfeiler-lehman graph kernels.” Journal of Machine Learning Research ,vol. 12, no. 9, 2011. [48] T. N. Kipf and M. Welling, “Semi-supervised classifica-tion with graph convolutional networks,” in Proceedings of the International Conference on Machine Learning ,2017. [49] K. Xu, W. Hu, J. Leskovec, and S. Jegelka, “How powerful are graph neural networks?” in Proceedings of the International Conference on Machine Learning ,2018. [50] C. Bodnar, F. Frasca, N. Otter, Y. Wang, P. Lio, G. F. Montufar, and M. Bronstein, “Weisfeiler and lehman go cellular: Cw networks,” Proceedings of the Conference on Neural Information Processing Systems , vol. 34, pp. 2625–2640, 2021. [51] J. Baek, M. Kang, and S. J. Hwang, “Accurate learning of graph representations with graph multiset pooling,” 
+
+arXiv preprint arXiv:2102.11533 , 2021. [52] G. Michel, G. Nikolentzos, J. F. Lutzeyer, and M. Vazir-giannis, “Path neural networks: Expressive and accurate graph neural networks,” in Proceedings of the Interna-tional Conference on Machine Learning . PMLR, 2023, pp. 24 737–24 755. [53] G. Xu, H. Guo, L. Yi, C. Ling, B. Wang, and G. Yi, “Revisiting source-free domain adaptation: a new per-spective via uncertainty control,” in Proceedings of the International Conference on Learning Representations ,vol. 2025, 2025, pp. 92 900–92 939. [54] Z. Zhang, M. Liu, A. Wang, H. Chen, Z. Li, J. Bu, and B. He, “Collaborate to adapt: Source-free graph domain adaptation via bi-directional adaptation,” in Proceedings of the ACM Web Conference , 2024, pp. 664–675. [55] N. Yin, L. Shen, B. Li, M. Wang, X. Luo, C. Chen, Z. Luo, and X.-S. Hua, “Deal: An unsupervised domain adaptive framework for graph-level classification,” in 
+
+Proceedings of the ACM International Conference on Multimedia , 2022, pp. 3470–3479. [56] P. D. Dobson and A. J. Doig, “Distinguishing enzyme structures from non-enzymes without alignments,” Jour-nal of molecular biology , vol. 330, no. 4, pp. 771–783, 2003. [57] N. Wale, I. A. Watson, and G. Karypis, “Comparison of descriptor spaces for chemical compound retrieval and classification,” Knowledge and Information Systems ,vol. 14, pp. 347–375, 2008. [58] J. Kazius, R. McGuire, and R. Bursi, “Derivation and validation of toxicophores for mutagenicity prediction,” 
+
+Journal of medicinal chemistry , vol. 48, no. 1, pp. 312– 320, 2005. [59] F. Orsini, P. Frasconi, and L. De Raedt, “Graph invari-ant kernels,” in Proceedings of the International Joint Conference on Artificial Intelligence , 2015. [60] W. Hu, M. Fey, H. Ren, M. Nakata, Y. Dong, and J. Leskovec, “Ogb-lsc: A large-scale challenge for machine learning on graphs,” arXiv preprint arXiv:2103.09430 , 2021. [61] V. P. Dwivedi, C. K. Joshi, A. T. Luu, T. Laurent, Y. Bengio, and X. Bresson, “Benchmarking graph neural networks,” The Journal of Machine Learning Research. ,2023. 15 
+
+APPENDIX 
+
+This appendix provides detailed proofs, implementation details, and additional experimental protocols for S 2PLR. The notation follows Sections III-E–IV. The purpose of the appendix is to make explicit the distinction between two notions that are easy to conflate: (i) a population noise bound on selected pseudo labels and (ii) target-only structural certificates used to identify reliable samples in practice. 
+
+A. Detailed Proofs 1) Proof of Theorem 2: Let x ∈ H τ,ρ and denote its pseudo-label by c = ˜ y(x). By the definition of the safe subspace in Eq. (1), we have 
+
+pS (c | x) = s(x) ≥ τ. (21) Assumption 1 then gives 
+
+pT (c | x) ≥ pS (c | x) − βτ (α) ≥ τ − βτ (α). (22) Since η(x) = Pr[˜ y(x)̸ = y | x] = 1 − pT (c | x), we obtain 
+
+η(x) ≤ 1 − τ + βτ (α), (23) which proves Eq. (2). We next prove the aggregate neighborhood certificate. For any x′ ∈ N τ
+
+> same
+
+(x), the construction of N τ
+
+> same
+
+(x) implies 
+
+˜y(x′) = ˜ y(x) = c and s(x′) ≥ τ . Applying Assumption 1 at x′ yields 
+
+pT (c | x′) ≥ pS (c | x′) − βτ (α) ≥ τ − βτ (α). (24) Moreover, because x ∈ H τ,ρ , at least a ρ-fraction of the target neighborhood N (x) belongs to N τ
+
+> same
+
+(x). The posterior probabilities of the remaining neighbors are nonnegative. Therefore, 
+
+1
+
+|N (x)|
+
+X 
+
+> x′∈N (x)
+
+pT (c | x′) ≥ |N τ
+
+> same
+
+(x)||N (x)|
+
+ τ − βτ (α) (25) 
+
+≥ ρ τ − βτ (α), (26) which proves Eq. (3). Finally, we prove the geometric certificate. For any x′ ∈ N τ
+
+> same
+
+(x), Assumption 2 gives 
+
+pT (c | x) ≥ pT (c | x′) − Ld (x, x ′). (27) Combining this inequality with the lower bound on pT (c | x′) gives 
+
+pT (c | x) ≥ τ − βτ (α) − Ld (x, x ′). (28) Averaging over x′ ∈ N τ
+
+> same
+
+(x) yields 
+
+pT (c | x) ≥ τ − βτ (α) − L 1
+
+|N τ
+
+> same
+
+(x)|
+
+X 
+
+> x′∈N τ
+> same (x)
+
+d(x, x ′), (29) which is Eq. (4). If τ − βτ (α) > 1/2, then Eq. (2) implies η(x) < 1/2 for every x ∈ H τ,ρ , which is the Massart bounded-noise condition on the selected safe subspace. 
+
+a) Remark on the role of ρ.: The proof intentionally separates the pointwise noise bound from the structural certificates. Under Assumption 1, the pointwise pseudo-label noise at the center sample is already controlled by τ and βτ (α). The neighborhood ratio ρ should not be interpreted as a factor that directly multiplies the center-point posterior. Instead, ρ provides observable target-domain evidence that the selected pseudo-label is locally supported rather than an isolated high-confidence error. This is why ρ enters the empirical safe-subspace selection rule in Eq. (16), while the Massart noise condition follows from Eq. (2). 16 
+
+2) Proof of Proposition 1: For a fixed target representation x, define the Bernoulli variable 
+
+Bi = I[˜ y(xi) = ˜ y(x), s (xi) ≥ τ ], (30) where xi is the i-th sampled neighbor of x. The empirical structural gate is 
+
+ˆrτ (x) = 1
+
+knn 
+
+> knn
+
+X
+
+> i=1
+
+Bi, (31) and its population counterpart is rτ (x) = E[Bi]. Hoeffding’s inequality gives 
+
+Pr [ |ˆrτ (x) − rτ (x)| ≥ ϵ] ≤ 2 exp( −2knn ϵ2). (32) Setting the right-hand side to δ proves Eq. (5). If ˆrτ (x) ≥ ρmin + ϵ, then with the same probability, 
+
+rτ (x) ≥ ˆrτ (x) − ϵ ≥ ρmin . (33) This proves the finite-sample reliability statement. 
+
+3) Proof of Corollary 2: Fix x ∈ H τ,ρ . Let Zk = I[f kS (x)̸ = y] be the error indicator of the k-th source expert. Under the idealized condition in Corollary 2, the variables Z1, . . . , Z Ke are conditionally independent given x, and E[Zk | x] ≤ ¯e < 1/2.Majority voting is wrong only when 
+
+1
+
+KeKeX
+
+> k=1
+
+Zk ≥ 12 . (34) Hoeffding’s inequality gives 
+
+Pr 
+
+"
+
+1
+
+KeKeX
+
+> k=1
+
+Zk ≥ 12 | x
+
+#
+
+≤ Pr 
+
+"
+
+1
+
+KeKeX
+
+> k=1
+
+Zk − ¯e ≥ 12 − ¯e | x
+
+#
+
+(35) 
+
+≤ exp −2Ke
+
+ 12 − ¯e
+
+2!
+
+. (36) This proves Eq. (7). The conditional-independence assumption is only a sufficient condition for the closed-form exponential bound. In practice, source checkpoints trained on the same source domain can have correlated errors. For this reason, S 2PLR does not use Eq. (7) as an unconditional performance guarantee. Instead, it uses the committee to measure empirical consensus and predictive variance through Eqs. (10)–(11). A target graph is admitted into Ssem only when the committee is both confident and low-disagreement, and it must further pass the structural gate in Eq. (16) before hard pseudo-label supervision is used. 
+
+4) Proof of Proposition 2: Let U = XT \ H τ,ρ . The target risk can be decomposed as 
+
+RT (h) = Pr[ h(x)̸ = y, x ∈ H τ,ρ ] + Pr[ h(x)̸ = y, x ∈ U ] (37) 
+
+= πH Pr[ h(x)̸ = y | x ∈ H τ,ρ ] + πU RU (h). (38) On the safe subspace, the event h(x)̸ = y is contained in the union of the two events h(x)̸ = ˜ y(x) and ˜y(x)̸ = y. Hence 
+
+Pr[ h(x)̸ = y | x ∈ H τ,ρ ] ≤ Pr[ h(x)̸ = ˜ y(x) | x ∈ H τ,ρ ] + Pr[˜ y(x)̸ = y | x ∈ H τ,ρ ] (39) 
+
+≤ eRH(h) + ¯ ητ . (40) Substituting this inequality into the risk decomposition gives Eq. (8). If the uncertain-set risk is upper bounded by a regularizer-induced quantity RU (h) ≤ ΓU (h), then replacing RU (h) with ΓU (h) gives Eq. (9). 
+
+5) A finite-sample variant: The previous proposition is a population decomposition. For completeness, we state a standard finite-sample form that explains the empirical objective in Eq. (20). Suppose m selected target graphs are sampled from Hτ,ρ ,and let bRH(h) be the empirical pseudo-label risk on them. For a bounded classification loss and a hypothesis class with Rademacher complexity Rm(H), with probability at least 1 − δ, uniformly over h,
+
+eRH(h) ≤ bRH(h) + 2 Rm(H) + 
+
+r log(2 /δ )2m . (41) Combining this inequality with Proposition 2 gives 
+
+RT (h) ≤ πH bRH(h) + ¯ ητ + 2 Rm(H) + 
+
+r log(2 /δ )2m
+
+!
+
++ πU ΓU (h). (42) This finite-sample variant should be read as a conventional generalization statement for the selected pseudo-labeled subset. It is not used to claim that pseudo-labels are reliable on the full target domain. 17 0 20 40 60 80 100 
+
+> Number of Nodes
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> 1.75
+> Frequency
+> ×10 2
+
+(a) Node Distribution 
+
+M0 
+
+M1 
+
+M2 
+
+M3     
+
+> 050 100 150 200
+> Number of Edges
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> Frequency
+> ×10 2
+
+(b) Edge Distribution 
+
+M0 
+
+M1 
+
+M2 
+
+M3 
+
+> T-SNE Visualization
+
+(c) Feature Distribution 
+
+PROTEINS 
+
+DD 
+
+Fig. 4: Visualization of domain shifts across different types. (a,b) Node and edge distribution shifts between sub-datasets of Mutagenicity. (c) Feature distribution shift between PROTEINS and DD datasets. TABLE VIII: Statistics of the experimental datasets. 
+
+Datasets Graphs Avg. Nodes Avg. Edges Classes DD 1,178 284.32 715.66 2NCI1 4,110 29.87 32.30 2Mutagenicity 4,337 30.32 30.77 2FRANKENSTEIN 4,337 16.9 17.88 2ogbg-molhiv 41,127 25.5 27.5 2CIFAR10 60,000 117.6 941.2 10 MNIST 70,000 70.6 564.5 10 PROTEINS 1,113 39.1 72.8 2COX2 467 41.22 43.45 2COX2 MD 303 26.28 335.12 2BZR 405 35.75 38.36 2BZR MD 306 21.30 225.06 2
+
+B. Connection to Full-Domain Unbounded-Noise Analyses 
+
+The safe-subspace guarantee does not contradict the full-domain unbounded-noise result in Theorem 1. The two statements analyze different adaptation protocols. The unbounded-noise result shows that if a fixed source classifier is applied to all shifted target samples, then there may exist a target region on which pseudo-labels are almost surely wrong. Our analysis instead studies a selective protocol in which hard pseudo-label supervision is restricted to 
+
+Hτ,ρ = {x : s(x) ≥ τ, r τ (x) ≥ ρ}. (43) Samples outside this set are not discarded; they are used through soft target regularization. Therefore, the theory should be interpreted as a sufficient condition for reliable selective adaptation, not as a global claim that every source-free pseudo-label is bounded-noise. This distinction also explains the design of S 2PLR. Module I estimates semantic reliability through source confidence and ensemble disagreement. Module II learns a target-intrinsic representation in which neighborhood evidence is more meaningful. Module III intersects semantic and structural evidence to form Hζ,ρ . Module IV avoids assigning hard labels to the remaining uncertain samples and instead controls them through entropy and KL regularization. 
+
+C. Dataset 1) Dataset Description: We provide additional details of the datasets used in our experiments. For structure-based domain shifts, we use real-world graph benchmarks and image-derived graph benchmarks. For graph datasets, molecules are represented as graphs with atoms as nodes and chemical bonds as edges, while proteins are represented with amino acids as nodes and spatial or chemical proximity relations as edges. Following [8, 46, 55], we construct structural domains by sorting graphs according to graph-level structural statistics. Specifically, node-density shifts are generated by sorting graphs according to the number of nodes |V |, while edge-density shifts are generated by sorting graphs according to the number of edges |E|. The sorted graphs are then divided into quantile-based subdomains with a shared label space. 
+
+(1) Structure-based domain shifts. 18 
+
+TABLE IX: Subdomain statistics for density-based partitions. Avg. Struct. and Std. Struct. denote the mean and standard deviation of the corresponding structural metrics. Class 0 and Class 1 are reported only for binary datasets; class counts for MNIST and CIFAR10 are omitted because they contain 10 classes.                                                                                                                                                                                                                                                                                                                                           
+
+> Dataset Split Domain #Graphs Class 0 Class 1 Avg. Struct. Std. Struct. Mutagenicity Node M0 1084 515 569 52.71 28.12 Mutagenicity Node M1 1084 730 354 31.00 2.37 Mutagenicity Node M2 1084 649 435 23.16 2.42 Mutagenicity Node M3 1085 507 578 14.41 3.32 Mutagenicity Edge M0 1084 557 527 52.80 16.91 Mutagenicity Edge M1 1084 723 361 32.55 2.70 Mutagenicity Edge M2 1084 618 466 23.66 2.81 Mutagenicity Edge M3 1085 503 582 14.08 3.64 NCI1 Node N0 1027 277 750 47.97 13.78 NCI1 Node N1 1027 504 523 30.59 2.43 NCI1 Node N2 1027 588 439 23.83 1.72 NCI1 Node N3 1029 684 345 17.09 3.03 NCI1 Edge N0 1027 281 746 52.25 14.98 NCI1 Edge N1 1027 524 503 33.16 2.67 NCI1 Edge N2 1027 546 481 25.79 1.86 NCI1 Edge N3 1029 702 327 18.04 3.54 FRANKENSTEIN Node F0 1084 468 616 28.46 14.17 FRANKENSTEIN Node F1 1084 355 729 18.13 1.42 FRANKENSTEIN Node F2 1084 457 627 13.08 1.47 FRANKENSTEIN Node F3 1085 656 429 7.93 2.06 FRANKENSTEIN Edge F0 1084 434 650 31.13 14.81 FRANKENSTEIN Edge F1 1084 363 721 19.54 1.70 FRANKENSTEIN Edge F2 1084 484 600 13.43 1.74 FRANKENSTEIN Edge F3 1085 655 430 7.42 2.35 DD Node D0 294 54 240 96.69 28.71 DD Node D1 295 153 142 191.05 29.01 DD Node D2 294 233 61 298.36 32.55 DD Node D3 295 251 44 550.58 421.71 DD Edge D0 294 57 237 229.79 70.62 DD Edge D1 295 153 142 470.15 74.44 DD Edge D2 294 227 67 746.97 82.80 DD Edge D3 295 254 41 1414.19 1058.74 ogbg-molhiv Node H0 10281 10080 201 14.90 2.65 ogbg-molhiv Node H1 10281 9972 309 20.74 1.35 ogbg-molhiv Node H2 10281 9987 294 25.92 1.85 ogbg-molhiv Node H3 10284 9645 639 40.48 14.66 ogbg-molhiv Edge H0 10281 10079 202 15.54 3.07 ogbg-molhiv Edge H1 10281 9960 321 22.31 1.55 ogbg-molhiv Edge H2 10281 9994 287 28.15 2.08 ogbg-molhiv Edge H3 10284 9651 633 43.87 15.61 MNIST Edge S0 23334 --204.40 20.20 MNIST Edge S1 23333 --273.80 26.26 MNIST Edge S2 23333 --360.41 33.79 CIFAR10 Edge C0 20000 --400.52 14.96 CIFAR10 Edge C1 20000 --593.02 21.92 CIFAR10 Edge C2 20000 --795.90 29.14
+> •
+
+DD. DD [56] contains 1,178 protein graphs for binary classification, where each graph is labeled according to whether the protein is an enzyme. Compared with PROTEINS, DD graphs are typically larger and denser, making the dataset suitable for evaluating structural shifts with higher graph complexity. We partition DD into four subdomains, denoted as D0, D1, D2, and D3.  
+
+> •
+
+NCI1. NCI1 [57] consists of 4,110 molecular graphs. Each graph corresponds to a chemical compound, and the prediction task is to determine whether the compound is active against cancer cell growth. We divide NCI1 into four structure-based subdomains, denoted as N0, N1, N2, and N3.  
+
+> •
+
+Mutagenicity. Mutagenicity [58] contains 4,337 molecular graphs labeled by mutagenic effect. The dataset contains diverse molecular sizes and bonding patterns, which naturally induce structural heterogeneity. We split it into four subdomains, denoted as M0, M1, M2, and M3.  
+
+> •
+
+FRANKENSTEIN. FRANKENSTEIN [59] includes 4,337 molecular graphs for biological activity prediction. The graphs are relatively small compared with several other molecular benchmarks, providing a complementary setting for evaluating adaptation across different graph-size regimes. We partition the dataset into F0, F1, F2, and F3.  
+
+> •
+
+ogbg-molhiv. ogbg-molhiv [60] is an OGB molecular benchmark with 41,127 graphs, where the task is to predict whether a molecule inhibits HIV replication. Compared with the TUDataset benchmarks, it is larger and more class-imbalanced, offering a more realistic molecular adaptation scenario. We construct four structural subdomains, denoted as H0, H1, H2, 19 
+
+and H3.  
+
+> •
+
+MNIST. MNIST [44] contains 70,000 grayscale digit images from 10 classes. We convert each image into a graph representation, where nodes correspond to pixels or superpixels and edges encode spatial adjacency. The resulting graphs are partitioned into three edge-based subdomains, denoted as S0, S1, and S2.  
+
+> •
+
+CIFAR-10. CIFAR-10 [45] contains 60,000 color images from 10 object categories. Similar to MNIST, each image is transformed into a graph with local image regions as nodes and spatial neighborhood relations as edges. We construct three edge-based subdomains, denoted as C0, C1, and C2. 
+
+(2) Feature-based domain shifts. For feature-based domain shifts, we evaluate paired domains that share the same prediction semantics but differ in node-feature distributions. These tasks test whether a method can adapt when the global graph-level semantics are comparable but the local feature statistics change across domains.  
+
+> •
+
+PROTEINS and DD. PROTEINS [56] contains 1,113 protein graphs for binary graph classification, with labels indicating enzyme or non-enzyme classes. Together with DD, it forms the PROTEINS ↔DD transfer pair. This pair evaluates adaptation across protein graph domains with related label semantics but different graph and feature characteristics.  
+
+> •
+
+COX2 and COX2 MD. COX2 contains 467 molecular graphs, while COX2 MD contains 303 molecular graphs from a mod-ified domain with the same label space. Both datasets describe molecular structures and are used as the COX2 ↔COX2 MD transfer pair. This setting evaluates feature-based distribution shifts between related molecular domains.  
+
+> •
+
+BZR and BZR MD. BZR contains 405 molecular graphs, and BZR MD contains 306 molecular graphs from the corresponding modified domain. The two datasets share the same binary prediction semantics and form the BZR ↔BZR MD transfer pair. This pair provides another molecular feature-shift benchmark with consistent label space but shifted node-feature statistics. Table IX provides detailed statistics of the constructed subdomains for all structure-based benchmarks. For each dataset and split type, it reports the subdomain identifier, number of graphs, class distribution, and the mean and standard deviation of the corresponding structural statistic. For node-density splits, Avg. Struct. and Std. Struct. refer to the number of nodes; for edge-density splits, they refer to the number of edges used to characterize graph connectivity. These statistics show that the constructed subdomains exhibit clear differences in graph scale or connectivity while maintaining the same label space, thereby forming meaningful structural domain shifts. They also reveal that density-based partitioning may introduce class-prior variations across subdomains, which makes the source-free adaptation setting more realistic and challenging. 
+
+2) Data Processing: For real-world graph datasets from TUDataset 4, including DD, PROTEINS, Mutagenicity, NCI1, FRANKENSTEIN, BZR, BZR MD, COX2, and COX2 MD, we follow the standard preprocessing pipeline provided by PyTorch Geometric 5. Each graph is converted into a PyG data object, with the original node attributes or node labels used as input features when available. For image benchmarks, i.e., MNIST and CIFAR10, we transform each image into a graph representation. Nodes correspond to pixels or superpixels, and edges are constructed according to spatial proximity. Specifically, we build KNN graphs based on node spatial coordinates, where the neighborhood size is adjusted to control graph density and induce edge-density domain shifts [9, 61]. The original image category is used as the graph-level label. For datasets from the Open Graph Benchmark (OGB) 6, such as ogbg-molhiv, we follow the official OGB preprocessing and evaluation protocol. The molecular graphs are loaded with their provided atom and bond features, and the ROC-AUC metric is used following the standard OGB setting. 
+
+D. Baselines 
+
+We compare the proposed S 2PLR with a comprehensive set of competitive baselines on the datasets above. These baselines include six graph kernels and general graph neural networks, including WL [47], PathNN [52], GCN [48], GIN [49], CIN [50], and GMT [51]; four source-free domain adaptation methods: SFDA LLN [19], SF(DA) 2 [28], NVC LLN [20], and Ucon SFDA [53]; four source-free graph domain adaptation methods: SOGA [15], GraphCTA [54], GALA [16], and GraphATA [32].  
+
+> •
+
+WL : The Weisfeiler–Lehman (WL) graph kernel [47] captures hierarchical graph structures by iteratively relabeling nodes based on neighborhood information. It computes graph similarities through subtree pattern matching, enabling efficient and expressive structural comparison.  
+
+> •
+
+PathNN : Path Neural Networks (PathNN) [52] enhance the expressive power of graph neural networks by modeling relationships along paths rather than only adjacent nodes. They aggregate path-based representations through attention mechanisms, effectively capturing higher-order structural dependencies and improving graph-level prediction accuracy.  
+
+> •
+
+GCN : Graph Convolutional Networks (GCN) [48] perform graph learning by propagating and aggregating feature information from neighboring nodes through spectral convolutions. This approach effectively captures local graph structure while enabling efficient end-to-end training. 
+
+> 4https://chrsmrrs.github.io/datasets/
+> 5https://pyg.org/
+> 6https://ogb.stanford.edu/ 20
+
+TABLE X: Paired Wilcoxon signed-rank tests on reported task-level mean performance over all node- and edge-shift transfer tasks, with Holm correction for multiple comparisons.                                                         
+
+> Comparison Test Scope Test Statistic WHolm-adjusted p-value Significant at 0.05
+> S2PLR vs. GraphATA 132 node/edge tasks 849.0 8.94 ×10 −16 Yes S2PLR vs. GALA 132 node/edge tasks 810.0 8.65 ×10 −16 Yes S2PLR vs. GraphCTA 132 node/edge tasks 521.5 7.43 ×10 −18 Yes S2PLR vs. SOGA 132 node/edge tasks 378.0 3.29 ×10 −19 Yes S2PLR vs. UCon SFDA 132 node/edge tasks 272.5 4.39 ×10 −20 Yes S2PLR vs. NVC LLN 132 node/edge tasks 73.5 8.84 ×10 −22 Yes S2PLR vs. SF(DA) 2132 node/edge tasks 137.5 4.14 ×10 −21 Yes S2PLR vs. SFDA LLN 132 node/edge tasks 103.0 1.50 ×10 −21 Yes
+> •
+
+GIN : Graph Isomorphism Networks (GIN) [49] achieve maximal discriminative power among message-passing GNNs by using sum aggregation and multi-layer perceptrons to capture injective neighborhood functions, enabling them to distinguish complex graph structures equivalent to the Weisfeiler–Lehman test.  
+
+> •
+
+CIN : Cellular Weisfeiler–Lehman Networks (CIN) [50] extend the Weisfeiler–Lehman framework to higher-dimensional cellular complexes, enabling message passing beyond edges to higher-order cells. This design captures multi-scale structural interactions and richer topological dependencies in complex graphs.  
+
+> •
+
+GMT : Graph Multiset Transformer (GMT) [51] introduces attention-based multiset pooling to learn expressive graph-level representations. By employing learnable queries to aggregate node embeddings, GMT flexibly captures diverse structural patterns and global dependencies for accurate graph representation learning.  
+
+> •
+
+SFDA LLN: SFDA LLN [19] introduces a robust source-free domain adaptation framework that models label noise as unbounded and exploits the early-time training phenomenon (ETP) to prevent noise memorization. By incorporating early-learning regularization into the SFDA objective, it effectively mitigates noisy pseudo-labels and significantly improves cross-domain adaptation performance.  
+
+> •
+
+SF(DA) 2: SF(DA) 2 [28] reinterprets source-free domain adaptation from a data augmentation perspective. It generates diverse target-domain variants to simulate source data, enabling model adaptation through consistency regularization and self-training without requiring access to source samples.  
+
+> •
+
+NVC LLN: NVC LLN [20] provides a theoretical and empirical analysis of label noise in SFDA, distinguishing between bounded and unbounded noise regimes. It introduces principled strategies to mitigate noise-induced degradation, offering both theoretical insights and practical algorithms that enhance adaptation robustness across domains.  
+
+> •
+
+Ucon SFDA: Ucon SFDA [53] revisits source-free domain adaptation from the perspective of uncertainty control. It explicitly models and regulates target-side uncertainty to reduce unreliable pseudo-labeling, thereby improving adaptation robustness without accessing source data.  
+
+> •
+
+SOGA: SOGA [15] introduces a graph-based framework for source-free domain adaptation. It transfers knowledge from a pre-trained source model to the target domain by aligning graph structural features and node representations without accessing source data, leveraging graph topology to enhance domain-invariant learning and cross-domain generalization.  
+
+> •
+
+GraphCTA: GraphCTA [54] proposes source-free graph domain adaptation via bi-directional collaboration between source hypothesis and target structure, iteratively refining pseudo-labels and representations through consistency, topology-aware alignment, and cooperative training to improve cross-domain generalization.  
+
+> •
+
+GALA: GALA [16] introduces a diffusion-driven graph alignment framework that preserves structural consistency between domains. It employs a jigsaw-style self-supervised task to enhance feature discrimination and jointly optimizes diffusion alignment and representation learning, enabling robust adaptation without access to source data.  
+
+> •
+
+GraphATA: GraphATA [32] addresses multi-source-free graph domain adaptation through node-centric aggregation. It dynamically aggregates knowledge from multiple source hypotheses according to local graph context, enabling fine-grained target adaptation without using source graphs. All methods are evaluated on the same source-target splits. Results are reported as mean performance with standard deviation over five random seeds. Small numerical differences whose standard-deviation ranges overlap are treated as empirically comparable rather than as strict wins. This convention is important because several transfer pairs have margins that are smaller than the run-to-run variance. 
+
+E. Algorithm 
+
+The complete training procedure is summarized in Algorithm 1. 
+
+F. More experimental results 1) More performance comparison: In this section, we present additional performance comparisons between S 2PLR and all baseline methods on more graph benchmarks, as summarized in Tables XVI–XXV. The results cover node-density and 21 
+
+Algorithm 1 Training Procedure of S 2PLR  
+
+> 1:
+
+Input: Source experts M, target data Dt, thresholds ζ, ρ min , variance percentile qu, neighborhood size knn , maximum epochs Emax . 
+
+> 2:
+
+Output: Adapted target model fT . 
+
+> 3:
+
+Initialize fT from the primary source checkpoint and initialize the target structure encoder gψ . 
+
+> 4:
+
+Warm up gψ on target graphs by minimizing LGCL in Eq. (14).  
+
+> 5:
+
+for epoch = 1 to Emax do  
+
+> 6:
+
+Compute ensemble consensus ¯pj , pseudo-label ˆyj , confidence sj , and variance uj for all Gtj ∈ D t. 
+
+> 7:
+
+Set ν = Qqu ({uj }nt
+
+> j=1
+
+). 
+
+> 8:
+
+Select semantic candidates Ssem using Eq. (12).  
+
+> 9:
+
+Compute target structural embeddings with gψ and construct the knn -nearest-neighbor graph.  
+
+> 10:
+
+Compute ρj using Eq. (15) and identify Hζ,ρ using Eq. (16).  
+
+> 11:
+
+Set U = Dt \ H ζ,ρ . 
+
+> 12:
+
+for each mini-batch B ⊂ D t do  
+
+> 13:
+
+Compute LH on B ∩ H ζ,ρ using Eq. (19).  
+
+> 14:
+
+Compute Lreg on B ∩ U using Eq. (18).  
+
+> 15:
+
+Compute LGCL on B using Eq. (14).  
+
+> 16:
+
+Update fT and gψ by minimizing Eq. (20).  
+
+> 17:
+
+end for  
+
+> 18:
+
+end for  
+
+> 19:
+
+return fT .edge-density domain shifts on DD, FRANKENSTEIN, Mutagenicity, NCI1, and ogbg-molhiv. Overall, S 2PLR achieves the best or consistently competitive performance in most transfer settings, further demonstrating its robustness across molecular and protein graph domains. Compared with conventional graph classifiers and kernel-based methods, S 2PLR shows clear advantages because it explicitly addresses source-target structural mismatch during adaptation. Although existing source-free and graph adaptation baselines improve over non-adaptive models, their performance still varies across transfer directions, especially under large graph-size or connectivity shifts. The paired Wilcoxon signed-rank tests in Table X further support this observation. Based on the reported task-level mean performance over 132 node- and edge-shift transfer tasks, S 2PLR achieves statistically significant improvements over representative source-free and graph adaptation baselines after Holm correction, including GraphATA, GALA, GraphCTA, SOGA, Ucon SFDA, NVC LLN, SF(DA) 2, and SFDA LLN. This indicates that the gains of S 2PLR are not concentrated on a few favorable transfer pairs, but are consistent across a broad range of structural domain shifts. In particular, the significant improvements over strong graph-specific baselines such as GraphATA, GALA, and GraphCTA suggest that topology-aware adaptation alone is not sufficient; reliable source-free graph adaptation also benefits from multi-expert semantic reliability estimation, target-intrinsic structure learning, neighborhood-consistency verification, and soft regularization on uncertain samples. These results reinforce the conclusion that effective source-free graph adaptation requires both conservative safe-subspace supervision and principled exploitation of the remaining uncertain target data. 
+
+2) More Ablation study: To further validate the effectiveness of each component in S 2PLR, we conduct additional ablation studies on the DD, NCI1, FRANKENSTEIN, and ogbg-molhiv datasets. Specifically, we evaluate five ablated variants of S2PLR, including S 2PLR w/o ME, S 2PLR w/o CF, S 2PLR w/o TS, S 2PLR w/o NC, and S 2PLR w/o SR. The corresponding experimental results are reported in Tables XII, XIV, XIII, and XV. Overall, the observed trends are consistent with those discussed in Section V-F, further confirming that each component contributes to the robustness of S 2PLR under source-free graph domain adaptation. These ablations also correspond to the theoretical risk decomposition in Proposition 2. Removing multi-expert uncertainty quantification weakens the identification of consensus pseudo-labels and makes the safe set more vulnerable to source-biased predictions. Removing the confidence filter primarily weakens the control of the pseudo-label noise term ¯ητ , while removing the neighborhood-consistency gate weakens the empirical certification of the safe subspace Hτ,ρ . Removing the target-intrinsic structure branch makes neighborhood construction less reliable and may enlarge the effective radius term L¯r. Removing the soft regularization on the uncertain set U weakens the control of the uncertain-set risk term ΓU (h). Beyond accuracy, safe-subspace coverage and selected pseudo-label precision are direct post-hoc diagnostics for the selective-learning mechanism. When target labels are used for such analysis, these diagnostics are reported separately from model selection and do not affect the source-free adaptation protocol. 
+
+3) More Sensitivity Analysis: We further analyze the sensitivity of S 2PLR to the confidence threshold ζ and the neighborhood-consistency threshold ρmin on DD, FRANKENSTEIN, NCI1, and ogbg-molhiv. The results are shown in Fig. 5 and 6, and the observed trends are consistent with the analysis in Section V-G. For each dataset, we vary one threshold at a time over 22    
+
+> (a) DD (b) FRANKENSTEIN (c) NCI1 (d) ogbg-molhiv
+
+Fig. 5: Sensitivity analysis of the confidence threshold ζ on DD, FRANKENSTEIN, NCI1, and ogbg-molhiv.    
+
+> (a) DD (b) FRANKENSTEIN (c) NCI1 (d) ogbg-molhiv
+
+Fig. 6: Sensitivity analysis of the neighborhood-consistency threshold ρmin on DD, FRANKENSTEIN, NCI1, and ogbg-molhiv. 
+
+{0.5, 0.6, 0.7, 0.8, 0.9} while keeping the other hyperparameters fixed. Overall, S 2PLR exhibits stable performance across a broad range of threshold values. For the confidence threshold ζ,moderate values generally lead to better results because they remove low-confidence pseudo-labels while retaining sufficient safe samples for hard supervision. When ζ becomes too large, the selected safe subspace may become overly conservative, which slightly degrades performance on several transfer directions. For the neighborhood-consistency threshold ρmin , a similar quality–coverage trade-off can be observed: small values may admit locally inconsistent samples, whereas overly strict values may discard useful target samples under domain shift. Across DD, FRANKENSTEIN, NCI1, and ogbg-molhiv, the best or near-best performance is usually achieved in the middle range, especially around 0.6–0.8. These results confirm that S 2PLR is not overly sensitive to the exact threshold choice and that its semantic and structural filters remain effective across both molecular and protein graph benchmarks. We additionally examine the sensitivity of S 2PLR to the number of source experts Ke, as shown in Fig. 7. We vary Ke from 1 to 6 while keeping the other hyperparameters fixed. The source experts are added cumulatively in the following order: GMT, GIN, PathNN, GCN, SAGE, and RandomWalkNN. Thus, Ke = 1 uses only GMT, Ke = 2 uses GMT and GIN, Ke = 3 uses GMT, GIN, and PathNN, and larger values further include GCN, SAGE, and RandomWalkNN. Different from ζ and ρmin ,which control the strictness of sample selection, Ke affects the reliability of multi-expert uncertainty estimation. The results show that increasing Ke from a single source hypothesis to a moderate-size heterogeneous committee generally improves performance, indicating that complementary experts provide more stable disagreement signals and help suppress source-biased pseudo-labels. However, the gains tend to saturate when Ke becomes larger, and further increasing the number of experts does not consistently improve performance across datasets. This suggests that additional experts may introduce redundant or less informative disagreement signals, making safe-subspace selection overly conservative in some transfer directions. Overall, the results support the default choice of Ke = 3 , which uses GMT, GIN, and PathNN and achieves a favorable trade-off between reliability estimation, adaptation performance, and computational cost across Mutagenicity, DD, FRANKENSTEIN, NCI1, and ogbg-molhiv. 
+
+4) Efficiency and Resource Consumption Analysis: In this section, we report the computational cost of S 2PLR and representative baselines, including GALA, GraphCTA, and SOGA, in Table XI. The goal is to examine whether the performance gains of S 2PLR come from a substantially larger adaptation budget or from the proposed reliability-guided refinement mechanism. All measurements are conducted on the Mutagenicity dataset under the same hardware setting. We report the per-epoch adaptation time, peak GPU memory, number of released source hypotheses, and trainable parameters during target adaptation. For S 2PLR, S 2PLR-Single uses one frozen GMT source hypothesis, S 2PLR-Homo3 uses three frozen GMT source hypotheses trained with different random seeds, and S 2PLR-Hetero3 uses a heterogeneous frozen source committee composed of GMT, GIN, and PathNN. During target adaptation, all released source hypotheses are kept frozen and are used only for forward-pass reliability estimation, including pseudo-label prediction and predictive-variance computation. Gradients are propagated only through the target-side trainable modules. Therefore, increasing the number of source hypotheses affects the number of stored checkpoints and the forward-pass cost, but does not increase the number of trainable parameters optimized during adaptation. The trainable parameter count of S 2PLR comes from two target-side modules: the primary target model and the target-intrinsic structure encoder gψ . In our implementation, the primary target model is instantiated as GMT and is responsible for 23     
+
+> (a) Mutagenicity (b) DD (c) FRANKENSTEIN (d) NCI1 (e) ogbg-molhiv
+
+Fig. 7: Sensitivity analysis of the number of source experts Ke on Mutagenicity, DD, FRANKENSTEIN, NCI1, and ogbg-molhiv. TABLE XI: Time (in seconds) and GPU memory (in MB) consumption of different methods in the adaptation stage for each epoch.                                 
+
+> Method Source Hypotheses Trainable Params Adapt. Time GPU Memory GraphATA 1164,738 0.9843 1,732 GALA 1144,819 2.2843 5,530 GraphCTA 1101,256 0.7563 1,312 SOGA 1134,274 0.1873 1,678 S2PLR-Single 1445,828 1.7230 1,473 S2PLR-Homo3 3445,828 2.0377 1,614 S2PLR-Hetero3 3445,828 1.7617 5,665
+
+target prediction and pseudo-label supervision, while gψ is instantiated as GIN and is used to learn target-intrinsic structural representations for graph contrastive learning and neighborhood-consistency verification. Both modules are updated during target adaptation. Thus, the trainable parameters of S 2PLR correspond to the combination of the trainable GMT target model and the trainable GIN-based structure encoder, together with minor overhead from task-specific heads or projection layers. Importantly, this parameter count remains identical for S 2PLR-Single, S 2PLR-Homo3, and S 2PLR-Hetero3, because the additional source hypotheses are frozen and never fine-tuned. The moderate runtime increase of the multi-hypothesis variants mainly comes from extra forward passes through frozen experts, while the higher memory usage of S 2PLR-Hetero3 is due to the heterogeneous frozen encoders used during reliability estimation. Overall, the results show that the gains of S 2PLR are not caused by additional trainable source models or test-time ensembling, but by using frozen source hypotheses to improve pseudo-label reliability, followed by target-structural verification and safe-subspace supervision. 
+
+G. Limitations 
+
+The proposed method has two limitations. First, the main version assumes that the source provider can release multiple source hypotheses or checkpoints. This is compatible with the source-free setting because no source graph is accessed during adaptation, but it may increase storage and inference cost. Second, the theoretical guarantee is selective: it applies to the safe subspace and does not certify correctness on all target samples. This is why uncertain samples are handled by soft regularization rather than hard pseudo-labels. These limitations are reflected in the design of the single-expert variant and the risk decomposition in Proposition 2. 24 
+
+TABLE XII: The results of ablation studies on the DD dataset (source → target). 
+
+Methods D0 →D1 D1 →D0 D0 →D2 D2 →D0 D0 →D3 D3 →D0 D1 →D2 D2 →D1 D1 →D3 D3 →D1 D2 →D3 D3 →D2 S2PLR w/o ME 52.4 80.0 67.5 75.5 78.4 59.8 76.8 65.3 83.0 80.7 86.0 83.5 S2PLR w/o CF 51.3 78.5 68.8 74.3 78.1 59.0 79.2 66.4 85.1 77.1 86.5 85.0 S2PLR w/o TS 52.2 79.4 67.6 73.4 80.4 58.9 78.8 66.0 86.6 79.5 86.2 83.6 S2PLR w/o NC 52.4 79.9 65.4 74.6 79.2 60.4 79.0 67.7 86.0 79.1 85.9 84.1 S2PLR w/o SR 48.1 77.5 63.5 73.1 77.9 57.6 76.0 64.0 82.3 76.8 85.1 79.3 S2PLR 55.7 80.5 70.1 77.3 82.7 62.8 81.4 68.1 87.3 83.2 88.0 86.7 
+
+TABLE XIII: The results of ablation studies on the FRANKENSTEIN dataset (source → target). 
+
+Methods F0 →F1 F1 →F0 F0 →F2 F2 →F0 F0 →F3 F3 →F0 F1 →F2 F2 →F1 F1 →F3 F3 →F1 F2 →F3 F3 →F2 S2PLR w/o ME 67.1 66.1 65.2 71.7 57.2 55.3 59.1 69.6 57.1 64.5 57.7 67.3 S2PLR w/o CF 67.7 68.2 64.6 70.2 55.1 56.2 66.7 68.4 56.9 62.4 59.4 66.9 S2PLR w/o TS 67.6 64.2 62.9 71.5 56.2 54.7 66.1 68.1 57.3 64.9 58.9 68.7 S2PLR w/o NC 67.8 67.5 63.7 69.9 53.1 54.0 67.5 67.5 55.2 62.2 58.1 67.1 S2PLR w/o SR 67.4 58.0 55.7 61.7 49.1 43.2 58.5 67.9 53.7 59.1 57.5 63.9 S2PLR 69.6 71.6 67.9 73.9 59.9 57.1 67.6 71.4 61.1 66.2 60.7 69.5 
+
+TABLE XIV: The results of ablation studies on the NCI1 dataset (source → target). 
+
+Methods N0 →N1 N1 →N0 N0 →N2 N2 →N0 N0 →N3 N3 →N0 N1 →N2 N2 →N1 N1 →N3 N3 →N1 N2 →N3 N3 →N2 S2PLR w/o ME 66.8 77.1 62.0 72.6 65.9 70.9 68.8 72.3 67.9 61.4 72.9 69.6 S2PLR w/o CF 67.1 78.6 62.3 74.6 65.2 69.1 71.1 75.5 68.0 62.1 76.2 72.7 S2PLR w/o TS 66.9 79.9 61.4 73.6 65.5 67.5 70.0 74.8 67.8 62.3 75.8 71.7 S2PLR w/o NC 66.0 78.3 61.8 72.0 66.8 68.6 70.3 75.3 66.9 61.6 75.5 71.5 S2PLR w/o SR 59.6 76.5 60.0 70.9 65.3 63.8 69.3 71.4 67.5 54.1 70.1 68.3 S2PLR 68.3 81.0 63.2 76.0 67.2 71.7 72.2 77.5 69.1 63.6 77.3 73.2 
+
+TABLE XV: The results of ablation studies on the ogbg-molhiv dataset (source → target). 
+
+Methods H0 →H1 H1 →H0 H0 →H2 H2 →H0 H0 →H3 H3 →H0 H1 →H2 H2 →H1 H1 →H3 H3 →H1 H2 →H3 H3 →H2 S2PLR w/o ME 60.3 68.5 59.0 63.5 62.7 62.3 68.6 73.7 67.7 69.8 65.0 70.7 S2PLR w/o CF 62.2 68.8 60.2 64.9 62.8 65.5 69.3 72.8 67.5 70.8 64.4 73.5 S2PLR w/o TS 61.6 67.9 61.0 64.6 61.1 64.8 67.0 71.2 65.0 70.5 63.8 72.4 S2PLR w/o NC 62.0 68.8 60.3 63.9 62.8 63.5 68.4 72.6 64.7 71.0 64.9 71.9 S2PLR w/o SR 58.0 58.6 60.0 60.2 59.7 59.9 64.5 63.1 62.7 66.3 57.3 59.6 S2PLR 64.1 70.6 63.7 66.5 64.6 66.1 70.2 74.4 70.8 73.4 68.0 76.2 
+
+TABLE XVI: The classification results (in %) on the DD dataset under node density domain shift (source → target). D0, D1, D2, and D3 denote the sub-datasets partitioned with node density. Bold results indicate the best performance. 
+
+Methods D0 →D1 D1 →D0 D0 →D2 D2 →D0 D0 →D3 D3 →D0 D1 →D2 D2 →D1 D1 →D3 D3 →D1 D2 →D3 D3 →D2 WL subtree 49.2 56.8 29.6 20.1 21.0 18.4 59.5 50.5 57.3 48.1 63.9 66.9 GCN 48.9 ±2.8 59.0 ±1.7 20.7 ±2.0 27.3 ±2.3 15.1 ±1.8 26.9 ±2.2 61.6 ±1.9 53.6 ±1.5 68.1 ±1.6 52.9 ±2.6 64.9 ±2.1 69.7 ±2.3 
+
+GIN 48.8 ±1.9 24.7 ±2.1 44.1 ±1.8 22.4 ±2.3 57.0 ±2.1 18.4 ±2.0 73.0 ±1.8 52.5 ±2.3 63.2 ±1.6 53.6 ±1.5 70.3 ±2.6 69.4 ±1.8 
+
+GMT 49.1 ±1.9 32.9 ±2.2 31.8 ±1.8 27.3 ±2.3 52.5 ±1.5 27.6 ±1.8 75.4 ±1.9 53.2 ±2.1 74.1 ±2.6 57.9 ±2.4 70.9 ±1.8 71.1 ±2.7 
+
+CIN 50.4 ±1.8 18.4 ±2.0 21.2 ±2.1 36.8 ±1.8 43.0 ±2.1 22.9 ±1.9 53.4 ±1.7 56.5 ±1.5 62.3 ±1.6 53.3 ±1.9 75.0 ±2.1 69.3 ±2.0 
+
+PathNN 50.1 ±2.3 58.8 ±2.0 31.6 ±2.1 28.6 ±1.6 21.6 ±2.1 30.3 ±1.3 69.1 ±2.3 59.5 ±1.4 74.5 ±2.4 57.8 ±1.9 74.9 ±1.8 71.1 ±1.6 
+
+SFDA LLN 50.9 ±1.6 79.6 ±2.0 63.7 ±2.3 75.6 ±2.0 67.1 ±1.8 57.6 ±2.0 77.4 ±1.6 56.7 ±2.3 82.6 ±1.5 78.5 ±1.6 79.1 ±1.8 76.6 ±2.3 
+
+SF(DA) 2 51.3 ±1.4 78.4 ±2.1 63.8 ±1.3 76.6 ±2.3 68.6 ±2.3 59.7 ±2.3 75.7 ±1.6 57.4 ±1.6 81.4 ±1.9 79.1 ±2.6 80.7 ±2.0 77.8 ±1.7 
+
+NVC LLN 49.7 ±2.0 79.4 ±1.5 64.7 ±1.7 78.0 ±1.9 68.5 ±2.3 59.3 ±1.7 76.2 ±2.1 58.1 ±1.8 82.3 ±1.6 77.8 ±2.0 80.3 ±2.1 76.7 ±1.8 
+
+Ucon SFDA 51.5 ±1.9 80.6 ±2.2 66.7 ±1.4 72.3 ±1.8 69.1 ±0.9 58.8 ±2.1 78.1 ±0.6 60.6 ±3.1 83.6 ±0.4 79.2 ±0.7 82.2 ±1.6 79.5 ±1.0 
+
+SOGA 51.1 ±1.6 80.4 ±1.7 65.3 ±1.8 79.4 ±1.6 71.9 ±2.0 61.4 ±1.7 78.3 ±2.1 59.9 ±1.5 84.1 ±1.5 80.1 ±2.0 81.4 ±2.3 79.5 ±1.9 
+
+GraphCTA 50.9 ±1.5 81.2 ±2.4 67.7 ±2.0 79.5 ±2.3 70.9 ±2.2 62.3 ±1.5 79.5 ±1.7 61.9 ±1.9 85.1 ±2.0 80.9 ±2.1 82.1 ±2.0 78.3 ±1.7 
+
+GALA 52.8 ±1.7 80.8 ±2.1 66.0 ±2.1 77.2 ±2.0 71.4 ±1.9 60.8 ±1.8 78.5 ±1.4 60.8 ±1.7 84.4 ±1.6 81.2 ±1.2 83.6 ±2.5 77.6 ±2.3 
+
+GraphATA 51.7 ±1.4 80.3 ±3.2 67.6 ±2.4 78.4 ±1.9 72.1 ±1.3 63.8 ±1.5 78.7 ±2.3 67.8 ±2.3 84.1 ±0.9 81.5 ±1.2 85.7 ±1.0 81.2 ±1.2 
+
+S2PLR 53.6 ±2.5 81.6 ±2.1 71.2 ±1.7 77.9 ±2.3 70.9 ±1.9 64.3 ±1.4 79.8 ±2.0 70.1 ±1.8 86.8 ±0.4 83.2 ±2.2 87.1 ±1.8 85.5 ±0.5 25 
+
+TABLE XVII: The classification results (in %) on the FRANKENSTEIN dataset under node density domain shift (source →
+
+target). F0, F1, F2, and F3 denote the sub-datasets partitioned with node density. Bold results indicate the best performance. 
+
+Methods F0 →F1 F1 →F0 F0 →F2 F2 →F0 F0 →F3 F3 →F0 F1 →F2 F2 →F1 F1 →F3 F3 →F1 F2 →F3 F3 →F2 WL subtree 54.6 40.1 47.8 62.0 49.6 56.0 49.7 51.2 41.8 42.9 47.3 45.1 GCN 32.7 ±2.0 43.2 ±2.1 42.2 ±1.7 43.2 ±1.5 54.5 ±1.8 43.2 ±1.9 42.2 ±2.0 32.7 ±1.5 56.5 ±1.2 32.7 ±1.8 55.5 ±1.8 42.2 ±2.0 
+
+GIN 39.7 ±1.8 51.4 ±1.7 54.7 ±1.3 51.4 ±1.7 58.2 ±1.9 41.8 ±2.0 54.7 ±2.3 47.1 ±1.6 52.1 ±1.2 34.3 ±1.5 50.8 ±1.7 43.8 ±2.0 
+
+GMT 47.3 ±2.2 56.8 ±1.9 57.8 ±1.4 56.8 ±1.2 39.5 ±2.3 44.1 ±1.2 57.8 ±2.0 58.3 ±1.5 39.5 ±1.6 39.3 ±1.4 39.5 ±2.0 44.1 ±1.6 
+
+CIN 54.3 ±1.8 51.6 ±1.9 45.0 ±1.7 52.5 ±1.8 51.9 ±2.1 43.2 ±2.0 45.3 ±1.3 60.4 ±1.8 48.8 ±1.6 32.7 ±2.0 57.1 ±1.2 42.2 ±1.8 
+
+PathNN 55.7 ±1.8 59.1 ±2.2 57.2 ±1.9 57.3 ±1.6 56.9 ±2.1 49.2 ±1.9 52.9 ±1.4 55.4 ±2.2 55.1 ±1.9 44.9 ±1.4 53.9 ±1.5 53.9 ±2.1 
+
+SFDA LLN 65.2 ±1.3 59.2 ±2.2 59.1 ±1.0 58.9 ±2.1 57.6 ±1.2 59.9 ±1.9 59.4 ±1.3 65.0 ±1.5 58.3 ±2.0 64.9 ±1.8 57.5 ±1.3 58.4 ±1.9 
+
+SF(DA) 2 66.3 ±1.3 62.6 ±0.8 61.7 ±1.4 60.2 ±1.6 58.6 ±1.7 60.1 ±0.9 60.9 ±1.7 66.5 ±1.2 60.5 ±2.0 66.2 ±1.6 60.1 ±1.5 60.7 ±2.2 
+
+NVC LLN 66.7 ±1.3 63.1 ±2.0 63.8 ±1.6 62.1 ±1.9 59.5 ±1.4 60.8 ±1.7 61.6 ±2.1 67.3 ±1.8 59.5 ±1.5 64.7 ±1.8 59.5 ±2.0 61.2 ±1.5 
+
+Ucon SFDA 67.4 ±1.0 65.6 ±2.2 59.6 ±2.4 71.4 ±1.9 60.5 ±0.7 59.0 ±1.8 60.4 ±2.0 68.3 ±1.9 60.5 ±0.8 67.4 ±0.9 60.5 ±2.0 61.2 ±1.1 
+
+SOGA 67.0 ±1.7 63.8 ±1.3 65.2 ±1.5 63.7 ±1.6 60.3 ±1.7 60.2 ±1.6 62.2 ±1.9 67.7 ±2.0 61.0 ±1.5 66.9 ±1.2 60.6 ±1.8 61.3 ±2.3 
+
+GraphCTA 67.3 ±1.8 64.1 ±1.9 66.5 ±1.4 64.3 ±1.7 61.9 ±2.2 60.9 ±1.5 62.0 ±1.6 68.3 ±2.1 60.9 ±0.9 67.0 ±0.8 60.0 ±1.2 62.7 ±1.3 
+
+GALA 67.1 ±1.3 64.6 ±1.7 67.1 ±1.6 64.0 ±1.9 62.2 ±1.5 61.2 ±2.0 63.1 ±1.6 68.8 ±1.8 62.5 ±2.0 66.7 ±1.9 60.6 ±1.2 61.9 ±1.5 
+
+GraphATA 69.3 ±1.3 70.3 ±1.9 66.1 ±2.2 64.8 ±0.8 59.5 ±1.2 63.3 ±1.8 65.3 ±2.0 69.6 ±1.5 59.6 ±2.4 65.1 ±1.6 60.3 ±1.1 67.2 ±1.7 
+
+S2PLR 69.6 ±1.8 71.6 ±2.1 67.9 ±2.4 73.9 ±1.6 59.9 ±1.6 57.1 ±2.0 67.6 ±1.2 71.4 ±2.2 61.1 ±1.3 66.2 ±2.9 60.7 ±1.4 69.5 ±1.6 
+
+TABLE XVIII: The classification results (in %) on the Mutagenicity dataset under node density domain shift (source → target). M0, M1, M2, and M3 denote the sub-datasets partitioned with node density. Bold results indicate the best performance. 
+
+Methods M0 →M1 M1 →M0 M0 →M2 M2 →M0 M0 →M3 M3 →M0 M1 →M2 M2 →M1 M1 →M3 M3 →M1 M2 →M3 M3 →M2 WL subtree 34.3 46.0 40.4 50.4 52.7 52.1 51.6 48.3 45.6 40.8 53.5 52.4 GCN 64.1 ±1.4 62.6 ±2.3 65.5 ±2.0 62.3 ±1.1 56.9 ±2.1 53.7 ±1.8 66.1 ±1.6 70.8 ±2.1 47.7 ±1.9 49.2 ±2.1 52.1 ±1.7 54.4 ±2.1 
+
+GIN 66.5 ±2.1 53.2 ±2.3 52.0 ±1.7 62.6 ±2.3 53.7 ±1.7 48.6 ±2.3 71.5 ±2.5 70.0 ±2.1 52.2 ±2.3 64.3 ±2.1 50.9 ±1.4 52.4 ±1.5 
+
+GMT 65.7 ±1.8 67.1 ±1.9 62.1 ±2.1 66.4 ±1.2 59.0 ±2.0 58.0 ±2.7 69.9 ±1.4 68.4 ±2.3 60.4 ±1.3 48.2 ±2.0 59.1 ±1.3 60.6 ±1.7 
+
+CIN 65.1 ±1.7 52.9 ±2.3 66.0 ±1.7 69.8 ±2.0 55.2 ±1.5 55.1 ±1.3 66.0 ±1.6 69.9 ±2.1 54.9 ±1.8 57.8 ±1.5 46.7 ±2.0 51.8 ±1.1 
+
+PathNN 70.2 ±1.5 68.9 ±1.5 67.1 ±2.0 70.2 ±1.3 58.0 ±1.9 60.4 ±2.2 68.9 ±1.6 70.3 ±1.9 59.8 ±1.7 57.7 ±1.5 59.9 ±1.7 61.8 ±0.9 
+
+SFDA LLN 70.7 ±1.6 69.2 ±2.3 68.1 ±1.2 67.9 ±2.3 60.4 ±1.3 61.4 ±1.9 70.8 ±1.7 74.1 ±1.6 60.1 ±1.1 68.8 ±1.4 59.3 ±2.1 65.4 ±2.3 
+
+SF(DA) 2 72.0 ±1.5 69.6 ±1.5 69.7 ±1.9 70.7 ±2.1 62.0 ±1.8 61.9 ±3.2 73.1 ±1.7 75.9 ±1.5 63.4 ±1.8 69.8 ±2.0 63.9 ±1.9 68.9 ±1.7 
+
+NVC LLN 71.4 ±1.3 70.2 ±1.4 67.8 ±1.1 70.9 ±2.3 62.1 ±1.5 63.2 ±1.7 72.3 ±1.6 75.8 ±1.6 62.7 ±2.1 69.0 ±1.4 62.0 ±2.3 65.2 ±2.5 
+
+Ucon SFDA 73.2 ±0.8 72.7 ±1.3 69.6 ±2.1 70.6 ±1.0 62.9 ±3.2 62.8 ±1.8 72.2 ±1.9 76.0 ±0.9 63.8 ±1.2 67.3 ±1.5 61.3 ±0.7 66.4 ±1.7 
+
+SOGA 73.5 ±1.3 69.9 ±2.0 69.4 ±2.5 71.0 ±2.0 63.1 ±2.1 64.6 ±1.7 73.8 ±1.3 75.5 ±2.0 65.0 ±1.5 76.4 ±1.4 63.5 ±1.8 71.6 ±2.0 
+
+GraphCTA 73.7 ±1.8 70.5 ±2.0 70.7 ±1.5 71.7 ±1.7 65.2 ±1.7 66.7 ±2.1 73.1 ±1.6 76.1 ±1.9 64.7 ±2.0 75.6 ±1.4 63.9 ±1.7 73.7 ±1.9 
+
+GALA 75.1 ±2.1 71.3 ±1.7 70.8 ±1.6 72.8 ±1.5 64.0 ±2.1 66.0 ±1.6 72.6 ±1.8 76.5 ±2.3 65.3 ±1.4 76.9 ±1.5 64.4 ±2.4 74.5 ±1.1 
+
+GraphATA 75.2 ±2.1 73.0 ±1.7 69.9 ±1.3 70.7 ±1.0 62.1 ±1.0 70.7 ±1.0 73.7 ±2.2 76.0 ±1.2 68.9 ±1.2 80.2 ±1.8 64.3 ±0.7 73.3 ±2.0 
+
+S2PLR 77.1 ±0.5 75.3 ±0.7 71.6 ±2.0 75.4 ±0.4 65.8 ±1.1 72.0 ±1.4 79.9 ±0.6 87.2 ±0.4 70.8 ±0.6 82.4 ±0.3 71.9 ±1.5 81.6 ±2.3 
+
+TABLE XIX: The classification results (in %) on the NCI1 dataset under node density domain shift (source → target). N0, N1, N2, and N3 denote the sub-datasets partitioned with node density. Bold results indicate the best performance. 
+
+Methods N0 →N1 N1 →N0 N0 →N2 N2 →N0 N0 →N3 N3 →N0 N1 →N2 N2 →N1 N1 →N3 N3 →N1 N2 →N3 N3 →N2 WL subtree 54.9 60.0 51.4 51.4 44.4 63.1 51.9 53.4 58.4 57.4 61.2 50.9 GCN 54.0 ±2.0 66.5 ±1.9 47.3 ±2.2 37.4 ±1.8 38.4 ±2.3 27.6 ±1.5 59.0 ±1.7 56.9 ±2.0 56.5 ±1.2 51.0 ±1.7 60.5 ±1.9 57.4 ±1.6 
+
+GIN 57.0 ±1.9 38.7 ±2.3 45.7 ±1.8 34.4 ±1.9 43.6 ±2.1 27.0 ±2.0 54.7 ±1.7 52.8 ±2.1 59.0 ±1.8 49.1 ±2.5 59.4 ±2.0 57.4 ±1.3 
+
+GMT 53.0 ±1.9 63.7 ±1.6 48.9 ±2.2 32.8 ±2.0 41.5 ±1.7 27.8 ±1.6 56.4 ±1.9 57.2 ±1.7 54.1 ±1.9 49.8 ±1.7 61.6 ±2.1 58.5 ±1.1 
+
+CIN 54.5 ±1.9 37.6 ±1.9 53.2 ±1.8 36.2 ±1.4 42.1 ±1.8 27.5 ±2.0 57.2 ±1.6 51.6 ±1.9 59.3 ±1.5 50.0 ±1.4 62.0 ±1.4 57.4 ±2.3 
+
+PathNN 56.8 ±2.5 62.8 ±2.1 52.7 ±2.2 64.5 ±1.2 50.6 ±1.8 37.4 ±2.1 59.2 ±1.4 58.6 ±1.5 60.2 ±1.8 53.1 ±2.1 60.9 ±1.2 57.6 ±1.5 
+
+SFDA LLN 56.4 ±2.0 71.1 ±1.8 55.7 ±1.5 73.0 ±2.0 66.4 ±1.2 72.6 ±1.8 57.4 ±1.2 59.0 ±2.1 65.5 ±2.0 54.4 ±1.8 64.5 ±2.0 59.4 ±1.4 
+
+SF(DA) 2 57.2 ±1.9 72.7 ±2.1 56.3 ±1.9 72.9 ±1.5 65.7 ±1.5 72.3 ±2.0 59.7 ±1.8 61.0 ±1.9 65.2 ±2.0 57.5 ±1.3 65.2 ±1.7 60.7 ±1.3 
+
+NVC LLN 58.9 ±2.0 72.0 ±1.8 56.7 ±1.9 73.1 ±1.6 65.2 ±2.3 71.0 ±2.1 61.4 ±1.8 62.1 ±1.4 66.3 ±1.2 59.1 ±1.6 65.9 ±2.0 63.3 ±1.9 
+
+Ucon SFDA 61.9 ±1.2 73.8 ±0.7 58.6 ±2.5 72.7 ±1.3 64.8 ±1.3 71.8 ±1.8 58.1 ±0.8 61.4 ±2.9 66.8 ±0.5 59.7 ±3.1 66.9 ±0.8 57.5 ±1.1 
+
+SOGA 61.0 ±1.5 73.1 ±2.1 58.0 ±1.4 73.0 ±1.0 66.3 ±1.3 72.8 ±1.6 63.5 ±2.2 64.1 ±1.8 66.5 ±2.0 59.9 ±1.6 66.5 ±1.7 64.0 ±2.0 
+
+GraphCTA 60.9 ±2.0 73.7 ±1.6 58.7 ±1.8 74.2 ±1.4 65.9 ±1.8 72.0 ±2.0 64.4 ±0.9 63.3 ±1.2 67.3 ±1.5 59.1 ±2.0 65.8 ±1.6 63.9 ±2.1 
+
+GALA 61.2 ±1.3 73.4 ±1.4 58.4 ±1.8 74.8 ±2.0 68.5 ±1.5 73.7 ±1.8 64.8 ±1.2 64.4 ±2.0 67.5 ±1.5 58.9 ±0.9 66.6 ±1.0 64.0 ±2.2 
+
+GraphATA 63.9 ±0.8 74.5 ±2.0 57.7 ±1.9 74.4 ±2.6 68.1 ±1.8 71.9 ±0.8 66.0 ±1.3 62.4 ±1.7 64.6 ±2.0 59.6 ±1.6 69.5 ±1.0 68.2 ±0.4 
+
+S2PLR 68.3 ±1.5 81.0 ±2.4 63.2 ±1.6 76.0 ±2.0 67.2 ±1.4 71.7 ±1.9 72.2 ±1.1 77.5 ±1.2 69.1 ±0.3 63.6 ±0.9 77.3 ±1.2 73.2 ±2.4 26 
+
+TABLE XX: ROC-AUC results (in %) on the ogbg-molhiv dataset under node density domain shift (source → target). H0, H1, H2, and H3 denote the sub-datasets partitioned with node density. Bold results indicate the best performance. 
+
+Methods H0 →H1 H1 →H0 H0 →H2 H2 →H0 H0 →H3 H3 →H0 H1 →H2 H2 →H1 H1 →H3 H3 →H1 H2 →H3 H3 →H2 WL 49.6 51.8 54.0 54.7 48.2 48.9 50.6 51.9 38.1 51.0 51.8 50.7 GCN 57.8 ±1.9 57.4 ±2.1 56.5 ±1.3 54.2 ±1.2 54.5 ±1.7 51.9 ±1.7 61.8 ±2.0 55.2 ±1.3 49.8 ±1.4 56.6 ±1.3 61.5 ±1.1 56.8 ±1.7 
+
+GIN 59.1 ±1.6 53.3 ±1.6 50.0 ±1.7 54.8 ±1.8 56.8 ±1.6 50.7 ±1.4 55.2 ±1.3 58.7 ±1.4 57.0 ±1.8 49.6 ±1.7 53.1 ±1.3 55.3 ±1.6 
+
+GMT 51.1 ±1.6 57.2 ±1.7 50.6 ±1.2 55.9 ±1.9 58.4 ±1.4 53.4 ±1.7 56.1 ±1.6 57.6 ±1.3 60.9 ±1.7 54.5 ±2.0 55.4 ±1.6 51.2 ±1.8 
+
+CIN 52.3 ±1.6 53.4 ±1.5 54.0 ±1.9 57.5 ±1.8 56.5 ±1.4 51.1 ±1.9 55.8 ±1.4 63.6 ±1.8 48.7 ±1.6 56.8 ±1.6 49.3 ±1.2 52.8 ±1.3 
+
+PathNN 50.3 ±1.3 51.2 ±1.8 51.5 ±1.2 55.3 ±1.8 56.7 ±1.2 52.2 ±1.5 53.7 ±1.7 51.5 ±1.4 53.9 ±1.9 54.3 ±1.5 55.6 ±1.8 56.0 ±1.5 
+
+SFDA LLN 63.1 ±1.1 63.8 ±1.6 62.9 ±1.5 62.9 ±1.6 63.9 ±0.9 62.4 ±1.6 63.5 ±1.4 64.7 ±1.3 63.9 ±1.7 61.3 ±1.7 66.2 ±1.6 60.9 ±1.1 
+
+SF(DA) 2 63.3 ±1.5 63.7 ±1.4 62.7 ±1.4 63.4 ±1.3 64.1 ±1.3 60.4 ±2.4 64.5 ±1.0 64.9 ±1.6 64.2 ±1.4 61.6 ±1.3 64.2 ±1.3 61.6 ±1.9 
+
+NVC LLN 57.2 ±0.4 61.8 ±0.4 58.3 ±0.3 61.7 ±0.4 61.9 ±1.6 61.4 ±1.0 60.3 ±1.5 58.2 ±1.7 64.1 ±1.7 60.4 ±1.8 62.3 ±2.5 60.0 ±1.1 
+
+Ucon SFDA 60.4 ±0.9 63.2 ±1.3 61.1 ±1.8 63.4 ±0.5 62.0 ±1.2 62.1 ±0.7 61.8 ±1.1 64.1 ±0.7 63.5 ±0.5 62.4 ±1.0 62.3 ±0.6 63.4 ±1.0 
+
+SOGA 62.8 ±1.6 62.3 ±1.3 63.2 ±1.9 62.1 ±1.8 63.8 ±1.6 64.1 ±1.2 63.2 ±2.9 66.8 ±1.6 67.2 ±2.3 61.8 ±1.3 65.4 ±2.1 63.7 ±1.7 
+
+GraphCTA 63.7 ±1.4 65.5 ±1.4 63.8 ±1.2 63.0 ±1.6 64.3 ±1.2 63.1 ±2.3 65.4 ±1.4 67.0 ±1.7 65.2 ±1.5 62.8 ±1.5 67.9 ±1.9 63.3 ±1.8 
+
+GALA 63.5 ±1.4 64.9 ±1.9 64.3 ±1.6 63.8 ±1.2 64.4 ±1.4 64.3 ±1.5 65.0 ±1.9 67.7 ±1.2 69.1 ±1.4 63.9 ±1.1 68.5 ±1.3 64.3 ±1.6 
+
+GraphATA 63.0 ±0.9 68.2 ±0.5 62.5 ±0.7 62.5 ±1.7 62.4 ±1.4 65.0 ±1.0 64.7 ±2.0 68.9 ±1.3 69.2 ±2.3 65.1 ±1.2 66.8 ±1.0 69.3 ±0.7 
+
+S2PLR 64.1 ±1.4 70.6 ±1.8 63.7 ±1.6 66.5 ±2.6 64.6 ±1.9 66.1 ±2.1 70.2 ±3.1 74.4 ±2.7 70.8 ±2.3 73.4 ±0.8 68.0 ±3.1 76.2 ±0.7 
+
+TABLE XXI: The classification results (in %) on the DD dataset under edge density domain shift (source → target). D0, D1, D2, and D3 denote the sub-datasets partitioned with edge density. Bold results indicate the best performance. 
+
+Methods D0 →D1 D1 →D0 D0 →D2 D2 →D0 D0 →D3 D3 →D0 D1 →D2 D2 →D1 D1 →D3 D3 →D1 D2 →D3 D3 →D2 WL subtree 49.2 56.8 29.6 20.1 21.0 18.4 59.5 50.5 57.3 48.1 63.9 66.9 GCN 48.9 ±2.8 59.0 ±1.7 20.7 ±2.0 27.3 ±2.3 15.1 ±1.8 26.9 ±2.2 61.6 ±1.9 53.6 ±1.5 68.1 ±1.6 52.9 ±2.6 64.9 ±2.1 69.7 ±2.3 
+
+GIN 48.8 ±1.9 24.7 ±2.1 44.1 ±1.8 22.4 ±2.3 57.0 ±2.1 18.4 ±2.0 73.0 ±1.8 52.5 ±2.3 63.2 ±1.6 53.6 ±1.5 70.3 ±2.6 69.4 ±1.8 
+
+GMT 49.1 ±1.9 32.9 ±2.2 31.8 ±1.8 27.3 ±2.3 52.5 ±1.5 27.6 ±1.8 75.4 ±1.9 53.2 ±2.1 74.1 ±2.6 57.9 ±2.4 70.9 ±1.8 71.1 ±2.7 
+
+CIN 50.4 ±1.8 18.4 ±2.0 21.2 ±2.1 36.8 ±1.8 43.0 ±2.1 22.9 ±1.9 53.4 ±1.7 56.5 ±1.5 62.3 ±1.6 53.3 ±1.9 75.0 ±2.1 69.3 ±2.0 
+
+PathNN 50.0 ±2.1 59.9 ±1.7 42.0 ±2.3 43.5 ±1.4 31.7 ±1.7 37.6 ±2.3 66.5 ±1.6 54.1 ±1.7 69.2 ±1.9 56.1 ±1.8 74.7 ±1.8 69.5 ±1.0 
+
+SFDA LLN 51.4 ±2.2 75.9 ±1.8 72.0 ±2.1 75.3 ±2.3 82.3 ±2.3 56.7 ±1.8 74.1 ±1.2 53.8 ±1.9 82.5 ±1.5 79.5 ±1.6 72.2 ±2.1 70.1 ±1.9 
+
+SF(DA) 2 51.9 ±2.3 77.7 ±2.6 72.4 ±1.2 74.5 ±1.9 82.5 ±1.4 58.4 ±1.8 75.9 ±1.6 53.7 ±2.2 83.7 ±2.2 81.4 ±2.0 74.4 ±2.4 72.8 ±1.8 
+
+NVC LLN 51.5 ±2.0 77.0 ±1.9 71.1 ±1.8 75.5 ±1.7 82.5 ±2.1 60.2 ±1.7 75.3 ±1.8 53.8 ±2.5 82.1 ±2.2 79.8 ±2.4 74.7 ±1.2 70.5 ±2.0 
+
+Ucon SFDA 52.2 ±1.3 80.7 ±2.0 77.5 ±0.9 75.9 ±2.6 86.6 ±0.8 60.1 ±1.4 79.9 ±1.8 59.8 ±2.9 83.8 ±1.2 79.6 ±1.3 79.2 ±1.4 72.6 ±0.6 
+
+SOGA 52.1 ±1.4 79.4 ±1.7 73.3 ±0.9 78.4 ±1.8 83.9 ±2.0 57.4 ±1.8 78.2 ±1.6 55.9 ±2.0 84.3 ±2.4 84.0 ±2.0 76.1 ±2.1 73.1 ±1.7 
+
+GraphCTA 51.9 ±1.5 79.8 ±2.1 73.8 ±2.0 77.6 ±2.5 85.4 ±1.9 56.1 ±1.8 77.5 ±2.4 56.9 ±2.0 85.1 ±1.7 83.9 ±2.0 75.1 ±2.3 72.2 ±1.9 
+
+GALA 52.3 ±1.6 80.2 ±1.9 74.6 ±2.0 78.4 ±1.7 84.8 ±1.5 60.9 ±2.1 78.0 ±1.7 57.7 ±1.9 85.5 ±2.3 87.1 ±1.4 78.2 ±2.4 74.5 ±1.8 
+
+GraphATA 52.5 ±0.8 80.0 ±2.4 73.6 ±3.0 79.5 ±1.8 86.5 ±2.1 57.3 ±1.9 80.5 ±1.9 66.4 ±1.8 85.5 ±0.9 87.4 ±1.4 82.3 ±1.1 80.4 ±2.1 
+
+S2PLR 55.7 ±2.1 80.5 ±2.3 70.1 ±2.0 77.3 ±1.4 82.7 ±1.2 62.8 ±1.4 81.4 ±3.8 68.1 ±3.1 87.3 ±1.2 83.2 ±1.7 88.0 ±0.8 86.7 ±1.4 
+
+TABLE XXII: The classification results (in %) on the FRANKENSTEIN dataset under edge density domain shift (source →
+
+target). F0, F1, F2, and F3 denote the sub-datasets partitioned with edge density. Bold results indicate the best performance. 
+
+Methods F0 →F1 F1 →F0 F0 →F2 F2 →F0 F0 →F3 F3 →F0 F1 →F2 F2 →F1 F1 →F3 F3 →F1 F2 →F3 F3 →F2 WL subtree 44.6 54.8 47.0 56.1 58.2 41.8 50.8 58.1 45.7 47.9 45.3 42.7 GCN 33.5 ±2.1 40.9 ±1.5 44.6 ±1.3 40.1 ±1.6 57.4 ±2.0 43.1 ±1.3 44.6 ±2.0 33.5 ±1.2 56.4 ±1.1 36.6 ±1.9 57.4 ±2.0 47.8 ±1.7 
+
+GIN 40.1 ±1.2 52.4 ±1.8 52.2 ±2.2 52.7 ±1.8 58.3 ±1.5 42.8 ±2.0 53.2 ±2.3 47.1 ±1.6 52.1 ±2.2 39.1 ±2.0 49.9 ±1.8 43.5 ±1.9 
+
+GMT 51.5 ±1.0 57.0 ±1.3 55.4 ±1.6 59.0 ±1.2 39.6 ±1.6 44.1 ±2.0 55.4 ±2.1 66.5 ±1.6 39.6 ±1.9 36.5 ±1.5 39.6 ±1.4 42.8 ±1.4 
+
+CIN 54.2 ±1.1 52.2 ±1.9 47.6 ±1.8 52.5 ±2.2 56.2 ±1.3 40.0 ±2.0 46.8 ±1.3 59.9 ±1.2 49.1 ±1.5 33.5 ±2.0 57.8 ±1.4 45.9 ±2.0 
+
+PathNN 55.9 ±1.5 59.6 ±1.7 56.5 ±1.5 60.8 ±1.6 57.0 ±1.2 48.0 ±1.7 49.2 ±1.3 60.2 ±1.9 55.1 ±1.5 48.2 ±1.8 54.1 ±1.9 54.1 ±2.2 
+
+SFDA LLN 64.6 ±1.3 62.5 ±2.7 55.3 ±1.9 60.9 ±1.8 60.6 ±1.2 63.5 ±2.1 55.6 ±1.3 66.7 ±1.3 60.4 ±1.8 56.8 ±1.7 60.4 ±2.0 55.4 ±1.1 
+
+SF(DA) 2 65.1 ±1.4 64.5 ±1.1 57.4 ±1.5 60.3 ±2.0 59.1 ±2.2 64.4 ±1.8 57.7 ±1.2 67.0 ±1.3 60.1 ±2.0 59.2 ±1.5 58.9 ±2.1 58.1 ±1.2 
+
+NVC LLN 65.5 ±1.3 65.0 ±0.9 57.0 ±1.2 61.0 ±2.1 59.6 ±1.6 63.0 ±1.7 57.4 ±1.4 66.5 ±2.0 59.6 ±1.4 58.5 ±1.9 59.6 ±1.7 61.6 ±2.1 
+
+Ucon SFDA 68.0 ±0.6 69.0 ±2.1 55.6 ±1.7 60.2 ±2.2 60.4 ±1.5 61.6 ±1.4 55.8 ±0.9 66.9 ±0.7 58.0 ±2.5 60.0 ±1.6 60.4 ±2.0 59.7 ±2.3 
+
+SOGA 63.5 ±1.8 65.1 ±1.4 58.4 ±0.8 60.8 ±1.2 58.8 ±1.1 64.4 ±2.0 60.7 ±1.6 68.5 ±1.3 60.6 ±1.6 59.4 ±2.1 60.2 ±1.4 63.8 ±1.3 
+
+GraphCTA 66.4 ±1.9 66.7 ±1.4 60.4 ±1.3 61.7 ±1.3 59.9 ±1.2 64.3 ±2.0 62.3 ±1.6 67.9 ±1.4 60.4 ±2.0 58.8 ±1.2 60.5 ±1.8 62.9 ±2.1 
+
+GALA 65.9 ±1.7 67.0 ±1.3 61.3 ±2.0 62.0 ±2.1 60.5 ±2.5 64.8 ±1.7 63.0 ±2.1 66.9 ±1.6 60.6 ±1.8 59.0 ±1.9 59.7 ±2.2 63.3 ±1.8 
+
+GraphATA 65.7 ±1.2 66.8 ±0.9 63.4 ±2.0 68.0 ±1.8 61.3 ±2.3 65.5 ±0.6 65.4 ±1.7 68.8 ±1.5 59.6 ±1.3 60.5 ±1.7 61.0 ±3.1 64.6 ±1.0 
+
+S2PLR 72.5 ±0.9 76.0 ±2.9 65.8 ±1.8 75.5 ±2.4 58.5 ±1.7 63.8 ±1.1 66.2 ±2.9 79.6 ±2.7 60.9 ±2.3 58.7 ±1.8 62.2 ±1.6 72.7 ±1.9 27 
+
+TABLE XXIII: The classification results (in %) on the Mutagenicity dataset under edge density domain shift (source → target). M0, M1, M2, and M3 denote the sub-datasets partitioned with edge density. Bold results indicate the best performance. 
+
+Methods M0 →M1 M1 →M0 M0 →M2 M2 →M0 M0 →M3 M3 →M0 M1 →M2 M2 →M1 M1 →M3 M3 →M1 M2 →M3 M3 →M2 WL subtree 34.4 39.6 47.6 43.6 52.7 46.4 59.8 40.9 53.0 65.1 52.6 42.4 GCN 66.3 ±1.7 65.1 ±2.2 63.6 ±1.4 67.6 ±1.6 56.0 ±1.4 49.6 ±1.9 66.1 ±2.0 71.8 ±1.8 48.0 ±2.3 47.8 ±1.7 51.6 ±1.8 56.6 ±2.2 
+
+GIN 67.1 ±1.7 56.1 ±1.5 54.2 ±2.6 65.6 ±1.6 55.4 ±1.9 50.8 ±2.1 67.9 ±2.1 69.4 ±2.0 53.4 ±1.6 66.7 ±2.0 50.4 ±1.1 55.4 ±1.2 
+
+GMT 67.9 ±1.3 63.9 ±1.8 61.5 ±1.8 68.5 ±1.5 58.2 ±2.4 54.3 ±1.8 66.7 ±1.9 76.1 ±1.7 58.8 ±1.5 44.5 ±1.5 59.0 ±1.4 63.7 ±1.7 
+
+CIN 66.3 ±1.8 56.7 ±2.5 60.8 ±1.7 67.4 ±1.7 55.8 ±2.4 52.3 ±1.8 63.4 ±2.3 69.3 ±1.2 54.3 ±1.2 60.7 ±1.4 49.0 ±1.3 54.4 ±1.7 
+
+PathNN 68.9 ±1.9 65.9 ±1.8 62.9 ±1.7 69.2 ±1.8 58.1 ±1.6 59.9 ±1.4 67.7 ±1.6 70.0 ±2.1 56.3 ±1.8 62.8 ±1.9 59.2 ±1.6 63.7 ±1.2 
+
+SFDA LLN 67.7 ±1.5 70.0 ±2.1 66.5 ±2.6 70.2 ±1.9 58.8 ±2.1 64.3 ±2.4 69.8 ±2.0 74.1 ±2.0 63.2 ±1.7 71.5 ±1.2 61.4 ±2.0 67.1 ±1.9 
+
+SF(DA) 2 71.7 ±1.9 70.7 ±1.4 68.8 ±2.3 70.4 ±2.2 61.9 ±2.0 66.4 ±1.9 70.8 ±1.7 73.9 ±1.7 63.1 ±1.5 72.1 ±1.8 64.8 ±1.4 71.8 ±1.5 
+
+NVC LLN 70.4 ±2.2 69.1 ±1.5 67.0 ±2.2 70.8 ±2.5 62.2 ±1.7 68.3 ±1.9 70.3 ±2.4 76.3 ±1.5 63.0 ±1.8 69.5 ±2.5 63.9 ±1.3 68.0 ±2.1 
+
+Ucon SFDA 74.1 ±1.1 74.1 ±0.6 68.2 ±1.2 72.5 ±0.4 63.5 ±3.7 72.4 ±1.8 71.1 ±1.0 74.6 ±2.1 63.9 ±2.3 72.7 ±1.3 63.3 ±0.9 67.2 ±1.6 
+
+SOGA 72.3 ±2.2 72.1 ±1.5 69.8 ±1.9 72.8 ±1.4 63.1 ±1.8 71.2 ±1.6 69.2 ±1.9 76.7 ±1.7 62.9 ±1.9 75.5 ±1.7 65.5 ±1.9 73.5 ±1.7 
+
+GraphCTA 72.0 ±2.2 71.4 ±2.0 70.5 ±1.6 72.9 ±1.8 62.8 ±1.8 71.7 ±2.2 70.1 ±1.7 76.5 ±1.8 64.4 ±1.6 77.8 ±2.0 65.8 ±2.1 73.6 ±1.8 
+
+GALA 72.2 ±1.2 73.3 ±1.0 70.3 ±1.7 72.3 ±2.2 63.4 ±1.8 69.7 ±1.4 72.7 ±1.7 74.9 ±1.5 65.5 ±1.9 76.7 ±1.7 65.1 ±1.5 73.0 ±1.7 
+
+GraphATA 74.4 ±1.3 74.4 ±1.1 69.0 ±0.9 71.8 ±1.9 61.9 ±2.2 72.8 ±1.3 73.1 ±0.8 74.7 ±1.3 67.5 ±2.2 76.1 ±1.7 68.1 ±1.6 74.7 ±1.0 
+
+S2PLR 75.8 ±2.1 78.1 ±1.0 69.9 ±1.6 78.3 ±0.2 66.2 ±1.4 74.5 ±1.9 77.7 ±1.7 85.6 ±0.3 67.2 ±1.6 78.6 ±2.0 72.5 ±0.4 81.1 ±0.7 
+
+TABLE XXIV: The classification results (in %) on the NCI1 dataset under edge density domain shift (source → target). N0, N1, N2, and N3 denote the sub-datasets partitioned with edge density. Bold results indicate the best performance. 
+
+Methods N0 →N1 N1 →N0 N0 →N2 N2 →N0 N0 →N3 N3 →N0 N1 →N2 N2 →N1 N1 →N3 N3 →N1 N2 →N3 N3 →N2 WL subtree 50.1 59.9 50.9 51.0 51.8 54.5 56.7 57.0 52.5 57.6 54.4 46.9 GCN 53.7 ±2.1 68.2 ±1.9 50.6 ±1.9 45.8 ±1.7 35.5 ±2.4 28.2 ±2.2 55.9 ±1.7 56.8 ±1.9 55.7 ±1.5 53.2 ±2.1 60.4 ±1.8 54.8 ±0.9 
+
+GIN 51.4 ±1.7 47.5 ±2.1 50.4 ±1.6 32.7 ±1.6 47.0 ±2.1 29.4 ±2.3 52.4 ±1.9 55.7 ±2.0 64.3 ±1.8 51.1 ±1.2 60.3 ±1.3 53.5 ±1.6 
+
+GMT 53.0 ±1.9 58.3 ±1.7 49.0 ±1.9 34.3 ±1.6 39.7 ±1.5 27.5 ±2.4 55.8 ±1.6 60.4 ±2.1 51.3 ±1.0 51.5 ±1.6 60.0 ±2.6 54.5 ±1.4 
+
+CIN 54.5 ±2.1 36.8 ±1.9 53.0 ±1.3 32.7 ±2.1 44.9 ±1.4 27.4 ±1.1 58.4 ±1.6 54.2 ±2.3 63.9 ±1.6 51.2 ±1.4 64.7 ±1.1 53.7 ±2.1 
+
+PathNN 56.4 ±1.4 65.5 ±1.4 54.6 ±1.5 60.9 ±1.8 46.7 ±2.1 35.5 ±1.9 57.6 ±1.8 60.6 ±1.2 61.9 ±1.8 53.9 ±2.0 65.1 ±1.8 52.5 ±1.5 
+
+SFDA LLN 57.9 ±1.9 72.7 ±2.1 54.3 ±1.9 71.6 ±2.0 65.7 ±1.5 72.6 ±2.0 58.0 ±1.8 61.1 ±2.0 68.2 ±1.7 58.9 ±2.3 64.2 ±1.5 58.7 ±1.8 
+
+SF(DA) 2 58.4 ±1.4 73.3 ±1.5 56.3 ±2.0 72.7 ±1.8 65.0 ±1.7 73.0 ±2.1 59.7 ±1.5 61.3 ±2.0 67.7 ±1.5 59.8 ±1.9 66.5 ±2.0 61.3 ±2.1 
+
+NVC LLN 59.7 ±2.3 74.5 ±2.2 56.0 ±2.0 72.4 ±1.7 66.7 ±2.5 72.4 ±2.0 61.9 ±1.5 63.0 ±1.9 68.9 ±1.6 61.0 ±2.0 68.2 ±1.8 62.2 ±1.9 
+
+Ucon SFDA 58.7 ±1.1 73.6 ±0.5 57.4 ±2.2 72.7 ±2.0 64.5 ±1.3 73.4 ±1.4 63.3 ±2.7 59.5 ±3.0 68.7 ±1.9 62.2 ±2.4 68.4 ±1.1 61.2 ±1.0 
+
+SOGA 60.9 ±1.3 74.6 ±2.0 54.9 ±1.8 72.6 ±2.2 68.0 ±1.4 72.6 ±1.3 64.2 ±1.6 65.0 ±1.7 68.2 ±1.0 61.8 ±0.8 67.9 ±2.0 63.8 ±1.7 
+
+GraphCTA 61.3 ±1.2 75.2 ±1.6 56.8 ±2.0 75.0 ±1.6 67.5 ±1.2 75.4 ±1.6 63.6 ±2.1 61.0 ±1.5 68.3 ±0.9 62.3 ±1.0 68.3 ±1.6 63.2 ±1.5 
+
+GALA 62.1 ±1.3 76.2 ±1.1 57.1 ±2.1 74.8 ±1.8 67.9 ±1.3 73.9 ±2.0 64.1 ±1.6 63.3 ±1.2 69.7 ±2.0 63.0 ±1.7 69.7 ±2.3 64.2 ±0.8 
+
+GraphATA 62.0 ±0.8 75.1 ±3.1 59.1 ±0.9 73.9 ±1.3 68.9 ±2.0 74.0 ±2.5 62.8 ±0.8 64.0 ±0.4 67.0 ±2.2 63.5 ±2.1 68.2 ±1.9 66.4 ±1.3 
+
+S2PLR 68.4 ±2.0 83.7 ±1.4 62.3 ±2.3 75.3 ±1.6 66.4 ±2.3 73.5 ±3.1 70.8 ±0.4 74.2 ±0.6 71.1 ±0.6 63.8 ±1.5 76.4 ±2.3 70.5 ±1.8 
+
+TABLE XXV: ROC-AUC results (in %) on the ogbg-molhiv dataset under edge density domain shift (source → target). H0, H1, H2, and H3 denote the sub-datasets partitioned with edge density. Bold results indicate the best performance. 
+
+Methods H0 →H1 H1 →H0 H0 →H2 H2 →H0 H0 →H3 H3 →H0 H1 →H2 H2 →H1 H1 →H3 H3 →H1 H2 →H3 H3 →H2 WL 45.4 54.9 44.9 46.7 54.4 52.2 53.7 46.0 56.1 45.3 51.1 50.8 GCN 57.5 ±1.8 58.0 ±1.5 56.1 ±2.1 54.3 ±1.2 54.1 ±1.4 50.9 ±1.4 61.2 ±1.6 54.8 ±1.9 54.9 ±2.1 56.6 ±1.4 65.4 ±2.0 58.1 ±1.6 
+
+GIN 58.1 ±1.1 55.3 ±1.2 49.7 ±1.5 55.2 ±2.2 55.5 ±1.9 50.5 ±2.0 55.1 ±1.3 58.8 ±1.2 56.6 ±1.6 50.0 ±1.1 56.8 ±1.8 56.2 ±1.6 
+
+GMT 50.7 ±1.0 57.5 ±1.7 51.1 ±2.1 58.8 ±1.5 59.8 ±1.4 52.0 ±1.4 57.0 ±1.8 55.4 ±1.0 54.0 ±1.7 54.9 ±1.0 58.1 ±1.3 52.0 ±1.3 
+
+CIN 51.8 ±1.4 54.1 ±1.7 53.6 ±1.4 57.3 ±1.6 56.9 ±1.7 53.9 ±1.3 54.5 ±1.7 63.6 ±2.1 54.2 ±1.2 56.9 ±1.8 57.6 ±1.3 58.7 ±1.2 
+
+PathNN 57.3 ±1.1 57.8 ±2.0 54.8 ±1.9 53.2 ±1.1 49.8 ±1.6 57.9 ±1.9 60.2 ±1.6 63.7 ±1.5 42.2 ±1.8 58.1 ±2.2 49.6 ±1.5 60.5 ±1.3 
+
+SFDA LLN 63.5 ±1.2 63.1 ±1.9 62.7 ±1.7 61.9 ±1.2 62.8 ±0.6 60.8 ±1.2 63.6 ±1.6 64.2 ±1.6 67.2 ±1.8 61.9 ±1.4 67.1 ±1.4 61.7 ±1.7 
+
+SF(DA) 2 63.6 ±0.3 63.7 ±1.2 63.6 ±0.6 61.8 ±0.2 64.7 ±0.7 58.6 ±3.2 63.9 ±0.5 64.4 ±0.5 64.6 ±0.4 61.5 ±1.6 65.1 ±0.9 62.7 ±1.8 
+
+NVC LLN 58.8 ±2.2 60.7 ±0.5 59.6 ±1.1 60.9 ±0.7 62.8 ±2.7 60.6 ±0.6 60.2 ±1.8 60.5 ±1.9 64.9 ±1.6 61.8 ±0.4 62.6 ±2.0 61.1 ±0.7 
+
+Ucon SFDA 60.8 ±0.7 62.3 ±2.1 61.0 ±1.6 62.5 ±3.1 65.3 ±1.9 60.7 ±1.5 62.1 ±2.2 62.7 ±1.0 68.3 ±1.5 62.5 ±1.3 63.1 ±0.8 61.5 ±1.2 
+
+SOGA 62.6 ±2.2 64.1 ±2.2 61.5 ±1.8 60.9 ±1.9 64.3 ±2.4 61.4 ±1.3 62.5 ±2.7 66.3 ±1.5 68.4 ±1.5 63.0 ±1.6 68.9 ±1.0 64.4 ±2.3 
+
+GraphCTA 61.5 ±1.5 63.9 ±1.1 61.9 ±1.9 60.8 ±1.3 63.4 ±1.7 61.0 ±2.1 63.5 ±1.4 66.9 ±1.4 67.9 ±1.2 64.4 ±1.8 69.6 ±1.2 66.0 ±1.3 
+
+GALA 63.8 ±1.5 64.6 ±1.3 62.7 ±1.6 61.1 ±1.4 64.0 ±1.3 61.3 ±1.9 64.2 ±1.5 66.7 ±1.4 68.4 ±1.3 64.6 ±1.5 70.9 ±1.5 65.1 ±1.5 
+
+GraphATA 63.3 ±1.1 66.3 ±0.3 62.6 ±0.3 60.9 ±1.2 63.2 ±2.4 64.2 ±0.7 62.3 ±0.8 64.2 ±1.7 68.0 ±0.6 70.2 ±0.4 69.7 ±1.2 70.3 ±0.5 
+
+S2PLR 64.1 ±1.4 71.7 ±2.4 61.7 ±2.1 69.0 ±2.7 66.2 ±1.5 65.0 ±1.0 67.2 ±1.0 77.1 ±0.2 69.4 ±2.7 72.2 ±2.6 71.1 ±3.0 75.7 ±1.8

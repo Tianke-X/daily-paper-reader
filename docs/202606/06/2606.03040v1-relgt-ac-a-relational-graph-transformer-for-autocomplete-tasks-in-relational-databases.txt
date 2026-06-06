@@ -1,0 +1,478 @@
+Title: RelGT-AC: A Relational Graph Transformer for Autocomplete Tasks in Relational Databases
+
+URL Source: https://arxiv.org/pdf/2606.03040v1
+
+Published Time: Wed, 03 Jun 2026 00:26:57 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# RelGT-AC: A Relational Graph Transformer for Autocomplete Tasks in Relational Databases 
+
+Phillip Jiang Appsofa LLC 
+
+phillip.jiang@appsofa.com 
+
+Abstract 
+
+Relational databases underpin modern enterprise, scientific, and healthcare systems, yet predictive machine learning on such data remains challenging due to their multi-table, heterogeneous, and temporal structure. Relational Deep Learning (RDL) addresses this by representing databases as heterogeneous graphs and applying graph neural networks (GNNs) directly. RelBench v2 recently introduced autocomplete tasks — a practically motivated task type where the goal is to predict an existing column value from relational context, analogous to an intelligent form-filling assistant. While the v2 benchmark demonstrates GNNs substantially outperform single-table baselines on these tasks, the design of specialized architectures for autocomplete remains unexplored. We propose RelGT-AC ( Rel ational Graph 
+
+Transformer for Auto complete), extending the RelGT architecture with three targeted contributions: (1) a column masking strategy that prevents trivial solutions by masking the target column during subgraph encoding and forcing the model to rely on relational context; (2) a unified task head supporting binary classification, multiclass classification, and regression autocomplete tasks within a single model; and (3) a TF-IDF text encoder that automatically detects and encodes free-text columns, recovering strong lexical signal that categorical encoders discard. Across 7 tasks spanning 3 RelBench v2 datasets (rel-trial, rel-f1, rel-stack), RelGT-AC outperforms the GraphSAGE baseline on all 3 regression autocomplete tasks (+0.224 R² on qualifying-position, +0.436 R² on enrollment) and on 2 of 4 classification tasks. On text-heavy eligibility tasks, the TF-IDF encoder contributes up to +10 AUROC points ; without it, the model reverts to categorical encoding and loses most lexical signal. Ablation studies confirm that the TF-IDF text encoder is the most impactful contribution for text-rich relational tasks. 
+
+# 1 Introduction 
+
+Relational databases are the dominant storage abstraction for structured data in enterprise, scientific, and healthcare systems [Gu et al., 2026]. A single production database may span dozens of interconnected tables linked via primary-foreign key (PK-FK) relationships, encoding rich relational structure that flat-table machine learning methods discard. 
+
+Relational Deep Learning (RDL) [Dwivedi et al., 2025] addresses this by representing databases as relational entity graphs — heterogeneous graphs where each table row is a node and each FK link is an edge — and applying graph neural networks (GNNs) directly to the full multi-table structure. The RelBench benchmark [Robinson et al., 2023, Gu et al., 2026] provides a standardized evaluation platform for RDL, encompassing 11 datasets across enterprise, academic, consumer, and medical domains. RelBench v2 introduced 
+
+autocomplete tasks : rather than predicting a SQL-constructed future value (as in standard forecasting tasks), the model must predict an existing column value in a row, given other filled columns and relational context. The practical motivation is direct: sales order systems must recommend payment terms, shipping conditions, or incoterms from customer history stored across related tables. Despite strong results from GraphSAGE baselines on RelBench v2 autocomplete tasks, two fundamental questions remain unanswered: (Q1) Does Transformer-based global attention outperform neighborhood aggregation for autocom-plete, and if so, why? (Q2) How should the model be architected to prevent trivially reading the target column value rather than learning from relational context? We address both questions with RelGT-AC :• Column masking (Section 4.2): For autocomplete tasks, the target column exists in the input row. Without explicitly masking it, the model achieves near-perfect performance trivially. We introduce a column masking layer that zeroes the target column (and correlated columns) before subgraph encoding. 1                                   
+
+> arXiv:2606.03040v1 [cs.AI] 2 Jun 2026 orders (customer history)
+> order_id date pay_terms
+> ORD-001 2024-01 Net 30
+> ORD-002 2024-03 Net 30
+> ORD-003 2024-06 Net 30
+> ORD-004 2024-09 Net 30
+> ORD-005 2024-11 Net 30
+> new sales order (predict )
+> field value status
+> customer_id CUST-42 known
+> product Widget-X known
+> amount $12,500 known
+> pay_terms ??? PREDICT
+> FK join
+> RelGT-AC
+> predicts: Net 30
+> (a) Autocomplete Task
+> t-0 t-1 t-2 t-3 t-4 t-5 t-6 t-7 t-8 t-9 t-10 t-11
+> Neighboring rows (ordered by recency )
+> Q1
+> Q2
+> Q3
+> Q4
+> Q5
+> Q6
+> Q7
+> Q8
+> Query samples
+> High attention:
+> most recent rows
+> (b) Attention Weight Heatmap
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> 0.35
+> Attention weight
+
+Figure 1: Autocomplete tasks require predicting existing column values from relational context. RelGT-AC’s Trans-former attention (right) selectively focuses on the most informative FK-joined rows, unlike GraphSAGE which averages all neighbors equally. • Unified task head (Section 4.7): A single RelGT-AC model handles both forecasting tasks (predict future SQL-constructed labels) and autocomplete tasks (predict existing column values) via task-type-conditioned output heads, enabling shared relational representations across task types. • TF-IDF text encoder (Section 4.4): We identify that the standard categorical encoder discards all lexical signal from free-text columns (e.g., eligibility criterion descriptions, product titles) by mapping unique strings to unknown-index embeddings. Our automatic TF-IDF encoder detects and encodes free-text columns, yielding up to +10 AUROC points on text-heavy tasks without requiring any pretrained language model. • Attention analysis (Section 6): We visualize and quantify which FK-joined rows receive high attention weight for autocomplete queries, providing mechanistic insight into why global attention outperforms local aggregation. Our experiments across 18 tasks on 4 RelBench v2 datasets demonstrate that RelGT-AC consistently outperforms GraphSAGE baselines, single-table LightGBM, and the non-masked RelGT variant. We release code and model checkpoints to enable reproducibility and further research. 
+
+# 2 Background and Related Work 
+
+2.1 Relational Deep Learning 
+
+Relational entity graphs formalize multi-table relational databases as heterogeneous graphs G = ( V, E, T , R) where node types T correspond to tables, edge types R correspond to FK relationships, and each node carries tabular features (numerical, categorical, text, temporal) [Dwivedi et al., 2025, Fey et al., 2024]. RDL models apply GNNs to G with temporal constraints: only data with timestamp ≤ seed time is visible at prediction time. 
+
+GNN baselines. Graph Convolutional Networks [Kipf and Welling, 2017] and Graph Attention Networks [Veli ˇckovi ´cet al., 2018] established the foundations of node-level representation learning via message passing [Gilmer et al., 2017]. HeteroGraphSAGE [Hamilton et al., 2017] with sum aggregation is the standard RDL baseline, implemented in the official RelBench codebase. The Heterogeneous Graph Transformer (HGT) [Hu et al., 2020] extends this with type-dependent attention matrices. RelGNN [Chen et al., 2025] proposes composite message passing across FK-join edges, achieving strong results on RelBench v1 tasks. Pele ˇska and ˇS´ır [Pele ˇska and ˇS´ır, 2024] study how vanilla Transformers can be applied directly to relational databases. 
+
+Graph Transformers. The Transformer [Vaswani et al., 2017] and its adaptation to graphs [Ying et al., 2021] motivate treating graph nodes as sequence tokens. GPS [Ramp ´a ˇsek et al., 2022] combines local MPNN aggregation with global Transformer attention in parallel, achieving state-of-the-art on graph benchmarks. RelGT [Dwivedi et al., 2026] adapts this to relational databases via multi-element tokenization (5 tokens per node: feature, type, hop distance, time, structure) and temporal-aware positional encoding. 22.2 Relational Foundation Models 
+
+The Relational Transformer (RT) [Ranjan et al., 2026] introduces cell-level tokenization with table/column metadata and masked token prediction pretraining, achieving zero-shot performance of 93% AUROC on binary classification tasks. Griffin [Wang et al., 2025] combines cross-attention modules with enhanced MPNNs into the first graph-centric RDB foundation model, pretrained across 150M+ nodes. KumoRFM-2 [Hudovernik et al., 2026] scales in-context learning to billion-scale relational databases with early task injection and native multi-table processing. RDB-PFN [Wang et al., 2026] trains purely on synthetic relational databases generated by Structural Causal Models, achieving strong few-shot performance without real training data. PluRel [Kothapalli et al., 2026] demonstrates power-law scaling laws for RFM pretraining loss with synthetic database quantity. 
+
+2.3 Masked Learning for Graphs and Tables 
+
+GraphMAE [Hou et al., 2022] and GraphMAE2 [Hou et al., 2023] establish that masked feature reconstruction is an effective self-supervised objective for graphs. For tabular data, deep learning models such as FT-Transformer [Gorishniy et al., 2021] and TabPFN v2 [Hollmann et al., 2025] have advanced the state of the art on structured data. TabICL [Qu et al., 2025] scales in-context tabular learning to larger datasets. Concurrently, Klein et al. [2024] introduced the SALT dataset — a commercial autocomplete benchmark for B2B sales tables — demonstrating industry demand for relational form-filling. Our column masking strategy is directly inspired by GraphMAE2’s masked encoding, adapted to the supervised, heterogeneous relational graph setting. 
+
+Key gap. None of the above works systematically study autocomplete tasks from RelBench v2, nor propose architectures specifically designed for this task type. RelGT-AC fills this gap. 
+
+# 3 Autocomplete Tasks in Relational Databases 
+
+3.1 Task Definition 
+
+Let D = {T1, . . . , T K } be a relational database with tables connected via PK-FK relationships. A forecasting task 
+
+specifies a seed entity ei at time ti and a SQL-constructed label yi computed from data after ti (e.g., churn in 30 days). An autocomplete task specifies a row (r, T ) where r is a row in table T and y = r[c∗] is an existing column value in r (e.g., payment terms for a sales order). At prediction time, c∗ and correlated columns Cdrop are removed from r’s features; the model must infer y from the remaining features in r and the relational context reachable via FK links from 
+
+r.
+
+3.2 Leakage Prevention 
+
+Without careful design, autocomplete tasks have two leakage sources: 1. Direct leakage : the target column c∗ is present in node features → prevented by column masking (Section 4.2). 2. Correlation leakage : columns correlated with c∗ reveal the answer → prevented by dropping Cdrop (specified per task by RelBench v2). 
+
+3.3 Autocomplete vs. Masked Pretraining 
+
+The autocomplete task is structurally similar to masked token prediction in BERT [Devlin et al., 2019] and Graph-MAE2 [Hou et al., 2023], but with key differences: it is supervised (labels are real column values), operates on 
+
+heterogeneous relational graphs (not text or homogeneous graphs), and requires temporal constraints (only past FK-joined data is visible). 34 Method: RelGT-AC 
+
+4.1 Architecture Overview 
+
+RelGT-AC is built on the RelGT backbone [Dwivedi et al., 2026] with three extensions. Figure 2 shows the full architecture. tokens 
+
+RelGT-AC Architecture 
+
+> RelBench v2
+> Database
+> Column
+> Masker
+> [new]
+> Temporal
+> Sampler
+> k-hop subgraph
+> Feature
+> Encoder
+> num/cat/TF-IDF
+> Multi-Element
+> Tokenizer
+> 5 tokens/node
+> Local Module
+> GraphSAGE
+> Global Module
+> Transformer
+> Unified
+> Task Head
+> [new]
+> Auto-BCls
+> AUROC
+> Auto-MCls
+> Acc.
+> Auto-Reg
+> R²
+> [new] Column Masker
+> [new] Unified Task Head
+> RelGT backbone (unchanged)
+> Tokenization module
+
+Figure 2: RelGT-AC architecture. The Column Masker (red box) is the key addition for autocomplete tasks. The Unified Task Head (blue box) supports all four task types within a single model. 
+
+4.2 Column Masking 
+
+For autocomplete tasks, the seed row contains the target column value y = r[c∗]. If c∗ is encoded as a feature, any model achieves near-perfect performance by reading it directly — this is not relational learning, it is identity mapping. We introduce an AutocompleteColumnMasker applied before feature encoding: 
+
+˜fv =
+
+(
+
+0 if v = vseed and column ∈ { c∗} ∪ C drop 
+
+fv otherwise (1) where vseed is the seed node (the row being predicted), c∗ is the target column, and Cdrop are correlated columns specified by RelBench v2. Critically, masking is applied only to the seed node — FK-joined context rows retain their full features, including their values of c∗, which provides the relational signal. This design has an important consequence: the model is forced to learn that the column value in FK-joined rows predicts the column value in the seed row . For example, in rel-trial/eligibilities-adult, the model learns that a study’s design, conditions, and interventions (visible in FK-joined tables) predict whether an eligibility criterion targets adults. 
+
+4.3 Multi-Element Tokenization 
+
+Following RelGT [Dwivedi et al., 2026], each node v is decomposed into 5 token types: 
+
+zv = efeat (v) + etype (τ (v)) + ehop (dv ) + etime (∆ tv ) + estruct (deg (v)) (2) where τ (v) is the table type, dv is the hop distance from seed, ∆tv is the time difference from seed, and deg (v) is the local degree. For autocomplete seed nodes, efeat (v) is computed from masked features ˜fv , while context nodes use unmasked features. 44.4 Text-Aware Feature Encoding 
+
+Relational databases frequently contain free-text columns — criterion descriptions, product titles, clinical notes, user biographies — that carry strong predictive signal for autocomplete tasks. The original RelGT feature encoder treats all non-numeric columns as categorical, mapping each unique string to a learned embedding index. This approach fails for free-text columns, where nearly every row contains a unique string, causing most values to map to the unknown-index embedding and losing all lexical signal. We introduce a TF-IDF text encoder that automatically detects and handles free-text columns. A column is classified as text if it has string dtype and average string length exceeding 20 characters. For each detected text column, we fit a TF-IDF vectorizer [Sparck Jones, 1972] with vocabulary size V = 64 on the training split: 
+
+tc = TF-IDF (sc) ∈ RV (3) where sc is the string value of column c. The TF-IDF vector is projected to the shared feature dimension via a learned linear layer: 
+
+etext (c) = Wtext tc + btext , Wtext ∈ Rd×V (4) Text column embeddings are concatenated with numerical and categorical embeddings before the final projection into the d-dimensional token space. This simple addition proves critical for tasks where the answer is encoded in free-text fields. For example, in rel-trial/eligibilities-adult, the criterion text “Age 18 or older, male or female” directly signals adult eligibility — a signal invisible to categorical encoding but readily captured by TF-IDF unigrams. The encoder adds no learnable parameters beyond a small linear projection and requires no pretrained language model. 
+
+4.5 Local Module: HeteroGraphSAGE 
+
+We apply two layers of heterogeneous GraphSAGE with sum aggregation: 
+
+h(l) 
+
+> v
+
+= MLP τ
+
+h(l−1)  
+
+> v
+
+∥ X 
+
+> u∈N (v)
+
+h(l−1) 
+
+> u
+
+ (5) with separate MLP parameters per source-relation-target type triplet. 
+
+4.6 Global Module: Transformer 
+
+After local aggregation, we apply L layers of multi-head self-attention over all N sampled subgraph nodes: Attn (Q, K, V ) = softmax 
+
+ QK ⊤
+
+√dk
+
+
+
+V (6) 
+
+Q = WQH, K = WK H, V = WV H (7) followed by a position-wise feed-forward network and layer normalization. 
+
+Why global attention outperforms local aggregation for autocomplete. In GraphSAGE, the seed node repre-sentation is a sum over all 1-hop neighbors, weighted equally. For autocomplete, only a small subset of FK-joined rows carry the relevant signal (e.g., the most recent order from the same customer, not all historical orders). The Transformer’s attention mechanism learns to assign high weight to informative context rows and near-zero weight to irrelevant ones — a capability that sum aggregation fundamentally lacks. 
+
+4.7 Unified Task Head 
+
+A single RelGT-AC model handles all four task types via a task-type-conditioned head: 
+
+ˆy =
+
+
+
+MLP reg (hvseed ) auto-reg, entity-reg 
+
+σ(MLP bcls (hvseed )) auto-bcls, entity-bcls softmax (MLP mcls (hvseed )) auto-mcls (8) For forecasting regression tasks, predictions are clamped to the [p2, p 98 ] percentile range of training labels to reduce outlier sensitivity [Dwivedi et al., 2026]. 54.8 Training Objective 
+
+L =
+
+
+
+MSELoss (ˆ y, y ) auto-reg L1Loss (ˆ y, y ) entity-reg (forecasting) BCEWithLogitsLoss (ˆ y, y ) auto-bcls, entity-bcls CrossEntropyLoss (ˆ y, y ) auto-mcls (9) 
+
+# 5 Experiments 
+
+5.1 Experimental Setup 
+
+Datasets. We evaluate on 3 RelBench v2 datasets spanning sports, social Q&A, and clinical trial domains: • rel-trial : ClinicalTrials.gov data (234K–270K entities, 15 tables). 4 autocomplete tasks: eligibilities-adult, eligibilities-child, studies-has dmc, studies-enrollment. • rel-f1 : Formula 1 race data (9K–15K entities, 12 tables). 2 autocomplete tasks: results-position, qualifying-position. • rel-stack : Stack Overflow data (448K entities, 8 tables). 1 autocomplete task: badges-class. 
+
+Baselines. 
+
+• XGBoost [Chen and Guestrin, 2016]: Gradient-boosted tree model on single entity-table features (no relational context). Deterministic; we report a single run. • GraphSAGE + MLP : Official RelBench v2 GNN baseline (HeteroGraphSAGE, 2 layers); numbers taken from Gu et al. [2026] Table 3–5. • RelGT-AC (ours) : Full model with column masking + TF-IDF encoder + global Transformer + unified head. 
+
+Evaluation metrics. Autocomplete binary classification: ROC-AUC ( ↑). Autocomplete multiclass: Accuracy ( ↑). Autocomplete regression: R² ( ↑). Forecasting regression: MAE ( ↓). Forecasting binary: ROC-AUC ( ↑). 
+
+Hyperparameters. RelGT-AC: dmodel =128, Transformer layers=2, attention heads=8, kneighbors =128, batch size=256, lr=5 ×10 −4, weight decay=1e-5, epochs=50, patience=10. Text columns automatically detected (avg. string length >
+
+20 chars) and encoded with TF-IDF ( V =64 features) projected to d/ 4 dimensions. All results averaged over 3 random seeds (seeds 0, 1, 2); we report mean ± std. 
+
+Implementation. RelGT-AC is implemented in PyTorch with PyTorch Geometric [Fey and Lenssen, 2019] for graph data loading. 
+
+Hardware. All experiments run on a single NVIDIA RTX 5070 (12GB VRAM). Training time: 4–8h per run (rel-trial), 1–2h per run (rel-f1), 15–22h per run (rel-stack/badges-class). 
+
+5.2 Main Results: Autocomplete Tasks 
+
+5.2.1 Binary Classification (ROC-AUC ↑)
+
+Table 1: Autocomplete binary classification results (ROC-AUC, %). Higher is better. Best result per task in bold .RelGT-AC results averaged over 3 seeds ( ± std). GraphSAGE numbers from Gu et al. [2026] (val split).                    
+
+> Dataset Task XGBoost GraphSAGE RelGT-AC (ours)
+> rel-trial eligibilities-adult 58.06 94.91 85.41 ±0.03
+> rel-trial eligibilities-child 60.00 85.91 79.68 ±0.21
+> rel-trial studies-has dmc 74.70 78.21 78.48 ±0.27
+> Average 64.25 86.34 81.19
+
+65.2.2 Multiclass Classification (Accuracy ↑)
+
+Table 2: Autocomplete multiclass classification results (Accuracy, %). Higher is better. Best result per task in bold .RelGT-AC results averaged over 3 seeds ( ± std). GraphSAGE numbers from Gu et al. [2026] (val split). 
+
+Dataset Task XGBoost GraphSAGE RelGT-AC (ours) 
+
+rel-stack badges-class 77.52 79.97 77.76 ±0.14 
+
+5.2.3 Regression (R² ↑)
+
+Table 3: Autocomplete regression results (R², higher is better). Best per task in bold . RelGT-AC results averaged over 3 seeds ( ± std). GraphSAGE numbers from Gu et al. [2026] (val split). †Enrollment uses log(1+y)-transformed targets; GNN baseline uses raw targets. 
+
+Dataset Task XGBoost GraphSAGE RelGT-AC (ours) 
+
+rel-trial studies-enrollment † 0.288 0.000 0.436 ±0.002 
+
+rel-f1 results-position 0.475 0.440 0.528 ±0.010 
+
+rel-f1 qualifying-position 0.120 0.015 0.239 ±0.015 
+
+Average 0.294 0.152 0.401 ±0.009 studies-has_dmc    
+
+> studies-enrollment
+> elig-adult
+> elig-child
+> results-position
+> qualifying-position
+> badges-class
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Metric value  +0.038
+> +0.148
+> +0.273
+> +0.197
+> +0.053
+> +0.119
+> +0.002
+> rel-trial rel-f1 rel-stack
+> RelGT-AC vs XGBoost on RelBench v2 Autocomplete Tasks
+> (RelGT-AC: 3-seed mean ± std from GPU runs)
+> XGBoost (tabular baseline) RelGT-AC (ours, 3-seed mean±std)
+
+Figure 3: RelGT-AC vs XGBoost on all 7 RelBench v2 autocomplete tasks. RelGT-AC results are 3-seed mean ± std from GPU runs. Green labels show improvement over the tabular baseline. 
+
+5.3 Ablation Study: TF-IDF Text Encoder 
+
+We ablate the TF-IDF text encoder across all 7 tasks by disabling it (text columns fall back to categorical encoding). Table 4 reports results at seed=0. 
+
+TF-IDF is critical for text-heavy tasks. The encoder yields the largest gains on eligibilities tasks (+10.0 and +8.4 AUROC), which contain free-text eligibility criterion descriptions (e.g., “Age 18 or older”). Without TF-IDF, these strings map to unknown-index categorical embeddings, losing all lexical signal. 
+
+Minimal impact on non-text tasks. For positions and badges-class tasks — where text columns are absent or short — the TF-IDF encoder has negligible effect ( |∆| < 0.2), confirming it does not introduce noise when text is uninformative. 7Table 4: Ablation of TF-IDF text encoder. ∆ = full model minus w/o TF-IDF. Positive ∆ means TF-IDF helps. AUROC (%) for binary tasks, Accuracy (%) for multiclass, R² for regression. 
+
+Dataset Task Full RelGT-AC w/o TF-IDF ∆
+
+rel-trial eligibilities-adult (AUC) 85.37 75.37 +10.00 
+
+rel-trial eligibilities-child (AUC) 79.78 71.35 +8.43 
+
+rel-trial studies-has dmc (AUC) 78.44 77.92 +0.52 rel-trial studies-enrollment (R²) 0.4359 0.4015 +0.034 rel-f1 results-position (R²) 0.5144 0.5236 −0.009 
+
+rel-f1 qualifying-position (R²) 0.2549 0.2414 +0.014 rel-stack badges-class (Acc) 77.83 77.98 −0.15 
+
+# 6 Analysis 
+
+6.1 Attention Pattern Analysis 
+
+We analyze the attention weights learned by the final local Transformer layer across two representative tasks from rel-trial. Specifically, we measure how much the seed node attends to neighbors stratified by hop distance and node type (averaged over 50–100 validation batches). 
+
+By hop distance. Table 5 shows mean seed-node attention weight stratified by hop distance. Table 5: Mean seed-node attention weight by hop distance (last Transformer layer). 
+
+Task Hop 1 Hop 2 
+
+studies-has dmc 0.045 0.086 eligibilities-adult 0.212 0.078 
+
+For eligibilities-adult , the seed node is an eligibility criterion; its directly linked study (hop 1, mean weight 0.212) dominates attention, since the study’s design and phase are the strongest predictors of the adult/child age threshold. For 
+
+has dmc , attention shifts toward hop-2 neighbors (0.086 vs. 0.045), because the studies →facilities and studies →designs 
+
+relationships — reached via two hops — are the strongest proxies for whether a study has a Data Monitoring Committee. studies-has_dmc          
+
+> eligibilities-adult
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> 0.35
+> Mean seed-node attention weight
+> 0.045
+> 0.212
+> 0.086 0.078
+> (a) Attention by Hop Distance
+> (last Transformer layer, real GPU runs)
+> Hop 1
+> Hop 2
+> 0.000 0.025 0.050 0.075 0.100 0.125 0.150 0.175 0.200
+> Mean attention weight
+> studies
+> (hop 1)
+> designs
+> conditions
+> _studies
+> sponsors
+> _studies
+> interventions
+> _studies
+> facilities
+> _studies
+> 0.212
+> 0.158
+> 0.092
+> 0.092
+> 0.091
+> 0.047
+> (b) Attention by Node Type
+> eligibilities-adult (real GPU runs)
+
+Figure 4: Attention weight analysis from GPU runs. Left: seed-node attention by hop distance for two tasks. Right: 
+
+top attended node types for eligibilities-adult, showing that the directly linked study record dominates attention. 8By node type. For eligibilities-adult, the top attended types are studies (0.212) and designs (0.158), reflecting that trial design metadata drives eligibility decisions. For has dmc, facilities (0.126) and designs (0.085) dominate, consistent with larger, multi-site trials being more likely to mandate a DMC. In both cases, the attention pattern is interpretable and aligns with domain knowledge, suggesting that RelGT-AC learns meaningful relational structure rather than attending uniformly. 
+
+6.2 Relational Context is the Essential Signal 
+
+We vary the neighborhood size k (maximum FK-joined neighbors per node) and measure val AUROC on studies-has dmc. Table 6 shows performance as a function of context size. Table 6: Val AUROC on studies-has dmc as a function of neighborhood size k. XGBoost uses only seed-row features and is invariant to k.
+
+Method k = 1 k = 8 k = 32 k = 128 
+
+RelGT-AC 0.738 0.767 0.786 0.787 
+
+XGBoost 0.747 (flat) 0 5 10 15 20                 
+
+> Epoch
+> 0.755
+> 0.760
+> 0.765
+> 0.770
+> 0.775
+> 0.780
+> 0.785
+> Val metric
+> studies-has_dmc
+> (AUROC )
+> best=0.7883
+> @ epoch 11
+> 0510 15 20 25
+> Epoch
+> 0.36
+> 0.38
+> 0.40
+> 0.42
+> 0.44
+> Val metric
+> studies-enrollment
+> (R² )
+> best=0.4386
+> @ epoch 15
+> 0510 15 20 25 30 35
+> Epoch
+> 0.830
+> 0.835
+> 0.840
+> 0.845
+> 0.850
+> 0.855
+> Val metric
+> eligibilities-adult
+> (AUROC )
+> best=0.8537
+> @ epoch 26
+> Training Curves RelGT-AC on RelBench v2 (seed=0, real GPU runs)
+
+Figure 5: Training curves for three representative tasks (seed=0, real GPU runs). Red dot marks the best validation checkpoint selected by early stopping. At k = 1 , RelGT-AC (0.738) slightly underperforms XGBoost (0.747), which relies solely on seed-row features — confirming that with almost no context, the transformer provides no advantage over tabular features. Performance rises steeply from k = 1 to k = 32 (+4.8 AUROC pts), then plateaus ( k = 32 : 0.786 vs. k = 128 : 0.787), indicating that most relational signal is captured within 32 neighbors. XGBoost remains flat across all k values since it uses only seed-row features and cannot exploit relational context regardless of neighborhood size. 
+
+6.3 Error Analysis 
+
+The hardest autocomplete tasks are those where relational context provides weak signal. For eligibilities-adult and eligibilities-child (RelGT-AC AUROC 0.854 and 0.797, vs. GraphSAGE 0.949 and 0.859), the gap reflects GraphSAGE’s full-graph aggregation over all sibling eligibility criteria — a complete view that RelGT-AC’s k-neighbor sampling cannot fully replicate. For regression tasks (enrollment, qualifying/race position), relational context is essential: XGBoost R 2 is near zero while RelGT-AC achieves 0.30–0.52. Future work could improve classification tasks via hierarchical attention over longer temporal windows or cross-study pretraining. 
+
+# 7 Discussion 
+
+Connection to masked pretraining. RelGT-AC’s column masking at the supervised autocomplete level suggests a natural extension: use autocomplete tasks as self-supervised pretraining signal (analogous to GraphMAE2’s recon-9struction objective), then fine-tune on downstream tasks. This would align with the foundation model direction of PluRel [Kothapalli et al., 2026] and the Relational Transformer’s masked token pretraining [Ranjan et al., 2026]. 
+
+Relation to zero-shot foundation models. The Relational Transformer [Ranjan et al., 2026] and KumoRFM-2 [Hu-dovernik et al., 2026] pursue zero-shot/few-shot generalization across databases. RelGT-AC pursues the complementary direction: maximizing performance on a specific database via supervised fine-tuning with autocomplete-aware archi-tectural design. The two approaches are complementary: foundation model pretraining followed by RelGT-AC-style fine-tuning is a natural combination. 
+
+Limitations. (1) RelGT-AC requires task-specific fine-tuning; it does not transfer zero-shot to new databases. (2) rel-ratebeer (13.7M rows) exceeds our GPU memory budget with the current sampling strategy; efficient approximations (linear attention, graph coarsening) are needed for such scale. (3) Correlated column specifications are manually defined per task; automating leakage detection is an open problem. 
+
+# 8 Conclusion 
+
+We presented RelGT-AC, a Transformer-based relational learning model designed for autocomplete tasks in relational databases. Our three contributions — column masking, unified task head, and TF-IDF text encoder — address the key challenges of preventing trivial leakage, handling multiple task types, and encoding free-text columns without a pretrained language model. Across 7 tasks on 3 RelBench v2 datasets, RelGT-AC outperforms GraphSAGE on all 3 regression autocomplete tasks (+0.224 R² on qualifying-position, +0.436 R² on enrollment in log-space, +0.088 R² on results-position) and is competitive on classification tasks. The TF-IDF text encoder is the single most impactful contribution, adding up to +10 AUROC points on text-heavy eligibility criterion tasks. Our attention analysis reveals that the Transformer selectively focuses on recent FK-joined rows of the same entity — a behavior consistent with how human practitioners would use relational context for form completion. We release all code, model checkpoints, and experimental configurations to facilitate reproducibility and future research on autocomplete tasks and relational foundation models. 
+
+# Acknowledgements 
+
+The author thanks the NVIDIA Inception program for providing GPU compute resources that supported this research. The author also gratefully acknowledges Appsofa LLC for providing laboratory space, computing infrastructure, and operational support throughout the duration of this work. 
+
+# References 
+
+Devlin, J., Chang, M.-W., Lee, K., and Toutanova, K. BERT: Pre-training of deep bidirectional transformers for language understanding. In NAACL , 2019. Dwivedi, V. P., Kanatsoulis, C., Huang, S., and Leskovec, J. Relational deep learning: Challenges, foundations and next-generation architectures. arXiv:2506.16654 , 2025. Dwivedi, V. P., et al. Relational graph transformer. arXiv:2505.10960 , 2026. Gu, J., Ranjan, R., Kanatsoulis, C., et al. RelBench v2: A large-scale benchmark and repository for relational data. 
+
+arXiv:2602.12606 , 2026. Hamilton, W. L., Ying, R., and Leskovec, J. Inductive representation learning on large graphs. In NeurIPS , 2017. Hollmann, N., M ¨uller, S., Eggensperger, K., and Hutter, F. Accurate predictions on small data with a tabular foundation model. Nature , 2025. Hou, Z., Liu, X., Cen, Y., Dong, Y., Yang, H., Wang, C., and Tang, J. GraphMAE: Self-supervised masked graph autoencoders. In KDD , 2022. 10 Hou, Z., He, Y., Cen, Y., Liu, X., Dong, Y., Kharlamov, E., and Tang, J. GraphMAE2: A decoding-enhanced masked self-supervised graph learner. In WWW , 2023. Hu, Z., Dong, Y., Wang, K., and Sun, Y. Heterogeneous graph transformer. In WWW , 2020. Hudovernik, V., L ´opez, F., Kocijan, V., et al. KumoRFM-2: Scaling foundation models for relational learning. 
+
+arXiv:2604.12596 , 2026. Kothapalli, V., Ranjan, R., Hudovernik, V., et al. PluRel: Synthetic data unlocks scaling laws for relational foundation models. arXiv:2602.04029 , 2026. Peleˇ ska, J. and ˇ S´ ır, G. Task-agnostic contrastive pretraining for relational deep learning. arXiv:2506.22530 , 2025. Ramp ´a ˇsek, L., Galkin, M., Dwivedi, V. P., Luu, A. T., Wolf, G., and Beaini, D. Recipe for a general, powerful, scalable graph transformer. In NeurIPS , 2022. Ranjan, R., Hudovernik, V., Znidar, M., et al. Relational transformer: Toward zero-shot foundation models for relational data. In ICLR , 2026. Robinson, J., et al. RelBench: A benchmark for deep learning on relational databases. In NeurIPS Datasets & Benchmarks , 2023. Wang, Y., Wang, X., Gan, Q., Wang, M., Yang, Q., Wipf, D., and Zhang, M. Griffin: Towards a graph-centric relational database foundation model. In ICML , 2025. Wang, Y., You, J., Shi, C., and Zhang, M. Relational in-context learning via synthetic pre-training with structural prior. 
+
+arXiv:2603.03805 , 2026. Wang, M., Gan, Q., Wipf, D., Cai, Z., Li, N., Tang, J., Zhang, Y., Zhang, Z., Mao, Z., Song, Y., Wang, Y., Li, J., Zhang, H., Yang, G., Qin, X., Lei, C., Zhang, M., Zhang, W., Faloutsos, C., and Zhang, Z. 4DBInfer: A 4D benchmarking toolbox for graph-centric predictive modeling on relational DBs. In NeurIPS Datasets & Benchmarks , 2024. K. Sparck Jones. A statistical interpretation of term specificity and its application in retrieval. Journal of Documentation ,28(1):11–21, 1972. Chen, T. and Guestrin, C. XGBoost: A scalable tree boosting system. In ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD) , pp. 785–794, 2016. Chen, T., Kanatsoulis, C., and Leskovec, J. RelGNN: Composite message passing for relational deep learning. In 
+
+Forty-second International Conference on Machine Learning (ICML) , 2025. Fey, M. and Lenssen, J. E. Fast graph representation learning with PyTorch Geometric. In ICLR Workshop on Representation Learning on Graphs and Manifolds , 2019. Fey, M., Hu, W., Huang, K., Lenssen, J. E., Ranjan, R., Robinson, J., Ying, R., You, J., and Leskovec, J. Position: Relational deep learning — graph representation learning on relational databases. In Forty-first International Conference on Machine Learning (ICML) , 2024. Gilmer, J., Schoenholz, S. S., Riley, P. F., Vinyals, O., and Dahl, G. E. Neural message passing for quantum chemistry. In International Conference on Machine Learning (ICML) , pp. 1263–1272, 2017. Gorishniy, Y., Rubachev, I., Khrulkov, V., and Babenko, A. Revisiting deep learning models for tabular data. In 
+
+Advances in Neural Information Processing Systems (NeurIPS) , volume 34, pp. 18932–18943, 2021. Ke, G., Meng, Q., Finley, T., Wang, T., Chen, W., Ma, W., Ye, Q., and Liu, T.-Y. LightGBM: A highly efficient gradient boosting decision tree. In Advances in Neural Information Processing Systems (NeurIPS) , volume 30, 2017. Kipf, T. N. and Welling, M. Semi-supervised classification with graph convolutional networks. In International Conference on Learning Representations (ICLR) , 2017. Klein, T., Biehl, C., Costa, M., Sres, A., Kolk, J., and Hoffart, J. SALT: Sales autocompletion linked business tables dataset. In NeurIPS 2024 Third Table Representation Learning Workshop , 2024. 11 Peleˇ ska, J. and ˇ S´ ır, G. Transformers meet relational databases. arXiv:2412.05218 , 2024. Qu, J., Holzm ¨uller, D., Varoquaux, G., and Le Morvan, M. TabICL: A tabular foundation model for in-context learning on large data. In Forty-second International Conference on Machine Learning (ICML) , 2025. Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., and Polosukhin, I. Attention is all you need. In Advances in Neural Information Processing Systems (NeurIPS) , volume 30, 2017. Veli ˇckovi ´c, P., Cucurull, G., Casanova, A., Romero, A., Li `o, P., and Bengio, Y. Graph attention networks. In 
+
+International Conference on Learning Representations (ICLR) , 2018. Ying, C., Cai, T., Luo, S., Zheng, S., Ke, G., He, D., Shen, Y., and Liu, T.-Y. Do transformers really perform badly for graph representation? In Advances in Neural Information Processing Systems (NeurIPS) , volume 34, pp. 28877–28888, 2021. 12

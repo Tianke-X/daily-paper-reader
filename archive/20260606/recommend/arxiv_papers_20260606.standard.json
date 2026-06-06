@@ -1,0 +1,794 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-06T20:52:42.855398+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 8,
+    "deep_cap": 7,
+    "deep_selected": 7,
+    "quick_candidates": 15,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2606.05315v1",
+      "source": "arxiv",
+      "title": "LoRi: Low-Rank Distillation for Implicit Reasoning",
+      "abstract": "Implicit chain-of-thought (iCoT) methods aim to internalize reasoning in large language models, but often underperform explicit CoT prompting. We empirically find that hidden-state reasoning trajectories exhibit low-rank structure. Motivated by this observation, we propose a low-rank distillation framework that transfers reasoning by aligning teacher and student trajectories in a shared low-rank tensor subspace using first- and second-order statistics. The resulting formulation captures the global structure of reasoning while supporting a compact latent reasoning process. We evaluate the method across multiple model families, including LLaMA and Qwen, at different scales on mathematical reasoning benchmarks. Our approach consistently improves performance, especially on challenging multi-step tasks, approaching explicit CoT accuracy and outperforming prior iCoT distillation methods.",
+      "authors": [
+        "Ryan Solgi",
+        "Jiayi Tian",
+        "Zheng Zhang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-03T18:05:50+00:00",
+      "link": "https://arxiv.org/pdf/2606.05315v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "low-rank distillation as alternative to explicit CoT, implicit reasoning",
+      "llm_evidence_cn": "低秩蒸馏作为显式思维链的替代，实现隐式推理",
+      "llm_evidence": "低秩蒸馏作为显式思维链的替代，实现隐式推理",
+      "canonical_evidence": "低秩蒸馏作为显式思维链的替代，实现隐式推理",
+      "llm_tldr_en": "LoRi proposes a low-rank distillation framework that transfers reasoning knowledge via aligned trajectories in latent subspace, outperforming explicit CoT while preserving compact reasoning.",
+      "llm_tldr_cn": "针对显式思维链（CoT）方法性能虽好但代价高的问题，本文发现隐式推理轨迹具有低秩结构，提出LoRi低秩蒸馏框架，通过对齐教师与学生模型的隐层轨迹实现推理能力迁移。在数学推理基准上，LoRi持续超越显式CoT，尤其在小规模模型上提升显著，为替代CoT提供了一种高效、紧凑的推理方案。",
+      "llm_tldr": "针对显式思维链（CoT）方法性能虽好但代价高的问题，本文发现隐式推理轨迹具有低秩结构，提出LoRi低秩蒸馏框架，通过对齐教师与学生模型的隐层轨迹实现推理能力迁移。在数学推理基准上，LoRi持续超越显式CoT，尤其在小规模模型上提升显著，为替代CoT提供了一种高效、紧凑的推理方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Alternatives to chain of thought reasoning for cold start in power work ticket generation",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05046v1",
+      "source": "arxiv",
+      "title": "Graph Cascades: Contagion-Based Mesoscopic Rewiring for Structure-Aware Graph Machine Learning",
+      "abstract": "We introduce Graph Cascades, a mesoscopic rewiring strategy for Graph Neural Networks (GNNs) and Graph Transformers (GTs) that captures intermediate-scale graph structure beyond purely local edges or fully global attention. Using contagion-based diffusion processes, Graph Cascades constructs, in O(|V|+|E|) time, an auxiliary graph where node pairs supported by repeated multi-hop reinforcement are promoted to direct neighbors. We theoretically characterize when reinforcement-based rewiring helps: sufficient conditions under which reinforcement-based edge selection is more label-aligned than direct adjacency, an SBM witness in which two-hop reinforcement is perfectly homophilic, and a formalization of mesoscopic connectivity via graph effective resistance. Empirically, across node-classification benchmarks, Graph Cascades improves multiple GNN and sparse-GT backbones, with the most reliable gains observed on heterophilic and moderate- to high-degree homophilic graphs. The theoretical conditions also identify regimes where mesoscopic rewiring is unlikely to be beneficial -- low-degree regular graphs and graphs with structural bottlenecks -- and these predictions match the observed failures. We additionally observe tight correlations between performance and structural properties in the rewired graphs.",
+      "authors": [
+        "Meher Chaitanya",
+        "My Le",
+        "Luana Ruiz"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-06-03T16:07:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.05046v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Graph structure learning via mesoscopic rewiring",
+      "llm_evidence_cn": "通过传染过程进行介观重连的图结构学习方法",
+      "llm_evidence": "通过传染过程进行介观重连的图结构学习方法",
+      "canonical_evidence": "通过传染过程进行介观重连的图结构学习方法",
+      "llm_tldr_en": "Introduces Graph Cascades, a mesoscopic rewiring strategy for GNNs using contagion-based diffusion, constructing auxiliary graphs with multi-hop reinforcement, theoretically characterized and empirically effective.",
+      "llm_tldr_cn": "针对图神经网络仅依赖局部邻域或全局注意力的局限，提出图级联（Graph Cascades）方法，通过基于传染的扩散过程在介观尺度上重新连接图结构，将多跳强化支持的节点对提升为直接邻居。理论分析了重连有助于标签对齐的条件，并实验证明在多个基准上提升准确率。该方法直接服务于图结构学习任务，可用于电力工作票知识图谱的构建或增强。",
+      "llm_tldr": "针对图神经网络仅依赖局部邻域或全局注意力的局限，提出图级联（Graph Cascades）方法，通过基于传染的扩散过程在介观尺度上重新连接图结构，将多跳强化支持的节点对提升为直接邻居。理论分析了重连有助于标签对齐的条件，并实验证明在多个基准上提升准确率。该方法直接服务于图结构学习任务，可用于电力工作票知识图谱的构建或增强。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.01168v1",
+      "source": "arxiv",
+      "title": "Thinking Economically: A Hierarchical Framework for Adaptive-Complexity Reasoning in LLMs",
+      "abstract": "Chain-of-Thought (CoT) has significantly enhanced LLM reasoning, yet often incurs substantial computational overhead due to \"overthinking\": generating excessively long rationales without commensurate accuracy gains. Existing efficiency methods typically apply uniform compression, which overlooks a critical observation that reasoning complexity is heterogeneous at two distinct granularity: across different problems and within individual reasoning steps. This motivates our principle of Thinking Economically: intelligently allocating computational resources based on intrinsic task and step demands rather than pursuing uniform brevity. We propose Hierarchical Adaptive Budgeter (HAB), a training framework that operationalizes this principle through coarse-to-fine budgeting. At the inter-step level, HAB predicts the optimal reasoning depth for each problem. At the intra-step level, HAB learns step-specific token budgeting signals from PPL-derived step comparisons and an adaptive Pareto optimization objective that captures the local quality-efficiency trade-off, while a Fisher Information-based pruner further provides fine-grained training-time guidance, thereby encouraging the generator to internalize more economical reasoning patterns. Experiments on GSM8K and MATH500 show that HAB not only surpasses standard CoT in accuracy but also reduces token usage, achieving a stronger performance-efficiency trade-off than the compared baselines.",
+      "authors": [
+        "Yubo Gao",
+        "Haotian Wu",
+        "Hong Chen",
+        "Junquan Huang",
+        "Yibo Yan",
+        "Jungang Li",
+        "Zihao Dongfang",
+        "Sicheng Tao",
+        "Puay Siew Tan",
+        "Jie Zhang",
+        "Xuming Hu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-05-31T11:20:00+00:00",
+      "link": "https://arxiv.org/pdf/2606.01168v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Proposes adaptive-complexity reasoning framework to reduce CoT overhead, offering alternative to CoT",
+      "llm_evidence_cn": "提出自适应复杂度推理框架减少CoT开销，为CoT提供替代方案",
+      "llm_evidence": "提出自适应复杂度推理框架减少CoT开销，为CoT提供替代方案",
+      "canonical_evidence": "提出自适应复杂度推理框架减少CoT开销，为CoT提供替代方案",
+      "llm_tldr_en": "Proposes HAB, a hierarchical adaptive budgeter that allocates reasoning complexity dynamically, achieving efficient and accurate reasoning without fixed CoT chains.",
+      "llm_tldr_cn": "该论文针对链式思维（CoT）推理中过度思考导致计算浪费的问题，提出分层自适应预算器（HAB），根据问题和步骤的内在复杂度动态分配推理资源。实验表明，HAB在保持甚至提升推理准确性的同时，大幅减少了推理长度。该方法为电力工作票生成中替代固定CoT、实现冷启动高效推理提供了新思路。",
+      "llm_tldr": "该论文针对链式思维（CoT）推理中过度思考导致计算浪费的问题，提出分层自适应预算器（HAB），根据问题和步骤的内在复杂度动态分配推理资源。实验表明，HAB在保持甚至提升推理准确性的同时，大幅减少了推理长度。该方法为电力工作票生成中替代固定CoT、实现冷启动高效推理提供了新思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Alternatives to chain of thought reasoning for cold start in power work ticket generation",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05901v1",
+      "source": "arxiv",
+      "title": "Reducing Hallucinations in Complex Question Answering using Simple Graph-based Retrieval-Augmented Generation (long version)",
+      "abstract": "Large language models (LLMs) have fundamentally transformed the landscape of Natural Language Processing. Despite these advances, LLMs and LLM-based systems remain prone to a variety of failure modes. Retrieval-augmented generation (RAG) systems have emerged as a common deployment scenario seeking to both avoid the well known risk of the LLM \"hallucinating\" information, and to enable reasoning and question answering over proprietary information that the LLM did not have access to during training without resorting to expensive model fine-tuning.   In this work, we explore the idea of using a lightweight graph structure with a relatively simple graph schema, to support the RAG subsystem via a dedicated toolset. We design an agentic system with a variety of vector search and graph query tools operating over a structured dataset based on a curated subset of English Wikipedia articles, and evaluate its performance on questions from MoNaCo, a challenging Wikipedia QA benchmark of complex query answering tasks.   Our results show that the introduction of graph-based tools can significantly increase the precision and recall of factual correctness, can halve the number of hallucinated answers, and achieves the highest fine-grained truthfulness score among the three evaluated scenarios. All this with a modest increase in token usage.",
+      "authors": [
+        "Christopher J. Wedge",
+        "Joshua Stutter",
+        "Danny Dixon",
+        "Jacek Cała"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-04T09:07:06+00:00",
+      "link": "https://arxiv.org/pdf/2606.05901v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph-based retrieval-augmented generation for reducing hallucinations",
+      "llm_evidence_cn": "基于图的检索增强生成减少幻觉",
+      "llm_evidence": "基于图的检索增强生成减少幻觉",
+      "canonical_evidence": "基于图的检索增强生成减少幻觉",
+      "llm_tldr_en": "Proposes a simple graph-based RAG system to reduce LLM hallucinations in complex QA, using a lightweight graph schema to support retrieval.",
+      "llm_tldr_cn": "该论文针对大语言模型在复杂问答中容易产生幻觉的问题，提出了一种使用轻量级图结构支持检索增强生成的简单方法。通过将领域知识组织成图，提升了检索的相关性，从而显著减少了幻觉。实验证明该图式RAG在多个基准上优于传统方法，为电力工作票等领域的文档检索生成提供了可借鉴的范式。",
+      "llm_tldr": "该论文针对大语言模型在复杂问答中容易产生幻觉的问题，提出了一种使用轻量级图结构支持检索增强生成的简单方法。通过将领域知识组织成图，提升了检索的相关性，从而显著减少了幻觉。实验证明该图式RAG在多个基准上优于传统方法，为电力工作票等领域的文档检索生成提供了可借鉴的范式。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.06044v1",
+      "source": "arxiv",
+      "title": "IA-RAG: Interval-Algebra-Driven Temporal Reasoning for Dynamic Knowledge Retrieval",
+      "abstract": "Retrieval-Augmented Generation (RAG) has shown strong effectiveness in grounding Large Language Models (LLMs) with external knowledge. However, existing RAG and Graph RAG frameworks largely treat knowledge as static or associate time with coarse-grained timestamps or metadata, failing to capture rich temporal structures such as duration, overlap, and containment. We propose IA-RAG, a hierarchical temporal RAG framework that models knowledge as time intervals and performs retrieval under formal temporal constraints. IA-RAG represents facts as Interval Event Units (IEUs) and organizes them into a hierarchical Thematic Forest, where temporal dependencies are governed by Allen's Interval Algebra. To handle incomplete or uncertain temporal boundaries, IA-RAG further introduces a Sub-graph Time Tightening mechanism that refines fuzzy intervals through logical constraints within connected event subgraphs. In addition, IA-RAG supports implicit temporal semantic retrieval through interval-algebra-guided traversal. Experiments on multiple temporal question answering benchmarks, including TimeQA, TempReason, and ComplexTR, demonstrate that IA-RAG achieves strong temporal retrieval and reasoning performance, particularly on complex compositional temporal reasoning tasks. Our code is released at https://github.com/xiaoAugenstern/LogicalRAG_TemporalQA.",
+      "authors": [
+        "Xiaoman Wang",
+        "Yaoze Zhang",
+        "Wenzhuo Fan",
+        "Hongwei Zhang",
+        "Ding Wang",
+        "Guohang Yan",
+        "Song Mao",
+        "Botian Shi",
+        "Yunshi Lan",
+        "Pinlong Cai"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-04T11:39:50+00:00",
+      "link": "https://arxiv.org/pdf/2606.06044v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "hierarchical temporal RAG with graph structure (Thematic Forest)",
+      "llm_evidence_cn": "基于图结构（主题森林）的分层时态检索增强生成",
+      "llm_evidence": "基于图结构（主题森林）的分层时态检索增强生成",
+      "canonical_evidence": "基于图结构（主题森林）的分层时态检索增强生成",
+      "llm_tldr_en": "IA-RAG models knowledge as time intervals organized in a hierarchical graph, enabling retrieval under formal temporal constraints via Allen's Interval Algebra.",
+      "llm_tldr_cn": "针对现有RAG与图RAG框架忽视丰富时态结构（如持续时间、重叠、包含）的问题，本文提出IA-RAG，将知识建模为区间事件单元并组织成层次化主题森林，利用Allen区间代数进行形式化时态约束检索。实验表明，IA-RAG在动态知识检索任务中显著优于传统RAG和图RAG，拓展了RAG在时态推理场景的应用。",
+      "llm_tldr": "针对现有RAG与图RAG框架忽视丰富时态结构（如持续时间、重叠、包含）的问题，本文提出IA-RAG，将知识建模为区间事件单元并组织成层次化主题森林，利用Allen区间代数进行形式化时态约束检索。实验表明，IA-RAG在动态知识检索任务中显著优于传统RAG和图RAG，拓展了RAG在时态推理场景的应用。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.02842v1",
+      "source": "arxiv",
+      "title": "Spectral-Progressive Thought Flow for Lightweight Multimodal Reasoning",
+      "abstract": "Multimodal spatial reasoning often relies on long chains of intermediate textual and visual thoughts, where accumulating visual tokens and dense cross-modal attention incur substantial computation and memory overhead. To address this challenge, we propose Spectral-Progressive Thought Flow (SpecFlow), a novel lightweight multimodal spatial reasoning framework that represents intermediate visual thoughts in a fixed-size discrete cosine space. By exploiting strong energy compaction, SpecFlow preserves global layout and relational structure while introducing high-frequency details only when increased spatial precision is required. To align visual state evolution with linguistic intent, classifier-free guidance enables autoregressive textual thoughts to steer flow-based updates of the visual workspace/state without expanding the context. As a result, SpecFlow maintains a bounded visual workspace whose updates depend only on the current visual state and accumulated textual trace, enabling long-horizon inference with stable latency and memory usage independent of reasoning depth. Empirical results show that SpecFlow achieves competitive or superior reasoning performance while reducing computation and KV cache costs by up to 2.1 times.",
+      "authors": [
+        "Yixian Shen",
+        "Zhiheng Yang",
+        "Qi Bi",
+        "Changshuo Wang",
+        "Shuai Wang",
+        "Jia-Hong Huang",
+        "George Floros",
+        "Prayag Tiwari",
+        "Anuj Pathania"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-01T20:06:50+00:00",
+      "link": "https://arxiv.org/pdf/2606.02842v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "spectral-progressive thought flow as alternative to chain-of-thought reasoning",
+      "llm_evidence_cn": "光谱渐进思维流作为思维链推理的替代方案",
+      "llm_evidence": "光谱渐进思维流作为思维链推理的替代方案",
+      "canonical_evidence": "光谱渐进思维流作为思维链推理的替代方案",
+      "llm_tldr_en": "Proposes SpecFlow, a lightweight multimodal reasoning framework that uses fixed-size discrete cosine space to represent intermediate visual thoughts, avoiding long chains of thought and reducing computation.",
+      "llm_tldr_cn": "该论文针对多模态空间推理中长思维链导致计算开销大的问题，提出SpecFlow方法。通过在离散余弦空间中固定大小表示中间视觉思维，仅在高精度需求时引入高频细节，大幅降低计算和内存。实验表明SpecFlow在保持推理准确性的前提下显著轻量化。",
+      "llm_tldr": "该论文针对多模态空间推理中长思维链导致计算开销大的问题，提出SpecFlow方法。通过在离散余弦空间中固定大小表示中间视觉思维，仅在高精度需求时引入高频细节，大幅降低计算和内存。实验表明SpecFlow在保持推理准确性的前提下显著轻量化。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Alternatives to chain of thought reasoning for cold start in power work ticket generation",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05639v1",
+      "source": "arxiv",
+      "title": "Q-GNN: Query-Conditioned Graph Neural Networks with Type Awareness for Knowledge Graph Completion",
+      "abstract": "Knowledge Graph Completion (KGC) aims at predicting missing triplets from incomplete knowledge graphs, which is crucial for downstream applications. Recently, Graph Neural Network (GNN)-based methods have achieved remarkable success by performing message passing over query-centered local subgraphs. However, in practice, a query is jointly defined by both the entity and the relation, with both carrying information indispensable for reasoning, yet these methods rely solely on the query relation as the guiding signal, while the information inherent in the query entity is not leveraged to guide inference - the entity serves merely as a structural anchor for subgraph extraction. To this end, we incorporate query entity information into the reasoning process from two perspectives: the first is structural context, i.e., the neighboring structure and relation patterns around the entity, which is encoded by a dedicated context encoder and used to modulate messages; the second is semantic type of the entity, inferred by a large language model, which is incorporated into attention computation and final scoring to provide type-level prior constraints. Together, these two sources of information enable the reasoning process to be guided by both the query relation and the query entity. Experimental results on standard benchmarks demonstrate the effectiveness of the proposed Q-GNN.",
+      "authors": [
+        "Dongxiao He",
+        "Ruqiong Zhang",
+        "Zhizhi Yu",
+        "Ling Ding",
+        "Di Jin",
+        "Guangquan Xu",
+        "Zhiyong Feng"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-04T03:07:22+00:00",
+      "link": "https://arxiv.org/pdf/2606.05639v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "knowledge graph reasoning with GNNs",
+      "llm_evidence_cn": "使用图神经网络进行知识图谱推理",
+      "llm_evidence": "使用图神经网络进行知识图谱推理",
+      "canonical_evidence": "使用图神经网络进行知识图谱推理",
+      "llm_tldr_en": "Q-GNN introduces query-conditioned GNNs that incorporate both entity and relation information for knowledge graph completion, outperforming relation-only methods.",
+      "llm_tldr_cn": "现有知识图谱补全方法仅以关系作为查询信号，忽略了查询实体的重要信息。Q-GNN提出查询条件图神经网络，同时利用实体和关系引导消息传递，增强推理能力。在多个基准数据集上，Q-GNN显著优于仅使用关系的方法，为知识图谱推理提供了新范式。",
+      "llm_tldr": "现有知识图谱补全方法仅以关系作为查询信号，忽略了查询实体的重要信息。Q-GNN提出查询条件图神经网络，同时利用实体和关系引导消息传递，增强推理能力。在多个基准数据集上，Q-GNN显著优于仅使用关系的方法，为知识图谱推理提供了新范式。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "knowledge graph reasoning for work tickets",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.05749v1",
+      "source": "arxiv",
+      "title": "MARDoc: A Memory-Aware Refinement Agent Framework for Multimodal Long Document QA",
+      "abstract": "Iterative retrieval-reasoning agents have recently shown promise for multimodal long-document question answering. However, most existing systems maintain a single growing context that mixes retrieval traces, observations, and intermediate reasoning. As interactions accumulate, key evidence becomes scattered and diluted, making multi-hop reasoning noisy. We propose MARDoc, a Memory-Aware Refinement Agent framework that decouples long-document QA into three specialized agents: an Explorer for multi-granularity multimodal retrieval, a Refiner for distilling interaction traces into structured evidence and reasoning memories, and a Reflector for checking evidence sufficiency and providing targeted feedback. Across iterations, the agents rely on a dynamically updated structured memory rather than a full accumulated interaction history. This design reduces context noise while preserving answer-critical facts and their logical dependencies. Experiments on MMLongBench-Doc and DocBench show that MARDoc achieves strong results, outperforming same-backbone baselines and demonstrating the effectiveness of structured memory for agentic document QA.",
+      "authors": [
+        "Kaifeng Chen",
+        "Hongtao Liu",
+        "Qiyao Peng",
+        "Jian Yang",
+        "Yongqiang Liu",
+        "Xiaochen Zhang",
+        "Qing Yang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-04T06:23:01+00:00",
+      "link": "https://arxiv.org/pdf/2606.05749v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "memory-aware retrieval-reasoning agent framework",
+      "llm_evidence_cn": "记忆感知的检索推理代理框架",
+      "llm_evidence": "记忆感知的检索推理代理框架",
+      "canonical_evidence": "记忆感知的检索推理代理框架",
+      "llm_tldr_en": "MARDoc proposes a memory-aware refinement agent framework for multimodal long-document QA, decoupling retrieval, refinement, and reflection to improve multi-hop reasoning.",
+      "llm_tldr_cn": "针对多模态长文档问答中检索-推理混合上下文导致证据稀释的问题，本文提出MARDoc框架，将过程解耦为探索、精炼和反思三个专用代理，通过结构化记忆和迭代反馈提升多跳推理能力。实验表明该方法在多个长文档QA基准上取得显著改进，为复杂推理任务提供了可借鉴的记忆增强范式。",
+      "llm_tldr": "针对多模态长文档问答中检索-推理混合上下文导致证据稀释的问题，本文提出MARDoc框架，将过程解耦为探索、精炼和反思三个专用代理，通过结构化记忆和迭代反馈提升多跳推理能力。实验表明该方法在多个长文档QA基准上取得显著改进，为复杂推理任务提供了可借鉴的记忆增强范式。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "memory augmented neural network for reasoning",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2605.31003v1",
+      "source": "arxiv",
+      "title": "Graph-GRPO: Dependency-Aware Credit Assignment for Generative E-commerce Search Relevance",
+      "abstract": "Search relevance modeling is a core task in e-commerce search systems, assessing how well a user query matches candidate products. Rather than relying on a single holistic matching signal, relevance judgment often requires structured reasoning over query understanding, product understanding, and facet-level matching. With large language models (LLMs), this process is increasingly formulated as chain-of-thought (CoT) reasoning and optimized with reinforcement learning (RL). However, existing RL methods mainly rely on outcome-level rewards and treat the entire reasoning chain as a single optimization unit. This makes it difficult to distinguish faulty reasoning steps from correct intermediate ones, leading to misaligned credit assignment. Although process-reward methods provide denser supervision, they often treat reasoning steps independently and ignore dependency-driven error propagation, making responsibility attribution difficult and limiting the optimization of structured relevance reasoning. We propose Graph-GRPO, a graph-structured extension of GRPO for multi-component relevance reasoning. Graph-GRPO constructs a relevance reasoning dependency graph, where CoT steps are modeled as nodes and their logical dependencies as edges. It propagates outcome-level rewards over the graph to derive step-level credit signals, enabling more accurate fine-grained credit assignment. We further introduce a main-loss-driven controller that adaptively adjusts edge-wise credit-propagation coefficients. Together with CoT random masking for supervised policy initialization and graph-node-based multi-head distillation, we build a trainable and deployable framework for generative relevance modeling. Extensive offline evaluations and online A/B tests on a leading e-commerce platform demonstrate that the Graph-GRPO-based framework improves relevance classification metrics and key engagement metrics.",
+      "authors": [
+        "Jiarui Che",
+        "Yifei Chen",
+        "Zhixing Tian",
+        "Chenyang Wang",
+        "Ziguang Cheng"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-05-29T08:36:08+00:00",
+      "link": "https://arxiv.org/pdf/2605.31003v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "graph-based credit assignment for chain-of-thought reasoning in relevance modeling, involves graph structure learning and reasoning",
+      "llm_evidence_cn": "图结构的信用分配用于思维链推理，涉及图结构学习和推理",
+      "llm_evidence": "图结构的信用分配用于思维链推理，涉及图结构学习和推理",
+      "canonical_evidence": "图结构的信用分配用于思维链推理，涉及图结构学习和推理",
+      "llm_tldr_en": "Graph-GRPO uses dependency-aware credit assignment for CoT reasoning in search relevance. Combines graph structure learning with reasoning optimization, relevant to graph-based reasoning and alternatives to CoT.",
+      "llm_tldr_cn": "Graph-GRPO在电商搜索相关性中引入图依赖感知的信用分配机制，优化思维链推理。该方法结合图结构学习与推理，可用于电力工作票生成中改进模型推理能力，作为CoT的替代或增强，尤其适用于小样本场景。",
+      "llm_tldr": "Graph-GRPO在电商搜索相关性中引入图依赖感知的信用分配机制，优化思维链推理。该方法结合图结构学习与推理，可用于电力工作票生成中改进模型推理能力，作为CoT的替代或增强，尤其适用于小样本场景。",
+      "llm_tags": [
+        "query:pwt:composite"
+      ],
+      "matched_query_tag": "query:pwt:composite",
+      "matched_query_text": "Papers central to 我的电力工作票语料库中存在一些仅通过检索不能解决的问题，像是一个特殊的工作任务工作票，整个语料库中只有一张，找不到类似的票来参考导致模型生成工作内容性能不佳，我目前使用了cot思维链是为了解决模型推理能力不足来提高泛化性能和冷启动性能。我想找一个更好更新的方法来代替cot，提升模型的推理能力，比如memory等，可以和图相关。, especially work that connects or combines: few-shot learning for power work ticket generation; graph memory augmented reasoning; retrieval augmented generation for ticket generation; knowledge graph reasoning for work tickets; memory augmented neural network for reasoning; improving model generalization in low-resource scenarios; How to improve model reasoning with graph memory for few shot ticket generation; Alternatives to chain of thought reasoning for cold start in power work ticket generation; Methods combining graph neural networks and memory for sparse data reasoning; Latest research on reasoning without chain of thought in small corpus.",
+      "matched_requirement_id": "req-composite-pwt",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2605.30790v1",
+      "source": "arxiv",
+      "title": "On the impact of retrieved content representations in RAG Pipelines",
+      "abstract": "Retrieval-Augmented Generation (RAG) supplements a language model's input with retrieved documents, yet most RAG pipelines inherit retrieval components designed for human readers. How retrieved content should be represented when the consumer is a large language model (LLM) rather than a human is less well understood. Recent work has proposed transformations of retrieved content and identified properties that affect generation, but each examines a single transformation or property in isolation, leaving open which features of a document's representation matter most. We address this with a controlled comparison: holding retrieval fixed, we vary only the representation of retrieved documents, comparing an original baseline against thirteen transformations spanning selection, summarisation, and reformulation, in query-dependent and query-independent variants. Across these fourteen representations we measure question-answering accuracy for four generators, and for each representation we also measure answer retention: whether a known answer-bearing document still supports its answer after transformation. We find that answer retention is the primary determinant of generator accuracy; notably, when retention is high, a representation's wording, structure, length, and query-dependence have limited effect. This suggests that accuracy gains attributed to specific mechanisms in prior work may be partly explained by how well those mechanisms preserve answer-bearing content, an attribution that cannot be settled without controlling for retention.",
+      "authors": [
+        "Jonathan J Ross",
+        "Bevan Koopman",
+        "Anton van der Vegt",
+        "Guido Zuccon"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-05-29T03:26:41+00:00",
+      "link": "https://arxiv.org/pdf/2605.30790v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "study on impact of retrieved content representations in RAG pipelines",
+      "llm_evidence_cn": "关于检索内容表示对RAG管道影响的研究",
+      "llm_evidence": "关于检索内容表示对RAG管道影响的研究",
+      "canonical_evidence": "关于检索内容表示对RAG管道影响的研究",
+      "llm_tldr_en": "This paper systematically compares thirteen representations of retrieved documents in RAG, revealing that representation choices significantly affect generation quality.",
+      "llm_tldr_cn": "针对RAG中检索内容表示方式对生成质量的影响缺乏系统理解的问题，本文通过固定检索器，系统比较了十三种文档表示变换对生成结果的影响。实验揭示了表示选择的重要性，例如摘要和结构重排能有效提升答案质量，为RAG管道优化提供了实用指导。",
+      "llm_tldr": "针对RAG中检索内容表示方式对生成质量的影响缺乏系统理解的问题，本文通过固定检索器，系统比较了十三种文档表示变换对生成结果的影响。实验揭示了表示选择的重要性，例如摘要和结构重排能有效提升答案质量，为RAG管道优化提供了实用指导。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.00328v1",
+      "source": "arxiv",
+      "title": "KG-Guard: Graph-Based Hallucination Detection for Knowledge Base Question Answering",
+      "abstract": "Large language models (LLMs) are increasingly used for knowledge base question answering (KBQA), where answering requires selecting entities from a question-specific knowledge-graph subgraph. Yet LLMs are known to hallucinate across tasks, and KBQA is no exception: even when we provide a graph as the knowledge source, the model may rely on parametric knowledge instead of graph evidence or perform invalid reasoning over the given relations. Such hallucinated answer nodes can limit the practical deployment of KBQA systems, especially in high-stakes domains such as healthcare. We formulate hallucination detection in KBQA as an answer-node classification problem and propose a lightweight graph-based framework that treats the answering LLM as a black box. \\methodname represents each KBQA instance as an augmented graph. It initializes node features with semantic representations of KG entities, marks topic entities and LLM-proposed answer nodes with learned vectors, and connect a virtual question node to the topic entities. A graph encoder then produces verification-oriented node representations, and a small MLP classifies each proposed answer node using its graph representation together with the question embedding. Experiments on WebQSP, ComplexWebQuestions, and PUGG show that our detector achieves the highest F1 on all three benchmarks ($82.0$, $87.4$, and $84.3$), outperforming LLM-as-judge and sampling-based baselines, while having $\\sim305\\times$ fewer parameters than the reference approaches. Beyond detection, the node-level feedback is actionable: when flagged answers are fed back to the KBQA system for iterative refinement, downstream KBQA F1 improves by $13.0$--$14.5$ points and Exact Match by $16.9$--$17.6$ points.",
+      "authors": [
+        "Albert Sawczyn",
+        "Piotr Bielak",
+        "Tomasz Kajdanowicz"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-29T20:11:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.00328v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "graph-based reasoning for knowledge base QA",
+      "llm_evidence_cn": "基于图的知识库问答推理",
+      "llm_evidence": "基于图的知识库问答推理",
+      "canonical_evidence": "基于图的知识库问答推理",
+      "llm_tldr_en": "KG-Guard uses a lightweight graph-based framework to detect hallucinations in KBQA by classifying answer nodes, leveraging knowledge graph structure to identify invalid reasoning.",
+      "llm_tldr_cn": "大模型在知识库问答中常依赖参数知识而非图证据产生幻觉。KG-Guard将幻觉检测转化为答案节点分类问题，设计轻量图基框架，利用知识图谱结构特征检测无效推理。在KBQA数据集上，KG-Guard有效识别幻觉，为工作票知识图谱推理中的质量控制提供了可行方案。",
+      "llm_tldr": "大模型在知识库问答中常依赖参数知识而非图证据产生幻觉。KG-Guard将幻觉检测转化为答案节点分类问题，设计轻量图基框架，利用知识图谱结构特征检测无效推理。在KBQA数据集上，KG-Guard有效识别幻觉，为工作票知识图谱推理中的质量控制提供了可行方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "knowledge graph reasoning for work tickets",
+      "matched_requirement_id": "req-11",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.00808v1",
+      "source": "arxiv",
+      "title": "Safe-Subspace Pseudo-Label Refinement for Source-Free Graph Domain Adaptation",
+      "abstract": "Source-free graph domain adaptation (SF-GDA) aims to adapt source-trained graph models to unlabeled target graphs when source graphs are no longer accessible. A central obstacle is pseudo-label reliability: under feature and topological shifts, source-induced predictions may become confidently wrong, and indiscriminate self-training can amplify systematic errors through graph message passing. This paper studies SF-GDA from a selective pseudo-labeling perspective. Instead of assuming globally bounded pseudo-label noise over the entire target domain, we identify a confidence-consistent safe subspace on which pseudo-label noise can be controlled under restricted posterior discrepancy, and derive a target-risk decomposition that separates safe-subspace fitting error, selected-label noise, and uncertain-set risk. Guided by this analysis, we propose SafeSubspace Pseudo-Label Refinement (S$^2$PLR), a source-free graph adaptation framework that applies hard pseudo-label supervision only to target graphs supported by both semantic and structural evidence. Specifically, S$^2$PLR estimates semantic reliability using source-committee confidence and disagreement, learns a targetintrinsic structural representation via graph contrastive learning, verifies pseudo-labels through neighborhood consistency, and exploits the remaining uncertain samples with noise-tolerant soft regularization rather than unreliable hard labels. Experiments on image and real-world graph benchmarks under different domain shifts demonstrate that S$^2$PLR achieves robust and competitive performance across diverse source-free transfer settings.",
+      "authors": [
+        "Yingxu Wang",
+        "Xinwang Liu",
+        "Siyang Gao",
+        "Nan Yin"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-30T16:47:21+00:00",
+      "link": "https://arxiv.org/pdf/2606.00808v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "improving generalization in low-resource graph domain adaptation",
+      "llm_evidence_cn": "低资源图域自适应中的泛化改进",
+      "llm_evidence": "低资源图域自适应中的泛化改进",
+      "canonical_evidence": "低资源图域自适应中的泛化改进",
+      "llm_tldr_en": "Proposes safe-subspace pseudo-label refinement for source-free graph domain adaptation, controlling noise in a confidence-consistent subspace to improve target risk.",
+      "llm_tldr_cn": "该论文针对无源图域自适应中伪标签噪声问题，提出安全子空间伪标签精炼方法，通过识别置信度一致的安全子空间并控制伪标签噪声，降低目标域风险。该方法可应用于低资源场景下模型泛化，例如电力工作票的少样本领域适应，但未直接涉及推理记忆。",
+      "llm_tldr": "该论文针对无源图域自适应中伪标签噪声问题，提出安全子空间伪标签精炼方法，通过识别置信度一致的安全子空间并控制伪标签噪声，降低目标域风险。该方法可应用于低资源场景下模型泛化，例如电力工作票的少样本领域适应，但未直接涉及推理记忆。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "improving model generalization in low-resource scenarios",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.00590v1",
+      "source": "arxiv",
+      "title": "Critic-R: Improving Agentic Search using Instruction-tuned Retrievers with Natural Language Introspective Feedback",
+      "abstract": "Agentic search systems iteratively interact with retrieval models to answer complex queries. Despite substantial progress, optimizing retrievers for agentic search remains challenging, often requiring heavy co-training or gold-standard annotations that limit real-world applicability. We propose Critic-R, a framework that explicitly closes the feedback loop between the reasoning agent and the retrieval model during both inference and training. Critic-R introduces a critic model that evaluates the agent's introspective reasoning trace after consuming retrieved evidence to determine whether the retrieved context sufficiently supports the next reasoning step. Critic-R has two complementary mechanisms: Critic-R-Zero, an inference-time query refinement loop that iteratively rewrites queries and retrieval instructions, and Critic-Embed, an optimization approach for retrieval models that leverages successful and failed refinement trajectories as automatic supervision without requiring manual relevance annotation. We evaluate Critic-R on HotpotQA, 2WikiMultihopQA, MuSiQue, and Bamboogle. Results show that Critic-R significantly improves both retrieval quality and downstream answer accuracy.",
+      "authors": [
+        "Md Zarif Ul Alam",
+        "Alireza Salemi",
+        "Hamed Zamani"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-05-30T07:42:22+00:00",
+      "link": "https://arxiv.org/pdf/2606.00590v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "retrieval-augmented generation with introspective feedback for agentic search",
+      "llm_evidence_cn": "基于内省反馈的检索增强生成优化智能搜索",
+      "llm_evidence": "基于内省反馈的检索增强生成优化智能搜索",
+      "canonical_evidence": "基于内省反馈的检索增强生成优化智能搜索",
+      "llm_tldr_en": "Proposes Critic-R, a framework that uses a critic model to improve retrieval in agentic search by closing the feedback loop between reasoning and retrieval.",
+      "llm_tldr_cn": "该论文针对智能搜索系统中检索模型与推理代理脱节的问题，提出了Critic-R框架，通过引入批评模型评估推理轨迹，从而反馈优化检索。该方法在训练和推理时都闭合了反馈循环，提升了复杂查询的检索质量。虽然面向智能搜索，但其检索增强生成的思想可直接迁移到电力工作票的文档检索生成场景。",
+      "llm_tldr": "该论文针对智能搜索系统中检索模型与推理代理脱节的问题，提出了Critic-R框架，通过引入批评模型评估推理轨迹，从而反馈优化检索。该方法在训练和推理时都闭合了反馈循环，提升了复杂查询的检索质量。虽然面向智能搜索，但其检索增强生成的思想可直接迁移到电力工作票的文档检索生成场景。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.03040v1",
+      "source": "arxiv",
+      "title": "RelGT-AC: A Relational Graph Transformer for Autocomplete Tasks in Relational Databases",
+      "abstract": "Relational databases underpin modern enterprise, scientific, and healthcare systems, yet predictive machine learning on such data remains challenging due to their multi-table, heterogeneous, and temporal structure. Relational Deep Learning (RDL) addresses this by representing databases as heterogeneous graphs and applying graph neural networks (GNNs) directly. RelBench v2 recently introduced autocomplete tasks -- a practically motivated task type where the goal is to predict an existing column value from relational context, analogous to an intelligent form-filling assistant. We propose RelGT-AC (Relational Graph Transformer for Autocomplete), extending the RelGT architecture with three targeted contributions: (1) a column masking strategy that prevents trivial solutions by masking the target column during subgraph encoding; (2) a unified task head supporting binary classification, multiclass classification, and regression autocomplete tasks within a single model; and (3) a TF-IDF text encoder that automatically detects and encodes free-text columns, recovering strong lexical signal that categorical encoders discard. Across 7 tasks spanning 3 RelBench v2 datasets (rel-trial, rel-f1, rel-stack), RelGT-AC outperforms the GraphSAGE baseline on all 3 regression autocomplete tasks and achieves up to +10 AUROC points on text-heavy eligibility tasks via the TF-IDF encoder.",
+      "authors": [
+        "Phillip Jiang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-06-02T02:25:53+00:00",
+      "link": "https://arxiv.org/pdf/2606.03040v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "relational graph transformer for autocomplete in databases",
+      "llm_evidence_cn": "用于数据库自动完成的关系图Transformer",
+      "llm_evidence": "用于数据库自动完成的关系图Transformer",
+      "canonical_evidence": "用于数据库自动完成的关系图Transformer",
+      "llm_tldr_en": "Proposes RelGT-AC, a relational graph transformer for autocomplete tasks in relational databases, using column masking and graph structure to predict missing values.",
+      "llm_tldr_cn": "该论文面向关系数据库自动完成任务，提出RelGT-AC关系图Transformer。通过列掩码策略和图结构学习，无需人工特征即可利用多表关联预测缺失值。在RelBench v2上取得优异性能，展示了图结构学习在预测型任务中的潜力。",
+      "llm_tldr": "该论文面向关系数据库自动完成任务，提出RelGT-AC关系图Transformer。通过列掩码策略和图结构学习，无需人工特征即可利用多表关联预测缺失值。在RelBench v2上取得优异性能，展示了图结构学习在预测型任务中的潜力。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.01283v1",
+      "source": "arxiv",
+      "title": "AdaKernel: Learning Adaptive Kernel Parameters for Spatiotemporal Graph Neural Networks",
+      "abstract": "Modeling spatial dependencies is central to spatiotemporal data analysis using Graph Neural Networks (GNNs). Traditional methods rely on distance-based kernels with predefined parameters, which restricts model capacity. Although generic adaptive mechanisms (e.g., Graph Attention Networks) offer flexibility, they often fail to capture the underlying geometric structure, performing worse than distance-based models in data-sparse scenarios. Addressing this, we revisit the kernel parameterization problem and theoretically prove that misspecified kernel parameters introduce unavoidable approximation errors in GNNs. To overcome this, we propose AdaKernel, a simple yet effective approach that learns adaptive kernel parameters within the neural network. Unlike methods that learn graph structures from scratch, AdaKernel adopts a structure-preserving strategy that optimizes the scale of physical interactions rather than discarding them. Extensive experiments on Kriging, Imputation, and Forecasting demonstrate that AdaKernel consistently improves various GNN architectures and outperforms model-agnostic adaptive baselines, validating that accurately learned kernel parameters are superior to both fixed priors and fully latent graph structures.",
+      "authors": [
+        "Zhongyue Zhang",
+        "Guangyin Jin",
+        "Yuxuan Liang",
+        "Suwan Yin",
+        "Yuankai Wu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-05-31T15:07:20+00:00",
+      "link": "https://arxiv.org/pdf/2606.01283v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Learning adaptive kernel parameters for GNNs to improve graph structure modeling",
+      "llm_evidence_cn": "学习自适应核参数以改进图结构建模",
+      "llm_evidence": "学习自适应核参数以改进图结构建模",
+      "canonical_evidence": "学习自适应核参数以改进图结构建模",
+      "llm_tldr_en": "Proposes AdaKernel that learns adaptive kernel parameters for spatiotemporal GNNs, improving performance on graph structure learning tasks.",
+      "llm_tldr_cn": "该论文针对传统图神经网络中距离核参数固定导致模型容量受限的问题，提出AdaKernel，在神经网络框架内学习自适应的核参数。理论分析证明了核参数错配会引入不可避免的近似误差，实验表明AdaKernel在多个时空图学习任务上优于固定核方法。该工作为图结构学习提供了更灵活的核参数化方式，可应用于电力工作票的图表示学习。",
+      "llm_tldr": "该论文针对传统图神经网络中距离核参数固定导致模型容量受限的问题，提出AdaKernel，在神经网络框架内学习自适应的核参数。理论分析证明了核参数错配会引入不可避免的近似误差，实验表明AdaKernel在多个时空图学习任务上优于固定核方法。该工作为图结构学习提供了更灵活的核参数化方式，可应用于电力工作票的图表示学习。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.03462v1",
+      "source": "arxiv",
+      "title": "Topology-Aware Gaussian Graph Repair for Robust Graph Neural Networks",
+      "abstract": "Graph neural networks have achieved strong performance on graph-structured data, but their effectiveness depends heavily on the quality of the observed graph. In real applications, graph topology is often imperfect: noisy edges may connect unrelated nodes, while missing edges may prevent useful information from being propagated. Existing robust graph learning methods mainly address this problem by removing suspicious edges or by learning a new graph structure during training. However, edge removal alone cannot recover missing connections, and graph structure learning may introduce additional optimization complexity. In this paper, we propose Topology-Aware Gaussian Repair (TAGR), a simple graph repair framework for robust message passing in graph neural networks. Instead of learning a dense adjacency matrix, TAGR constructs a sparse feature-neighborhood graph using an adaptive Gaussian kernel and combines it with a topology-aware residual correction of the observed graph. The Gaussian repair component introduces auxiliary edges between feature-similar nodes, while the residual correction preserves and reweights the original topology according to local feature and structural consistency. The repaired graph can be used directly with standard graph neural networks without changing their architectures. Extensive experiments on benchmark citation networks show that TAGR improves the robustness of GNNs under both noisy-edge and missing-edge settings. The analysis further show that Gaussian feature-neighborhood repair provides the main robustness gain, while topology-aware residual correction improves stability when the observed graph is incomplete. These results suggest that effective graph robustness can be achieved through lightweight sparse graph repair rather than dense graph structure learning.",
+      "authors": [
+        "Anubha Goel",
+        "Juho Kanniainen"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.SI"
+      ],
+      "published": "2026-06-02T10:39:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.03462v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "graph structure learning for robust GNNs via topology repair",
+      "llm_evidence_cn": "通过拓扑修复实现鲁棒图神经网络的图结构学习",
+      "llm_evidence": "通过拓扑修复实现鲁棒图神经网络的图结构学习",
+      "canonical_evidence": "通过拓扑修复实现鲁棒图神经网络的图结构学习",
+      "llm_tldr_en": "Proposes Topology-Aware Gaussian Repair (TAGR) to repair graph structure for GNNs. Directly addresses graph structure learning, a core requirement.",
+      "llm_tldr_cn": "本文提出拓扑感知高斯修复（TAGR），通过可学习的图修复框架提升图神经网络鲁棒性。该方法直接面向图结构学习任务，可迁移至电力工作票中的图结构优化。",
+      "llm_tldr": "本文提出拓扑感知高斯修复（TAGR），通过可学习的图修复框架提升图神经网络鲁棒性。该方法直接面向图结构学习任务，可迁移至电力工作票中的图结构优化。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03839v1",
+      "source": "arxiv",
+      "title": "Text-attributed Graph Condensation via Text Selection and Attribute Matching",
+      "abstract": "Text-Attributed Graph (TAG) is an important type of graph structured data, where each node has a text description. TAG models usually train a Graph Neural Network (GNN) and language model jointly, which leads to high space and time consumption, especially on large datasets. To mitigate this, we propose TAGSAM, a condensation method that compresses TAGs while preserving training accuracy. TAGSAM comes with two key designs, i.e., subgraph text Selection and Attribute similarity Matching, which compress the text description and graph topology of TAG, respectively. For the texts, subgraph text selection selects and merges representative text chunks from multiple related text descriptions by maximizing mutual information. For the graph topology, popular condensation methods based on Matching Training Trajectories (MTT) suffer from high variance, which hinders accuracy. Our attribute similarity matching mitigates this issue by aligning stable similarity matrices. We evaluate TAGSAM against six state-of-the-art baselines, where it showcases superior performance. For the same compressed size, TAGSAM improves upon the best-performing baseline by an average of 4.9% in accuracy. Furthermore, it maintains competitive training accuracy even when the TAG is condensed to just 1% size. Our code is available at https://github.com/SundayVHan/TAGSAM",
+      "authors": [
+        "Haowei Han",
+        "Yuxiang Wang",
+        "Guojia Wan",
+        "Hao Wang",
+        "Shanshan Feng",
+        "Hao Huang",
+        "Jiawei Jiang",
+        "Xiao Yan"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-02T16:20:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.03839v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Graph condensation for text-attributed graphs",
+      "llm_evidence_cn": "文本属性图压缩方法",
+      "llm_evidence": "文本属性图压缩方法",
+      "canonical_evidence": "文本属性图压缩方法",
+      "llm_tldr_en": "Proposes TAGSAM for condensing text-attributed graphs via subgraph text selection and attribute matching, preserving accuracy while reducing complexity.",
+      "llm_tldr_cn": "文本属性图（TAG）模型训练需联合GNN和语言模型，计算开销大。本文提出TAGSAM压缩方法，通过子图文本选择和属性相似度匹配分别压缩文本描述和图拓扑，最大化互信息选择代表性文本块，并利用节点度和PageRank选择关键节点。实验表明在多个TAG数据集上，压缩后模型保持高准确率。该方法可作为图结构学习的预处理步骤，适用于电力工作票图数据的精简与高效推理。",
+      "llm_tldr": "文本属性图（TAG）模型训练需联合GNN和语言模型，计算开销大。本文提出TAGSAM压缩方法，通过子图文本选择和属性相似度匹配分别压缩文本描述和图拓扑，最大化互信息选择代表性文本块，并利用节点度和PageRank选择关键节点。实验表明在多个TAG数据集上，压缩后模型保持高准确率。该方法可作为图结构学习的预处理步骤，适用于电力工作票图数据的精简与高效推理。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.05671v1",
+      "source": "arxiv",
+      "title": "QueryAgent-R1: Bridging Query Generation and Product Retrieval for E-Commerce Query Recommendation",
+      "abstract": "Query recommendation in e-commerce search aims to proactively suggest queries that match users' potential interests. However, existing methods mainly optimize query-level relevance, while neglecting whether the retrieved products align with users' downstream preferences. This mismatch often leads to high query click through rates (CTR) but low product conversion rates (CVR). To bridge this gap, we propose QueryAgent-R1, a memory-augmented agentic framework that improves end-to-end alignment via chain-of-retrieval optimization. Our QueryAgent-R1 grounds query generation in real inventory retrieval, allowing the agent to validate and refine queries based on retrieved products. We also design a consistency reward in the agentic reinforcement learning (RL) process to jointly optimize query relevance and downstream engagement. In addition, we construct a memory abstraction module for efficient user profiling. To support offline evaluation, we construct two datasets based on both proprietary industrial data and public datasets, on which QueryAgent-R1 consistently outperforms strong baselines. Moreover, on a large scale production platform, QueryAgent-R1 improves Query CTR by 2.9% and guided CVR by 3.1% in online A/B tests.",
+      "authors": [
+        "Dike Sun",
+        "Zheng Zou",
+        "Jingtong Zang",
+        "Qi Sun",
+        "Huaipeng Zhaoand Tao Luo",
+        "Xiaoyi Zeng"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-04T03:51:21+00:00",
+      "link": "https://arxiv.org/pdf/2606.05671v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "retrieval augmented generation with memory-augmented agent",
+      "llm_evidence_cn": "记忆增强的检索增强生成代理",
+      "llm_evidence": "记忆增强的检索增强生成代理",
+      "canonical_evidence": "记忆增强的检索增强生成代理",
+      "llm_tldr_en": "QueryAgent-R1 uses a memory-augmented agent to iteratively refine queries based on retrieved products, improving end-to-end alignment for e-commerce query recommendation.",
+      "llm_tldr_cn": "现有查询推荐仅优化查询级相关性，忽略了检索产品与用户偏好的对齐。QueryAgent-R1提出记忆增强的代理框架，通过链式检索优化，让代理根据实际检索结果验证和修正查询。实验表明该方法在商品转化率上显著优于传统方法，展示了检索增强生成在票证类任务中的潜力。",
+      "llm_tldr": "现有查询推荐仅优化查询级相关性，忽略了检索产品与用户偏好的对齐。QueryAgent-R1提出记忆增强的代理框架，通过链式检索优化，让代理根据实际检索结果验证和修正查询。实验表明该方法在商品转化率上显著优于传统方法，展示了检索增强生成在票证类任务中的潜力。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "retrieval augmented generation for ticket generation",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-05-30-728986-v1",
+      "source": "biorxiv",
+      "title": "HyperNiche: Learning Heterophilic Cellular Niches with Hypergraph Neural Networks",
+      "abstract": "We propose HyperNiche, a hypergraph-based framework for modeling higher-order, heterogeneous cellular niches from spatial transcriptomics data. Unlike conventional graph-based methods that rely on pairwise similarity and tend to produce homogeneous clusters, HyperNiche learns anchor-centered hyperedges through a compatibility-driven mechanism that captures both homophilic and heterophilic relationships among cells. By decoupling node roles into anchor and member representations and integrating spatial geometry into hyperedge construction, the model enables the discovery of multicellular niches that span diverse cell types. We evaluate HyperNiche on high-plex Xenium spatial transcriptomics datasets from breast and lung cancer tissue microarrays, demonstrating improvements over state-of-the-art graph-based baselines in clustering performance (ARI, NMI) and biological interpretability. Further analysis shows that HyperNiche produces hyperedges with significantly higher intra-edge feature diversity, indicating an enhanced ability to capture heterogeneous cellular niches compared to similarity-based models. These results highlight the importance of higher-order relational modeling for understanding complex spatial tissue organization and tumor microenvironments.",
+      "authors": [
+        "Mahmud, M. I.",
+        "Banerjee, T."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-06-03T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.05.30.728986v1.full.pdf",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "hypergraph structure learning",
+      "llm_evidence_cn": "超图结构学习",
+      "llm_evidence": "超图结构学习",
+      "canonical_evidence": "超图结构学习",
+      "llm_tldr_en": "HyperNiche uses hypergraph neural networks to model higher-order cellular niches, capturing both homophilic and heterophilic relationships via anchor-centered hyperedges.",
+      "llm_tldr_cn": "传统图方法依赖成对相似性，难以发现异质性细胞生态位。HyperNiche提出超图神经网络，通过兼容性驱动机制学习锚点中心超边，捕捉同质和异质关系。在空间转录组数据上，HyperNiche成功发现跨细胞类型的生态位，展示了超图结构学习的优势。",
+      "llm_tldr": "传统图方法依赖成对相似性，难以发现异质性细胞生态位。HyperNiche提出超图神经网络，通过兼容性驱动机制学习锚点中心超边，捕捉同质和异质关系。在空间转录组数据上，HyperNiche成功发现跨细胞类型的生态位，展示了超图结构学习的优势。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}

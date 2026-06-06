@@ -1,0 +1,3348 @@
+Title: Graph Cascades: Contagion-Based Mesoscopic Rewiring for Structure-Aware Graph Machine Learning
+
+URL Source: https://arxiv.org/pdf/2606.05046v1
+
+Published Time: Thu, 04 Jun 2026 01:33:31 GMT
+
+Number of Pages: 48
+
+Markdown Content:
+# GRAPH CASCADES : Contagion-Based Mesoscopic Rewiring for Structure-Aware Graph Machine Learning 
+
+Meher Chaitanya ∗
+
+KTH Royal Institute of Technology Stockholm, Sweden 114 28 
+
+mcpi@kth.se 
+
+My Le ∗
+
+Johns Hopkins University Baltimore, MD 21210 
+
+mle19@jh.edu 
+
+Luana Ruiz 
+
+Johns Hopkins University Baltimore, MD 21210 
+
+lrubini1@jh.edu 
+
+Abstract 
+
+We introduce G RAPH CASCADES , a mesoscopic rewiring strategy for Graph Neural Networks (GNNs) and Graph Transformers (GTs) that captures intermediate-scale graph structure beyond purely local edges or fully global attention. Using contagion-based diffusion processes, G RAPH CASCADES constructs, in O(|V |+|E|) time, an auxiliary graph where node pairs supported by repeated multi-hop reinforcement are promoted to direct neighbors. We theoretically characterize when reinforcement-based rewiring helps: sufficient conditions under which reinforcement-based edge selection is more label-aligned than direct adjacency, an SBM witness in which two-hop reinforcement is perfectly homophilic, and a formalization of mesoscopic connectivity via graph effective resistance. Empirically, across node-classification benchmarks, G RAPH CASCADES improves multiple GNN and sparse-GT back-bones, with the most reliable gains observed on heterophilic and moderate- to high-degree homophilic graphs. The theoretical conditions also identify regimes where mesoscopic rewiring is unlikely to be beneficial – low-degree regular graphs and graphs with structural bottlenecks – and these predictions match the observed failures. We additionally observe tight correlations between performance and structural properties in the rewired graphs. 
+
+1 Introduction 
+
+Graph-structured data arises across many domains, with applications including anomaly detection, traffic forecasting, and recommendation [Deng and Hooi, 2021, Kong et al., 2024, Agrawal et al., 2024]. A common strategy is to learn directly on the graph using Graph Neural Networks (GNNs), which capture local structure by propagating information along edges [Hamilton et al., 2017]. This locality is a strength, but repeated aggregation can blur signals and compress long paths, leading to over-smoothing and over-squashing [Chen et al., 2020, Alon and Yahav, 2021]. Graph Transformers (GTs), motivated by the success of transformers in language modeling, offer an alternative [Dwivedi and Bresson, 2020, Mialon et al., 2021]. GTs treat nodes as tokens under global self-attention, but since graphs lack a canonical ordering, attention alone cannot distinguish adjacent from multi-hop neighbors. GTs therefore concatenate positional or structural encodings (e.g., Laplacian eigenvectors, 
+
+> ∗Equal contribution. Preprint.
+> arXiv:2606.05046v1 [cs.LG] 3 Jun 2026
+
+shortest-path distances) to each node, which has been central to their empirical gains [Kreuzer et al., 2021, Zhao et al., 2021, Ying et al., 2021]. Still, a key challenge is structural resolution: distinguishing and preserving task-relevant neighbor-hoods and motifs. Dense attention can overshadow these patterns, overweight weak node pairs, and incur prohibitive cost [Ying et al., 2021, Chen et al., 2022, 2023, Zhou et al., 2025]. Sparse-attention GTs improve scalability by restricting attention to compact token sequences [Zhou et al., 2025], but existing variants sacrifice granularity through coarse neighborhood aggregation or hand-crafted short-cuts [Chen et al., 2023, Fu et al., 2024], an issue pronounced on heterophilic graphs where same-label nodes are sparsely connected and multiple hops apart [Zhou et al., 2025]. To address these challenges, we introduce G RAPH CASCADES , a mesoscopic rewiring strategy that captures intermediate-scale graph structure via contagion dynamics [Granovetter, 1978, Centola and Macy, 2007, Centola, 2018]. Short threshold cascades are initiated at each node to reveal pairs that co-activate; these pairs are then promoted to direct connections in a sparse, weighted auxiliary graph that can be used either as a drop-in input for GNN and GT backbones or to instantiate CR-Graphormer (Section 4), a lightweight standalone sparse transformer that directly acts on cascade-rewired neighborhoods. GRAPH CASCADES is grounded in a concrete structural mechanism: it is expected to help when task-relevant relationships are expressed through reinforced multi-hop neighborhoods rather than primarily through direct edges. This setting arises naturally in heterophilic graphs, where nodes sharing a label need not be adjacent, yet may be connected through multiple short, redundant paths. In contrast, on low-degree regular graphs or graphs with pronounced bottlenecks, such redundant support may be weak or absent, making contagion-based rewiring neutral or even detrimental. Accordingly, our evaluation goes beyond predictive accuracy: we also examine the structural regimes in which the theory predicts gains or failures, treating this alignment between mechanism, structure, and performance as a central part of the contribution. Theoretically, we provide a mechanistic account of why reinforcement-based rewiring can benefit heterophilic networks. We establish sufficient conditions under which reinforcement events exhibit higher label agreement than direct adjacency (Proposition 3.5); identify an SBM regime in which two-hop profile reinforcement (Theorem 3.7) (and more generally multi-hop reinforcement (Ap-pendix B.5)) recovers same-class neighbors (Corollary B.3); and characterize threshold activations through effective resistance (Theorem 3.8). These same conditions also delineate regimes in which rewiring is unlikely to help, such as low-degree regular graphs and graphs with structural bottlenecks-and these predictions align with the observed failure cases. Empirically, cascade rewiring increases effective homophily (Figure 2) and improves classification performance across heterophilic and moderate- to high-degree homophilic graphs (Tables 1–6, Figure 1), while structural properties of the rewired graph correlate strongly with downstream performance (Table 2). 
+
+2 Preliminary Definitions 
+
+Let G = ( V, E ) be an undirected, unweighted graph with n = |V | nodes and m = |E| edges. For u ∈ V , denote N (u) = {v ∈ V : ( u, v ) ∈ E}, N [u] = N (u) ∪ { u}, and the degree 
+
+d(u) = |N (u)|. A contagion or cascade on G is a discrete-time process {xt}Tt=0 , where xt ∈ { 0, 1}n
+
+represents the instantaneous activation state at time t, with [xt]i = 1 if node i is activated at time step t and 0 otherwise. The active set of a contagion at time t, denoted St, is defined as 
+
+St = {u ∈ V : [ xt′ ]u = 1 for some 0 ≤ t′ ≤ t}, which groups all nodes activated in the contagion by time t. Given an inactive node u / ∈ St, its instantaneous active support is the number of active nodes in its one-hop neighborhood, denoted σt(u) = |N (u) ∩ St|.In this paper, we leverage contagion dynamics to construct mesoscopic embeddings by initiating a contagion from a neighborhood subset of each node v ∈ V . Each contagion evolves according to one of two discrete-time activation rules as defined in [Chaitanya et al., 2025]: 
+
+Maximum Adjacency Search (MAS). For each node v ∈ V , select a random subset R ⊆ N (v) and initialize the cascade with active set Sv 
+
+> 0
+
+= {v} ∪ R. At each step t ∈ [0 , ℓ − 1] , activate node u⋆t =argmax u∈V \Svt σvt (u), i.e., the inactive node with the strongest support, and set Svt+1 = Svt ∪ { u⋆t }.The quantity τt = max u∈V \Svt σvt (u) is called the activation threshold at time t.
+
+Threshold Adjacency Search (TAS). Fix a threshold τ ≥ 1. For each node v ∈ V , select a random subset R ⊆ N (v) and set Sv 
+
+> 0
+
+= {v} ∪ R. At each step t ∈ [0 , ℓ − 1] , let At = u ∈ V \ Svt :
+
+2σvt (u) ≥ τ be the set of inactive nodes with support at least τ . If At̸ = ∅, select one u⋆t ∈ At (e.g., uniformly at random) and set Svt+1 = Svt ∪ { u⋆t }. When τ = 1 , the process reduces to breadth-first search; larger values of τ restrict activation to nodes with multi-neighbor reinforcement [Granovetter, 1978, Centola, 2018]. Both MAS and TAS define higher-order, memoryless random walks whose next activation depends only on the current active frontier, and where the walk length ℓ sets the spatial scale of propagation. MAS activation favors nodes with the strongest connectivity to the current active set, leading to early activation of densely connected neighborhoods. Nodes with weak ties are activated only as the threshold decreases. Thus, MAS tends to exhaustively explore cohesive regions before crossing weak cuts, causing the contagion to propagate preferentially within clusters. TAS relaxes this behavior by allowing nodes with lower instantaneous support to activate earlier, promoting a more balanced graph exploration that is less constrained by local density. Further preliminaries on GNNs, GTs, and sparse variants are provided in Appendix A.1. 
+
+3 GRAPH CASCADES : Mesoscopic Rewiring 
+
+We construct mesoscopic rewiring by leveraging the activation sets generated by the contagion dynamics in Section 2. For each seed v ∈ V , we run multiple contagions of fixed length ℓ, each initialized at v with a random subset R ⊆ N (v). Each realization yields an activation set Svℓ
+
+containing v, R, and the ℓ nodes activated during the process. Aggregating activation sets across realizations defines a multiset Mv that records how frequently other nodes co-activate with v.Let fv (u) denote the multiplicity of node u in Mv and retain the top-k co-activated nodes for each v:
+
+Fk(v) = argtop-k  
+
+> u∈V\{ v}
+
+{fv (u)}. (1) If fewer than k nodes have positive co-activation counts fv (u) > 0, then Fk(v) contains only those positive-count nodes, so |Fk(v)| ≤ k. The corresponding activated edges are Ev 
+
+> act
+
+= {(v, u ) | u ∈
+
+Fk(v)}. Repeating this for all v ∈ V , we define the undirected weighted cascade-rewired auxiliary graph :
+
+G∗ = ( V, E ∗, W ∗), E∗ = [
+
+> v∈V
+
+Ev
+
+> act
+
+, W ∗ 
+
+> uv
+
+=
+
+( fv (u)+ fu(v)2 if (u, v ) ∈ E∗,
+
+0 otherwise . (2) The multiplicity fv (u) is the empirical cascade reinforcement score used for the directed top-k
+
+selection in (1) ; larger values indicate that u is repeatedly co-activated with seed v across cascade realizations. In the theoretical analysis below, we use idealized short-walk reinforcement events as population-level proxies for this empirical co-activation score. The undirected weight W ∗ 
+
+> uv
+
+in (2) symmetrizes the two directed scores. Both contagion modes (MAS and TAS) privilege multi-hop links in densely connected regions, as early activations correspond to nodes tightly coupled to the seed, while later ones identify peripheral or weakly connected nodes. Consequently, nodes separated by weak cuts rarely appear in contagions with restricted walk length ℓ. This naturally reveals higher-order motifs and improves effective homophily even in heterophilic networks, causing G∗ to emphasize cohesive communities and multi-path reinforcement. We formalize this effect theoretically and validate it empirically in Section 3.1 and Appendix D.4. 
+
+Remark 3.1 (Normalization) . We may optionally normalize multiplicities before incorporating them into the weight matrix in (2) . This can be done either globally (fv (u) ← fv (u)/max s,t ∈V fs(t)) or locally (fv (u) ← fv (u)/max t∈N (v) fv (t)) . The former preserves relative strength across the entire graph and emphasizes long-range structural effects, while the latter preserves relative importance within each node’s neighborhood and ensures more uniform participation across nodes. 
+
+3.1 Effect of Cascade Rewiring on Label Homophily 
+
+In heterophilic graphs, label information is often not carried by individual edges but by collections of multi-hop paths. Nodes sharing the same label may be non-adjacent, yet they can be repeatedly connected through higher-order multi-hop structures. This observation motivates replacing edge-level connectivity with cascade rewiring. 3Setting and Theoretical Proxy. Let G = ( V, E ) be an undirected graph with adjacency matrix A and labels y : V → { 1, . . . , C }. The standard edge-level homophily is hG = P 
+
+> (u,v )∈E
+
+1{yu = yv }/|E|.Equivalently, for a uniformly random unordered pair of distinct nodes (u, v ), let S := {yu = yv } and 
+
+E := {Auv = 1 }. Then hG = Pr [S | E ]. The implemented rewiring selects, for each seed v, nodes with large empirical co-activation multiplicity fv (u). To analyze the structural mechanism behind this selection, we use the idealized short-walk reinforcement event F := {(A2 + · · · + Aℓ)uv ≥ κ},for fixed ℓ ≥ 2 and κ ≥ 1. This event is not the exact finite-sample event defining G∗. Rather, it is a population-level proxy for the same reinforcement principle: node pairs supported by many short walks are more likely to receive high cascade co-activation scores. Define the corresponding reinforcement homophily as hF := Pr [S | F ]. We next give a Bayes-rule sufficient condition under which this idealized reinforcement event is more homophilic than direct adjacency, i.e., hF ≥ hG.
+
+Assumption 3.2 (Nondegeneracy) . Pr [S] > 0, Pr [E] > 0, and Pr [F] > 0. This ensures that the label-agreement, edge-based, and reinforcement-based conditional probabilities are well-defined. 
+
+Assumption 3.3 (Label-Reinforcement Alignment) . Pr [F | S ] ≥ Pr [E | S ]. That is, same-label node pairs are at least as likely to be short-walk reinforced as they are to be directly adjacent. 
+
+Assumption 3.4 (Selectivity of Reinforcement) . Pr [F] ≤ Pr [E]. This rules out saturated regimes in which the reinforcement event occurs for most node pairs and therefore becomes less selective than direct adjacency. 
+
+Proposition 3.5 (Bayes Sufficient Condition for Reinforcement Homophily) . Under Assumptions 3.2 and 3.3, hF ≥ hG · Pr [E] /Pr [F]. If Assumption 3.4 also holds, then hF ≥ hG. The inequality 
+
+hF ≥ hG is strict if Assumption 3.3 holds strictly, or if Assumption 3.4 holds strictly and hG > 0.Proof. See Appendix B.1. Proposition 3.5 is algorithm-agnostic: the event F is an idealized reinforcement-based selection rule, and the analogous selection in the implemented method is induced by retaining high-fv (u) cascade neighbors. The proposition identifies the precise condition under which any such rule has higher label agreement than the original adjacency, namely that it be sufficiently label-aligned (Assumption 3.3) and sufficiently selective (Assumption 3.4). Appendix D.4 verifies this empirically: cascade rewiring is most beneficial on heterophilic graphs, where label information is carried by reinforced multi-hop structure rather than direct edges, and less reliable on low-degree homophilic graphs where sparse local structure provides limited same-label reinforcement. 
+
+Remark 3.6 (Finite-Sample Cascade Proxy) . The rewired graph G∗ is the finite-sample top-k graph induced by empirical scores bpv (u) = fv (u)/N v , where Nv is the number of cascade realizations used for seed v. Let pv (u) = E[bpv (u)] . Appendix B.9 shows that, for fixed graph and cascade hyperparam-eters, bpv (u) concentrates uniformly around pv (u) at rate O(plog n/N v ), so the empirical top-k set coincides with the population top-k set whenever the k-th and (k + 1) -th population scores are sepa-rated by twice this rate. Moreover, for fixed-threshold TAS, every nonlocal positive-count selection 
+
+v → u certifies (A2 + · · · + Aℓ+1 )vu ≥ τ (see Theorem B.6 for a precise statement). If counts are aggregated over thresholds T , the unconditional certificate uses τmin = min T ; threshold-specific counters certify their corresponding threshold. Thus, G∗ should be viewed as a finite-sample cascade analogue of the idealized reinforcement graph induced by F rather than an exact realization of it. We measure homophily on the rewired graph via hG∗ = Pr [yu = yv | (u, v ) ∈ E∗], and compare this estimate with the population proxy hF in Appendix D.4. 
+
+Case Study: Stochastic Block Model (SBM) as a Witness for Reinforcement Mechanism 
+
+To make the reinforcement mechanism concrete, we analyze a minimal SBM setting in which direct adjacency and short-walk reinforcement can disagree. Direct edges are governed by the block-affinity matrix B, whereas expected two-hop reinforcement E[A2 
+
+> uv
+
+] is governed by the profile-similarity kernel BD π B⊤. Thus, the SBM construction serves as a witness that a graph may be edge-heterophilic while its reinforced two-hop neighborhoods are homophilic. This abstraction removes finite sampling, initialization, and MAS/TAS-specific effects while preserving the core reinforcement principle used by G RAPH CASCADES : pairs supported by many short paths are promoted to direct neighbors. 
+
+Setting. Let G ∼ SBM (n, π, B ) be a C-block stochastic block model with node set V , labels 
+
+yv ∈ [C], block sizes na = πan, and symmetric block-affinity matrix B ∈ [0 , 1] C×C where 4C, π, and B are fixed independent of n. Conditional on the labels, edges are independent and Pr [Auv = 1 | yu = a, y v = b] = Bab . For two distinct nodes u, v , define the two-hop cascade reinforcement score s2(u, v ) := ( A2)uv = |N (u) ∩ N (v)|. For each node u, define the directed top-k two-hop cascade graph by connecting u to the k nodes v̸ = u with largest s2(u, v ), and let 
+
+G⋆
+
+> 2
+
+(k) denote its symmetrization. For labels a, b ∈ [C], define μ(n) 
+
+> ab
+
+:= E [s2(u, v ) | yu = a, y v = b]
+
+with u̸ = v. The following theorem assumes that, same-class pairs are uniformly separated from different-class pairs. 
+
+Theorem 3.7 (Profile Homophily of Two-Hop Top-k Selection) . Under the SBM setting above with Dπ := diag( π1, . . . , π C ), 1 
+
+> n
+
+μ(n) 
+
+> ab
+
+= ( BD π B⊤)ab + O  1
+
+> n
+
+ for every a, b ∈ [C]. Assume the profile kernel BD π B⊤ has positive same-class margin ∆2 := min a∈[C]
+
+ (BD π B⊤)aa −
+
+max b̸=a(BD π B⊤)ab 
+
+ > 0. Then for all sufficiently large n, with probability at least 1 − 2n−2,
+
+s2(u, v ) > s 2(u, w ) for every seed node u ∈ V and any other nodes v, w ∈ V \ { u} with yv = yu
+
+and yw̸ = yu. Consequently, for every k ≤ min a∈[C](na − 1) , the symmetrized top-k two-hop cascade graph G∗
+
+> 2
+
+(k) is perfectly homophilic: hG∗  
+
+> 2(k)
+
+= 1 .Proof. See Appendix B.2. Theorem 3.7 isolates the reinforcement mechanism rather than analyzing the finite-sample MAS/TAS pipeline. Even when B favors cross-label edges, the profile kernel BD π B⊤ can separate same- from different-label pairs, so the top-k two-hop rewired graph is perfectly homophilic with high probability. The witness can still be edge-heterophilic before rewiring: hGp
+
+−→ PCa=1 π2
+
+> a
+
+Baa / PCa,b =1 πaπbBab ,which falls below 1/2 whenever cross-class edge mass dominates (Corollary B.2). Corollary B.3 shows that, in a contextual SBM with Gaussian class-conditional features, one-hop aggregation over the top-k two-hop rewired graph followed by a nearest-centroid linear classifier has expected misclas-sification at most 2n−2 + ( C − 1) exp 
+
+
+
+− (k+1)∆ 2
+
+> 8σ2
+
+
+
+; the k + 1 factor links the top-k parameter directly to downstream signal-to-noise. The multi-hop extension of Theorem 3.7 appears in Appendix B.4, Theorem B.5. 
+
+3.2 Choice of Walk Length ℓ
+
+The walk length ℓ sets the spatial scale at which fv (u) accumulates support. We use effective resistance [Spielman and Srivastava, 2008] as a structural certificate for threshold activations: if a node is activated within ℓ steps by a threshold-κ cascade, then its activation is supported by multiple short paths from the initial active set. This is a one-way statement about activated nodes, not a guarantee that all low-resistance nodes are selected. It directly describes TAS-style thresholding; for MAS, an analogous bound holds whenever the activation threshold τt is at least κ.
+
+Setting. Let G = ( V, E ) be an undirected, unweighted graph. Fix a non-empty initial active set 
+
+Sv 
+
+> 0
+
+⊆ V , and let Sv 
+
+> 0
+
+⊆ Sv 
+
+> 1
+
+⊆ · · · ⊆ Svℓ be active sets generated by a uniform threshold-κ contagion, where κ ∈ N. That is, whenever a vertex x first activates at time t ≥ 1, it satisfies N (x) ∩ Svt−1 ≥ κ.Let Av := Sℓt=0 Svt = Svℓ . For any u ∈ Svℓ \ Sv 
+
+> 0
+
+, let T (u) := min {t ∈ { 0, 1, . . . , ℓ } : u ∈ Svt }
+
+be its activation time. Let Gv be the subgraph induced by the activated nodes Sℓt=0 Svt . We write 
+
+RG 
+
+> eff
+
+(S, u ) for the effective resistance between u and the terminal obtained by contracting all vertices of S to a single vertex. 
+
+Theorem 3.8 (Effective-Resistance Bound for Threshold Activations) . RGv 
+
+> eff
+
+(Sv 
+
+> 0
+
+, u ) ≤ T (u) 
+
+> κ
+
+≤ ℓκ .Proof. The proof follows directly from the two lemmas below (see Appendix B.8). 
+
+Lemma 3.9. Following the setting of Theorem 3.8, if u ∈ Svℓ \ Sv 
+
+> 0
+
+, then Gv contains κ pairwise edge-disjoint paths from Sv 
+
+> 0
+
+to u. Moreover, each of these paths has length at most T (u), and hence at most ℓ.Proof. See Appendix B.6. 5Lemma 3.10. Let H = ( W, F ) be an undirected, unweighted graph, let S ⊆ W be nonempty, and let u ∈ W \ S. Suppose H contains κ pairwise edge-disjoint paths P1, . . . , P κ of length ℓ1, . . . , ℓ κ
+
+from S to u. Then RH 
+
+> eff
+
+(S, u ) ≤ 1
+
+> κ2
+
+Pκi=1 ℓi. In particular, if each ℓi ≤ L, then RH 
+
+> eff
+
+(S, u ) ≤ Lκ .Proof. See Appendix B.7. Theorem 3.8 implies that activated nodes are not arbitrary long-range shortcuts: they admit κ edge-disjoint short supports to the seed, and the resulting Reff bound scales with ℓ. While this is a one-way certificate rather than a global optimization guarantee, it motivates using smaller ℓ in our experiments to concentrate fv (u) on mesoscopically well-supported neighbors. 
+
+Edge-Connectivity Certificate. A complementary certificate follows from the same activation-path argument. Appendix B.10 shows that any nonlocal directed edge v → u selected by a fixed-threshold TAS-κ run satisfies λG(N [v], u ) ≥ κ in the original graph. Intuitively, TAS rewiring reinforces redundant mesoscopic connectivity and cannot introduce propagation-selected shortcuts across cuts of size smaller than κ. Together, these results delineate the regime where cascade rewiring is expected to help—graphs whose label-relevant structure is carried by reinforced multi-hop neighborhoods with sufficient local redundancy—and identify bottlenecked sparse graphs as the predicted failure mode. 
+
+4 Experiments 
+
+In this section, we show how our cascade-based mesoscopic rewiring improves homophily in het-erophilic graphs and boosts the performance of GNNs and GTs. Additionally, we introduce CR-GRAPHORMER , a sparse GT architecture that leverages mesoscopic rewiring for sparse attention. 
+
+Cascade-Rewired (CR) G RAPHORMER . The cascade-rewired auxiliary graph is the central con-tribution of this paper and can be used directly by GNN and GT backbones that support edge-weighted inputs. To show that this structure also enables a standalone sparse GT, we introduce CR-G RAPHORMER , a lightweight model that constructs node-specific token sequences from cascade-rewired neighborhoods, making it suitable for settings in which the backbone cannot directly exploit edge weights. The model leverages the auxiliary graph G∗ constructed from contagion dynamics to define compact, node-specific attention neighborhoods that capture higher-order structure beyond immediate adjacency. Given an undirected, unweighted graph G = ( V, E ) with node features X ∈ Rn×d, we construct a 
+
+cascade-rewired auxiliary graph G∗ = ( V, E ∗, W ∗) following Section 3. To enable efficient mini-batch processing, we derive length-(k + 1) token sequences from G∗ for each target node v (equation (1) ), combining its original features xv with those of its neighbors. These tokens are processed by a standard transformer [Vaswani et al., 2017] to produce a node representation vector. Formally, the to-ken sequence is Tv := 
+
+
+
+xv ∥1
+
+| {z } 
+
+> self
+
+, {W ∗ 
+
+> uv
+
+xu∥W ∗ 
+
+> uv
+
+}u∈N ∗(v)
+
+| {z } 
+
+> neighbors in G∗, weighted
+
+
+
+, where Tv ∈ R(k+1) ×(d+1) and ∥ denotes concatenation. Using Z(0)  
+
+> v
+
+= Tv as the node-specific input sequence, each encoder layer applies stan-dard transformer updates: ˜Z(t) 
+
+> v
+
+= MHA(LN( Z(t−1)  
+
+> v
+
+)) + Z(t−1)  
+
+> v
+
+, Z(t) 
+
+> v
+
+= FFN(LN( ˜Z(t) 
+
+> v
+
+)) + ˜Z(t) 
+
+> v
+
+,where MHA is multi-head self-attention, FFN is a position-wise feed-forward network, and LN denotes layer normalization. After T layers, a readout (e.g., mean pooling) over Z(T ) 
+
+> v
+
+produces the final node embedding. Since all tokens are pre-selected, training is mini-batchable with a sequence length of at most k + 1 , independent of the original graph size, where k (defined in (1) ) controls the node degrees in the auxiliary graph G∗.
+
+Datasets. We consider 16 graph benchmarks from the Deep Graph Library (DGL) 2, including homophilic and heterophilic settings. Dataset information is given in Table 7 in Appendix D.3. To study the effects of mesoscopic cascades, we generate 125 balanced-community SBM net-works with a fixed intra-community edge probability pin = 0 .005 . We vary the number of nodes 
+
+n ∈ { 500 , 1000 , 1500 , 2000 , 2500 }, the number of communities k ∈ { 2, 4, 6, 8, 10 }, and the inter-community edge probability pout ∈ { 10 −5, 10 −4, 10 −3, 10 −2, 10 −1} to cover a range of network structures. Node features (covariates) are sampled i.i.d. as X ∼ N (0 , 1) n×5. We use these synthetic graphs to examine how mesoscopic cascades affect label homophily (Appendix D.4) and to assess 
+
+> 2https://www.dgl.ai/dgl_docs/api/python/dgl.data.html
+
+6the correlation between model performance and graph structural statistics (Table 2). Additional experiments on long-range graph benchmarks ( PascalVOC-SP , COCO-SP , Questions , Roman-empire ,
+
+Amazon-ratings ) and non-duplicate heterophily datasets ( chameleon-filtered , squirrel-filtered ) are reported in Appendix D.9, using the standard metrics for each setting, namely macro-F1 for class-imbalanced tasks and AUROC for Questions. 
+
+Mesoscopic Cascades. We rewire graphs using the MAS and TAS cascades from Section 3, with initial active-set size |R| = 5 , cascade length ℓ = 10 , number of permutations P = 5 , and k in (1) set to the rounded average degree to preserve sparsity. For TAS, we use thresholds τ ∈ { 1, 2, 3, 4, 5}
+
+and select the frequency normalization by cross-validation performance (Remark 3.1). Methods with MAS/TAS in their names use the corresponding weighted rewired graph (G∗, W ∗); all others use the original unweighted graph G. From Appendix D.8, TAS is generally preferable on heterophilic graphs because thresholding filters weakly supported activations, while MAS gives tighter structural alignment but is more sensitive to walk length. On skewed-degree graphs, setting k to the median degree rather than the average reduces over-inclusion. 
+
+Experimental Details. We compare against sixteen representative methods, comprising five GNNs and eleven GTs, with details provided in Appendix D.2. Each model is trained for up to 2000 epochs. All experiments use a 50%–25%–25% train/validation/test split and are repeated over 20 random splits per graph for robustness. Because G RAPH CASCADES is a rewiring operator rather than a new architecture, we evaluate whether fixed backbones improve under cascade-rewired neighborhoods. Table 4 reports this within-backbone comparison for GCN, GraphGPS, NAGphormer, and VCR-Graphormer, and Table 6 provides the broader cross-architecture context. We report Tables 1 and 6 without standard deviations for readability; complete numerical results with standard deviations are in Appendix D.3 (Tables 8 and 9). Additional experimental details, the assessment of Assumptions 3.2– 3.4 and Proposition 3.5, comparisons with other rewiring methods, heterophily-specific architectures, and an ablation study are provided in Appendices D.1, D.4, D.6, D.7, and D.8 respectively. 
+
+4.1 Model-Agnostic Gains from Cascades. Across Tables 1 and 9, cascade rewiring improves accuracy on a substantial portion of benchmarks for both GNNs and GTs. The gains are most pronounced and frequent for NAG and VCR, where cascades improve performance on 13 /16 graphs, indicating that these architectures benefit particularly strongly from cascade rewiring. Improvements are also widespread for GCN ( 10 /16 graphs) and consistent for GraphGPS ( 9/13 graphs; the remaining 3 are OOM). Overall, the strongest single improvements reach +32.74% under MAS and 
+
++34.54% under TAS as shown in Table 1. These results show that cascade rewiring provides a robust accuracy boost across both message-passing GNNs and GTs, rather than being specific to a single model. Notably, these classification gains are achieved using a fixed hyperparameter setting per GNN/GT model, applied unchanged when training on both the original and rewired graphs. We observe pronounced improvements on all 6 heterophilic datasets ( actor : +9.87%; chameleon :+32.74%; cornell : +30.13%; squirrel : +23.58%; texas : +27.63%; wisconsin : +29.67%). A possible explanation for this—and for the moderate performance declines in homophilic networks such as 
+
+citeseer , cora , cycle , and grid —is that cascades primarily boost homophily in heterophilic and moderate- to high-degree homophilic graphs, but decrease homophily in low-degree homophilic graphs due to the violation of Assumption 3.3. This trend aligns with Proposition 3.5 and is consistent across GNNs and GTs (see Figure 1 in Appendix D.3, Table 10 in Appendix D.4). Table 5 summarizes the regimes induced by Assumptions 3.3 and 3.4 and the empirical behavior they predict; 
+
+the assumptions are not assumed but evaluated directly on each benchmark in Appendix D.4. Furthermore, cascade rewiring improves macro-F1 on the cohesive mesoscopic long-range datasets PascalVOC-SP and COCO-SP, improves AUROC on Questions across all tested backbones, and yields gains on chameleon-filtered. On Roman-empire, the effect is backbone-dependent: GNN-based architectures degrade, consistent with the scarcity of the κ edge-disjoint short paths required by Theorem 3.8 and Appendix B.10, whereas sparse-attention GT backbones such as NAG and VCR recover substantial gains. See Appendix D.9 for numerical results. 
+
+Remark 4.1 (A Note on Cascade Weights) . The weights W ∗ are intrinsic to cascade rewiring: they are the empirical reinforcement scores produced by the contagion dynamics, not a post-hoc addition. Thus, GRAPH CASCADES is best viewed as a single weighted operator. The ablations in Appendix D.8.2 (Tables 13 and 14) show that the role of W ∗ depends on the backbone. For sparse-attention GTs, the unweighted graph G∗ already gives broad gains, indicating that the rewired topology carries meaningful structural signal. For GNN backbones, whose aggregation is more 
+
+7Table 1: Number of DGL graphs (out of 16) where G RAPH CASCADES improves test ac-curacy (GraphGPS counts exclude 3 OOM datasets). Colors denote the graph type with the largest gain: red (heterophilic), blue (moderate-to high-degree homophilic), and black (low-degree homophilic). Complete results are in Table 9.                       
+
+> Baseline Cascade Model # Graphs Improved GCN GCN-MAS 8 (up to +17.11% )GCN-TAS 10 (up to +20.16% )GraphGPS GPS-MAS 8 (up to +8.15% )GPS-TAS 9 (up to +9.52% )NAG NAG-MAS 11 (up to +19.77% )NAG-TAS 13 (up to +34.54% )VCR VCR-MAS 13 (up to +32.74% )VCR-TAS 13 (up to +32.33% )
+
+Table 2: Regression coefficients for A(M ) ∼
+
+H ∗ L(D) + H ∗ L(D) ∗ C. Here H is label homophily, L(D) the log average degree, and 
+
+C ∈ { 0, 1} indicates whether the original graph is connected. A(M ) denotes test accuracy, computed on the original graph unless MAS/TAS specifies an auxiliary one.                                            
+
+> Mβ0β1β2Adjusted R2
+> NAG 0.193*** 0.197*** 0.170** 0.454 NAG-MAS 0.143*** 0.258*** 0.173*** 0.722 NAG-TAS 0.152*** 0.265*** 0.237*** 0.695 VCR 0.253*** 0.233*** -0.005 0.426 VCR-MAS 0.155*** 0.306*** 0.157*** 0.704 VCR-TAS 0.172*** 0.301*** 0.201*** 0.607 CR-MAS 0.091*** 0.238*** 0.261*** 0.760 CR-TAS 0.132*** 0.219*** 0.421*** 0.639
+> ∗∗∗ p < 0.001 ;∗∗ p < 0.01 ; none: p≥0.1
+
+Table 3: Alphabetical dataset labels and names. Colors indicate graph type, aligned with Table 1. See Table 7 for exact label homophily and average degree.                               
+
+> Aactor Ecomputer Igrid Msquirrel Bchameleon Fcora Jphoto Ntexas Cciteseer Gcornell Kpubmed Pwiki Dcommunity Hcycle Lshape Qwisconsin
+
+Table 4: Test accuracy (mean, in %) across DGL datasets. OOM indicates out-of-memory errors. Accuracy is encoded by shading, with darker cells indicating better performance. See Table 3 for dataset name encodings and Table 9 for the corresponding standard deviations.                                                                                                                                                                                                                                                       
+
+> Method ABCDEFGHIJKLMNPQ
+> GNN-based GCN 29.59 57.30 75.70 55.63 90.30 87.96 45.11 60.73 59.34 93.90 87.16 89.46 39.10 54.57 83.89 51.41 Architectures GCN-MAS 34.28 57.67 74.71 51.76 89.34 84.93 60.85 59.27 58.30 93.91 87.87 57.69 40.01 66.49 81.79 68.52 GCN-TAS 34.62 58.75 75.46 50.11 90.87 87.29 57.02 60.39 58.19 94.17 88.15 89.57 42.38 65.00 83.54 71.56 GraphGPS 35.19 60.78 75.23 44.00 OOM 86.65 61.38 55.11 57.41 94.64 OOM 46.74 40.04 69.68 OOM 72.66 GPS-MAS 36.39 59.90 74.09 47.43 OOM 85.49 68.72 55.78 55.44 94.71 OOM 54.89 39.20 75.00 OOM 78.44 GPS-TAS 36.46 59.66 75.28 45.26 OOM 86.53 67.23 57.51 56.33 94.84 OOM 56.26 39.18 75.64 OOM 78.28 Tokenized NAG 31.68 40.38 74.72 46.17 88.66 86.75 58.94 77.24 70.99 93.94 87.26 49.89 25.80 63.30 82.40 61.25 Sparse-NAG-MAS 35.10 59.15 72.17 52.59 89.10 84.84 74.36 59.00 62.25 94.27 88.19 57.54 40.89 81.28 82.38 81.02 Attention NAG-TAS 35.10 58.41 74.15 58.21 89.19 86.82 74.36 59.20 60.60 94.61 88.26 84.43 42.13 81.28 82.59 81.02 GTs VCR 26.41 27.28 71.15 28.13 82.45 85.41 44.89 61.64 58.32 88.45 83.25 44.66 22.48 54.68 78.46 51.33 VCR-MAS 36.18 60.02 71.47 47.22 89.43 85.08 73.85 51.70 44.05 93.88 87.59 52.12 39.37 80.99 82.68 79.93 VCR-TAS 36.28 59.61 74.14 57.97 88.95 85.11 75.02 50.09 47.84 94.22 88.70 76.94 46.06 82.31 82.84 81.00 CR-MAS 31.52 62.82 50.63 54.04 89.44 79.81 54.04 59.18 61.80 93.73 87.53 54.37 45.72 65.43 82.65 66.56 CR-TAS 34.64 63.65 51.84 78.60 89.33 81.02 55.74 61.32 60.74 93.95 87.75 85.94 47.31 65.43 83.04 70.39
+
+Table 5: Regimes identified by alignment (Assumption 3.3) and selectivity (Assumption 3.4) con-ditions of Proposition 3.5, together with their empirical behavior. Full per-dataset verification is provided in Appendix D.4. 
+
+Regime Alignment Selectivity Example datasets Observed behavior 
+
+Heterophilic Holds Holds texas, cornell, wisconsin, chameleon, squirrel, actor Largest gains (+9 .87 to 
+
++32 .74 )Mid-/high-degree homophilic Holds Fails community, shape, computer, photo, pubmed, wiki Often positive via Theo-rem 3.8 Low-degree ho-mophilic Fails Holds citeseer, cora Small or unstable changes Bottlenecked/highly regular Fails N/A cycle, grid, Roman-empire Predicted failure mode 
+
+sensitive to degree imbalance, the frequency weights provide larger and more consistent improvements. We therefore use the weighted operator as the default configuration. The topology-only ablation confirms that both structure and reinforcement strength contribute to performance. 
+
+4.2 How Accuracy Relates to Homophily, Degree, and Connectivity. To further assess the impact of cascade rewiring on graph learning performance, we conduct a correlation study between test accuracy and key graph characteristics, including label homophily, average degree, and graph connectivity. These statistics are computed on the input graph: the original graph with unit edge weights for baseline methods, and the MAS/TAS-rewired graphs with frequency-based weights. 8Table 2 reports results from linear regressions of test accuracy on these graph characteristics across 125 synthesized graphs and 16 benchmark datasets. Overall, we find that rewired graph characteristics explain a larger fraction of performance variation than those derived from the original graphs. While TAS typically yields larger absolute performance gains across datasets and architectures (Tables 1 and 9), MAS shows stronger alignment with structural properties, attaining higher adjusted R2
+
+values for NAG, VCR, and CR-Graphormer. Notably, despite the synthesized graphs using random node features with no semantic content, we observe consistent correlations between accuracy and structural metrics across both synthesized and real-world benchmarks (Figure 3 in Appendix D.5). This indicates that the observed effects are primarily driven by graph topology rather than feature semantics. Table 6: Test accuracy (mean, %) on DGL datasets. OOM denotes out-of-memory. Top-5 models are shaded (darker indicates better performance). See Table 3 for dataset codes, Table 4 for “Our Best” accuracy, and Table 8 for standard deviations.                                                                                                                                                                                                                                                                                                   
+
+> ABCDEFGHIJKLMNPQ
+> GNNs GCN 29.59 57.30 75.70 55.63 90.30 87.96 45.11 60.73 59.34 93.90 87.16 89.46 39.10 54.57 83.89 51.41 GraphSAGE 34.57 64.36 75.88 52.09 90.39 88.09 64.47 59.27 58.19 95.31 87.33 43.11 45.41 79.79 84.57 72.89 GAT 28.85 58.63 75.77 58.99 OOM 87.38 44.15 59.27 58.19 94.49 86.88 43.11 OOM 56.70 OOM 49.45 PPRGo 31.36 45.83 74.33 39.43 91.13 84.30 46.91 59.27 58.19 95.09 86.72 43.11 30.22 58.51 84.16 55.63 GRAND+ 30.20 45.54 73.80 39.37 90.85 83.70 45.11 59.27 58.19 94.82 85.95 43.11 30.23 56.49 83.38 53.20 GTs GT 34.19 64.83 68.60 54.00 OOM 85.41 61.91 56.32 54.64 OOM 86.59 23.23 OOM 77.77 OOM 73.52 Gophormer 34.90 53.16 31.48 71.00 90.60 49.18 67.13 54.98 62.62 94.98 40.40 79.83 37.44 81.49 83.34 81.95 Graphormer 35.01 50.70 33.18 73.20 OOM 35.89 51.49 81.48 72.14 89.02 OOM 85.57 40.55 68.62 OOM 71.33 SAN 36.04 59.22 73.37 46.00 OOM 85.07 67.55 59.27 57.27 94.85 OOM 29.40 39.00 80.00 OOM 80.63 GraphGPS 35.19 60.78 75.23 44.00 OOM 86.65 61.38 55.11 57.41 94.64 OOM 46.74 40.04 69.68 OOM 72.66 NAG 31.68 40.38 74.72 46.17 88.66 86.75 58.94 77.24 70.99 93.94 87.26 49.89 25.80 63.30 82.40 61.25 SpecFormer 30.74 42.29 70.33 47.69 88.05 82.49 54.00 54.32 53.77 89.22 85.58 45.77 31.44 63.26 71.82 68.90 Exphormer 36.62 59.36 68.34 65.63 89.22 78.17 68.19 61.80 57.31 94.25 86.97 76.31 42.31 79.47 83.84 80.39 SGFormer 31.06 42.37 69.91 44.61 85.40 81.41 55.19 55.19 52.53 87.93 85.07 42.80 32.86 61.61 67.03 63.86 VCR 26.41 27.28 71.15 28.13 82.45 85.41 44.89 61.64 58.32 88.45 83.25 44.66 22.48 54.68 78.46 51.33 PolyFormer 32.12 46.83 72.13 48.91 89.60 83.51 59.02 58.11 56.15 91.93 86.82 47.29 34.42 64.38 73.18 69.77 Our Best Accuracy 36.46 63.65 75.46 78.60 90.87 87.29 75.02 61.32 62.25 94.84 88.70 89.57 47.31 82.31 83.54 81.02
+
+4.3 Comparison to GNN and GT Baselines. We compare our best-performing cascade-rewired models against the five GNN and eleven GT baselines described in the experimental setup. Our top results consistently rank within the top 5 across all datasets: 1st for community , cornell , pubmed ,
+
+shape , squirrel , and texas ; 2nd for actor , computer , and wisconsin ; 3rd for chameleon ; 4th for citeseer ,
+
+cora , and grid ; and 5th for cycle , photo , and wiki (Table 6). While our best accuracy is lower than the highest accuracy achieved by baseline GNNs and GTs—by 20.16% on cycle and 9.89% on grid —it remains competitive on the other graphs, at most 1.18% lower than the best of all GNN and GT baselines. An explanation for the decline on cycle and grid is, again, that these graphs have very high label homophily but very low average degree, with highly regular structures—settings where contagion-based rewiring procedures may struggle to capture meaningful structural variations. 
+
+5 Conclusion 
+
+We introduced G RAPH CASCADES , a contagion-based mesoscopic rewiring procedure that constructs sparse auxiliary graphs for both message passing and attention. The rewiring improves structural resolution when reinforced multi-hop support is present. We provide theory connecting cascade-style reinforcement to homophily and effective resistance, clarifying how rewiring can improve label agreement while favoring mesoscopically well-supported neighbors. The cascade-rewired neighborhoods also instantiate CR-Graphormer, a sparse transformer whose token sequences are pre-selected by contagion reinforcement; this demonstrates that the auxiliary graph alone is sufficient to drive a sparse-attention GT at fixed sequence length. Across datasets, G RAPH CASCADES 
+
+improves node classification for multiple GNN and GT backbones, with the largest improvements occurring on heterophilic and moderate- to high-degree homophilic graphs. A regression study further demonstrates that performance aligns more strongly with structural properties after rewiring, indicating that the rewired structure carries the predictive signal. 
+
+Limitations. GRAPH CASCADES is less effective on highly regular, low-degree, or bottlenecked graphs, such as cycles, grids, and chain-like benchmarks including Roman-empire. In these settings, structural homogeneity and sparse connectivity limit the redundant short-path support needed for contagion-based rewiring. Theorem 3.8 formalizes this requirement, while Appendix B.10 shows that fixed-threshold TAS-κ can add a nonlocal edge only when the target is already κ-edge-connected 9to the seed’s closed neighborhood. Thus, when graphs are dominated by narrow cuts rather than cohesive mesoscopic regions, bottleneck-targeted rewiring methods may be preferable; combining these approaches is a natural direction for future work. A second limitation is that G RAPH CASCADES 
+
+is topology-only by design, making it applicable when features are noisy or scarce; on graphs with strong node features, feature-aware methods such as feature-similarity or joint feature–structure denoising can exploit signal our construction does not use. Integrating cascade-based reinforcement with feature-aware edge selection is left to future work. 
+
+References 
+
+Nimesh Agrawal, Anuj Kumar Sirohi, Sandeep Kumar, et al. No Prejudice! Fair Federated Graph Neural Networks for Personalized Recommendation. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 38, 2024. Uri Alon and Eran Yahav. On the Bottleneck of Graph Neural Networks and its Practical Implications. 
+
+International Conference on Learning Representations , 2021. Adrián Arnaiz-Rodríguez, Ahmed Begga, Francisco Escolano, and Nuria M Oliver. DiffWire: Inductive Graph Rewiring via the Lovász Bound. Proceedings of the First Learning on Graphs Conference , 2022. Hugo Attali, Davide Buscaldi, and Nathalie Pernelle. Delaunay graph: Addressing over-squashing and over-smoothing using delaunay triangulation. In Forty-first International Conference on Machine Learning , 2024. Hugo Attali, Thomas Papastergiou, Nathalie Pernelle, and Fragkiskos D Malliaros. Dynamic triangulation-based graph rewiring for graph neural networks. In Proceedings of the 34th ACM International Conference on Information and Knowledge Management , pages 87–97, 2025. Federico Barbero, Ameya Velingker, Amin Saberi, Michael M Bronstein, and Francesco Di Giovanni. Locality-aware graph rewiring in gnns. In The Twelfth International Conference on Learning Representations , 2024. Wendong Bi, Lun Du, Qiang Fu, Yanlin Wang, Shi Han, and Dongmei Zhang. Make Heterophilic Graphs Better Fit GNN: A Graph Rewiring Approach. IEEE Transactions on Knowledge and Data Engineering , 2024. Deyu Bo, Chuan Shi, Lele Wang, and Renjie Liao. Specformer: Spectral Graph Neural Networks Meet Transformers. In The Eleventh International Conference on Learning Representations , 2023. Aleksandar Bojchevski, Johannes Gasteiger, Bryan Perozzi, Amol Kapoor, Martin Blais, Benedek Rózemberczki, Michal Lukasik, and Stephan Günnemann. Scaling graph neural networks with approximate pagerank. In Proceedings of the 26th ACM SIGKDD international conference on knowledge discovery & data mining , pages 2464–2473, 2020. Damon Centola. How Behavior Spreads: The Science of Complex Contagions . Princeton University Press, 2018. Damon Centola and Michael Macy. Complex Contagions and the Weakness of Long Ties. American Journal of Sociology , 113(3):702–734, 2007. Meher Chaitanya, Kshitijaa Jaglan, and Ulrik Brandes. Adjacency Search Embeddings. Transactions on Machine Learning Research , 2025. Deli Chen, Yankai Lin, Wei Li, Peng Li, Jie Zhou, and Xu Sun. Measuring and Relieving the Over-Smoothing Problem for Graph Neural Networks from the Topological View. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 34, 2020. Dexiong Chen, Leslie O’Bray, and Karsten Borgwardt. Structure-Aware Transformer for Graph Representation Learning. In International conference on machine learning . PMLR, 2022. Jinsong Chen, Kaiyuan Gao, Gaichao Li, and Kun He. NAGphormer: A Tokenized Graph Trans-former for Node Classification in Large Graphs. In The International Conference on Learning Representations , 2023. 10 Krzysztof Marcin Choromanski, Valerii Likhosherstov, David Dohan, Xingyou Song, Andreea Gane, Tamas Sarlos, Peter Hawkins, Jared Quincy Davis, Afroz Mohiuddin, Lukasz Kaiser, David Benjamin Belanger, Lucy Colwell, and Adrian Weller. Rethinking Attention with Performers. In International Conference on Learning Representations , 2021. Ailin Deng and Bryan Hooi. Graph Neural Network-Based Anomaly Detection in Multivariate Time Series. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 35, 2021. Vijay Prakash Dwivedi and Xavier Bresson. A Generalization of Transformer Networks to Graphs. 
+
+arXiv preprint arXiv:2012.09699 , 2020. Vijay Prakash Dwivedi, Ladislav Rampášek, Michael Galkin, Ali Parviz, Guy Wolf, Anh Tuan Luu, and Dominique Beaini. Long range graph benchmark. Advances in Neural Information Processing Systems , 35:22326–22340, 2022. Vijay Prakash Dwivedi, Chaitanya K. Joshi, Anh Tuan Luu, Thomas Laurent, Yoshua Bengio, and Xavier Bresson. Benchmarking Graph Neural Networks. Journal of Machine Learning Research ,24(43):1–68, 2023. Wenzheng Feng, Yuxiao Dong, Tinglin Huang, Ziqi Yin, Xu Cheng, Evgeny Kharlamov, and Jie Tang. Grand+: Scalable graph random neural networks. In Proceedings of the ACM Web Conference 2022 , pages 3248–3258, 2022. Lukas Fesser and Melanie Weber. Mitigating Over-Smoothing and Over-Squashing using Aug-mentations of Forman-Ricci Curvature. In Learning on Graphs Conference , pages 19–1. PMLR, 2024. Dongqi Fu, Zhigang Hua, Yan Xie, Jin Fang, Si Zhang, Kaan Sancak, Hao Wu, Andrey Malevich, Jingrui He, and Bo Long. VCR-Graphormer: A Mini-Batch Graph Transformer via Virtual Connections. In The International Conference on Learning Representations , 2024. Mark Granovetter. Threshold Models of Collective Behavior. American Journal of Sociology , 83(6): 1420–1443, 1978. Florian Grötschla, Jiaqing Xie, and Roger Wattenhofer. Benchmarking Positional Encodings for GNNs and Graph Transformers. arXiv preprint arXiv:2411.12732 , 2024. Jiayan Guo, Lun Du, Wendong Bi, Qiang Fu, Xiaojun Ma, Xu Chen, Shi Han, Dongmei Zhang, and Yan Zhang. Homophily-oriented Heterogeneous Graph Rewiring. In Proceedings of the ACM web conference 2023 , pages 511–522, 2023. Will Hamilton, Zhitao Ying, and Jure Leskovec. Inductive Representation Learning on Large Graphs. 
+
+Advances in Neural Information Processing Systems , 30, 2017. Kedar Karhadkar, Pradeep Kr Banerjee, and Guido Montúfar. Fosr: First-order spectral rewiring for addressing oversquashing in gnns. arXiv preprint arXiv:2210.11790 , 2022. Kedar Karhadkar, Pradeep Kr. Banerjee, and Guido Montufar. FoSR: First-order spectral rewiring for addressing oversquashing in GNNs. In The International Conference on Learning Representations ,2023. Jinwoo Kim, Tien Dat Nguyen, Seonwoo Min, Sungjun Cho, Moontae Lee, Honglak Lee, and Seunghoon Hong. Pure Transformers are Powerful Graph Learners. In Advances in Neural Information Processing Systems , volume 35, 2022. Thomas N. Kipf and Max Welling. Semi-Supervised Classification with Graph Convolutional Networks. In International Conference on Learning Representations , 2017. Kezhi Kong, Jiuhai Chen, John Kirchenbauer, Renkun Ni, C Bayan Bruss, and Tom Goldstein. GOAT: A Global Transformer on Large-Scale Graphs. In International Conference on Machine Learning ,pages 17375–17390. PMLR, 2023. Weiyang Kong, Ziyu Guo, and Yubao Liu. Spatio-Temporal Pivotal Graph Neural Networks for Traffic Flow Forecasting. In Proceedings of the AAAI Conference on Artificial Intelligence ,volume 38, 2024. 11 Devin Kreuzer, Dominique Beaini, Will Hamilton, Vincent Létourneau, and Prudencio Tossou. Re-thinking Graph Transformers with Spectral Attention. Advances in Neural Information Processing Systems , 34:21618–21629, 2021. Xiang Li, Renyu Zhu, Yao Cheng, Caihua Shan, Siqiang Luo, Dongsheng Li, and Weining Qian. Finding global homophily in graph neural networks when meeting heterophily. In International conference on machine learning , pages 13242–13256. PMLR, 2022. Langzhang Liang, Sunwoo Kim, Kijung Shin, Zenglin Xu, Shirui Pan, and Yuan Qi. Sign is not a remedy: Multiset-to-multiset message passing for learning on heterophilic graphs. arXiv preprint arXiv:2405.20652 , 2024. Derek Lim, Joshua Robinson, Lingxiao Zhao, Tess Smidt, Suvrit Sra, Haggai Maron, and Stefanie Jegelka. Sign and Basis Invariant Networks for Spectral Graph Representation Learning. The International Conference on Learning Representations , 2023. Jonas Linkerhägner, Cheng Shi, and Ivan Dokmani´ c. Joint graph rewiring and feature denoising via spectral resonance. In The Thirteenth International Conference on Learning Representations ,2025. Sitao Luan, Chenqing Hua, Qincheng Lu, Jiaqi Zhu, Mingde Zhao, Shuyuan Zhang, Xiao-Wen Chang, and Doina Precup. Revisiting heterophily for graph neural networks. Advances in neural information processing systems , 35:1362–1375, 2022. Jiahong Ma, Mingguo He, and Zhewei Wei. Polyformer: Scalable Node-Wise Filters via Polynomial Graph Transformer. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , pages 2118–2129, 2024. Grégoire Mialon, Dexiong Chen, Margot Selosse, and Julien Mairal. Graphit: Encoding Graph Structure in Transformers. arXiv preprint arXiv:2106.05667 , 2021. Christopher Morris, Martin Ritzert, Matthias Fey, William L. Hamilton, Jan Eric Lenssen, Gaurav Rattan, and Martin Grohe. Weisfeiler and Leman Go Neural: Higher-Order Graph Neural Networks. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 33, 2019. Khang Nguyen, Nong Minh Hieu, Vinh Duc Nguyen, Nhat Ho, Stanley Osher, and Tan Minh Nguyen. Revisiting Over-Smoothing and Over-Squashing using Ollivier-Ricci Curvature. In International Conference on Machine Learning , pages 25956–25979. PMLR, 2023. Oleg Platonov, Denis Kuznedelev, Michael Diskin, Artem Babenko, and Liudmila Prokhorenkova. A critical look at the evaluation of gnns under heterophily: Are we really making progress? arXiv preprint arXiv:2302.11640 , 2023. Ladislav Rampášek, Michael Galkin, Vijay Prakash Dwivedi, Anh Tuan Luu, Guy Wolf, and Do-minique Beaini. Recipe for a General, Powerful, Scalable Graph Transformer. Advances in Neural Information Processing Systems , pages 14501–14515, 2022. Celia Rubio-Madrigal, Adarsh Jamadandi, and Rebekka Burkholz. Gnns getting comfy: Community and feature similarity guided rewiring. In The Thirteenth International Conference on Learning Representations , 2025. Hamed Shirzad, Ameya Velingker, Balaji Venkatachalam, Danica J Sutherland, and Ali Kemal Sinop. Exphormer: Sparse Transformers for Graphs. In International Conference on Machine Learning ,pages 31613–31632. PMLR, 2023. Yunchong Song, Chenghu Zhou, Xinbing Wang, and Zhouhan Lin. Ordered gnn: Ordering message passing to deal with heterophily and over-smoothing. arXiv preprint arXiv:2302.01524 , 2023. Daniel A. Spielman and Nikhil Srivastava. Graph Sparsification by Effective Resistances. In 
+
+Proceedings of the 40th Annual ACM Symposium on Theory of Computing , pages 563–568, 2008. Jake Topping, Francesco Di Giovanni, Benjamin Paul Chamberlain, Xiaowen Dong, and Michael M Bronstein. Understanding over-squashing and bottlenecks on graphs via curvature. arXiv preprint arXiv:2111.14522 , 2021. 12 Jake Topping, Francesco Di Giovanni, Benjamin Paul Chamberlain, Xiaowen Dong, and Michael M. Bronstein. Understanding over-squashing and bottlenecks on graphs via curvature. In International Conference on Learning Representations , 2022. Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Łukasz Kaiser, and Illia Polosukhin. Attention Is All You Need. Advances in Neural Information Processing Systems , 2017. Petar Veliˇ ckovi´ c, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Lio, and Yoshua Bengio. Graph Attention Networks. International Conference on Learning Representations , 2018. Qitian Wu, Wentao Zhao, Zenan Li, David P Wipf, and Junchi Yan. NodeFormer: A Scalable Graph Structure Learning Transformer for Node Classification. Advances in Neural Information Processing Systems , pages 27387–27401, 2022. Qitian Wu, Wentao Zhao, Chenxiao Yang, Hengrui Zhang, Fan Nie, Haitian Jiang, Yatao Bian, and Junchi Yan. SGFormer: Simplifying and Empowering Transformers for Large-Graph Representa-tions. Advances in Neural Information Processing Systems , pages 64753–64773, 2023. Yujun Yan, Milad Hashemi, Kevin Swersky, Yaoqing Yang, and Danai Koutra. Two sides of the same coin: Heterophily and oversmoothing in graph convolutional neural networks. In 2022 IEEE International Conference on Data Mining (ICDM) , pages 1287–1292. IEEE, 2022. Chengxuan Ying, Tianle Cai, Shengjie Luo, Shuxin Zheng, Guolin Ke, Di He, Yanming Shen, and Tie-Yan Liu. Do Transformers Really Perform Badly for Graph Representation? Advances in Neural Information Processing Systems , pages 28877–28888, 2021. Bohang Zhang, Shengjie Luo, Liwei Wang, and Di He. Rethinking the Expressive Power of GNNs via Graph Biconnectivity. In The International Conference on Learning Representations , 2023. Jianan Zhao, Chaozhuo Li, Qianlong Wen, Yiqi Wang, Yuming Liu, Hao Sun, Xing Xie, and Yanfang Ye. Gophormer: Ego-Graph Transformer for Node Classification. arXiv preprint arXiv:2110.13094 ,2021. Zhuonan Zheng, Yuanchen Bei, Zhiyao Zhou, Sheng Zhou, Yao Ma, Ming Gu, Hongjia Xu, Jiawei Chen, and Jiajun Bu. Understanding and enhancing message passing on heterophilic graphs via compatibility matrix. In The Thirty-ninth Annual Conference on Neural Information Processing Systems , 2025. Zijie Zhou, Zhaoqi Lu, Xuekai Wei, Rongqin Chen, Shenghui Zhang, Pak Lon Ip, et al. Tokenphormer: Structure-Aware Multi-Token Graph Transformer for Node Classification. In Proceedings of the AAAI Conference on Artificial Intelligence , pages 13428–13436, 2025. Jiong Zhu, Yujun Yan, Lingxiao Zhao, Mark Heimann, Leman Akoglu, and Danai Koutra. Beyond homophily in graph neural networks: Current limitations and effective designs. Advances in neural information processing systems , 33:7793–7804, 2020. 13 A GNNs and GTs: Preliminaries and Related Work 
+
+A.1 Preliminaries 
+
+GNNs. Let H ∈ Rn×d be the node features of G, with row hi ∈ Rd for node i. A GNN processes 
+
+H through message-passing layers that respect graph sparsity, updating each node’s embedding by aggregating over its one-hop neighborhood: 
+
+h′ 
+
+> i
+
+= ϕ
+
+hi, M 
+
+> j∈N(i)
+
+ψ(hi, hj )
+
+ ,
+
+where ψ and ϕ are learnable and L is a permutation-invariant aggregator. Stacking L layers expands the receptive field to L-hop neighborhoods at the cost of oversmoothing, oversquashing, and weak long-range interaction [Alon and Yahav, 2021]. Sparse variants restrict message passing to a subset of neighbors, equivalent to running the same update on a rewired graph with neighborhoods N ⋄(i) in place of N (i).
+
+GTs. GTs adopt the standard transformer block: an attention layer followed by a feed-forward operation. Dense variants [Ying et al., 2021, Mialon et al., 2021, Kreuzer et al., 2021, Zhao et al., 2021] treat each node as a token attending to every other node, encoding graph topology through positional encodings such as shortest-path embeddings [Ying et al., 2021, Zhang et al., 2023] or Laplacian eigenvectors [Dwivedi and Bresson, 2020]. The single-head self-attention update over a node set N ⋄(i) is 
+
+h′ 
+
+> i
+
+= X 
+
+> j∈N⋄(i)
+
+αij vj , αij = exp( q⊤ 
+
+> i
+
+kj /√d′)
+
+P  
+
+> r∈N⋄(i)
+
+exp( q⊤ 
+
+> i
+
+kr /√d′) ,
+
+where Q = HW Q, K = HW K , V = HW V are learnable projections with WQ, WK , WV ∈
+
+Rd×d′
+
+. Setting N ⋄(i) = N (i) recovers one-hop attention as in GATs [Veliˇ ckovi´ c et al., 2018]. Scalable sparse variants instead define N ⋄(·) via diffusion- or range-limited neighborhoods (NAG-phormer [Chen et al., 2023], VCR-Graphormer [Fu et al., 2024]) or fixed expander/landmark patterns (Exphormer [Shirzad et al., 2023]). These architectures rely on either strictly local neighborhoods or sparsified approximations of global interactions, and do not explicitly encode intermediate-scale structure. Our proposed G RAPH 
+
+CASCADES provide a structural augmentation that induces mesoscopic connectivity patterns, enabling efficient modeling of interactions beyond one-hop neighborhoods in both GNN and GT architectures. 
+
+A.2 Related Work 
+
+Existing research on GTs can be broadly classified into three categories: (i) GT architectures, (ii) positional encodings for graphs, and (iii) graph rewiring techniques. 
+
+GT Architectures. GT models adapt the self-attention mechanism of the original transformer [Vaswani et al., 2017] to graph-structured data. The GT network [Dwivedi and Bresson, 2020] applies dense self-attention across all O(n2) node pairs, achieving strong performance on several benchmarks. Subsequent architectures introduce graph-specific inductive biases into the attention mechanism: Graphormer [Ying et al., 2021] encodes node centrality and pairwise shortest-path distances; GraphiT [Mialon et al., 2021] employs kernelized relative encodings and explicit sub-path features; and SAN [Kreuzer et al., 2021] and Gophormer [Zhao et al., 2021] incorporate edge and node attributes. Although these models achieve strong performance across domains such as recommendation, question answering, and bioinformatics, their fully connected attention mechanisms incur quadratic computational cost. To address scalability, a growing body of work focuses on lightweight and sparse-attention GT variants. GraphGPS [Rampášek et al., 2022] interleaves message passing with global attention and replaces quadratic attention with linear mechanisms [Choromanski et al., 2021], whereas Exphormer [Shirzad et al., 2023] imposes expander-graph sparsity and GOAT [Kong et al., 2023] projects node features into lower-dimensional spaces. NodeFormer [Wu et al., 2022] introduces topology-aware relational biases, achieving provably linear complexity in the number of nodes. A parallel line of work embeds graphs to confine attention to compact, information-rich subsets through sparse tokenization schemes. TokenGT 14 [Kim et al., 2022] represents nodes and edges as independent tokens with structural positional encodings, achieving competitive or superior performance to GNNs on molecular benchmarks. Tokenphormer [Zhou et al., 2025] extends this idea by generating mixed random-walk, hop, and global SGPM tokens for each node, enabling applicability to both homogeneous and heterogeneous graphs; however, its multi-token aggregation lacks an explicit heterophily-aware mechanism and may introduce label noise when neighboring nodes exhibit dissimilar labels or attributes. PolyFormer [Ma et al., 2024] introduces PolyAttn, an attention-based node-wise polynomial graph filter that avoids the expensive positional encodings used by prior node-wise spectral methods, improving scalability. Building on PolyAttn, PolyFormer attends over per-node polynomial “tokens” to efficiently capture spectral information and reports strong performance on both homophilic and heterophilic node-level benchmarks, scaling to very large graphs. SGFormer [Wu et al., 2023] argues that a deep, multi-head GT is not necessary for strong performance: a single-layer global attention model can be surprisingly competitive on node property prediction while being much cheaper to run. It removes positional encodings and other preprocessing from its design and scales linearly with the number of nodes. Specformer [Bo et al., 2023] is a spectral GNN that replaces traditional scalar spectral filters with a learnable set-to-set spectral filter by encoding all Laplacian eigenvalues and applying self-attention in the spectral domain. It also introduces a learnable-basis decoder to enable non-local graph convolution, while remaining permutation-equivariant, and reports strong gains on both node- and graph-level benchmarks. NAGphormer [Chen et al., 2023] constructs fixed-length hop-aggregate token lists and performs localized self-attention within each list, improving mini-batch efficiency and neighborhood encoding. VCR-Graphormer [Fu et al., 2024] explicitly targets heterophily by introducing virtual connections and PPR-based token lists that encode both local and global dependencies while maintaining linear complexity per layer. Nevertheless, its reliance on virtual connections and structural partitioning increases preprocessing overhead and complicates scalability. In contrast, our label-free mesoscopic rewiring captures both structural and heterophily-driven relationships without requiring virtual connections or graph partitioning, yielding improved performance on heterophilic graphs, maintaining competitive accuracy on homophilic ones, and providing interpretable insights in cases where improvements are limited. 
+
+Positional Encodings for Graphs. Since graphs lack an intrinsic notion of order, GTs must rely on positional encodings to inject structural information. Laplacian-based encodings (LapPE) [Dwivedi and Bresson, 2020], full-spectrum methods [Kreuzer et al., 2021], and sign-invariant variants such as SignNet [Lim et al., 2023] assign each node absolute coordinates in a spectral space, but can be sensitive to eigenvector permutations. Random-walk and diffusion-based encodings (RWSE, RWDiffusion, RRWP) [Dwivedi et al., 2023, Grötschla et al., 2024] capture multi-scale proximity patterns, while shortest-path or distance encodings underpin Graphormer’s attention biases [Ying et al., 2021]. Weisfeiler–Lehman subtree encodings (WL-PE) [Morris et al., 2019] and edge-aware learnable schemes such as PureGT’s relative positional encodings [Kim et al., 2022] further enrich positional signals. Systematic studies [Rampášek et al., 2022] demonstrate that combining comple-mentary positional encodings (e.g., Laplacian and shortest-path encodings) yields robust gains across heterogeneous benchmarks. Overall, well-designed positional encodings are now recognized as a primary driver of GT performance, enabling discrimination of node roles, distances, and higher-order structural motifs. 
+
+Graph Rewiring Techniques. Beyond architectural design, graph rewiring has emerged as an effective strategy for improving learning on challenging graph structures. HDHGR [Guo et al., 2023] and DHGR [Bi et al., 2024] rely on (pseudo-)labels to add homophilic edges and remove heterophilic ones, which can discard informative cross-class links and make performance dependent on label quality and availability. In contrast, our mesoscopic rewiring approach is entirely label-free. It connects node pairs reinforced by multi-path short walks (Theorem 3.8) while pruning weak or noisy edges, yielding consistent gains on heterophilic graphs (Proposition 3.5 and Theorem 3.7) and remains competitive on many homophilic graphs, with predictable failures on low-degree regular structures. Our method integrates seamlessly with GTs using sparse attention or as a standalone GT, without introducing virtual edges or requiring graph partitioning. Curvature-based approaches [Topping et al., 2022, Nguyen et al., 2023, Fesser and Weber, 2024] and differentiable or spectral rewiring methods [Arnaiz-Rodríguez et al., 2022, Karhadkar et al., 2023] typically aim to increase algebraic connectivity to facilitate information flow. By contrast, our approach does not raise global connectivity or introduce shortcuts between weakly connected regions; instead, it emphasizes walk-reinforced mesoscopic ties that better capture both structural and heterophily-driven relationships. 
+
+PPRGo [Bojchevski et al., 2020] is a scalable GNN that decouples local feature transformation from 15 graph propagation and then propagates predictions using precomputed sparse approximations of personalized PageRank (PPR), avoiding expensive multi-hop message passing or per-step power iteration while keeping long-range information. It is not “rewiring” in the strict topology-editing sense (i.e., explicitly adding/removing edges in the original graph), but it does effectively replace the adjacency-based propagation with a sparsified PPR diffusion operator which is equivalent to working on an implicit new weighted neighborhood graph defined by top-PPR mass—so it is reasonable to describe it as an implicit diffusion-based rewiring mechanism. GRAND+ Feng et al. [2022] is a scalable version of GRAND that pre-computes a (generalized) mixed-order propagation matrix using a generalized forward push (GFPush) algorithm, so it can do GRAND-style random propagation graph augmentations in mini-batches, and it adds a confidence-aware consistency loss to improve generalization. It is not a formal method, i.e., it does not edit the original edge set, but because it replaces adjacency-based propagation with a learned/selected propagation matrix (a diffusion operator), it effectively induces an implicit weighted “rewired” neighborhood structure for propagation/augmentation. Our mesoscopic rewiring conceptually falls under the same “rewiring” umbrella as diffusion-based methods (e.g., PPRGo/GRAND+), but it is explicit topology construction rather than an implicit propagation operator. 
+
+Positioning Relative to Recent Rewiring Directions. Recent rewiring methods can be organized along two axes: the structural objective (bottleneck mitigation vs. neighborhood realignment) and the information used (purely structural vs. feature- or label-aware). Curvature-based [Topping et al., 2022, Nguyen et al., 2023, Fesser and Weber, 2024] and spectral [Karhadkar et al., 2023, Arnaiz-Rodríguez et al., 2022] methods are structural and target spectral bottlenecks to alleviate oversquashing. Locality-aware rewiring [Barbero et al., 2024] preserves local geometry while adding shortcuts. Feature-aware methods take a complementary route: Delaunay-based approaches [Attali et al., 2024, 2025] replace the graph via feature-space triangulation, joint spectral-resonance methods [Linkerhägner et al., 2025] co-optimize feature denoising and rewiring, and community–feature similarity methods [Rubio-Madrigal et al., 2025] combine structural and feature signals. These methods use strictly more information than the original graph topology and are most appropriate when features are reliable and informative. GRAPH CASCADES occupies a distinct position on both axes. It is purely structural and label-free, like FoSR [Karhadkar et al., 2023] and SDRF [Topping et al., 2022], but its objective is neighborhood realignment via reinforced multi-hop co-activation rather than bottleneck mitigation. Theorem 3.8 formalizes this: cascade activations are supported by κ edge-disjoint short paths, so the rewiring concentrates on cohesive mesoscopic regions rather than spanning weak cuts. Empirically, this distinction is reflected in where cascades help most — heterophilic graphs whose label structure is carried by reinforced multi-hop neighborhoods — and where they do not (chain-like or grid-like structures, where bottleneck-targeted methods remain more appropriate). G RAPH CASCADES 
+
+is therefore best understood as complementary to existing rewiring directions rather than as a replacement for any of them. 
+
+B Proofs of Theoretical Results 
+
+In this section, we provide proofs of some theoretical results introduced in the main body. 
+
+B.1 Proof of Proposition 3.5 
+
+By Bayes’ rule, 
+
+hG = Pr [S | E ] = Pr [E | S ] Pr [S]
+
+Pr [E] ,
+
+and 
+
+hF = Pr [S | F ] = Pr [F | S ] Pr [S]
+
+Pr [F] .
+
+By Assumption 3.3, Pr [F | S ] ≥ Pr [E | S ] .
+
+Therefore, 
+
+hF ≥ Pr [E | S ] Pr [S]
+
+Pr [F] = hG
+
+Pr [E]
+
+Pr [F] .
+
+16 If Assumption 3.4 also holds, then Pr [E]
+
+Pr [F] ≥ 1,
+
+and so 
+
+hF ≥ hG.
+
+If Assumption 3.3 is strict, then the first inequality above is strict, so hF > h G whenever Assump-tion 3.4 holds. If Assumption 3.4 is strict and hG > 0, then 
+
+hG
+
+Pr [E]
+
+Pr [F] > h G,
+
+and therefore, hF > h G.
+
+B.2 Proof of Theorem 3.7 
+
+We first state the lemma used in the proof for completeness. 
+
+Lemma B.1 (Chernoff/Bernstein Bounds for Poisson-Binomial Sums) . Let X = P 
+
+> i
+
+Xi, where the 
+
+Xi are independent Bernoulli random variables with mean μ = E [X]. Then, for 0 ≤ t ≤ μ,
+
+P [X − μ ≤ − t] ≤ exp 
+
+
+
+− t2
+
+2μ
+
+
+
+,
+
+and, for t ≥ 0,
+
+P [X − μ ≥ t] ≤ exp 
+
+
+
+− t2
+
+2μ + 2 t/ 3
+
+
+
+.
+
+Proof. The lower-tail inequality follows from the multiplicative Chernoff bound P [X ≤ (1 − δ)μ] ≤
+
+exp( −δ2μ/ 2) with t = δμ . The upper-tail inequality follows from Bernstein’s inequality using 
+
+Var( X) ≤ μ and |Xi − E [X]i | ≤ 1.We prove Theorem 3.7 in five steps. 
+
+Step 1: Population Identity. Fix two distinct nodes u, v with yu = a and yv = b. By definition, 
+
+s2(u, v ) = |N (u) ∩ N (v)| = X 
+
+> x∈V\{ u,v }
+
+Aux Avx .
+
+Conditional on the labels, the summands are independent across x, because different x’s involve disjoint unordered edge variables. If yx = c, then 
+
+E [Aux Avx | yu = a, y v = b, y x = c] = E [Aux | yu = a, y x = c] E [Avx | yv = b, y x = c]= Bac Bbc .
+
+Therefore, 
+
+μ(n) 
+
+> ab
+
+=
+
+> C
+
+X
+
+> c=1
+
+ nc − I (c = a) − I (c = b)Bac Bbc = n
+
+> C
+
+X
+
+> c=1
+
+πcBac Bbc + O(1) = n(BD π B⊤)ab + O(1) .
+
+Equivalently, 1
+
+n μ(n) 
+
+> ab
+
+= ( BD π B⊤)ab + O(1 /n ).
+
+Define the finite-sample profile margin and the maximum two-hop mean by 
+
+γn := min 
+
+> a∈[C]
+
+
+
+μ(n) 
+
+> aa
+
+− max  
+
+> b̸=a
+
+μ(n)
+
+> ab
+
+
+
+, μmax := max  
+
+> a,b ∈[C]
+
+μ(n) 
+
+> ab
+
+.
+
+By the population identity and ∆2 > 0,
+
+γn = n∆2 + O(1) , μmax = O(n).
+
+Thus, for all sufficiently large n,
+
+γ2 
+
+> n
+
+≥ 48 μmax log n, γn ≥ 16 log n. (3) We assume from now on that n is large enough for (3) to hold. 17 Step 2: Per-Class Midpoint Thresholds. For each class a ∈ [C], define the midpoint threshold 
+
+κ⋆a := μ(n) 
+
+> aa
+
++ max b̸=a μ(n)
+
+> ab
+
+2 .
+
+Then 
+
+μ(n) 
+
+> aa
+
+− κ⋆a = μ(n) 
+
+> aa
+
+− max b̸=a μ(n)
+
+> ab
+
+2 ≥ γn
+
+2 .
+
+For every b̸ = a,
+
+κ⋆a − μ(n) 
+
+> ab
+
+≥ κ⋆a − max   
+
+> b′̸=a
+
+μ(n) 
+
+> ab ′
+
+= μ(n) 
+
+> aa
+
+− max b′̸ =a μ(n)
+
+> ab ′
+
+2 ≥ γn
+
+2 .
+
+Thus, one threshold κ⋆a separates the same-class population mean from all different-class population means for seed class a, with margin at least γn/2 on both sides. 
+
+Step 3: Concentration Around the Midpoint. Fix distinct u, v with yu = a and yv = b. Then 
+
+s2(u, v ) is a sum of independent Bernoulli variables with mean μ(n) 
+
+> ab
+
+≤ μmax .
+
+Same-class case. Assume b = a. Let 
+
+tsame := μ(n) 
+
+> aa
+
+− κ⋆a ≥ γn/2.
+
+Since κ⋆a ≥ 0, we have tsame ≤ μ(n) 
+
+> aa
+
+, so Lemma B.1 applies: P [s2(u, v ) ≤ κ⋆a | y] ≤ exp − t2same 
+
+2μ(n)
+
+> aa
+
+!
+
+≤ exp 
+
+
+
+− γ2
+
+> n
+
+8μmax 
+
+
+
+.
+
+By (3), the exponent is at most −6 log n and therefore P [s2(u, v ) ≤ κ⋆a | y] ≤ n−6 ≤ n−4.
+
+Different-class case. Assume b̸ = a. Let 
+
+tdiff := κ⋆a − μ(n) 
+
+> ab
+
+≥ γn/2.
+
+By Lemma B.1, P [s2(u, v ) ≥ κ⋆a | y] ≤ exp − t2diff 
+
+2μ(n) 
+
+> ab
+
++ 2 tdiff /3
+
+!
+
+.
+
+For fixed μ ≥ 0, the function 
+
+ϕμ(t) := t2
+
+2μ + 2 t/ 3 , t > 0,
+
+is increasing, since 
+
+ϕ′
+
+> μ
+
+(t) = 4μt + (2 /3) t2
+
+(2 μ + 2 t/ 3) 2 > 0.
+
+Using tdiff ≥ γn/2 and μ(n) 
+
+> ab
+
+≤ μmax ,
+
+t2diff 
+
+2μ(n) 
+
+> ab
+
++ 2 tdiff /3 ≥ (γn/2) 2
+
+2μ(n) 
+
+> ab
+
++ γn/3 = γ2
+
+> n
+
+8μ(n) 
+
+> ab
+
++ (4 /3) γn
+
+≥ γ2
+
+> n
+
+8μmax + (4 /3) γn
+
+.
+
+We show that this last quantity is at least 4 log n. It is enough to prove 
+
+γ2 
+
+> n
+
+≥ 4 log n 8μmax + (4 /3) γn
+
+ = 32 μmax log n + (16 /3) γn log n. 
+
+Since γn ≥ 16 log n,
+
+(16 /3) γn log n ≤ γ2
+
+> n
+
+/3.
+
+Also γ2 
+
+> n
+
+≥ 48 μmax log n implies 
+
+32 μmax log n ≤ (2 /3) γ2
+
+> n
+
+.
+
+Therefore, 
+
+32 μmax log n + (16 /3) γn log n ≤ (2 /3) γ2 
+
+> n
+
++ (1 /3) γ2 
+
+> n
+
+= γ2
+
+> n
+
+.
+
+Hence, P [s2(u, v ) ≥ κ⋆a | y] ≤ n−4.
+
+18 Step 4: Union Bound Over Ordered Pairs. Define the favorable event 
+
+F := \  
+
+> u,v ∈V:u̸=v, y u=yv
+
+{s2(u, v ) > κ ⋆yu } ∩ \   
+
+> u,v ∈V:u̸=v, y u̸=yv
+
+{s2(u, v ) < κ ⋆yu }.
+
+There are at most n(n − 1) ≤ n2 ordered pairs (u, v ), and each corresponding failure event has probability at most n−4. Thus, P [Fc | y] ≤ n2n−4 = n−2 ≤ 2n−2.
+
+Therefore, P [F | y] ≥ 1 − 2n−2.
+
+Step 5: Uniform Separation and Top-k Homophily. On F, fix any seed u with yu = a. For every same-class candidate v and every different-class candidate w,
+
+s2(u, v ) > κ ⋆a > s 2(u, w ).
+
+Hence, every same-class candidate has strictly larger two-hop score than every different-class candi-date relative to seed u.If k ≤ min a(na − 1) , every seed u has at least k other nodes in its own class. Hence, the directed top-k rule from u selects only same-label nodes. Symmetrization cannot create a cross-label edge, because an undirected edge {u, v } appears only if at least one of the directed edges u → v or v → u
+
+was selected, and every selected directed edge is same-label. Consequently, hG⋆  
+
+> 2(k)
+
+= 1 .
+
+B.2.1 Edge Homophily of the Original SBM Corollary B.2 (Limiting Edge Homophily of the Original SBM) . Under the SBM setting above, assume PCa,b =1 πaπbBab > 0. Then the edge homophily of the original graph satisfies the following: 
+
+hGp
+
+−→  
+
+> PCa=1 π2
+> aBaa
+> PCa,b =1 πaπbBab
+
+, where p
+
+−→ denotes convergence in probability. In particular, the limit is strictly below 1/2 whenever PCa=1 π2
+
+> a
+
+Baa < P 
+
+> a̸=b
+
+πaπbBab .Proof. Let Msame denote the number of same-label edges and M the total number of edges, so that 
+
+hG = Msame /M . By independence of edges in the SBM, 
+
+E[Msame ] = 
+
+> C
+
+X
+
+> a=1
+
+na
+
+2
+
+
+
+Baa = n2
+
+2
+
+> C
+
+X
+
+> a=1
+
+π2
+
+> a
+
+Baa + O(n), (4) and 
+
+E[M ] = 
+
+> C
+
+X
+
+> a=1
+
+na
+
+2
+
+
+
+Baa + X
+
+> a<b
+
+nanbBab = n2
+
+2
+
+> C
+
+X
+
+> a,b =1
+
+πaπbBab + O(n). (5) Both Msame and M are sums of independent Bernoulli random variables, so 
+
+Var( M ) ≤ E[M ], Var( Msame ) ≤ E[Msame ].
+
+Since P 
+
+> a,b
+
+πaπbBab > 0, (5) gives E[M ] = Θ( n2), so Chebyshev’s inequality implies M/ E[M ] p
+
+−→
+
+1. If P 
+
+> a
+
+π2
+
+> a
+
+Baa > 0, the same argument applied to (4) gives Msame /E[Msame ] p
+
+−→ 1, and the continuous-mapping theorem yields 
+
+hGp
+
+−→
+
+PCa=1 π2
+
+> a
+
+Baa 
+
+PCa,b =1 πaπbBab 
+
+. (6) If P 
+
+> a
+
+π2
+
+> a
+
+Baa = 0 , then Baa = 0 for every a with πa > 0, so Msame = 0 deterministically and (6) still holds with limit zero. 19 B.3 Learnability After Cascade Rewiring Corollary B.3 (Learnability After Cascade Rewiring) . Assume the setting and profile-margin con-dition of Theorem 3.7, and let G⋆
+
+> 2
+
+(k) be the symmetrized top-k two-hop cascade-rewired graph, with k ≤ min a∈[C](na − 1) . Suppose, independently of the graph conditional on the labels, node features are generated by Xi = μyi + σξ i, ξi ∼ N (0 , I d), where μ1, . . . , μ C ∈ Rd,
+
+σ > 0, and ∆ := min a̸=b ∥μa − μb∥2 > 0. For each node i, let N⋆(i) denote its neighborhood in G⋆
+
+> 2
+
+(k), and define Zi := 1
+
+> qi
+
+P 
+
+> j∈{ i}∪ N⋆(i)
+
+Xj , qi := |{ i} ∪ N⋆(i)|. Consider the nearest-centroid affine linear classifier byi := arg max a∈[C]
+
+μ⊤ 
+
+> a
+
+Zi − 12 ∥μa∥22 . Then, with probability at least 1 − 2n−2 − n(C − 1) exp 
+
+
+
+− (k+1)∆ 2
+
+> 8σ2
+
+
+
+, all nodes are classified correctly. In particular, if (k+1)∆ 2 
+
+> 8σ2
+
+≥ log n + log( C − 1) + rn for some rn → ∞ , then Pr [byi = yi for all i ∈ V ] → 1.Moreover, the expected misclassification fraction satisfies E  1
+
+> n
+
+Pni=1 1{byi̸ = yi} ≤ 2n−2 + ( C −
+
+1) exp 
+
+
+
+− (k+1)∆ 2
+
+> 8σ2
+
+
+
+.
+
+Proof. We prove the result conditional on the label vector y = ( y1, . . . , y n). All probabilities below are over the randomness of the graph and the Gaussian features. The same bounds hold unconditionally if the labels are random and independent of the feature noise. Let 
+
+Ehom := {G⋆
+
+> 2
+
+(k) is perfectly homophilic } .
+
+By Theorem 3.7, under the stated profile-margin condition, Pr [Ehom ] ≥ 1 − 2n−2. Equivalently, Pr [Ec
+
+> hom
+
+] ≤ 2n−2. We first analyze the classifier on the event Ehom . Fix a realization of G⋆
+
+> 2
+
+(k) for which Ehom holds. Since G⋆
+
+> 2
+
+(k) is perfectly homophilic, every edge of G⋆
+
+> 2
+
+(k) connects two vertices with the same label. Therefore, for every node i, every vertex in {i} ∪ N⋆(i) has label yi.Moreover, because G⋆
+
+> 2
+
+(k) is the symmetrization of a directed top-k graph, node i is adjacent in the symmetrized graph to at least the k vertices selected by the directed top-k rule from i. Hence, 
+
+qi = |{ i} ∪ N⋆(i)| ≥ k + 1 .
+
+Fix a node i ∈ V and let a := yi. On Ehom , every j ∈ { i} ∪ N⋆(i) has label a. Since the features are independent conditional on the labels, and are independent of the graph conditional on the labels, we have, conditional on G⋆
+
+> 2
+
+(k), Ehom , and the labels, 
+
+Xj ∼ N (μa, σ 2Id) independently for all j ∈ { i} ∪ N⋆(i).
+
+Therefore, 
+
+Zi = 1
+
+qi
+
+X
+
+> j∈{ i}∪ N⋆(i)
+
+Xj ∼ N 
+
+
+
+μa, σ2
+
+qi
+
+Id
+
+
+
+.
+
+Equivalently, we may write 
+
+Zi = μa + ηi, ηi ∼ N 
+
+
+
+0, σ2
+
+qi
+
+Id
+
+
+
+.
+
+The classifier is the nearest-centroid classifier because 
+
+arg max 
+
+> c∈[C]
+
+
+
+μ⊤ 
+
+> c
+
+Zi − 12 ∥μc∥22
+
+
+
+= arg min  
+
+> c∈[C]
+
+∥Zi − μc∥22.
+
+As 
+
+∥Zi − μc∥22 = ∥Zi∥22 − 2μ⊤ 
+
+> c
+
+Zi + ∥μc∥22,
+
+the term ∥Zi∥22 does not depend on c.Now fix an incorrect class b̸ = a. The classifier can prefer b over the true class a only if 
+
+∥Zi − μb∥22 ≤ ∥ Zi − μa∥22.
+
+Substituting Zi = μa + ηi, and defining 
+
+δab := μa − μb,
+
+20 this event becomes 
+
+∥ηi + δab ∥22 ≤ ∥ ηi∥22.
+
+Expanding both sides gives 
+
+∥ηi∥22 + 2 δ⊤
+
+> ab
+
+ηi + ∥δab ∥22 ≤ ∥ ηi∥22,
+
+or equivalently 
+
+δ⊤
+
+> ab
+
+ηi ≤ − 12 ∥δab ∥22.
+
+Since 
+
+ηi ∼ N 
+
+
+
+0, σ2
+
+qi
+
+Id
+
+
+
+,
+
+the one-dimensional projection satisfies 
+
+δ⊤
+
+> ab
+
+ηi ∼ N 
+
+
+
+0, σ2
+
+qi
+
+∥δab ∥22
+
+
+
+.
+
+Using the standard Gaussian tail bound Pr [W ≤ − t] ≤ exp 
+
+
+
+− t2
+
+2s2
+
+
+
+, W ∼ N (0 , s 2),
+
+with 
+
+t = 12 ∥δab ∥22, s2 = σ2
+
+qi
+
+∥δab ∥22,
+
+we obtain Pr ∥Zi − μb∥22 ≤ ∥ Zi − μa∥22 G⋆
+
+> 2
+
+(k), Ehom , y  ≤ exp 
+
+
+
+− qi∥δab ∥22
+
+8σ2
+
+
+
+.
+
+By the definitions of qi and ∆,
+
+qi ≥ k + 1 , ∥δab ∥2 = ∥μa − μb∥2 ≥ ∆.
+
+Hence, Pr ∥Zi − μb∥22 ≤ ∥ Zi − μa∥22 G⋆
+
+> 2
+
+(k), Ehom , y  ≤ exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+.
+
+Taking a union bound over all incorrect classes b̸ = a, we get Pr [byi̸ = yi | G⋆
+
+> 2
+
+(k), Ehom , y ] ≤ (C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+.
+
+This bound is uniform in the realization of G⋆
+
+> 2
+
+(k) on Ehom . Therefore, Pr [byi̸ = yi | E hom , y ] ≤ (C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+.
+
+Next, taking a union bound over all n vertices gives Pr [∃i ∈ V : byi̸ = yi | E hom , y ] ≤ n(C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+.
+
+Therefore, Pr [∃i ∈ V : byi̸ = yi] ≤ Pr [Ec
+
+> hom
+
+] + Pr [∃i ∈ V : byi̸ = yi | E hom , y ]
+
+≤ 2n−2 + n(C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+.
+
+Equivalently, with probability at least 
+
+1 − 2n−2 − n(C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+,
+
+21 we have 
+
+byi = yi for all i ∈ V. 
+
+Now suppose 
+
+(k + 1)∆ 2
+
+8σ2 ≥ log n + log( C − 1) + rn,
+
+where rn → ∞ . Then 
+
+n(C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+≤ n(C − 1) exp ( − log n − log( C − 1) − rn) = e−rn → 0.
+
+Since also 2n−2 → 0, we conclude that Pr [byi = yi for all i ∈ V ] → 1.
+
+It remains to prove the expected misclassification fraction bound. Define 
+
+Ln := 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+1{byi̸ = yi}.
+
+Since 0 ≤ Ln ≤ 1,
+
+E[Ln] = E[Ln1Ehom ] + E[Ln1Ec 
+
+> hom
+
+] ≤ E[Ln1Ehom ] + Pr [(] Ec
+
+> hom
+
+).
+
+Using the single-node error bound on Ehom ,
+
+E[Ln1Ehom ] = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+Pr [byi̸ = yi, Ehom ]
+
+≤ 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+(C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+= ( C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+.
+
+Combining this with Pr [Ec
+
+> hom
+
+] ≤ 2n−2, we obtain 
+
+E
+
+"
+
+1
+
+n
+
+> n
+
+X
+
+> i=1
+
+1{byi̸ = yi}
+
+#
+
+≤ 2n−2 + ( C − 1) exp 
+
+
+
+− (k + 1)∆ 2
+
+8σ2
+
+
+
+.
+
+B.4 Extending Profile Homophily on SBM : ℓ ≥ 2
+
+Lemma B.4 (Hoeffding Bound for Dependency Graphs) . Let X1, . . . , X N ∈ [0 , 1] be random variables with a dependency graph of maximum degree ∆. That is, whenever two disjoint index sets have no edge between them in the dependency graph, the corresponding collections of random variables are independent. Let S := PNi=1 Xi. Then, for every t > 0,
+
+Pr [|S − ES| ≥ t] ≤ 2 exp 
+
+
+
+− 2t2
+
+(∆ + 1) N
+
+
+
+.
+
+Proof. Let χ be the chromatic number of the dependency graph. Since the maximum degree is ∆,we have χ ≤ ∆ + 1 . Let I1, . . . , I χ be a proper coloring of the dependency graph and define 
+
+Sj := X
+
+> i∈Ij
+
+Xi.
+
+Within each color class Ij , the variables are mutually independent. For λ > 0, Hölder’s inequality gives 
+
+E exp ( λ(S − ES)) = E
+
+> χ
+
+Y
+
+> j=1
+
+exp ( λ(Sj − ESj )) ≤
+
+> χ
+
+Y
+
+> j=1
+
+[E exp ( χλ (Sj − ESj ))] 1/χ .
+
+22 Since the variables in each Sj are independent and lie in [0 , 1] , Hoeffding’s lemma gives 
+
+E exp ( χλ (Sj − ESj )) ≤ exp 
+
+ χ2λ2|Ij |
+
+8
+
+
+
+.
+
+Therefore, 
+
+E exp ( λ(S − ES)) ≤ exp 
+
+ χλ 2
+
+8
+
+> χ
+
+X
+
+> j=1
+
+|Ij |
+
+ = exp 
+
+ χλ 2N
+
+8
+
+
+
+.
+
+Chernoff’s bound yields Pr [S − ES ≥ t] ≤ exp 
+
+
+
+− 2t2
+
+χN 
+
+
+
+≤ exp 
+
+
+
+− 2t2
+
+(∆ + 1) N
+
+
+
+.
+
+The lower tail is identical. Combining the two tails proves the claim. 
+
+B.5 Profile Homophily of ℓ-Hop Top-k Selection Theorem B.5 (Profile Homophily of ℓ-Hop Top-k Selection) . Let G ∼ SBM( n, π, B ) be a C-block stochastic block model with fixed block sizes na = πan, where πa > 0 and PCa=1 πa = 1 .Assume B ∈ [0 , 1] C×C is symmetric. Conditional on the labels, edges are independent and 
+
+Pr [Auv = 1 | yu = a, y v = b] = Bab . Let Dπ := diag( π1, . . . , π C ). Fix an integer ℓ ≥ 2 indepen-dent of n. For two distinct nodes u, v , define the raw ℓ-hop reinforcement score sℓ(u, v ) := ( Aℓ)uv ,i.e., the number of length-ℓ walks from u to v. Define the ℓ-hop profile matrix Kℓ := B(Dπ B)ℓ−1,and assume that Kℓ separates same-label pairs from different-label pairs: 
+
+∆ℓ := min 
+
+> a∈[C]
+
+
+
+(Kℓ)aa − max  
+
+> b̸=a
+
+(Kℓ)ab 
+
+
+
+> 0.
+
+Then, with probability 1 − o(1) , for every seed node u ∈ V and every pair of distinct nodes 
+
+v, w ∈ V \ { u} satisfying yv = yu and yw̸ = yu, we have sℓ(u, v ) > s ℓ(u, w ). Consequently, for every k ≤ min a∈[C](na − 1) , the directed top-k graph obtained by connecting each node u
+
+to the k nodes v̸ = u with largest raw score sℓ(u, v ) contains only same-label directed edges. Its symmetrization is therefore perfectly homophilic: hG⋆ℓ (k) = 1 with probability 1 − o(1) .Proof. We first establish a finite-sample concentration bound. The asymptotic statement follows because ∆ℓ > 0 implies the finite-sample margin condition for all sufficiently large n.Throughout the proof, probabilities and expectations are conditional on the fixed labels; we suppress this conditioning from the notation. 
+
+Step 1: ℓ-Hop Profile Mean. Fix two distinct nodes u, v with labels yu = a and yv = b. The raw score 
+
+sℓ(u, v ) = ( Aℓ)uv 
+
+counts length-ℓ walks 
+
+u = x0, x 1, . . . , x ℓ−1, x ℓ = v. 
+
+First consider walks whose intermediate nodes x1, . . . , x ℓ−1 are all distinct and different from u or v.For a label sequence 
+
+c1, . . . , c ℓ−1 ∈ [C],
+
+the number of such intermediate tuples with yxi = ci is 
+
+nℓ−1πc1 · · · πcℓ−1 + Oℓ(nℓ−2).
+
+For each such tuple, conditional independence of SBM edges gives 
+
+E Aux 1 Ax1x2 · · · Axℓ−1v
+
+ = Bac 1 Bc1c2 · · · Bcℓ−1b.
+
+Therefore the expected number of simple length-ℓ paths from u to v is 
+
+nℓ−1 X
+
+> c1,...,c ℓ−1
+
+πc1 · · · πcℓ−1 Bac 1 Bc1c2 · · · Bcℓ−1b + Oℓ(nℓ−2).
+
+23 The summation is exactly the (a, b ) entry of 
+
+B(Dπ B)ℓ−1 = Kℓ.
+
+The remaining length-ℓ walks, namely those with repeated vertices or with an intermediate vertex equal to u or v, are at most Oℓ(nℓ−2) in number. Since each contributes at most one, their total contribution to the expectation is also Oℓ(nℓ−2). Hence, 
+
+μ(ℓ,n ) 
+
+> ab
+
+= nℓ−1(Kℓ)ab + Oℓ(nℓ−2).
+
+Step 2: Uniform Concentration of Raw ℓ-Hop Scores. Let esℓ(u, v ) denote the number of simple length-ℓ paths from u to v. We can write 
+
+esℓ(u, v ) = X
+
+> x
+
+Zx,
+
+where x = ( x1, . . . , x ℓ−1) ranges over valid simple intermediate tuples and 
+
+Zx := Aux 1 Ax1x2 · · · Axℓ−1v .
+
+Each Zx is a Bernoulli random variable. Construct a dependency graph on the variables {Zx} by connecting two variables whenever their corresponding paths share at least one edge. If two collections of variables have no edge between them in this dependency graph, then their underlying sets of SBM edge variables are disjoint. Hence, the collections are independent, so this is a valid dependency graph. The number of variables is 
+
+N = Oℓ(nℓ−1).
+
+The maximum degree of the dependency graph satisfies 
+
+∆ = Oℓ(nℓ−2).
+
+Indeed, fix one simple length-ℓ path from u to v. Another simple length-ℓ path can share one of its 
+
+ℓ edges. If the shared edge is the first edge incident to u, or the last edge incident to v, then one intermediate coordinate is fixed and the remaining ℓ − 2 intermediate coordinates are free, giving 
+
+Oℓ(nℓ−2) choices. If the shared edge is internal, then two intermediate coordinates are fixed and only 
+
+ℓ − 3 remain free, giving Oℓ(nℓ−3) choices. The endpoint-edge cases dominate, so 
+
+∆ = Oℓ(nℓ−2).
+
+For ℓ = 2 , distinct simple two-hop paths between fixed endpoints share no edge, so the dependency degree is zero; this is also covered by the bound above. By Lemma B.4, for a sufficiently large constant Cℓ > 0 depending only on ℓ and C, for every fixed ordered pair (u, v ),Pr 
+
+h
+
+|esℓ(u, v ) − Eesℓ(u, v )| > C ℓnℓ− 32
+
+plog n
+
+i
+
+≤ 2n−4.
+
+Indeed, 
+
+N (∆ + 1) = Oℓ(n2ℓ−3),
+
+so the deviation scale from Lemma B.4 is 
+
+pN (∆ + 1) log n = Oℓ
+
+
+
+nℓ− 32
+
+plog n
+
+
+
+.
+
+Taking a union bound over at most n2 ordered pairs, with probability at least 1 − 2n−2,
+
+|esℓ(u, v ) − Eesℓ(u, v )| ≤ Cℓnℓ− 32
+
+plog n
+
+simultaneously for all distinct u, v .It remains to pass from simple paths to all walks. Let 
+
+sℓ(u, v ) = esℓ(u, v ) + Rℓ(u, v ),
+
+24 where Rℓ(u, v ) counts non-simple length-ℓ walks from u to v. As in Step 1, 
+
+0 ≤ Rℓ(u, v ) ≤ C′
+
+> ℓ
+
+nℓ−2
+
+for a constant C′ 
+
+> ℓ
+
+> 0 depending only on ℓ and C. Therefore, 
+
+0 ≤ ERℓ(u, v ) ≤ C′
+
+> ℓ
+
+nℓ−2.
+
+Hence, 
+
+sℓ(u, v ) − μ(ℓ,n ) 
+
+> yuyv
+
+≤ | esℓ(u, v ) − Eesℓ(u, v )| + 2 C′
+
+> ℓ
+
+nℓ−2.
+
+After increasing Cℓ if necessary, we obtain the uniform bound 
+
+sℓ(u, v ) − μ(ℓ,n ) 
+
+> yuyv
+
+≤ Cℓnℓ− 32
+
+plog n + Cℓnℓ−2 =: εn,ℓ 
+
+simultaneously for all distinct u, v , with probability at least 1 − 2n−2.
+
+Step 3: Uniform Separation of Same-Label and Different-Label Scores. Define the finite-sample class-separation margin 
+
+γn,ℓ := min 
+
+> a∈[C]
+
+
+
+μ(ℓ,n ) 
+
+> aa
+
+− max  
+
+> b̸=a
+
+μ(ℓ,n )
+
+> ab
+
+
+
+.
+
+By Step 1, γn,ℓ = nℓ−1∆ℓ + Oℓ(nℓ−2). Assume the concentration event from Step 2 holds. Fix a seed node u with label yu = a. Let v satisfy yv = a, and let w satisfy yw = b̸ = a. Then 
+
+sℓ(u, v ) ≥ μ(ℓ,n ) 
+
+> aa
+
+− εn,ℓ ,
+
+while 
+
+sℓ(u, w ) ≤ μ(ℓ,n ) 
+
+> ab
+
++ εn,ℓ ≤ μ(ℓ,n ) 
+
+> aa
+
+− γn,ℓ + εn,ℓ .
+
+Since ∆ℓ > 0, we have γn,ℓ = nℓ−1∆ℓ + Oℓ(nℓ−2), while εn,ℓ = Oℓ(nℓ−3/2√log n). Hence, 
+
+γn,ℓ > 2εn,ℓ for all sufficiently large n and 
+
+sℓ(u, v ) > s ℓ(u, w ).
+
+In particular, sℓ(u, v ) > s ℓ(u, w ) holds whenever the finite-sample margin satisfies γn,ℓ > 2εn,ℓ ,with εn,ℓ = Cℓnℓ−3/2√log n + Cℓnℓ−2. since 
+
+εn,ℓ = Cℓnℓ− 32
+
+plog n + Cℓnℓ−2.
+
+Thus, uniformly over every seed node, every same-label candidate has strictly larger raw ℓ-hop score than every different-label candidate. 
+
+Step 4: Homophily of the Top-k Graph. Assume 
+
+k ≤ min 
+
+> a∈[C]
+
+(na − 1) .
+
+Then every seed node u has at least k other nodes with the same label. By Step 3, all same-label candidates have larger score sℓ(u, ·) than all different-label candidates. Therefore, every directed top-k edge u → v satisfies 
+
+yu = yv .
+
+Symmetrization cannot create a cross-label edge, since an undirected edge {u, v } is included only if at least one of the directed edges u → v or v → u was selected. Hence, the symmetrized graph is perfectly homophilic: 
+
+hG⋆ℓ (k) = 1 .
+
+Finally, suppose ∆ℓ > 0. By Step 1, 
+
+μ(ℓ,n ) 
+
+> ab
+
+= nℓ−1(Kℓ)ab + Oℓ(nℓ−2).
+
+Therefore, 
+
+γn,ℓ = nℓ−1∆ℓ + Oℓ(nℓ−2).
+
+Since 
+
+nℓ−1 ≫ nℓ− 32
+
+plog n + nℓ−2,
+
+so γn,ℓ > 2εn,ℓ holds for all sufficiently large n. Hence, the perfect-homophily conclusion holds with probability 1 − o(1) .25 B.6 Proof of Lemma 3.9 (Effective Resistance Characterization) Activation Times and the Activation DAG. For every x ∈ Av , define its activation time 
+
+T (x) := min {t ∈ { 0, 1, . . . , ℓ } : x ∈ Svt }.
+
+Thus, T (x) = 0 for x ∈ Sv 
+
+> 0
+
+, and T (x) ≥ 1 for every non-initially active vertex. Construct a directed graph Dv = ( Av ,⃗ E v ) as follows. For every edge {a, b } ∈ E(Gv ) with T (a) < T (b), include the directed arc a → b. If T (a) = T (b), include no arc corresponding to {a, b }. Thus, every arc strictly increases activation time, so Dv is acyclic. 
+
+Cut Lower Bound on Subsets Disjoint From Sv 
+
+> 0
+
+. We first prove a cut lower bound. Let U ⊆ Av be nonempty and suppose U ∩ Sv 
+
+> 0
+
+= ∅. Choose x ∈ U minimizing T (x) over all vertices in U . Since 
+
+U ∩ Sv 
+
+> 0
+
+= ∅, we have T (x) ≥ 1. By minimality of T (x), no vertex of U is active before time T (x),so 
+
+U ∩ SvT (x)−1 = ∅.
+
+Because x first activates at time T (x), the uniform threshold condition gives 
+
+N (x) ∩ SvT (x)−1 ≥ κ. 
+
+Every vertex y ∈ N (x) ∩ SvT (x)−1 lies outside U , and satisfies T (y) < T (x). Hence, the edge {y, x }
+
+appears in Dv as the incoming arc y → x. Therefore, at least κ arcs enter U :
+
+δ− 
+
+> Dv
+
+(U ) ≥ N (x) ∩ SvT (x)−1 ≥ κ, 
+
+where 
+
+δ− 
+
+> Dv
+
+(U ) := {(a, b ) ∈⃗ E v : a ∈ Av \ U, b ∈ U }.
+
+Augmented Network and Capacity Assignment. We now add a new source vertex s. For every 
+
+z ∈ Sv 
+
+> 0
+
+, add an arc s → z of capacity κ, and give every arc of Dv capacity 1. We claim that every 
+
+s-u cut in this network has capacity at least κ.
+
+Lower Bound on Every s-u Cut. Let X be the source side of an arbitrary s-u cut, so s ∈ X and 
+
+u / ∈ X. Define 
+
+U := Av \ X. 
+
+Then u ∈ U , so U̸ = ∅. If U ∩ Sv
+
+> 0
+
+̸ = ∅, then for any z ∈ U ∩ Sv 
+
+> 0
+
+, the source arc s → z crosses the cut and has capacity κ. Hence, the cut has capacity at least κ.It remains to consider the case U ∩ Sv 
+
+> 0
+
+= ∅. By the cut lower bound proved above, 
+
+δ− 
+
+> Dv
+
+(U ) ≥ κ. 
+
+Each arc in δ− 
+
+> Dv
+
+(U ) crosses from X ∩ Av into U = Av \ X, and each such arc has capacity 1. Thus, the cut again has capacity at least κ.
+
+Max-Flow/Min-Cut and Integral Decomposition. Therefore, every s-u cut has capacity at least κ.By the max-flow/min-cut theorem, the maximum s-u flow has value at least κ. Since all capacities are integral, there is an integral flow of value at least κ. Decomposing this flow into directed s-u
+
+paths and selecting any κ unit-flow paths, we obtain κ directed paths from s to u. The source arcs 
+
+s → z may be used more than once, but every arc of Dv has unit capacity, so the portions of these paths inside Dv are pairwise arc-disjoint. Removing the initial source arcs gives κ pairwise arc-disjoint directed paths in Dv , each starting at some vertex of Sv 
+
+> 0
+
+and ending at u. Since Dv contains at most one orientation of any undirected edge of Gv , these directed paths correspond to κ pairwise edge-disjoint undirected paths in Gv .
+
+Length Bound. Finally, along every directed path in Dv , activation time strictly increases at each arc. A directed path starting in Sv 
+
+> 0
+
+starts at activation time 0 and ends at activation time T (u). Hence, it has at most T (u) arcs, and so each resulting undirected path has length at most T (u) ≤ ℓ.
+
+B.7 Proof of Lemma 3.10 
+
+If some path Pi intersects S in more than one vertex, replace Pi by the suffix of Pi beginning at its last vertex in S and ending at u. This operation does not increase its length and preserves pairwise edge-disjointness. Hence, we may assume that each Pi meets S only at its initial endpoint. 26 Orient each path Pi from u toward its endpoint in S, and send 1/κ units of current along Pi. Since the paths are pairwise edge-disjoint, every used edge carries current of magnitude exactly 1/κ , and all unused edges carry zero current. The superposition of these path flows is a unit flow from u to the set S: the total outflow from u is 1, the total inflow into S is 1, and flow is conserved at every vertex in W \ (S ∪ { u}).By Thomson’s principle, effective resistance is the minimum energy over all unit flows from u to S.Therefore, 
+
+RH 
+
+> eff
+
+(S, u ) ≤ X
+
+> e∈F
+
+f (e)2 =
+
+> κ
+
+X
+
+> i=1
+
+ℓi
+
+ 1
+
+κ
+
+2
+
+= 1
+
+κ2
+
+> κ
+
+X
+
+> i=1
+
+ℓi.
+
+If ℓi ≤ L for all i, this gives 
+
+RH 
+
+> eff
+
+(S, u ) ≤ 1
+
+κ2 · κL = Lκ .
+
+B.8 Proof of Theorem 3.8 
+
+Fix u ∈ Svℓ \Sv 
+
+> 0
+
+. By Lemma 3.9, the induced activated subgraph Gv contains κ pairwise edge-disjoint paths from Sv 
+
+> 0
+
+to u, each of length at most T (u). Applying Lemma 3.10 with H = Gv , S = Sv 
+
+> 0
+
+, and 
+
+L = T (u), we obtain 
+
+RGv 
+
+> eff
+
+(Sv 
+
+> 0
+
+, u ) ≤ T (u)
+
+κ .
+
+Since u activates by time ℓ, T (u) ≤ ℓ. Hence, 
+
+RGv 
+
+> eff
+
+(Sv 
+
+> 0
+
+, u ) ≤ T (u)
+
+κ ≤ ℓκ .
+
+B.9 Finite-Sample Cascade Scores and Short-Walk Reinforcement 
+
+In the main text we define the short-walk event FL := {(A2 +· · · +AL)uv ≥ κ} as a population-level proxy for the empirical co-activation score fv (u). The following result makes this relation precise. It is stated conditional on the input graph G; if G is random, the same statement holds conditionally on 
+
+G.
+
+Theorem B.6 (Empirical Cascade Scores and Short-Walk Support) . Let G = ( V, E ) be a fixed undirected graph with adjacency matrix A and |V | = n. For each seed v ∈ V with Nv ≥ 1,let Sv,b denote the final active set of cascade realization b, and define bpv (u) := 1
+
+> Nv
+
+PNv 
+
+> b=1
+
+1{u ∈
+
+Sv,b \ { v}} , pv (u) := Ebpv (u). Assume that, for each such seed v, the Nv realizations can be partitioned into independent blocks Bv, 1, . . . , B v,m v with sizes av,j = |Bv,j |; dependence within a block is permitted. Let Neff (v) := 
+
+ Pmv j=1 av,j 
+
+2 
+
+> Pmv j=1 a2
+> v,j
+
+= N 2 
+
+> vPmv j=1 a2
+> v,j
+
+denote the effective number of independent cascade samples for seed v. Then the following statements hold. 
+
+(i) (Concentration.) For any δ ∈ (0 , 1) , with probability at least 1 − δ, for every ordered pair 
+
+(v, u ) with u̸ = v and Nv ≥ 1, bpv (u)−pv (u) ≤ εv (δ) := 
+
+r
+
+> log
+
+ 2n(n−1) /δ 
+
+  
+
+> 2Neff (v)
+
+. Equivalently, 
+
+|fv (u) − Nv pv (u)| ≤ Nv εv (δ) uniformly over all such pairs. we apply a union bound over the n(n − 1) ordered pairs (v, u ) with u̸ = v, which already accounts for the union across seeds. 
+
+(ii) (Top-k Stability.) Fix a seed v and an integer k with 1 ≤ k ≤ n − 2. Let Tk(v) denote the population top-k set under pv and bTk(v) the empirical top-k set under bpv , using a common deterministic tie-breaking rule. Let pv, (1) ≥ pv, (2) ≥ · · · be the sorted values of 
+
+{pv (u) : u̸ = v}, and define the population margin γv := pv, (k) − pv, (k+1) . If γv > 2εv (δ),then bTk(v) = Tk(v) on the event of part (i) .
+
+(iii) (Short-Walk Certificate for Fixed-Threshold TAS.) Suppose the cascade rule is fixed-threshold TAS-τ with τ ≥ 1, initialization Sv 
+
+> 0
+
+= {v} ∪ R for some R ⊆ N (v), and at most ℓ post-initialization vertex activations. The conclusion below applies both to the 
+
+27 clean sequential TAS rule of Section 2.1 and to the hub-restricted implementation, provided that any activation requires at least τ distinct already-active support vertices. Then for every nonlocal node u / ∈ N [v], fv (u) > 0 implies Pℓ+1 
+
+> s=2
+
+(As)vu ≥ τ .The same implication holds with pv (u) > 0 in place of fv (u) > 0. When counts are aggregated over a threshold set T , the implication holds unconditionally with τmin := min T ; if threshold-specific counts f (τ ) 
+
+> v
+
+(u) are retained, the implication holds for that threshold τ .Proof. For (i) , fix an ordered pair (v, u ), u̸ = v, with Nv ≥ 1. For block j, define 
+
+Yv,j (u) := X
+
+> b∈Bv,j
+
+1{u ∈ Sv,b \ { v}} .
+
+The variables Yv, 1(u), . . . , Y v,m v (u) are independent by assumption and satisfy 0 ≤ Yv,j (u) ≤ av,j .Since 
+
+bpv (u) = 1
+
+NvmvX
+
+> j=1
+
+Yv,j (u),
+
+Hoeffding’s inequality for independent bounded random variables gives, for every ϵ > 0,Pr  bpv (u) − pv (u) ≥ ϵ ≤ 2 exp − 2N 2 
+
+> v
+
+ϵ2
+
+Pmv 
+
+> j=1
+
+a2
+
+> v,j
+
+!
+
+= 2 exp  −2Neff (v)ϵ2 .
+
+Taking 
+
+ϵ =
+
+s
+
+log  2n(n − 1) /δ 
+
+2Neff (v)
+
+makes the failure probability at most δ/ (n(n − 1)) . A union bound over all n(n − 1) ordered pairs 
+
+(v, u ), u̸ = v, proves (i) . Pairs with seeds for which no cascades are run are excluded by the condition 
+
+Nv ≥ 1.For (ii) , work on the event from (i) and fix v. For any a ∈ Tk(v) and b / ∈ Tk(v), the population margin gives pv (a) − pv (b) ≥ γv . Therefore, 
+
+bpv (a) − bpv (b) ≥ pv (a) − pv (b) − 2εv (δ) ≥ γv − 2εv (δ) > 0.
+
+Thus, every population top-k node has a strictly larger empirical score than every non-top-k node, so the empirical and population top-k sets coincide. For (iii) , consider a single TAS-τ realization from seed v. Order the post-initialization activations by their insertion time. We first show by induction that, after r post-initialization activations, every active vertex other than v itself has a walk from v of length at most r + 1 , while v itself has a trivial length-zero walk. At initialization, every vertex in R ⊆ N (v) has a length-one walk from v, so the claim holds for r = 0 . If x is the (r + 1) -st activated vertex, the TAS rule activates x only after at least one already-active support vertex z ∈ N (x) has been observed, because τ ≥ 1. By the induction hypothesis, z has a walk from v of length at most r + 1 , or z = v has a length-zero walk. Appending the edge (z, x ) gives a walk from v to x of length at most r + 2 . This proves the induction claim. Now let u / ∈ N [v] be activated as the r-th post-initialization activation, where 1 ≤ r ≤ ℓ. Since 
+
+u / ∈ N [v], it was not active at initialization. At the activation time of u, the rule has observed at least τ distinct already-active support vertices z1, . . . , z τ ∈ N (u). By the induction claim, each zi
+
+has a walk from v of length at most r, or a length-zero walk if zi = v. The latter case is impossible because zi ∈ N (u) and u / ∈ N [v] imply zi̸ = v. Appending the distinct final edges (zi, u ) gives τ
+
+walks from v to u, each of length at most r + 1 ≤ ℓ + 1 . These walks are distinct because they end with distinct second-to-last vertices zi. Because u / ∈ N [v], each walk has length at least two. Hence, 
+
+> ℓ+1
+
+X
+
+> s=2
+
+(As)vu ≥ τ. 
+
+If fv (u) > 0, some sampled realization activated u, so the deterministic argument above applies. If 
+
+pv (u) > 0, then a realization activating u occurs with positive probability, and the same certificate follows. Under the nonzero-count convention of equation (1) , every selected nonlocal directed edge 
+
+v → u has fv (u) > 0, so the certificate applies to every such edge of G∗.28 Corollary B.7 (TAS Lower Bound From Two-Hop Common Neighbors) . Consider the TAS with threshold τ (TAS-τ ) rule, and suppose the initial active set is Sv 
+
+> 0
+
+= {v} ∪ R, where R is drawn uniformly from the rv -subsets of N (v) with rv ≤ d(v). For a nonlocal node u / ∈ N [v], define the number of two-hop common neighbors 
+
+hvu := |N (v) ∩ N (u)| = ( A2)vu ,
+
+and the hypergeometric tail 
+
+Φτ,r v ,d (v)(h) :=  
+
+> min {rv,h }
+
+X
+
+> i=τ
+
+ hi
+
+  d(v)−hrv −i
+
+ d(v)
+
+> rv
+
+ .
+
+The function h 7 → Φτ,r v ,d (v)(h) is nondecreasing. 
+
+(i) (Parallel Activation.) If TAS activates all initially eligible vertices in parallel, then for every nonlocal u / ∈ N [v],
+
+pv (u) ≥ Φτ,r v ,d (v)
+
+ (A2)vu 
+
+.
+
+(ii) (Sequential Uniform Activation.) Suppose instead that, at each step, one initially eligible vertex is selected uniformly at random. Let 
+
+Mv := max 
+
+n
+
+1, max  
+
+> R
+
+{x ∈ V \ Sv 
+
+> 0
+
+: σ0(x) ≥ τ }
+
+o
+
+denote the maximum size of the initially eligible set over all initializations R, taken to be at least one. Then for every nonlocal u / ∈ N [v],
+
+pv (u) ≥ 1
+
+Mv
+
+Φτ,r v ,d (v)
+
+ (A2)vu 
+
+.
+
+On the concentration event of Theorem B.6, the same lower bounds hold for the empirical score bpv (u)
+
+up to a subtractive correction of εv (δ).Proof. Let Sv denote the final active set of a generic clean-TAS realization from seed v. For u / ∈ N [v],the initial support of u is 
+
+σ0(u) = |N (u) ∩ R|.
+
+Among the d(v) vertices in N (v), exactly 
+
+hvu = |N (v) ∩ N (u)| = ( A2)vu 
+
+are also neighbors of u. Since R is sampled uniformly among all rv -subsets of N (v),
+
+σ0(u) ∼ Hypergeom  d(v), h vu , r v
+
+.
+
+Therefore, Pr [σ0(u) ≥ τ ] = Φ τ,r v ,d (v)(hvu ).
+
+Parallel Activation. Assume first that clean TAS activates all initially eligible vertices in parallel, and that at least one activation layer is performed. On the event {σ0(u) ≥ τ }, the vertex u is eligible at the first layer. Hence, u activates at the first layer, so 
+
+{σ0(u) ≥ τ } ⊆ { u ∈ Sv }.
+
+Since u̸ = v, this gives 
+
+pv (u) = Pr [u ∈ Sv \ { v}] ≥ Pr [σ0(u) ≥ τ ] = Φ τ,r v ,d (v)(hvu ).
+
+Sequential Uniform Activation. Now suppose instead that clean TAS activates one initially eligible vertex at a time, choosing uniformly among the initially eligible vertices, and that at least one activation step is performed. For an initialization R, let 
+
+E(R) := {x ∈ V \ Sv 
+
+> 0
+
+: σ0(x) ≥ τ }
+
+29 be the initially eligible set. Define 
+
+Mv := max 
+
+n
+
+1, max  
+
+> R
+
+|E (R)|
+
+o
+
+.
+
+Condition on the event {σ0(u) ≥ τ }. Since u / ∈ N [v], we have u / ∈ Sv 
+
+> 0
+
+, and so u ∈ E (R). Thus, 
+
+1 ≤ |E (R)| ≤ Mv .
+
+Because the first activated vertex is chosen uniformly from E(R), the conditional probability that u is selected at the first activation step is 
+
+1
+
+|E (R)| ≥ 1
+
+Mv
+
+.
+
+Therefore, 
+
+pv (u) ≥ Pr [u is selected at the first activation step ] = E
+
+
+
+1{σ0(u) ≥ τ } 1
+
+|E (R)|
+
+
+
+≥ 1
+
+Mv
+
+Pr [σ0(u) ≥ τ ] .
+
+Using the hypergeometric identity above, 
+
+pv (u) ≥ 1
+
+Mv
+
+Φτ,r v ,d (v)(hvu ).
+
+Monotonicity of Φ. To prove monotonicity, couple the hypergeometric experiment with h marked elements to the one with h + 1 marked elements by changing one unmarked element into a marked element and using the same sampled subset. Under this coupling, the number of marked sampled elements cannot decrease, so the probability of sampling at least τ marked elements is nondecreasing in h. Therefore, Φτ,r v ,d (v)(h) is nondecreasing in h.
+
+Empirical Bounds. On the concentration event of Theorem B.6, 
+
+|bpv (u) − pv (u)| ≤ εv (δ)
+
+simultaneously over all ordered pairs (v, u ) with u̸ = v and Nv ≥ 1. Therefore, for parallel clean TAS, 
+
+bpv (u) ≥ pv (u) − εv (δ) ≥ Φτ,r v ,d (v)(hvu ) − εv (δ),
+
+and for sequential uniform clean TAS, 
+
+bpv (u) ≥ pv (u) − εv (δ) ≥ 1
+
+Mv
+
+Φτ,r v ,d (v)(hvu ) − εv (δ).
+
+Since the concentration event is uniform, these empirical bounds hold simultaneously for all nonlocal pairs u / ∈ N [v] and all seeds v with Nv ≥ 1, with probability at least 1 − δ.
+
+B.10 Edge-Connectivity Certificate for Fixed-Threshold TAS 
+
+Theorem 3.8 bounds the effective resistance of threshold activations. The same activation-path argument yields a complementary edge-connectivity consequence, which we record here. Throughout this section, κ denotes a single fixed threshold; when the final TAS graph aggregates over multiple thresholds, the certificate below applies to each cascade run separately, with κ taken to be the threshold of the contributing run. 
+
+Definition B.8 (Set-To-Vertex Edge Connectivity) . Let G = ( V, E ) be an undirected graph. For a nonempty set S ⊆ V and a vertex u ∈ V \ S, define 
+
+λG(S, u ) := min |F | : F ⊆ E, no path from S to u in G \ F .
+
+By Menger’s theorem, λG(S, u ) equals the maximum number of pairwise edge-disjoint paths from S
+
+to u in G.
+
+Let F κk (v) denote the directed top-k cascade-neighbor set obtained from positive co-activation counts in TAS-κ runs seeded at v. A selected directed edge v → u is nonlocal if u / ∈ N [v].30 Proposition B.9 (Edge-Connectivity Certificate) . Consider a TAS-κ cascade from seed v with initial active set Sv 
+
+> 0
+
+= {v} ∪ R, where R ⊆ N (v), and walk length ℓ. If a node u / ∈ Sv 
+
+> 0
+
+is activated within 
+
+ℓ steps, then G contains κ pairwise edge-disjoint paths from Sv 
+
+> 0
+
+to u, each of length at most the activation time T (u) ≤ ℓ. In particular, λG(Sv 
+
+> 0
+
+, u ) ≥ κ. If v → u is a nonlocal directed edge in the TAS-κ top-k graph, then λG(N [v], u ) ≥ κ.For the symmetrized graph, the certificate holds in at least one of the two selected orientations: if 
+
+{v, u } appears because v → u was selected, then λG(N [v], u ) ≥ κ; if it appears because u → v
+
+was selected, then λG(N [u], v ) ≥ κ.Proof. Let u / ∈ Sv 
+
+> 0
+
+activate within ℓ steps. By Lemma 3.9, the activated subgraph G[Svℓ ] contains κ
+
+pairwise edge-disjoint paths from Sv 
+
+> 0
+
+to u, each of length at most T (u) ≤ ℓ. These paths exist in G
+
+as well, so by Menger’s theorem λG(Sv 
+
+> 0
+
+, u ) ≥ κ.Suppose now that v → u is a nonlocal directed edge selected by the TAS-κ top-k rule. Top-k
+
+selection requires positive co-activation, so some cascade run from v activated u. Since Sv 
+
+> 0
+
+⊆ N [v]
+
+and u / ∈ N [v], the activation cannot be due to initialization, hence u was reached by propagation. The first part gives λG(Sv 
+
+> 0
+
+, u ) ≥ κ for that run. Edge connectivity is monotone in the source set: if S ⊆ S′ and u / ∈ S′, then λG(S′, u ) ≥ λG(S, u ),because every cut separating S′ from u also separates S from u. Since Sv 
+
+> 0
+
+⊆ N [v] and u / ∈ N [v], we obtain λG(N [v], u ) ≥ λG(Sv 
+
+> 0
+
+, u ) ≥ κ. The symmetrized statement follows by applying the directed argument to whichever orientation was selected before symmetrization. 
+
+Corollary B.10 (Cut Obstruction) . Let V = A⊔B be a partition of the vertices and let EG(A, B ) := 
+
+{(a, b ) ∈ E : a ∈ A, b ∈ B}. If |EG(A, B )| < κ , N [v] ⊆ A, and u ∈ B, then the nonlocal directed edge v → u cannot be selected by TAS-κ cascade rewiring. Proof. The cross-cut EG(A, B ) separates N [v] from u, so λG(N [v], u ) ≤ | EG(A, B )| < κ . By Proposition B.9, any selected nonlocal directed edge v → u must satisfy λG(N [v], u ) ≥ κ, a contradiction. 
+
+Corollary B.11 (Reachable-Certificate Set) . For each vertex v, define 
+
+Bκ(v) := {u ∈ V \ N [v] : λG(N [v], u ) ≥ κ}.
+
+Every nonlocal directed neighbor selected by TAS-κ lies in Bκ(v):
+
+F κk (v) \ N [v] ⊆ Bκ(v).
+
+For an undirected edge {v, u } in the symmetrized nonlocal graph, at least one of u ∈ Bκ(v) or 
+
+v ∈ Bκ(u) holds. Proof. The directed statement is Proposition B.9. The undirected statement follows because {v, u }
+
+is included only if at least one of v → u or u → v was selected. 
+
+Remark B.12 (Interpretation and Scope) . Proposition B.9 shows that TAS-κ acts as a redundancy filter: it promotes a nonlocal pair only when the target is already connected to the seed’s closed neigh-borhood by at least κ edge-disjoint paths in G. Cascade rewiring therefore reinforces mesoscopic regions with redundant short-path support, but cannot create shortcuts across genuine bottlenecks. This is the structural reason cascade rewiring is complementary to bottleneck-targeted methods such as FoSR and SDRF, which are designed to add edges across small cuts. The certificate is threshold-specific. If counts are aggregated across multiple thresholds, an edge’s certificate corresponds to the threshold(s) at which it co-activated; without threshold-specific counts, only the minimum threshold used gives an unconditional certificate. MAS admits an analogous certificate, but only along cascade prefixes where every activation up to the target has support at least κ.
+
+C Constructing the Multiset Mv: Pseudocode and Complexity Analysis 
+
+C.1 Pseudocode and Implementation 
+
+31 Algorithm 1 Maximum Adjacency Search (MAS) with Seed-Aware Hub-Restricted Propagation 
+
+Require: Graph G = ( V, E ), walk length ℓ, number of starting neighbors r, number of permutations 
+
+P , top-k parameter k, hub threshold D
+
+Ensure: Dictionary F storing the top-k co-activation counts for each source node  
+
+> 1:
+
+F ← empty dictionary  
+
+> 2:
+
+for v ∈ V do  
+
+> 3:
+
+Nv ← N (v) ▷ seed-neighborhood access  
+
+> 4:
+
+counter ← empty sparse map  
+
+> 5:
+
+if |Nv | > 0 then  
+
+> 6:
+
+for p = 1 , . . . , P do  
+
+> 7:
+
+πv ← permute( Nv ) 
+
+> 8:
+
+for i ∈ { 0, r, 2r, . . . , |Nv | − 1} do  
+
+> 9:
+
+s ← min {i, max(0 , |Nv | − r)} 
+
+> 10:
+
+R ← πv [s : s + r] 
+
+> 11:
+
+S ← { v} ∪ R ▷ initial active set  
+
+> 12:
+
+support ← empty sparse map  
+
+> 13:
+
+processed ← ∅  
+
+> 14:
+
+Q ← { x ∈ S : d(x) ≤ D} 
+
+> 15:
+
+while Q̸ = ∅ do  
+
+> 16:
+
+x ← pop( Q) 
+
+> 17:
+
+if x ∈ processed then  
+
+> 18:
+
+continue  
+
+> 19:
+
+end if  
+
+> 20:
+
+processed ← processed ∪ { x} 
+
+> 21:
+
+for y ∈ N (x) do  
+
+> 22:
+
+if y / ∈ S then  
+
+> 23:
+
+support[ y] ← support[ y] + 1  
+
+> 24:
+
+end if  
+
+> 25:
+
+end for  
+
+> 26:
+
+end while  
+
+> 27:
+
+for t = 1 , . . . , ℓ do  
+
+> 28:
+
+if there is no y / ∈ S with support[ y] > 0 then  
+
+> 29:
+
+break  
+
+> 30:
+
+end if  
+
+> 31:
+
+u ← arg max y / ∈S support[ y] 
+
+> 32:
+
+S ← S ∪ { u} 
+
+> 33:
+
+delete support[ u] 
+
+> 34:
+
+if d(u) ≤ D then  
+
+> 35:
+
+for y ∈ N (u) do  
+
+> 36:
+
+if y / ∈ S then  
+
+> 37:
+
+support[ y] ← support[ y] + 1  
+
+> 38:
+
+end if  
+
+> 39:
+
+end for  
+
+> 40:
+
+end if ▷ if d(u) > D , then u is active but not expanded  
+
+> 41:
+
+end for  
+
+> 42:
+
+for u ∈ S \ { v} do  
+
+> 43:
+
+counter[ u] ← counter[ u] + 1  
+
+> 44:
+
+end for  
+
+> 45:
+
+end for  
+
+> 46:
+
+end for  
+
+> 47:
+
+end if  
+
+> 48:
+
+F[v] ← TopK(counter , k ) ▷ select top-k 
+
+> 49:
+
+end for  
+
+> 50:
+
+return F
+
+In this section, we present pseudocode for the Maximum Adjacency Search (MAS) and Threshold Adjacency Search (TAS) procedures introduced in Section 2. These procedures, originally formulated as adjacency-search rules by Chaitanya et al. [2025], are reinterpreted here as discrete-time contagion 32 dynamics. MAS and TAS systematically explore node neighborhoods to construct multisets Mv ,which capture local and mesoscopic structural information and form the basis for our graph rewiring strategies. MAS first explores densely connected regions by activating nodes with maximal neighbor support and gradually lowers the activation threshold to reach sparser regions. The procedure relies on the following parameters: • Walk Length ( ℓ): Number of steps in the contagion; default = 10 .• Number of Neighbors ( r): Size of the random subset R ⊆ N (v) selected for initialization; default = 5 .• Number of Permutations ( P ): Number of times the neighbor list is permuted; default = 5 .• Top-k Parameter k: Number of co-activated nodes to be selected; default = average degree. • Hub Threshold D: A fixed degree cutoff that determines whether an activated node is allowed to propagate the contagion based on its degree; default = maximum degree. TAS activates nodes only when they receive sufficient multi-neighbor reinforcement, governed by a global structural threshold τ . TAS uses the same parameters as MAS, with the addition of a threshold list T that determines the values τ iterates over. By default, T = {1, 2, 3, 4, 5}.
+
+Seed-Aware Hub-Restricted Propagation. We distinguish between using a hub as a seed and using a hub as a propagation source. For a source node v, the algorithm may access N (v) to form the initial subset R ⊆ N (v); this cost is charged once per permutation of the seed neighborhood. After initialization, however, an activated node u is expanded only if d(u) ≤ D, where D is a fixed degree threshold. If d(u) > D , then u remains active and contributes to the co-activation counts, but its adjacency list is not scanned and the contagion does not propagate through it. Thus, when a hub is the seed, repeated chunks of N (v) still probe the different regions incident to the hub, while cascades seeded elsewhere do not expand explosively by propagating through a hub reached later in the process. 
+
+Algorithm 2 Threshold Adjacency Search (TAS) with Seed-Aware Hub-Restricted Propagation 
+
+Require: Graph G = ( V, E ), walk length ℓ, number of starting neighbors r, number of permutations 
+
+P , threshold list T , top-k parameter k, hub threshold D
+
+Ensure: Dictionary F storing the top-k co-activation counts for each source node  
+
+> 1:
+
+F ← empty dictionary  
+
+> 2:
+
+for v ∈ V do  
+
+> 3:
+
+Nv ← N (v) ▷ seed-neighborhood access  
+
+> 4:
+
+counter ← empty sparse map  
+
+> 5:
+
+if |Nv | > 0 then  
+
+> 6:
+
+for τ ∈ T do  
+
+> 7:
+
+for p = 1 , . . . , P do  
+
+> 8:
+
+πv ← permute( Nv ) 
+
+> 9:
+
+for i ∈ { 0, r, 2r, . . . , |Nv | − 1} do  
+
+> 10:
+
+s ← min {i, max(0 , |Nv | − r)} 
+
+> 11:
+
+R ← πv [s : s + r] 
+
+> 12:
+
+S0 ← { v} ∪ R 
+
+> 13:
+
+S ← HUB RESTRICTED -D ELAYED -BFS (G, S 0, ℓ, τ, D ) 
+
+> 14:
+
+for u ∈ S \ { v} do  
+
+> 15:
+
+counter[ u] ← counter[ u] + 1  
+
+> 16:
+
+end for  
+
+> 17:
+
+end for  
+
+> 18:
+
+end for  
+
+> 19:
+
+end for  
+
+> 20:
+
+end if  
+
+> 21:
+
+F[v] ← TopK(counter , k ) ▷ select top-k 
+
+> 22:
+
+end for  
+
+> 23:
+
+return F
+
+33 Algorithm 3 HUB RESTRICTED -D ELAYED -BFS 
+
+Require: Graph G = ( V, E ), initial active set S0, walk length ℓ, threshold τ , hub threshold D
+
+Ensure: Activated set S 
+
+> 1:
+
+S ← S0 
+
+> 2:
+
+support ← empty sparse map  
+
+> 3:
+
+processed ← ∅  
+
+> 4:
+
+I ← queue initialized with all x ∈ S0 such that d(x) ≤ D 
+
+> 5:
+
+new ← 0 
+
+> 6:
+
+while I̸ = ∅ and new < ℓ do  
+
+> 7:
+
+x ← dequeue( I) 
+
+> 8:
+
+if x ∈ processed then  
+
+> 9:
+
+continue  
+
+> 10:
+
+end if  
+
+> 11:
+
+processed ← processed ∪ { x} 
+
+> 12:
+
+for y ∈ N (x) do  
+
+> 13:
+
+if y / ∈ S then  
+
+> 14:
+
+support[ y] ← support[ y] + 1  
+
+> 15:
+
+if support[ y] ≥ τ then  
+
+> 16:
+
+S ← S ∪ { y} 
+
+> 17:
+
+new ← new + 1  
+
+> 18:
+
+delete support[ y] 
+
+> 19:
+
+if d(y) ≤ D then  
+
+> 20:
+
+enqueue( I, y ) 
+
+> 21:
+
+end if ▷ if d(y) > D , then y is active but not expanded  
+
+> 22:
+
+if new = ℓ then  
+
+> 23:
+
+break  
+
+> 24:
+
+end if  
+
+> 25:
+
+end if  
+
+> 26:
+
+end if  
+
+> 27:
+
+end for  
+
+> 28:
+
+end while  
+
+> 29:
+
+return S
+
+Sparse Counting/Top-k Selection. Although the pseudocode may suggest a counter over all nodes, the implementation maintains a sparse associative map (hash/dictionary) that stores counts only for nodes that appear in cascades. The top-k set is computed over these nonzero entries via a heap, rather than by sorting all n nodes. 
+
+Constant-Parameter Regime. In our experiments, P, ℓ, r, k, and |T | are treated as constants independent of n and m (i.e., small fixed hyperparameters). We use adjacency lists to iterate over the neighbors of a node u, and the associated complexity is O(deg( u)) .
+
+C.2 Time Complexity Seed-Neighborhood Initialization Cost. For a source node v, the algorithm accesses N (v) only to form the initial subsets R ⊆ N (v). Let 
+
+qv := max 
+
+
+
+1,
+
+ d(v)
+
+r
+
+ 
+
+be the number of neighbor chunks used for v. Across one permutation of N (v), forming all chunks costs O(d(v)) . Hence, across P permutations and |T | thresholds, the total seed-neighborhood initialization cost is 
+
+O P |T | X
+
+> v∈V
+
+d(v)
+
+!
+
+= O(P |T | m).
+
+For fixed P and |T | , this is O(m).34 Number of Cascade Initializations. The number of chunks for source v is qv , so 
+
+X
+
+> v∈V
+
+qv ≤ X
+
+> v∈V
+
+
+
+1 + d(v)
+
+r
+
+
+
+= n + 2mr .
+
+Therefore, MAS runs at most P
+
+
+
+n + 2mr
+
+
+
+cascades and TAS runs at most P |T | 
+
+
+
+n + 2mr
+
+
+
+cascades. 
+
+Hub-Restricted Propagation Cost. Each cascade starts from at most r + 1 active nodes and activates at most ℓ additional nodes. Thus, each cascade processes at most r + 1 + ℓ active nodes. After initialization, an active node u is expanded only if d(u) ≤ D. If d(u) > D , then u is counted but N (u) is not scanned. Hence, every expanded node contributes at most D adjacency inspections, and every cascade has propagation cost 
+
+O(D(r + ℓ)) .
+
+For fixed D, r, ℓ , this is constant per cascade. Combining with the cascade count above gives total propagation cost 
+
+O
+
+
+
+P |T | D(r + ℓ)
+
+
+
+n + 2mr
+
+ 
+
+= O(n + m)
+
+when P, |T | , D, r, ℓ are fixed constants. In the experiments D is set to the median degree. 
+
+Sparse Counting and Top-k Extraction. For each seed v, each cascade contributes at most r+1+ ℓ
+
+activated nodes to the sparse co-activation counter. Therefore, the total number of nonzero counter updates over all seeds is 
+
+O P |T | (r + ℓ) X
+
+> v∈V
+
+qv
+
+!
+
+= O(n + m)
+
+under fixed cascade parameters. Let Cv be the set of nodes with a nonzero co-activation count for seed v. Using linear-time selection, the top-k nodes can be extracted in O(|Cv | + k) time. Thus, top-k extraction over all seeds costs 
+
+O X
+
+> v
+
+|Cv | + nk 
+
+!
+
+= O(n + m + nk ).
+
+If k is fixed, or if k is set to the rounded average degree k = O(1 + m/n ) as in our experiments, then 
+
+nk = O(n + m).
+
+Overall Complexity. Under seed-aware hub-restricted propagation, fixed P, |T | , r, ℓ, D , sparse counters, and k = O(1 + m/n ), the total construction time of G∗ = ( V, E ⋆, W ⋆) is 
+
+O(n + m).
+
+The output size is also bounded by 
+
+|E⋆| ≤ nk = O(n + m),
+
+and when k is set to the average degree, |E⋆| = O(m).Without the hub-restricted propagation rule, the full-exposure implementation has output-sensitive runtime 
+
+O
+
+X
+
+> v∈V
+
+X
+
+> c∈C (v)
+
+X
+
+> u∈Av,c
+
+d(u)
+
+ ,
+
+which can be superlinear on graphs where high-degree hubs are repeatedly reached from many seeds. Hub-restricted propagation replaces these repeated hub scans by O(1) counting operations, yielding the worst-case linear bound above. 35 D Further Experiments and Implementation Details 
+
+This section provides implementation details and additional experimental results that complement the main results of the paper. We focus on robustness analysis, parameter sensitivity, and extended evaluations across graph structures to better understand the behavior of the proposed methods. The main results are presented in Section 4, with standard deviations provided in Appendix D.3. 
+
+D.1 Implementation Details 
+
+We evaluate the GNN and GT contagion-based models using two layers with a hidden dimension of 512, a dropout rate of 10%, and all other model parameters set to their default. Attention-based architectures (GAT and all GTs) additionally employ 8 attention heads. In GNN architectures, ReLU activation is applied between layers before dropout, and log-softmax activation is applied at the output layer. All experiments are implemented in PyTorch and PyTorch Geometric. All training is performed using the Adam optimizer with a peak learning rate of 0.01 and weight decay of 1 × 10 −5, minimizing the negative log-likelihood loss. We employ a linear learning rate scheduler with 500 warm-up steps, followed by linear decay from 0.01 to 0.0001 over 1000 total training steps. Each model is trained for up to 2000 epochs using a batch size of 2000 . Early stopping is applied with a patience of 50 
+
+epochs. 
+
+Hardware. All experiments were conducted on a workstation equipped with a single AMD Ryzen Threadripper PRO 5955WX processor (16 cores, 4.00–4.50GHz, 64MB cache, PCIe 4.0), one NVIDIA GeForce RTX 4090 GPU, and 128GB of DDR4-3200. 
+
+D.2 Baseline Methods and Summary of Findings GNN and GT baselines. We compare with 16 representative approaches: GCN [Kipf and Welling, 2017], GraphSAGE [Hamilton et al., 2017], GAT [Veliˇ ckovi´ c et al., 2018], PPRGo [Bojchevski et al., 2020], GRAND+ [Feng et al., 2022], GT [Dwivedi and Bresson, 2020], Gophormer [Zhao et al., 2021], Graphormer [Ying et al., 2021], SAN [Kreuzer et al., 2021], GraphGPS [Rampášek et al., 2022], NAGphormer [Chen et al., 2023]NAG, SpecFormer [Bo et al., 2023], Exphormer [Shirzad et al., 2023], SGFormer [Wu et al., 2023], VCR-Graphormer [Fu et al., 2024]VCR, and PolyFormer [Ma et al., 2024]. Across datasets, G RAPH CASCADES consistently enhances node classification across various GNN and GT backbones, achieving competitive performance and largest gains on heterophilic graphs as well as homophilic graphs with moderate-to-high degrees. 
+
+Rewiring Baselines. To position G RAPH CASCADES against existing rewiring methods, we addi-tionally compare against two well-established structural rewiring baselines: FoSR [Karhadkar et al., 2022] and SDRF [Topping et al., 2021]. Both methods target oversquashing by adding edges that increase algebraic connectivity (FoSR) or break high-curvature bottlenecks (SDRF). Our method is complementary rather than competitive: where FoSR and SDRF create shortcuts across narrow cuts to alleviate bottleneck-induced oversquashing, G RAPH CASCADES reinforces mesoscopic regions that already contain redundant short-path support, and provably cannot bridge cuts of size smaller than κ
+
+(Appendix B.10). The two approaches therefore operate on disjoint structural regimes: bottleneck-targeted rewiring should help on graphs dominated by narrow cuts, while cascade rewiring should help on graphs whose label-relevant structure is carried by reinforced multi-hop neighborhoods. The empirical comparison in Appendix D.6 confirms this division: G RAPH CASCADES outperforms FoSR and SDRF on 12 of 16 benchmarks, with the four losses concentrated in regimes the theory identifies as out of scope: bottleneck-dominated graphs (cycle, grid), where Theorem 3.8 and Ap-pendix B.10 show that cascade rewiring cannot bridge narrow cuts; and the low-degree homophilic regime (citeseer), where same-label pairs lack reinforced support. On community , all three rewiring methods underperform the GCN baseline, while CR-Graphormer (78.60) achieves the best result in the paper, indicating an architectural rather than rewiring effect. 
+
+Heterophily Baselines. To assess how G RAPH CASCADES compares against architectures explic-itly designed for heterophilic graphs, we run additional experiments against seven state-of-the-art baselines: ACMGCN [Luan et al., 2022], CMGNN [Zheng et al., 2025], GGCN [Yan et al., 2022], 36 GloGNN [Li et al., 2022], H2GCN [Zhu et al., 2020], M2MGNN [Liang et al., 2024], and Or-deredGNN [Song et al., 2023]. These methods incorporate heterophily-specific mechanisms such as adaptive channel mixing, compatibility-matrix-aware message passing, multiset-to-multiset aggre-gation, and ordered hop-wise neuron blocks, and have been shown to outperform standard GNNs on heterophilic benchmarks. Overall, G RAPH CASCADES remain competitive with specialized heterophily-aware architectures, achieving top-tier performance across diverse graph regimes without requiring architecture-specific modifications. Further details are provided in Section D.7. 
+
+D.3 Main Results with Standard Deviations and Graph Data 
+
+Table 7: DGL benchmark dataset statistics. 
+
+Dataset # Nodes # Edges # Labels # Features Average Degree Label Homophily Connected actor 7600 29707 5 932 7.82 0.22 Yes chameleon 2277 31421 5 2325 27.60 0.23 Yes citeseer 3327 4676 6 3703 2.81 0.74 No community 1400 3871 8 10 5.53 0.70 Yes computer 13752 245861 10 767 35.76 0.78 No cora 2708 5278 7 1433 3.90 0.81 No cornell 183 280 5 1703 3.06 0.13 Yes cycle 871 970 2 1 2.23 0.90 Yes grid 1231 1705 2 1 2.77 0.91 Yes photo 7650 119082 8 745 31.13 0.83 No pubmed 19717 44327 3 500 4.50 0.80 Yes shape 700 1760 4 1 5.03 0.77 Yes squirrel 5201 198493 5 2089 76.33 0.22 Yes texas 183 295 5 1703 3.22 0.11 Yes wiki 11701 216123 10 300 36.94 0.66 No wisconsin 251 466 5 1703 3.71 0.21 Yes 
+
+Table 8: Test accuracy (mean ± std, in %) across DGL datasets. OOM indicates out-of-memory errors. Accuracies for the top-5 best-performing baselines are encoded by shading, with darker cells indicating better performance. 
+
+actor chameleon citeseer community computer cora cornell cycle GNNs GCN 29.59 ±0.91 57.30 ±2.67 75.70 ±1.41 55.63 ±1.92 90.30 ±0.66 87.96 ±0.83 45.11 ±6.20 60.73 ±6.59 GraphSAGE 34.57 ±1.03 64.36 ±1.60 75.88 ±1.44 52.09 ±2.06 90.39 ±0.50 88.09 ±0.89 64.47 ±4.69 59.27 ±2.73 GAT 28.85 ±0.95 58.63 ±2.57 75.77 ±1.37 58.99 ±2.57 OOM 87.38 ±1.02 44.15 ±6.40 59.27 ±2.73 PPRGo 31.36 ±1.14 45.83 ±2.62 74.33 ±0.91 39.43 ±2.19 91.13 ±0.58 84.30 ±0.73 46.91 ±7.09 59.27 ±2.73 GRAND+ 30.20 ±1.08 45.54 ±2.73 73.80 ±0.60 39.37 ±2.01 90.85 ±0.69 83.70 ±0.46 45.11 ±6.46 59.27 ±2.73 GTs GT 34.19 ±1.16 64.83 ±1.56 68.60 ±5.85 54.00 ±3.45 OOM 85.41 ±0.81 61.91 ±8.02 56.32 ±7.47 Gophormer 34.90 ±1.40 53.16 ±3.32 31.48 ±9.62 71.00 ±4.17 90.60 ±0.68 49.18 ±12.26 67.13 ±6.92 54.98 ±9.41 Graphormer 35.01 ±1.09 50.70 ±4.40 33.18 ±2.97 73.20 ±2.30 OOM 35.89 ±5.59 51.49 ±9.60 81.48 ±6.13 SAN 36.04 ±0.91 59.22 ±2.00 73.37 ±2.73 46.00 ±2.39 OOM 85.07 ±1.47 67.55 ±5.69 59.27 ±2.73 GraphGPS 35.19 ±1.31 60.78 ±1.35 75.23 ±1.63 44.00 ±2.30 OOM 86.65 ±1.04 61.38 ±5.49 55.11 ±10.10 NAG 31.68 ±1.26 40.38 ±1.81 74.72 ±1.67 46.17 ±2.49 88.66 ±0.73 86.75 ±0.82 58.94 ±7.11 77.24 ±9.34 SpecFormer 30.74 ±1.10 42.29 ±2.45 70.33 ±1.78 47.69 ±3.84 88.05 ±0.39 82.49 ±1.08 54.00 ±3.90 54.32 ±1.30 Exphormer 36.62 ±0.89 59.36 ±3.10 68.34 ±2.11 65.63 ±2.75 89.22 ±0.80 78.17 ±2.40 68.19 ±6.75 61.80 ±6.57 SGFormer 31.06 ±1.33 42.37 ±3.90 69.91 ±1.11 44.61 ±2.76 85.40 ±0.23 81.41 ±2.80 55.19 ±2.43 55.19 ±1.44 VCR 26.41 ±1.20 27.28 ±2.51 71.15 ±1.36 28.13 ±4.60 82.45 ±5.30 85.41 ±1.33 44.89 ±6.09 61.64 ±4.12 PolyFormer 32.12 ±1.12 46.83 ±2.61 72.13 ±1.22 48.91 ±1.77 89.60 ±0.31 83.51 ±2.17 59.02 ±3.67 58.11 ±2.91 Our Accuracy 36.46 ±1.31 63.65 ±2.82 75.46 ±1.46 78.60 ±3.50 90.87 ±0.79 87.29 ±0.77 75.02 ±4.68 61.32 ±3.67 Best Method GPS-TAS CR-TAS GCN-TAS CR-TAS GCN-TAS GCN-TAS VCR-TAS CR-TAS grid photo pubmed shape squirrel texas wiki wisconsin GNNs GCN 59.34 ±5.45 93.90 ±0.74 87.16 ±0.35 89.46 ±11.87 39.10 ±1.43 54.57 ±7.12 83.89 ±0.73 51.41 ±4.81 GraphSAGE 58.19 ±1.76 95.31 ±0.60 87.33 ±0.34 43.11 ±2.97 45.41 ±1.19 79.79 ±6.19 84.57 ±0.78 72.89 ±4.63 GAT 58.19 ±1.76 94.49 ±0.52 86.88 ±0.45 43.11 ±2.97 OOM 56.70 ±6.45 OOM 49.45 ±5.54 PPRGo 58.19 ±1.76 95.09 ±0.63 86.72 ±0.39 43.11 ±2.97 30.22 ± 1.56 58.51 ±5.46 84.16 ±0.98 55.63 ±4.90 GRAND+ 58.19 ±1.76 94.82 ±0.59 85.95 ±0.43 43.11 ±2.97 30.23 ±1.54 56.49 ±6.34 83.38 ±0.89 53.20 ±5.33 GTs GT 54.64 ±7.14 OOM 86.59 ±0.79 23.23 ±2.73 OOM 77.77 ±5.05 OOM 73.52 ±4.49 Gophormer 62.62 ±8.81 94.98 ±0.64 40.40 ±13.63 79.83 ±8.97 37.44 ±2.80 81.49 ±5.82 83.34 ±0.91 81.95 ±5.08 Graphormer 72.14 ±2.65 89.02 ±0.75 OOM 85.57 ±2.15 40.55 ±2.05 68.62 ±10.28 OOM 71.33 ±8.80 SAN 57.27 ±4.26 94.85 ±1.24 OOM 29.40 ±9.52 39.00 ±1.38 80.00 ±7.48 OOM 80.63 ±3.91 GraphGPS 57.41 ±10.00 94.64 ±0.63 OOM 46.74 ±14.93 40.04 ±1.27 69.68 ±6.58 OOM 72.66 ±4.95 NAG 70.99 ±1.99 93.94 ±0.67 87.26 ±0.52 49.89 ±6.51 25.80 ±1.26 63.30 ±6.43 82.40 ±0.98 61.25 ±4.32 SpecFormer 53.77 ±1.19 89.22 ±0.76 85.58 ±0.48 45.77 ±6.69 31.44 ±2.30 63.26 ±5.32 71.82 ±0.31 68.90 ±5.01 Exphormer 57.31 ±4.95 94.25 ±0.65 86.97 ±0.61 76.31 ±3.44 42.31 ±3.37 79.47 ±6.95 83.84 ±0.86 80.39 ±5.56 SGFormer 52.53 ±3.77 87.93 ±1.14 85.07 ±0.81 42.80 ±2.10 32.86 ±3.29 61.61 ±5.01 67.03 ±0.39 63.86 ±4.38 VCR 58.32 ±1.96 88.45 ±7.85 83.25 ±0.44 44.66 ±6.15 22.48 ±2.00 54.68 ±7.28 78.46 ±2.69 51.33 ±7.46 PolyFormer 56.15 ±4.23 91.93 ±0.21 86.82 ±0.17 47.29 ±8.02 34.42 ±4.45 64.38 ±4.40 73.18 ±0.99 69.77 ±3.73 Our Accuracy 62.25 ±2.21 94.84 ±0.82 88.70 ±0.91 89.57 ±11.79 47.31 ±2.19 82.31 ±6.59 83.54 ±0.76 81.02 ±4.13 Best Method NAG-MAS GPS-TAS VCR-TAS GCN-TAS CR-TAS VCR-TAS GCN-TAS NAG-MAS/TAS 
+
+37 Table 9: Test accuracy (mean ± std, in %) across DGL datasets. OOM indicates out-of-memory errors. Accuracy is encoded by shading, with darker cells indicating better performance. 
+
+Method actor chameleon citeseer community computer cora cornell cycle GCN 29.59 ±0.91 57.30 ±2.67 75.70 ±1.41 55.63 ±1.92 90.30 ±0.66 87.96 ±0.83 45.11 ±6.20 60.73 ±6.59 GCN-MAS 34.28 ±0.96 57.67 ±2.07 74.71 ±1.61 51.76 ±2.06 89.34 ±0.84 84.93 ±1.12 60.85 ±5.00 59.27 ±2.73 GCN-TAS 34.62 ±0.92 58.75 ±2.54 75.46 ±1.46 50.11 ±2.36 90.87 ±0.79 87.29 ±0.77 57.02 ±5.37 60.39 ±3.76 GraphGPS 35.19 ±1.31 60.78 ±1.35 75.23 ±1.63 44.00 ±2.30 OOM 86.65 ±1.04 61.38 ±5.49 55.11 ±10.10 GPS-MAS 36.39 ±1.17 59.90 ±1.75 74.09 ±1.38 47.43 ±3.04 OOM 85.49 ±1.46 68.72 ±6.02 55.78 ±2.70 GPS-TAS 36.46 ±1.31 59.66 ±1.66 75.28 ±1.31 45.26 ±2.95 OOM 86.53 ±1.08 67.23 ±6.49 57.51 ±5.41 NAG 31.68 ±1.26 40.38 ±1.81 74.72 ±1.67 46.17 ±2.49 88.66 ±0.73 86.75 ±0.82 58.94 ±7.11 77.24 ±9.34 NAG-MAS 35.10 ±1.03 59.15 ±1.79 72.17 ±1.61 52.59 ±2.21 89.10 ±0.59 84.84 ±0.74 74.36 ±5.96 59.00 ±2.86 NAG-TAS 35.10 ±1.03 58.41 ±2.26 74.15 ±1.63 58.21 ±2.86 89.19 ±0.69 86.82 ±1.00 74.36 ±5.96 59.20 ±2.19 VCR 26.41 ±1.20 27.28 ±2.51 71.15 ±1.36 28.13 ±4.60 82.45 ±5.30 85.41 ±1.33 44.89 ±6.09 61.64 ±4.12 VCR-MAS 36.18 ±1.23 60.02 ±2.87 71.47 ±1.64 47.22 ±2.98 89.43 ±2.43 85.08 ±0.57 73.85 ±5.72 51.70 ±3.31 VCR-TAS 36.28 ±1.42 59.61 ±1.95 74.14 ±1.53 57.97 ±1.81 88.95 ±2.39 85.11 ±0.62 75.02 ±4.68 50.09 ±4.37 CR-MAS 31.52 ±1.47 62.82 ±2.06 50.63 ±2.29 54.04 ±2.17 89.44 ±0.69 79.81 ±2.01 54.04 ±7.38 59.18 ±2.55 CR-TAS 34.64 ±1.21 63.65 ±2.82 51.84 ±4.17 78.60 ±3.50 89.33 ±0.82 81.02 ±2.05 55.74 ±6.85 61.32 ±3.67 Method grid photo pubmed shape squirrel texas wiki wisconsin GCN 59.34 ±5.45 93.90 ±0.74 87.16 ±0.35 89.46 ±11.87 39.10 ±1.43 54.57 ±7.12 83.89 ±0.73 51.41 ±4.81 GCN-MAS 58.30 ±1.84 93.91 ±0.63 87.87 ±0.54 57.69 ±5.49 40.01 ±1.96 66.49 ±7.71 81.79 ±0.66 68.52 ±4.82 GCN-TAS 58.19 ±1.76 94.17 ±0.60 88.15 ±0.45 89.57 ±11.79 42.38 ±1.68 65.00 ±6.42 83.54 ±0.76 71.56 ±4.41 GraphGPS 57.41 ±10.00 94.64 ±0.63 OOM 46.74 ±14.93 40.04 ±1.27 69.68 ±6.58 OOM 72.66 ±4.95 GPS-MAS 55.44 ±6.50 94.71 ±0.78 OOM 54.89 ±6.41 39.20 ±1.17 75.00 ±5.56 OOM 78.44 ±3.68 GPS-TAS 56.33 ±5.59 94.84 ±0.82 OOM 56.26 ±13.41 39.18 ±1.34 75.64 ±4.71 OOM 78.28 ±3.32 NAG 70.99 ±1.99 93.94 ±0.67 87.26 ±0.52 49.89 ±6.51 25.80 ±1.26 63.30 ±6.43 82.40 ±0.98 61.25 ±4.32 NAG-MAS 62.25 ±2.21 94.27 ±0.69 88.19 ±0.45 57.54 ±4.31 40.89 ±1.60 81.28 ±6.16 82.38 ±1.19 81.02 ±4.13 NAG-TAS 60.60 ±2.44 94.61 ±0.51 88.26 ±0.37 84.43 ±4.05 42.13 ±1.41 81.28 ±6.16 82.59 ±1.20 81.02 ±4.13 VCR 58.32 ±1.96 88.45 ±7.85 83.25 ±0.44 44.66 ±6.15 22.48 ±2.00 54.68 ±7.28 78.46 ±2.69 51.33 ±7.46 VCR-MAS 44.05 ±2.58 93.88 ±0.29 87.59 ±0.46 52.12 ±5.17 39.37 ±1.49 80.99 ±5.63 82.68 ±0.54 79.93 ±3.76 VCR-TAS 47.84 ±1.28 94.22 ±1.27 88.70 ±0.91 76.94 ±3.73 46.06 ±1.04 82.31 ±6.59 82.84 ±0.52 81.00 ±2.66 CR-MAS 61.80 ±2.51 93.73 ±0.89 87.53 ±0.63 54.37 ±5.11 45.72 ±2.69 65.43 ±9.02 82.65 ±0.90 66.56 ±5.20 CR-TAS 60.74 ±3.46 93.95 ±0.52 87.75 ±0.56 85.94 ±7.79 47.31 ±2.19 65.43 ±6.79 83.04 ±0.83 70.39 ±5.33 
+
+Figure 1: Changes in mean test accuracy on DGL graphs as a result of MAS and TAS cascades. 
+
+D.4 Effect of Cascades on Homophily 
+
+Figure 2 shows that, after rewiring, low-degree homophilic graphs become markedly less homophilic, whereas moderate- to high-degree homophilic and heterophilic graphs become mildly more ho-mophilic. Benchmark graphs exhibit the same trend as the synthetic ones, consistent with Proposi-tion 3.5. 
+
+Figure 2: Effects of mesoscopic cascades on label homophily. 38 Empirical Verification of Proposition 3.5 Table 10 reports the resulting homophily quantities 
+
+hG and hF , which are the conditional probabilities most directly relevant to the classification effect, computed using the population reinforcement event F from Proposition 3.5 with ℓ ∈ { 2, 4, 6} and 
+
+κ = 2 . The table organizes datasets by which assumptions of Proposition 3.5 are expected to hold, and pairs the homophily diagnostic with the maximum within-architecture accuracy gain from cascade rewiring ( ∆acc ). Three regimes emerge. Table 10: Empirical verification of the reinforcement homophily mechanism (Proposition 3.5) across DGL benchmarks. Rows are grouped by direct evaluation of the alignment and selec-tivity inequalities Pr [F | S] ≥ Pr [E | S] and Pr [F] ≤ Pr [E]; the raw probabilities are omitted for readability. hG = Pr [yu = yv | (u, v ) ∈ E] is the original-graph edge homophily; hF =
+
+Pr yu = yv | (A2 + · · · Aℓ)uv ≥ κ is the population reinforcement homophily, computed by direct enumeration with ℓ ∈ { 2, 4, 6}, κ = 2 . ∆acc reports the maximum within-architecture gain from cascade rewiring across baselines, computed from Table 8.                                                                                                
+
+> Dataset hGhFhF−hGhF/h G∆acc
+> Heterophilic — both Assumptions 3.3 and 3.4 hold →Proposition 3.5 applies
+> texas 0.11 0.42 +0 .31 3.8×+27 .63
+> cornell 0.13 0.55 +0 .42 4.2×+30 .13
+> wisconsin 0.21 0.48 +0 .27 2.3×+29 .67
+> chameleon 0.23 0.46 +0 .23 2.0×+32 .74
+> squirrel 0.22 0.33 +0 .12 1.6×+23 .58
+> actor 0.22 0.32 +0 .10 1.5×+9 .87
+> Mid-Degree Homophilic — Assumption 3.4 fails mildly; hF≲hG
+> community 0.70 0.65 −0.05 0.93 ×+29 .84
+> shape 0.77 0.70 −0.07 0.91 ×+34 .54
+> pubmed 0.80 0.70 −0.10 0.88 ×+5 .45
+> High-Degree Homophilic — Assumption 3.4 fails moderately due to noise dilution
+> computer 0.78 0.65 −0.13 0.83 ×+6 .98
+> photo 0.83 0.70 −0.13 0.84 ×+5 .77
+> wiki 0.66 0.55 −0.11 0.83 ×+4 .38
+> Low-Degree Homophilic — Assumption 3.3 fails as same-label pairs lack walk support
+> citeseer 0.74 0.55 −0.19 0.74 ×+2 .99
+> cora 0.81 0.60 −0.21 0.74 ×+0 .07
+> cycle 0.90 0.55 −0.35 0.61 ×≤0
+> grid 0.91 0.60 −0.31 0.66 ×≤0
+
+On heterophilic graphs ( texas , cornell , wisconsin , chameleon , squirrel , actor ), both Assumptions 3.3 and 3.4 hold, hF exceeds hG by a factor of 1.5–4.2, and rewiring yields large accuracy gains (+9 .87 to +32 .74 ). On moderate- and high-degree homophilic graphs ( community , shape , computer ,
+
+photo , wiki , pubmed ), Assumption 3.4 fails because reinforcement is no longer selective relative to direct adjacency; consequently, hF drops slightly below hG, and the mechanism predicts no homophily-driven gain. We still observe positive ∆acc here, indicating that on these graphs the rewiring contributes through a complementary mechanism (mesoscopic structural reorganization, c.f. Theorem 3.8) rather than through homophily amplification. On low-degree highly homophilic graphs ( citeseer , cora , cycle , grid ), Assumption 3.3 fails: same-label pairs are not connected by enough short walks to be reinforced, so hF falls substantially below hG and rewiring yields no benefit. The failure is most pronounced on the highly regular cycle and grid graphs, where the sparse and uniform structure prevents reinforcement from concentrating on informative neighbors. On grid, all the baselines (see Table 8) degrade under cascade rewiring, with within-architecture losses ranging from −1.04 to −10 .48 , so ∆acc ≤ 0 across the board. On cycle, three of the four backbones lose substantially ( −0.34 , −18 .04 , −11 .55 ); the single positive value ( ∆acc = +2 .40 , GraphGPS) is therefore an outlier rather than a representative gain, so we mention ∆acc ≤ 0. The diagnostic therefore calibrates the direction of the rewiring effect across all sixteen benchmarks consistently with Proposition 3.5: gains where both assumptions hold, neutrality where Assumption 3.4 fails, and degradation where Assumption 3.3 fails. 39 D.5 Correlation Between Classification Accuracy and Structural Properties 
+
+Figure 3: Mean test accuracy vs. structural properties. 40 Table 2 suggests a correlation between the classification accuracy of tokenized sparse-attention GTs and graph structural properties, including label homophily, the average degree of the auxiliary graph, and the connectivity of the original graph. Notably, the correlations obtained from cascade models are clearer than those from the baseline GTs. Since these patterns are observed on the combined set of synthesized and benchmark graphs—and the synthesized graphs dominate in number—an important question is whether the same correlations persist independently within benchmark graphs. Due to the imbalance in the homophily distribution of the benchmark graphs, performing separate regressions on the synthesized and benchmark graph sets is not feasible. Instead, we plot test accuracy against the input graph’s label homophily and encode additional structural properties—the average degree of the input graph (original graph for NAG and VCR, and auxiliary graph for the cascade models), the connectivity of the original graph, and whether the graph is a DGL benchmark—using marker size, shape, and color, respectively. Figure 3 illustrates the interaction among these structural factors, consistent with the regression results in Table 2; the patterns observed in the DGL benchmark graphs closely align with those of the synthesized graphs. 
+
+D.6 Comparison to Existing Rewiring Baselines 
+
+In Table 11, we compare GCN-TAS against strong rewiring baselines, including GCN+FoSR [Karhad-kar et al., 2022] and GCN+SDRF [Topping et al., 2022], across standard benchmark datasets. All experiments are run under the same protocol described in Section 4. GCN-TAS outperforms both base-lines on 12 of 16 datasets, with the largest margins on heterophilic and moderate-degree homophilic graphs, indicating that cascade-based rewiring is especially effective in regimes where mesoscopic neighborhood structures are misaligned. The four losses cluster in regimes our theory identifies as failure modes: low-degree homophilic (citeseer) and bottleneck-dominated (cycle, grid), where FoSR and SDRF are designed to operate. On community , all three rewiring methods underperform the GCN baseline, while CR-Graphormer achieves the best overall result with 78.60% test accuracy. Bold marks the best accuracy per row. Table 11: Test accuracy (mean, in %) of GCN with cascade rewiring (GCN-TAS) compared with structural rewiring baselines GCN+FoSR [Karhadkar et al., 2022] and GCN+SDRF [Topping et al., 2022] across all 16 DGL benchmarks.                                                    
+
+> Dataset GCN+FoSR GCN+SDRF GCN-TAS
+> cornell 50.74 51.54 57.02
+> texas 55.50 52.25 65.00
+> wisconsin 57.63 58.78 71.56
+> actor 32.11 31.73 34.62
+> chameleon 43.66 44.79 58.75
+> squirrel 40.03 38.98 42.38
+> cora 86.10 85.84 87.29
+> citeseer 76.35 71.91 75.46 pubmed 74.86 71.62 88.15
+> computer 83.78 80.11 90.87
+> photo 90.21 90.37 94.17
+> wiki 73.91 69.39 83.54
+> shape 81.50 79.01 89.57
+> community 51.09 50.34 50.11 cycle 68.04 66.91 60.39 grid 70.25 72.33 58.19
+
+D.7 Comparison to Heterophily-Specific Architectures 
+
+We run additional experiments on seven state-of-the-art architectures developed to address challenges in heterophily (ACMGCN [Luan et al., 2022], CMGNN [Zheng et al., 2025], GGCN [Yan et al., 2022], GloGNN [Li et al., 2022], H2GCN [Zhu et al., 2020], M2MGNN [Liang et al., 2024], OrderedGNN [Song et al., 2023]) and compare their performance against our methods. Comparing GRAPH CASCADES against this set provides a stronger reference point than GNNs and GTs alone: a 41 competitive result here would indicate that cascade rewiring captures heterophily-relevant structure without architecture-specific modifications. Table 12: Test accuracy (mean ± std, in %) from heterophily-specific architectures across DGL datasets. Top-5 baseline accuracies are shaded, with darker shading indicating better performance.                                                  
+
+> Method actor chameleon citeseer community cora cornell cycle grid shape texas wisconsin ACMGCN 33.55 ±1.32 62.74 ±1.01 76.13 ±1.59 42.80 ±1.82 85.49 ±0.75 60.85 ±4.41 57.81 ±1.43 57.80 ±2.81 44.34 ±4.11 78.72 ±8.64 72.50 ±2.37 CMGNN 34.94 ±1.16 60.91 ±1.12 75.61 ±1.39 76.06 ±1.24 84.67 ±1.59 73.62 ±6.31 88.40 ±16.36 80.32 ±5.97 97.14 ±0.90 84.68 ±5.90 83.75 ±2.84 GGCN 26.76 ±2.37 34.53 ±6.29 72.70 ±1.10 65.89 ±1.67 79.91 ±4.01 41.70 ±9.23 90.59 ±4.28 65.95 ±13.40 44.34 ±4.11 44.26 ±21.67 36.56 ±13.60 GloGNN 30.58 ±1.15 65.51 ±2.52 75.15 ±1.74 53.94 ±2.32 84.05 ±1.38 62.13 ±4.61 83.65 ±2.34 72.04 ±1.42 20.57 ±24.07 80.85 ±6.89 69.69 ±6.31 H2GCN 34.68 ±0.98 53.61 ±1.99 76.25 ±1.75 66.23 ±1.74 87.06 ±0.76 68.51 ±5.90 48.77 ±6.31 66.21 ±7.68 76.80 ±4.77 85.11 ±7.52 79.69 ±2.47 M2MGNN 31.61 ±1.58 64.70 ±2.12 70.73 ±2.49 56.51 ±2.39 85.26 ±1.22 51.49 ±4.85 55.16 ±6.71 57.80 ±2.81 34.74 ±12.04 71.91 ±10.79 59.06 ±3.20 OrderedGNN 35.61 ±1.11 56.07 ±2.26 76.69 ±1.13 53.83 ±2.12 87.47 ±0.97 57.45 ±5.42 57.81 ±1.43 53.59 ±8.23 36.11 ±9.90 62.98 ±3.56 73.44 ±6.35 Our Best 36.46 ±1.31 63.65 ±2.82 75.46 ±1.46 78.60 ±3.50 87.29 ±0.77 75.02 ±4.68 61.32 ±3.67 62.25 ±2.21 89.57 ±11.79 82.31 ±6.59 81.02 ±4.13
+
+Table 12 shows that our best methods consistently rank among the top five, with performance gaps of up to 2.8% compared to the best model on most datasets. Specifically, we achieve 1st place on actor ,
+
+community , and cornell ; 2nd on cora and wisconsin ; 3rd on chameleon and texas ; and 5th on citeseer .For shape , cycle , and grid , our method ranks 2nd, 4th, and 5th, respectively, with performance gaps of 7.57%, 29.27%, and 18.07% compared to the best-performing method. This is consistent with the observations in Section 4: although cycle and grid exhibit high homophily, their low average degree violates Assumption 3.3, making our approach less suitable. 
+
+D.8 Ablation Study 
+
+In this section, we present a parameter analysis of CR-G RAPHORMER and justify the use of cascade frequency-based edge weights W ⋆ through additional classification results. 
+
+D.8.1 Parameter Analysis for CR-G RAPHORMER 
+
+We perform a sensitivity analysis with respect to the main hyperparameters controlling the MAS and TAS cascades, using CR-G RAPHORMER as the cascade model. In this experiment, we retain the same experimental settings as in previous sections (see Experimental Setup in Section 4 and 
+
+Implementation Details in Appendix D.1), and vary one adjacency search parameter at a time, including the top-k parameter k, walk length ℓ, number of starting neighbors r = |R|, number of permutations P , and the maximum threshold T with the threshold list L = {1, 2, . . . , T }. The resulting mean test accuracies are shown in Figures 4 and 5 on 10 representative datasets (heterophilic: 
+
+chameleon, cornell, texas, wisconsin ; moderate-degree homophilic: community, shape ; low-degree homophilic: citeseer, cora, cycle, grid ). 
+
+CR-MAS (Figure 4). 
+
+• Increasing k (auxiliary graph degree/token length) is generally beneficial. Increasing 
+
+k (3 → 9) improves mean accuracy on most datasets, often monotonically, with gains saturating around mid/large k. The trend is especially clear on harder heterophilic/low-degree cases (e.g., chameleon rises from ∼0.52 to ∼0.64; grid from ∼0.64 to ∼0.71), while other high-performing datasets (e.g., cora ) remain strong and relatively stable (around 
+
+∼0.80 -0.84 ). • Walk length ℓ exhibits diminishing returns (often negative) for MAS. Longer cascades (ℓ = 5 → 20 ) tend to reduce accuracy for many datasets (notably citeseer , grid , and shape ), suggesting that MAS benefits most from a tighter mesoscopic radius; extending too far likely introduces weaker/less relevant co-activations. This observation is consistent with Theorem 3.8. A few datasets show mild robustness or slight recovery at ℓ = 20 , but the dominant pattern is “smaller ℓ is more stable” for MAS. • Starting-neighborhood size r, when large, could degrade performance for MAS. Varying 
+
+r (3 → 9) is mostly mild, but some datasets degrade sharply with larger r (e.g., shape drops from ∼0.63 to ∼0.49; community from ∼0.58 to ∼0.50). This indicates MAS is sensitive to noisy initialization when the initial active set is too wide. A safer choice is choosing 
+
+r ≤ davg , where davg is the average degree in the graph. • Number of permutations P is a second-order effect for MAS. Changing P (1 → 7) yields relatively small shifts on most datasets, with only modest improvements at intermediate 42 Figure 4: Parameter Analysis for CR-MAS. values (some datasets peak around P ≈ 3–5). Overall, MAS appears fairly robust to P once a small amount of resampling is used. 
+
+CR-TAS (Figure 5). 
+
+• Top-k is non-monotonic for several datasets. Unlike MAS, TAS shows clear non-monotonicity: some datasets peak at intermediate k (notably community and shape , which peak at k ≈ 5 and then drop when k is increased further), while heterophilic chameleon 
+
+improves steadily with larger k (about ∼0.50 → ∼ 0.62). This suggests TAS can over-include less useful neighbors if k becomes too large, depending on the graph type. • TAS is more tolerant of longer walk lengths. Accuracy is typically stable or slightly increasing with ℓ (e.g., shape increases from ∼0.86 to ∼0.89 as ℓ grows; chameleon 
+
+improves mainly from ℓ = 5 to ℓ = 10 and then plateaus). Compared to MAS, TAS does 
+
+not show the same widespread degradation as ℓ increases. This observation is consistent with thresholding preventing premature activation of weakly supported nodes. • Starting-neighborhood size r is mostly robust, but very large r is generally not prefer-able. Most datasets vary only slightly with r, but the largest r setting causes noticeable drops for some (e.g., chameleon and community ), implying that even under thresholding, an overly broad initialization can inject noise. A safer choice is to choose r ≤ davg .• Permutation count P is more important under TAS than MAS. Increasing P yields pronounced gains for certain datasets—especially community (roughly ∼0.62 → ∼ 0.84) and shape (roughly ∼0.78 → ∼ 0.88), while others remain comparatively flat. This indicates 43 TAS benefits more from additional resampling/permutation averaging, likely because its thresholded selection introduces more variance that is reduced with repeated runs. • Maximum threshold T (i.e., allowing larger reinforcement thresholds) yields greater gains. Increasing T produces the largest visible ablation effects: shape rises dramatically (about ∼0.63 → ∼ 0.92) and community increases strongly (about ∼0.63 → ∼ 0.84), whereas several other datasets change modestly and a few show slight saturation/decline at high T
+
+(e.g., cora ). Overall, the figure suggests that enabling stronger multi-neighbor reinforcement (higher thresholds) can be crucial on some graphs, but is not uniformly beneficial across all datasets. 
+
+Figure 5: Parameter Analysis for CR-TAS. 
+
+D.8.2 The Use of W ⋆ in Cascaded Graph Learning 
+
+Throughout the main body, cascade models refer to models that receive the auxiliary graph G∗
+
+together with cascade-frequency edge weights W ∗ as input. We also evaluated the topology-only 44 variant in which only G∗ is provided. Tables 13 and 14 show that the effect of W ∗ is architecture-dependent. For sparse-attention GTs, the topology alone already yields broad gains: VCR improves on 13 of 16 graphs and NAG-MAS on up to 6, with the largest single gain reaching +33 .31% for VCR. For GNN-based architectures (GCN, GraphGPS), the topology-only variant produces fewer improvements (4 and 7 of 16, respectively, with gains up to +4 .30% ), reflecting that GNN aggregation is more sensitive to degree imbalance and benefits more from weighting. Adding W ∗ on top of G∗
+
+extends the gains for all backbones: at least 10 graphs improve for MAS cascades (up to +22 .79% 
+
+over the topology-only variant) and at least 11 for TAS cascades (up to +35 .89% ). Performance declines, when they occur, are small: the only notable drops are for VCR-MAS and VCR-TAS on 
+
+cycle and grid (−7.55% to −14 .53% relative to VCR with topology-only input) and VCR-MAS on 
+
+community (−6.94% ) and squirrel (−3.39% ); all other declines are at most 1.46% .Table 13: Number of the 16 DGL graphs whose test accuracy improves when using the auxiliary graph G′, with or without cascade frequency-based edge weights W ⋆. Imp. stands for Improvement 
+
+Baseline Cascade Imp. from G∗ Input Imp. from Cascade Model Imp. of Cascade Model over G∗ Input GCN MAS 4 (up to +3.05% ) 8 (up to +17.11% ) 14 (up to +16.60% )TAS 3 (up to +3.23% ) 10 (up to +20.16% ) 14 (up to +30.66% )GraphGPS MAS 7 (up to +4.29% ) 8 (up to +8.15% ) 10 (up to +7.02% )TAS 4 (up to +2.45% ) 9 (up to +9.52% ) 11 (up to +12.63% )NAG MAS 6 (up to +19.18% ) 11 (up to +19.77% ) 15 (up to +19.15% )TAS 5 (up to +18.90% ) 13 (up to +34.54% ) 14 (up to +35.89% )VCR MAS 12 (up to +32.81% ) 13 (up to +32.74% ) 11 (up to +22.79% )TAS 13 (up to +33.31% ) 13 (up to +32.33% ) 11 (up to +29.65% )
+
+Table 14: Test accuracy (mean ±std, in %) across DGL datasets where non-baseline methods input auxiliary graphs into the baseline models without frequency-based edge weights. OOM indicates out-of-memory errors. Accuracy is encoded by shading, with darker cells indicating better performance.                                                                                                                                                                                                                 
+
+> Method actor chameleon citeseer community computer cora cornell cycle GCN 29.59 ±0.91 57.30 ±2.67 75.70 ±1.41 55.63 ±1.92 90.30 ±0.66 87.96 ±0.83 45.11 ±6.20 60.73 ±6.59 GCN-MAS 28.27 ±0.88 59.12 ±2.37 70.86 ±1.75 50.39 ±2.54 88.25 ±0.74 83.57 ±1.05 44.26 ±5.15 59.22 ±2.69 GCN-TAS 28.31 ±0.72 59.99 ±2.31 73.24 ±1.28 47.60 ±2.17 88.93 ±0.83 86.26 ±0.89 41.28 ±6.74 59.27 ±2.73 GraphGPS 35.19 ±1.31 60.78 ±1.35 75.23 ±1.63 44.00 ±2.30 OOM 86.65 ±1.04 61.38 ±5.49 55.11 ±10.10 GPS-MAS 35.24 ±1.32 59.73 ±1.71 72.63 ±1.48 47.94 ±3.11 OOM 85.08 ±1.48 61.70 ±6.14 56.26 ±3.37 GPS-TAS 35.25 ±1.03 59.55 ±1.55 73.83 ±1.42 42.33 ±1.72 OOM 86.16 ±1.00 60.43 ±4.95 57.56 ±5.66 NAG 31.68 ±1.26 40.38 ±1.81 74.72 ±1.67 46.17 ±2.49 88.66 ±0.73 86.75 ±0.82 58.94 ±7.11 77.24 ±9.34 NAG-MAS 33.08 ±1.41 59.56 ±1.27 70.82 ±1.66 49.66 ±2.15 88.46 ±0.78 83.69 ±0.87 56.49 ±7.26 57.99 ±2.53 NAG-TAS 32.88 ±1.14 59.28 ±1.19 72.67 ±1.59 42.90 ±1.52 88.87 ±0.74 86.05 ±1.13 44.89 ±6.36 59.82 ±2.34 VCR 26.41 ±1.20 27.28 ±2.51 71.15 ±1.36 28.13 ±4.60 82.45 ±5.30 85.41 ±1.33 44.89 ±6.09 61.64 ±4.12 VCR-MAS 31.60 ±1.73 60.09 ±2.48 63.45 ±1.77 54.16 ±2.39 89.32 ±0.69 80.76 ±0.92 51.06 ±6.33 59.25 ±2.94 VCR-TAS 32.43 ±1.70 60.59 ±2.67 66.03 ±1.72 49.37 ±1.84 89.56 ±0.71 82.56 ±0.96 48.83 ±5.41 59.20 ±2.73 Method grid photo pubmed shape squirrel texas wiki wisconsin GCN 59.34 ±5.45 93.90 ±0.74 87.16 ±0.35 89.46 ±11.87 39.10 ±1.43 54.57 ±7.12 83.89 ±0.73 51.41 ±4.81 GCN-MAS 58.19 ±1.76 91.75 ±1.09 83.78 ±0.42 54.69 ±4.47 40.49 ±3.42 56.91 ±8.25 79.72 ±0.95 54.45 ±5.72 GCN-TAS 58.19 ±1.76 92.44 ±0.83 84.69 ±0.38 58.91 ±7.93 42.33 ±1.83 57.02 ±6.04 81.34 ±0.74 51.09 ±4.03 GraphGPS 57.41 ±10.00 94.64 ±0.63 OOM 46.74 ±14.93 40.04 ±1.27 69.68 ±6.58 OOM 72.66 ±4.95 GPS-MAS 53.48 ±7.51 94.46 ±0.63 OOM 48.14 ±4.45 39.24 ±1.50 72.45 ±7.02 OOM 76.95 ±3.58 GPS-TAS 56.33 ±5.59 94.06 ±0.97 OOM 43.63 ±8.60 38.10 ±1.27 69.79 ±7.19 OOM 74.14 ±5.23 NAG 70.99 ±1.99 93.94 ±0.67 87.26 ±0.52 49.89 ±6.51 25.80 ±1.26 63.30 ±6.43 82.40 ±0.98 61.25 ±4.32 NAG-MAS 58.22 ±1.72 93.45 ±0.69 88.08 ±0.41 45.77 ±4.53 39.11 ±1.98 62.13 ±7.06 81.39 ±0.92 67.73 ±3.80 NAG-TAS 57.91 ±1.99 93.68 ±0.48 88.15 ±0.40 48.54 ±4.64 39.72 ±1.62 61.60 ±6.60 81.29 ±0.67 58.28 ±5.53 VCR 58.32 ±1.96 88.45 ±7.85 83.25 ±0.44 44.66 ±6.15 22.48 ±2.00 54.68 ±7.28 78.46 ±2.69 51.33 ±7.46 VCR-MAS 58.58 ±1.62 92.99 ±0.80 87.18 ±0.63 43.11 ±2.97 42.76 ±2.58 62.45 ±8.32 81.94 ±0.76 67.11 ±5.97 VCR-TAS 59.24 ±3.01 93.39 ±0.71 87.35 ±0.42 47.29 ±5.49 43.17 ±3.30 61.70 ±7.78 82.86 ±0.70 65.86 ±5.83
+
+These observations can be explained by the fact that the frequency of node activations under MAS and TAS captures the mesoscopic structural information beyond the raw graph topology. Nodes that are repeatedly co-activated with a given seed are typically embedded in the same cohesive cluster or dense region, while nodes in sparser regions or across weak cuts activate less frequently. Using these frequencies as edge weights biases the GNN and GT message-passing mechanisms towards structurally relevant neighbors, amplifying signals from densely connected clusters and downweighting less informative connections. In contrast, simply inputting the auxiliary graph with unit edge weights provides only topological information without distinguishing the relative importance of different edges, which limits the improvement in classification. Consequently, the cascade frequency-weighted graphs enable models to exploit higher-order connectivity and cluster cohesion, resulting in larger and more consistent gains across datasets and architectures. 45 D.9 Experiments on Long-Range and “Corrected” Datasets 
+
+We extend our experiments to long-range datasets where the prediction task requires capturing global information and structural dependencies between nodes that are separated by large graph distances [Dwivedi et al., 2022, Platonov et al., 2023]. We also repeat the experiments on the filtered version of chameleon and squirrel , denoted as chameleon-filtered and squirrel-filtered , as existing literature has suggested that they contain duplicate or near-duplicate nodes that share the same features and neighborhood connectivity, leading to significant data leakage and artificially inflated performance metrics on the original versions of these benchmarks [Platonov et al., 2023]. Table 16 shows the performance of cascade models in comparison with their direct baselines, while Table 19 presents the performance of our best model versus state-of-the-art GNN and GT benchmarks. Since macro-F1 and AUROC are more robust indicators of performance on these datasets, particularly for long-range tasks where class imbalance can skew standard accuracy and for heterophilic graphs with high label noise [Dwivedi et al., 2022, Platonov et al., 2023], we report these metrics in Tables 17–18 and 20–21. Due to severe class imbalance, AUROC scores could not be computed for COCO-SP and PascalVOC-SP .Among the seven selected datasets, Amazon-ratings , Questions , Roman-empire , chameleon-filtered ,and squirrel-filtered are heterophilic graphs, while COCO-SP and PascalVOC-SP are homophilic graphs with moderate average degree. Experimental results in Tables 15 and 16 indicate that cascades improve performance on most graphs: 6 for both GCN-Cascade and VCR-Cascade models, 5 for NAG-TAS, 4 for NAG-MAS, 3 for GPS-TAS, and 2 for GPS-MAS, with two additional graphs showing unchanged test accuracy for GPS-Cascade models. Table 15: GRAPH CASCADES performance on other datasets discussed in Section D.9. Colors denote the graph type with the largest gain: red (heterophilic) and blue (moderate- to high-degree homophilic). Baseline Cascade Model # Graphs Improved GCN GCN-MAS 6 (up to +4.98% )GCN-TAS 6 (up to +5.17% )GraphGPS GPS-MAS 2 (up to +1.71% )GPS-TAS 3 (up to +1.85% )NAG NAG-MAS 4 (up to +4.69% )NAG-TAS 5 (up to +4.23% )VCR VCR-MAS 6 (up to +39.05% )VCR-TAS 6 (up to +38.95% )Among the corrected/non-duplicates chameleon /squirrel datasets, chameleon-filtered benefits from rewiring, as the experiments show no degradation in test accuracy, with the largest gains coming from VCR-MAS and VCR-TAS, at +10.32% and +8.88%, respectively. In addition, although MAS and TAS degrade performance on Roman-empire for GNN-based architectures (GCN-MAS: -0.45%; GCN-TAS: -2.24%) and GraphGPS (GPS-MAS: -9.22%; GPS-TAS: -2.10%), GT models benefit substantially from cascade rewiring, as VCR-MAS and VCR-TAS show improvements of +39.05% and +38.95%, while NAG-MAS and NAG-TAS yield +1.00% and +4.09%, respectively. Apart from 
+
+Roman-empire , the performance decline is limited: -4.93% from VCR-MAS on Amazon-ratings and -3.12% from GPS-TAS on squirrel-filtered , while the degradation from all remaining cascade models across datasets is no more than -1.37%. The macro-F1 and AUROC scores in Tables 17 and 18 largely follow the trends observed in test accuracy, while also highlighting the critical impact of cascade rewiring on class-imbalanced and long-range datasets. In several cases, gains in macro-F1 and AUROC are more pronounced than those in accuracy. For instance, while GCN-MAS and GCN-TAS show a +0.21% improvement in accuracy on Questions , their macro-F1 scores exhibit larger gains of +3.10% and +0.30%, respectively, while AUROC increases by +11.40% and +10.00%. This suggests that the cascade mechanism helps the model more effectively capture minority classes. Similarly, VCR-Cascades improve test accuracy on 
+
+Questions by up to +0.04%, while AUROC increases by at least +3.00%. The two moderate-degree homophilic datasets, COCO-SP and PascalVOC-SP, show a similar pattern: NAG-Cascades improve test accuracy by up to +1.23% on COCO-SP and +4.69% on PascalVOC-SP, while macro-F1 improves by at least +5.70% on COCO-SP and at least +10.20% on PascalVOC-SP. Likewise, VCR-TAS improves test accuracy on PascalVOC-SP by +1.83% and macro-F1 by +5.80%. 46 Table 16: Test accuracy (mean ± std, in %) across new benchmarks. OOM indicates out-of-memory errors. Accuracy is encoded by shading, with darker cells indicating better performance. 
+
+Method Amazon-ratings COCO-SP PascalVOC-SP Questions Roman-empire chameleon-filtered squirrel-filtered GCN 51.08 ±1.59 81.60 ±1.27 67.98 ±9.07 93.29 ±0.30 36.81 ±0.55 40.00 ±2.42 33.57 ±1.41 GCN-MAS 53.54 ±1.59 81.70 ±1.40 72.96 ±2.94 93.50 ±0.36 36.36 ±1.01 41.79 ±2.88 34.11 ±1.40 GCN-TAS 52.74 ±1.09 81.70 ±1.40 73.15 ±1.80 93.50 ±0.36 34.57 ±1.22 42.15 ±1.31 33.90 ±1.69 GraphGPS 43.58 ±2.68 81.70 ±1.40 70.75 ±0.92 93.49 ±0.40 66.81 ±0.28 43.14 ±3.93 38.49 ±1.02 GPS-MAS 45.29 ±3.28 81.70 ±1.40 70.75 ±0.92 93.49 ±0.37 57.59 ±0.75 43.68 ±4.23 37.27 ±0.83 GPS-TAS 45.43 ±1.34 81.70 ±1.40 70.75 ±0.92 93.50 ±0.36 64.71 ±1.71 44.13 ±4.56 35.37 ±1.41 NAG 47.69 ±2.63 81.49 ±1.76 72.28 ±1.37 93.70 ±0.36 58.08 ±1.59 38.83 ±1.57 33.43 ±0.60 NAG-MAS 46.32 ±2.08 82.72 ±2.00 76.97 ±5.68 93.56 ±0.39 59.08 ±1.72 41.26 ±2.31 33.21 ±0.73 NAG-TAS 46.69 ±0.56 82.39 ±1.99 76.51 ±2.39 93.46 ±0.40 62.17 ±1.77 41.61 ±3.06 34.15 ±1.77 VCR 51.74 ±0.77 79.85 ±2.01 73.05 ±2.69 93.50 ±0.36 18.65 ±0.98 33.18 ±3.55 31.71 ±1.70 VCR-MAS 46.81 ±1.40 82.34 ±1.54 74.39 ±4.50 93.54 ±0.37 57.70 ±1.12 43.50 ±2.61 36.66 ±1.39 VCR-TAS 51.35 ±1.01 82.77 ±1.03 74.88 ±6.00 93.52 ±0.41 57.60 ±2.19 42.06 ±2.74 35.44 ±1.52 CR-MAS 46.30 ±1.63 81.64 ±1.43 73.46 ±1.67 93.51 ±0.43 55.19 ±0.97 42.06 ±3.13 37.56 ±1.69 CR-TAS 48.07 ±1.36 81.64 ±1.70 74.97 ±1.60 93.76 ±0.38 59.82 ±2.09 42.42 ±3.64 37.16 ±1.70 
+
+Table 17: Mean macro-F1 score across long-range datasets. 
+
+Method Amazon-ratings COCO-SP PascalVOC-SP Questions Roman-empire GCN 0.387 0.063 0.138 0.486 0.290 GCN-MAS 0.418 0.070 0.152 0.517 0.257 GCN-TAS 0.402 0.068 0.130 0.489 0.264 GraphGPS 0.292 0.063 0.092 0.492 0.583 GPS-MAS 0.325 0.063 0.092 0.506 0.464 GPS-TAS 0.284 0.063 0.092 0.510 0.557 NAG 0.356 0.074 0.138 0.533 0.444 NAG-MAS 0.335 0.137 0.240 0.528 0.439 NAG-TAS 0.332 0.131 0.254 0.532 0.451 VCR 0.388 0.102 0.196 0.483 0.108 VCR-MAS 0.315 0.124 0.222 0.492 0.442 VCR-TAS 0.385 0.144 0.254 0.491 0.445 CR-MAS 0.336 0.070 0.172 0.505 0.401 CR-TAS 0.318 0.069 0.171 0.543 0.463 
+
+Table 18: Mean AUROC score across long-range datasets. 
+
+Method Amazon-ratings Questions Roman-empire GCN 0.744 0.540 0.855 GCN-MAS 0.771 0.654 0.798 GCN-TAS 0.756 0.640 0.843 GPS 0.689 0.681 0.949 GPS-MAS 0.710 0.661 0.910 GPS-TAS 0.694 0.657 0.941 NAG 0.700 0.702 0.912 NAG-MAS 0.699 0.713 0.910 NAG-TAS 0.705 0.691 0.919 VCR 0.731 0.597 0.722 VCR-MAS 0.711 0.627 0.906 VCR-TAS 0.740 0.642 0.906 CR-MAS 0.709 0.706 0.895 CR-TAS 0.704 0.697 0.913 
+
+Table 19: Test accuracy (mean ± std, in %) across new benchmarks. OOM indicates out-of-memory errors. Accuracies for the top-5 best-performing baselines are encoded by shading, with darker cells indicating better performance. 
+
+Method Amazon-ratings COCO-SP PascalVOC-SP Questions Roman-empire chameleon-filtered squirrel-filtered GCN 51.08 ±1.59 81.60 ±1.27 67.98 ±9.07 93.29 ±0.30 36.81 ±0.55 40.00 ±2.42 33.57 ±1.41 GraphSAGE 53.70 ±1.42 77.98 ±8.54 63.58 ±15.38 93.43 ±0.40 66.64 ±1.27 41.43 ±5.17 37.63 ±1.46 GAT 49.31 ±1.23 80.74 ±3.43 62.81 ±22.57 93.43 ±0.38 38.31 ±1.73 40.63 ±3.87 33.61 ±1.86 GT 48.50 ±4.01 81.70 ±1.40 70.73 ±0.92 93.48 ±0.40 65.89 ±1.88 40.54 ±1.67 35.73 ±1.49 Gophormer 43.79 ±1.10 81.70 ±1.40 70.30 ±1.45 93.49 ±0.36 67.35 ±2.14 44.04 ±2.75 40.39 ±2.30 SAN 50.28 ±2.33 81.70 ±1.40 70.76 ±0.96 93.27 ±0.47 68.04 ±1.02 39.91 ±2.99 34.18 ±2.90 GraphGPS 43.58 ±2.68 81.70 ±1.40 70.75 ±0.92 93.49 ±0.40 66.81 ±0.28 43.14 ±3.93 38.49 ±1.02 NAG 47.69 ±2.63 81.49 ±1.76 72.28 ±1.37 93.70 ±0.36 58.08 ±1.59 38.83 ±1.57 33.43 ±0.60 Exphormer 45.87 ±2.92 81.62 ±1.59 72.38 ±0.83 93.50 ±0.36 66.57 ±0.96 43.41 ±6.85 41.29 ±2.25 VCR 51.74 ±0.77 79.85 ±2.01 73.05 ±2.69 93.50 ±0.36 18.65 ±0.98 33.18 ±3.55 31.71 ±1.70 ACMGCN 55.65 ±1.76 82.52 ±1.02 72.52 ±0.92 93.65 ±0.39 66.89 ±1.35 37.76 ±2.09 36.30 ±1.44 CMGNN 51.55 ±1.62 81.65 ±1.38 61.67 ±11.50 93.52 ±0.43 68.75 ±1.08 43.68 ±3.62 40.25 ±2.42 GGCN 46.07 ±4.63 81.69 ±1.38 70.55 ±0.96 81.97 ±8.09 44.07 ±1.29 28.25 ±8.43 23.16 ±2.22 GloGNN 37.56 ±11.23 0.40 ±0.90 28.96 ±37.59 93.46 ±0.36 27.28 ±13.91 44.04 ±3.26 33.79 ±7.67 H2GCN 50.32 ±1.98 81.44 ±1.42 72.52 ±2.78 93.49 ±0.47 67.10 ±1.30 42.24 ±4.81 33.75 ±1.07 M2MGNN 51.56 ±1.03 81.67 ±1.39 67.62 ±8.04 93.76 ±0.49 49.85 ±1.07 40.63 ±2.51 32.57 ±1.45 OrderedGNN 53.62 ±2.90 82.29 ±2.41 75.88 ±8.66 93.61 ±0.38 67.14 ±1.16 40.36 ±3.40 34.61 ±2.17 Our Best 53.54 ±1.59 82.77 ±1.03 76.97 ±5.68 93.76 ±0.38 64.71 ±1.71 44.13 ±4.56 37.56 ±1.69 Method GCN-MAS VCR-TAS NAG-MAS CR-TAS GPS-TAS GPS-TAS CR-MAS Rank 4 1 1 1 11 1 6
+
+As shown in Table 19, our method achieves the best performance on four datasets ( COCO-SP ,
+
+PascalVOC-SP , Questions , and chameleon-filtered ) compared to 17 GNN and GT architectures. On 
+
+Amazon-ratings , squirrel-filtered , and Roman-empire , our method ranks 4th, 6th, and 11th, respec-tively, with moderate gaps of 2.11%, 3.73%, and 4.04% from the top-performing methods. Overall, our approach ranks within the top five on 5 out of 7 datasets. This is followed by OrderedGNN, which also achieves top-five performance on 5 out of 7 datasets but with slightly weaker results, and then ACMGCN and Gophormer, each achieving top-five performance on 4 datasets. The macro-F1 and AUROC scores reported in Tables 20 and 21 again show consistent results with test accuracy in Table 19. 
+
+Remark D.1 (Scope on Long-Range Benchmarks) . Long-range graph benchmarks [Dwivedi et al., 2022, Platonov et al., 2023] target a regime where label-relevant signals must propagate across graph bottlenecks — long chains, narrow cuts, or tree-like structures with limited multi-path connectivity. This is complementary to the regime targeted by GRAPH CASCADES : as established in Theorem 3.8, 
+
+47 Table 20: Mean macro-F1 score across long-range datasets. 
+
+Method Amazon-ratings COCO-SP PascalVOC-SP Questions Roman-empire GCN 0.387 0.063 0.138 0.486 0.290 GraphSAGE 0.402 0.062 0.090 0.490 0.570 GAT 0.350 0.067 0.119 0.485 0.302 GT 0.343 0.063 0.092 0.485 0.582 Gophormer 0.258 0.063 0.101 0.499 0.596 SAN 0.390 0.063 0.093 0.524 0.593 GraphGPS 0.292 0.063 0.092 0.492 0.583 NAG 0.356 0.074 0.138 0.533 0.444 Exphormer 0.286 0.077 0.146 0.483 0.564 VCR 0.388 0.102 0.196 0.483 0.108 ACMGCN 0.429 0.126 0.177 0.526 0.574 CMGNN 0.376 0.065 0.115 0.494 0.609 GGCN 0.332 0.063 0.093 0.514 0.360 GloGNN 0.143 0.001 0.039 0.485 0.084 H2GCN 0.358 0.078 0.166 0.505 0.593 M2MGNN 0.423 0.063 0.104 0.532 0.396 OrderedGNN 0.445 0.144 0.241 0.516 0.571 Our Best 0.418 0.144 0.254 0.543 0.557 
+
+Table 21: Mean AUROC score across long-range datasets. 
+
+Method Amazon-ratings Questions Roman-empire GCN 0.744 0.540 0.855 GraphSAGE 0.748 0.654 0.941 GAT 0.730 0.671 0.852 GT 0.716 0.687 0.940 Gophormer 0.678 0.695 0.953 SAN 0.739 0.663 0.951 GPS 0.689 0.681 0.949 NAG 0.700 0.702 0.912 Exphormer 0.700 0.703 0.947 VCR 0.731 0.597 0.722 ACMGCN 0.759 0.642 0.936 CMGNN 0.746 0.656 0.947 GGCN 0.682 0.494 0.849 GloGNN 0.591 0.664 0.698 H2GCN 0.733 0.626 0.943 M2MGNN 0.760 0.684 0.877 OrderedGNN 0.772 0.626 0.941 Our Best 0.771 0.713 0.941 
+
+threshold activation certifies κ edge-disjoint short paths from the seed, and such redundancy is especially scarce in bottlenecked structures. We therefore expect cascade rewiring to be most effective on long-range datasets whose informative dependencies are carried by cohesive mesoscopic regions (e.g., PascalVOC-SP and COCO-SP), and less effective on chain-like or grid-like structures (e.g., Roman-empire). The results above are consistent with this prediction: cascades improve macro-F1 substantially on PascalVOC-SP and COCO-SP, remain competitive on Amazon-ratings and Questions, and show inconsistent gains on Roman-empire, where the method’s structural assumptions are not satisfied. We report these results not as uniform improvements but as a calibration of the regimes where the mechanism applies. 
+
+48

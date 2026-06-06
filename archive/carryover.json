@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-06-05T22:04:00.304386+00:00",
-  "updated_date": "20260605",
+  "generated_at": "2026-06-06T20:52:42.856940+00:00",
+  "updated_date": "20260606",
   "carryover_days": 9,
   "tag_states": {
     "power-ticket": {
-      "updated_date": "20260605",
+      "updated_date": "20260606",
       "carryover_days": 9,
       "items": []
     },
     "pwt": {
-      "updated_date": "20260605",
+      "updated_date": "20260606",
       "carryover_days": 9,
       "items": []
     }

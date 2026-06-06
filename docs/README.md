@@ -6,79 +6,79 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-05
-- 运行时间：2026-06-05 22:15:00 UTC
+- 最新运行日期：2026-06-06
+- 运行时间：2026-06-06 21:04:31 UTC
 - 运行状态：成功
 - 本次总论文数：19
 - 精读区：7
 - 速读区：12
 
 ### 今日简报（AI）
-今日精读聚焦LLM推理增强与图记忆智能体，两篇9分论文揭示外部子图生成和记忆重构新范式。  
-速读中RAG架构搜索与查询自适应导航值得关注，为提升检索与技能管理提供新思路。  
-建议优先精读两篇高分论文，理解图结构在推理与记忆中的核心作用，再结合RAG搜索优化实践。
-- 详情：[/202606/05/README](/202606/05/README)
+1) 今日精选19篇论文，重点聚焦LLM推理优化与知识增强，精读7篇中《LoRi》以9.0分领先。  
+2) 最值关注方向：隐式推理的低秩蒸馏（LoRi）和层级自适应推理框架（Thinking Economically），分别获9.0和8.0分；速读中多模态长文档QA记忆精炼框架（MARDoc 8.0分）也值得一看。  
+3) 对普通读者，建议优先精读LoRi和Thinking Economically以低成本提升模型推理，再速览MARDoc与KG-Guard了解多模态问答和幻觉检测前沿。
+- 详情：[/202606/06/README](/202606/06/README)
 
 ### 精读区论文标签
-1. [Stepwise Reasoning Enhancement for LLMs via External Subgraph Generation](/202606/05/2606.04454v1-stepwise-reasoning-enhancement-for-llms-via-external-subgraph-generation)  
-   标签：评分：9.0/10、query:power-ticket
-   evidence：基于图的检索增强生成，使用外部子图
-2. [Memory is Reconstructed, Not Retrieved: Graph Memory for LLM Agents](/202606/05/2606.06036v1-memory-is-reconstructed-not-retrieved-graph-memory-for-llm-agents)  
+1. [LoRi: Low-Rank Distillation for Implicit Reasoning](/202606/06/2606.05315v1-lori-low-rank-distillation-for-implicit-reasoning)  
    标签：评分：9.0/10、query:pwt
-   evidence：提出图记忆用于LLM推理，直接匹配图记忆增强推理需求
-3. [Generating Graph-like Rules for Knowledge Graph Reasoning via Diffusion Models](/202606/05/2605.30747v1-generating-graph-like-rules-for-knowledge-graph-reasoning-via-diffusion-models)  
+   evidence：低秩蒸馏作为显式思维链的替代，实现隐式推理
+2. [Thinking Economically: A Hierarchical Framework for Adaptive-Complexity Reasoning in LLMs](/202606/06/2606.01168v1-thinking-economically-a-hierarchical-framework-for-adaptive-complexity-reasoning-in-llms)  
    标签：评分：8.0/10、query:pwt
-   evidence：使用扩散模型生成知识图谱推理中的类图规则
-4. [EMA: Approximate Nearest Neighbor Search with General Attribute Filtering and Dynamic Updates](/202606/05/2606.00734v1-ema-approximate-nearest-neighbor-search-with-general-attribute-filtering-and-dynamic-updates)  
+   evidence：提出自适应复杂度推理框架减少CoT开销，为CoT提供替代方案
+3. [Spectral-Progressive Thought Flow for Lightweight Multimodal Reasoning](/202606/06/2606.02842v1-spectral-progressive-thought-flow-for-lightweight-multimodal-reasoning)  
+   标签：评分：8.0/10、query:pwt
+   evidence：光谱渐进思维流作为思维链推理的替代方案
+4. [Graph Cascades: Contagion-Based Mesoscopic Rewiring for Structure-Aware Graph Machine Learning](/202606/06/2606.05046v1-graph-cascades-contagion-based-mesoscopic-rewiring-for-structure-aware-graph-machine-learning)  
    标签：评分：8.0/10、query:power-ticket
-   evidence：支持属性过滤的近似最近邻搜索，用于检索增强生成
-5. [Geometric Latent Reasoning Induces Shorter Generations in LLMs](/202606/05/2606.02248v1-geometric-latent-reasoning-induces-shorter-generations-in-llms)  
+   evidence：通过传染过程进行介观重连的图结构学习方法
+5. [Q-GNN: Query-Conditioned Graph Neural Networks with Type Awareness for Knowledge Graph Completion](/202606/06/2606.05639v1-q-gnn-query-conditioned-graph-neural-networks-with-type-awareness-for-knowledge-graph-completion)  
    标签：评分：8.0/10、query:pwt
-   evidence：几何潜在推理作为思维链的高效替代方案
-6. [Visual Graph Scaffolds for Structural Reasoning in Large Language Models](/202606/05/2606.02673v1-visual-graph-scaffolds-for-structural-reasoning-in-large-language-models)  
-   标签：评分：8.0/10、query:pwt
-   evidence：使用图思维导图作为推理支架，是思维链的替代方案
-7. [Beyond Vector Similarity: A Structural Analysis of Graph-Augmented Retrieval for Industrial Knowledge Graphs](/202606/05/2606.06003v1-beyond-vector-similarity-a-structural-analysis-of-graph-augmented-retrieval-for-industrial-knowledge-graphs)  
+   evidence：使用图神经网络进行知识图谱推理
+6. [Reducing Hallucinations in Complex Question Answering using Simple Graph-based Retrieval-Augmented Generation (long version)](/202606/06/2606.05901v1-reducing-hallucinations-in-complex-question-answering-using-simple-graph-based-retrieval-augmented-generation-long-version)  
    标签：评分：8.0/10、query:power-ticket
-   evidence：对工业知识图谱图增强检索架构的系统比较
+   evidence：基于图的检索增强生成减少幻觉
+7. [IA-RAG: Interval-Algebra-Driven Temporal Reasoning for Dynamic Knowledge Retrieval](/202606/06/2606.06044v1-ia-rag-interval-algebra-driven-temporal-reasoning-for-dynamic-knowledge-retrieval)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：基于图结构（主题森林）的分层时态检索增强生成
 
 ### 速读区论文标签
-1. [RAISE: RAG Design as an Architecture Search Problem](/202606/05/2605.30029v1-raise-rag-design-as-an-architecture-search-problem)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：RAG架构搜索框架用于超参数优化
-2. [SkillPager: Query-Adaptive Intra-Skill Navigation via Semantic Node Retrieval](/202606/05/2606.00822v1-skillpager-query-adaptive-intra-skill-navigation-via-semantic-node-retrieval)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：从技能文档中检索最小上下文，类似于工作票检索生成
-3. [Consistent and Distinctive: LLM Benchmark Efficiency via Maximum Independent Set Prompt Selection on Similarity Graphs](/202606/05/2606.01400v1-consistent-and-distinctive-llm-benchmark-efficiency-via-maximum-independent-set-prompt-selection-on-similarity-graphs)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：图结构学习用于提示选择，通过最大独立集
-4. [Value-Aware Stochastic KV Cache Eviction for Reasoning Models](/202606/05/2606.03928v1-value-aware-stochastic-kv-cache-eviction-for-reasoning-models)  
+1. [MARDoc: A Memory-Aware Refinement Agent Framework for Multimodal Long Document QA](/202606/06/2606.05749v1-mardoc-a-memory-aware-refinement-agent-framework-for-multimodal-long-document-qa)  
+   标签：评分：8.0/10、query:pwt
+   evidence：记忆感知的检索推理代理框架
+2. [Graph-GRPO: Dependency-Aware Credit Assignment for Generative E-commerce Search Relevance](/202606/06/2605.31003v1-graph-grpo-dependency-aware-credit-assignment-for-generative-e-commerce-search-relevance)  
    标签：评分：7.0/10、query:pwt
-   evidence：针对推理模型的值感知随机KV缓存驱逐策略
-5. [Learning Long Range Spatio-Temporal Representations over Continuous Time Dynamic Graphs with State Space Models](/202606/05/2606.04672v1-learning-long-range-spatio-temporal-representations-over-continuous-time-dynamic-graphs-with-state-space-models)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：动态图上的长程时空表示学习
-6. [Agent-Orchestrated Adaptive RAG: A Comparative Study on Structured and Multi-Hop Retrieval](/202606/05/2606.05658v1-agent-orchestrated-adaptive-rag-a-comparative-study-on-structured-and-multi-hop-retrieval)  
+   evidence：图结构的信用分配用于思维链推理，涉及图结构学习和推理
+3. [KG-Guard: Graph-Based Hallucination Detection for Knowledge Base Question Answering](/202606/06/2606.00328v1-kg-guard-graph-based-hallucination-detection-for-knowledge-base-question-answering)  
    标签：评分：7.0/10、query:pwt
-   evidence：提出代理编排的自适应RAG，与票据生成的检索增强生成相关
-7. [Xetrieval: Mechanistically Explaining Dense Retrieval](/202606/05/2605.29507v1-xetrieval-mechanistically-explaining-dense-retrieval)  
+   evidence：基于图的知识库问答推理
+4. [Critic-R: Improving Agentic Search using Instruction-tuned Retrievers with Natural Language Introspective Feedback](/202606/06/2606.00590v1-critic-r-improving-agentic-search-using-instruction-tuned-retrievers-with-natural-language-introspective-feedback)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：基于内省反馈的检索增强生成优化智能搜索
+5. [AdaKernel: Learning Adaptive Kernel Parameters for Spatiotemporal Graph Neural Networks](/202606/06/2606.01283v1-adakernel-learning-adaptive-kernel-parameters-for-spatiotemporal-graph-neural-networks)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：学习自适应核参数以改进图结构建模
+6. [Text-attributed Graph Condensation via Text Selection and Attribute Matching](/202606/06/2606.03839v1-text-attributed-graph-condensation-via-text-selection-and-attribute-matching)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：文本属性图压缩方法
+7. [QueryAgent-R1: Bridging Query Generation and Product Retrieval for E-Commerce Query Recommendation](/202606/06/2606.05671v1-queryagent-r1-bridging-query-generation-and-product-retrieval-for-e-commerce-query-recommendation)  
+   标签：评分：7.0/10、query:pwt
+   evidence：记忆增强的检索增强生成代理
+8. [HyperNiche: Learning Heterophilic Cellular Niches with Hypergraph Neural Networks](/202606/06/biorxiv-10-64898-2026-05-30-728986-v1-hyperniche-learning-heterophilic-cellular-niches-with-hypergraph-neural-networks)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：超图结构学习
+9. [On the impact of retrieved content representations in RAG Pipelines](/202606/06/2605.30790v1-on-the-impact-of-retrieved-content-representations-in-rag-pipelines)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：关于检索内容表示对RAG管道影响的研究
+10. [Safe-Subspace Pseudo-Label Refinement for Source-Free Graph Domain Adaptation](/202606/06/2606.00808v1-safe-subspace-pseudo-label-refinement-for-source-free-graph-domain-adaptation)  
    标签：评分：6.0/10、query:pwt
-   evidence：在嵌入空间内进行推理而不需要显式思维链，适用于冷启动票据生成
-8. [SemStruct: Contextualizing Semantic Embeddings with Structural Information for Schema Matching](/202606/05/2605.30729v1-semstruct-contextualizing-semantic-embeddings-with-structural-information-for-schema-matching)  
+   evidence：低资源图域自适应中的泛化改进
+11. [RelGT-AC: A Relational Graph Transformer for Autocomplete Tasks in Relational Databases](/202606/06/2606.03040v1-relgt-ac-a-relational-graph-transformer-for-autocomplete-tasks-in-relational-databases)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：基于图神经网络的图结构学习方法用于模式匹配
-9. [Generating Graph-Like Logical Rules for Knowledge Graph Reasoning via Diffusion Models](/202606/05/2605.30747v2-generating-graph-like-logical-rules-for-knowledge-graph-reasoning-via-diffusion-models)  
+   evidence：用于数据库自动完成的关系图Transformer
+12. [Topology-Aware Gaussian Graph Repair for Robust Graph Neural Networks](/202606/06/2606.03462v1-topology-aware-gaussian-graph-repair-for-robust-graph-neural-networks)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：生成图状逻辑规则用于知识图谱推理，与图结构学习相关
-10. [Scaling Higher-Order Graph Learning with Maximal Clique Complexes](/202606/05/2605.31373v1-scaling-higher-order-graph-learning-with-maximal-clique-complexes)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：基于最大团复形的可扩展高阶图学习
-11. [DG-CoLearn: An Efficient Collaborative Learning Framework for Dynamic Graphs](/202606/05/2605.31427v1-dg-colearn-an-efficient-collaborative-learning-framework-for-dynamic-graphs)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：基于增量快照处理的协作动态图学习
-12. [Learning to Retrieve: Dual-Level Long-Term Memory for Text-to-SQL Agents](/202606/05/2606.00547v1-learning-to-retrieve-dual-level-long-term-memory-for-text-to-sql-agents)  
-   标签：评分：6.0/10、query:pwt
-   evidence：多轮推理中的双层长期记忆检索框架
+   evidence：通过拓扑修复实现鲁棒图神经网络的图结构学习
 
 
 <div class="dpr-home-promo-card">
