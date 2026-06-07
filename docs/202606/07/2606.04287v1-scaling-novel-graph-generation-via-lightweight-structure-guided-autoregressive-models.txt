@@ -1,0 +1,688 @@
+Title: Scaling Novel Graph Generation via Lightweight Structure-Guided Autoregressive Models
+
+URL Source: https://arxiv.org/pdf/2606.04287v1
+
+Published Time: Thu, 04 Jun 2026 00:20:31 GMT
+
+Number of Pages: 23
+
+Markdown Content:
+# Structure-Guided Autoregressive Models for Scalable and Novel Graph Generation 
+
+Alessio Barboni 
+
+Boise State University Boise, Idaho, USA 
+
+alessiobarboni@u.boisestate.edu 
+
+Massimiliano Lupo Pasini 
+
+Oak Ridge National Laboratory Oak Ridge, Tennessee, USA 
+
+lupopasinim@ornl.gov 
+
+Bishal Lakha 
+
+Boise State University Boise, Idaho, USA 
+
+bishallakha@u.boisestate.edu 
+
+Edoardo Serra 
+
+Boise State University Boise, Idaho, USA 
+
+edoardoserra@boisestate.edu 
+
+# Abstract 
+
+Generating realistic and diverse graphs is a key problem in machine learning, with applications in molecular discovery, circuit design, cybersecurity, and beyond. However, current graph generative models remain limited by scalability and novelty. Diffusion-based methods often require costly full-adjacency operations and long denoising chains, while many autoregressive and hybrid models have at least quadratic complexity. In addition, these models often imitate training graphs rather than generalize beyond them. We propose a lightweight autoregressive framework to address these issues. It uses a structure-guided topological ordering to serialize graphs into regular edge sequences, enabling near log-linear generation, and a two-phase training strategy that combines exploration-oriented augmentation with iterative refinement to reduce overfitting and promote controlled novelty. Experiments on molecular and non-molecular benchmarks show that our approach improves novelty while preserving high validity and uniqueness. The framework also supports both LSTM and Mamba-style causal sequence backbones, with large-memory accelerators enabling longer graph-sequence experiments beyond typical GPU limits. 
+
+# 1 Introduction 
+
+Many scientific and engineering systems are naturally represented as graphs. Molecules can be mod-eled as atoms connected by chemical bonds, materials as atomic structures, circuits as interconnected electronic components, and software or cybersecurity artifacts as dependency or control-flow graphs. In these domains, graph generation enables the synthesis of novel structured objects that preserve the regularities observed in real data. Consequently, graph generative models have become increasingly important in applications ranging from molecular discovery to program analysis and cyber-defense. Despite rapid progress, existing graph generative models still face important limitations. Diffusion-based approaches often rely on costly operations over the full adjacency structure and iterative denoising chains, making generation computationally expensive and highly sequential in practice. Autoregressive and hybrid approaches are often more lightweight, but their performance strongly depends on the graph serialization strategy and many still incur at least quadratic complexity in graph size. More fundamentally, across these model families, graph generators frequently remain strongly 
+
+> Preprint.
+> arXiv:2606.04287v1 [cs.LG] 2 Jun 2026
+
+imitative, reproducing training examples or local structural patterns rather than capturing the broader underlying graph distribution. As a result, achieving both scalability and novelty remains challenging. These issues become even more pronounced when graphs are represented in compact discrete form. In this work, we encode graphs as ordered sparse edge streams and model them at the bit level. Binary representations are attractive because they are compact, memory efficient, and naturally scalable to sparse graphs. However, they are also highly sensitive to node ordering: different serializations of the same graph can produce drastically different binary sequences, ranging from highly regular patterns to fragmented sequences that are difficult for autoregressive models to learn. To address these limitations, we propose a lightweight autoregressive graph generation framework built around two key ideas. First, we introduce a strict structure-guided serialization strategy that combines unsupervised structural node representations derived from SIR-GN Joaristi and Serra [2021] with a breadth-first traversal of the graph. The structural representations rank nodes according to their topological role, while the BFS traversal preserves local connectivity during serialization. Together, these components transform graph ordering from a nuisance into a computational advantage by producing regular binary edge sequences that are substantially easier for autoregressive models to learn. By generating sparse edge streams directly instead of dense adjacency matrices, the framework achieves near-log-linear complexity for sparse graphs, i.e., approximately |E| log |V |, where |V | and 
+
+|E| denote the number of nodes and edges. Second, we introduce a two-phase training strategy designed to balance exploration and plausibility. In the first phase, the model is trained on both original and structurally perturbed graphs, encouraging exploration beyond simple memorization of the training data. In the second phase, we apply a ReST-style refinement procedure Gulcehre et al. [2023], where generated graphs are filtered according to a Gaussian Mixture Model (GMM) fitted in graph embedding space generated by SIR-GN. The GMM is used to learn the distribution of the training graphs and identify instances that are or are not inside that distribution. The retained samples selected by the GMM are then used to further refine the generator. This refinement process enables the model to generalize beyond the empirical training distribution and promotes controlled novelty rather than pure imitation. The proposed framework supports both unsupervised and supervised graph generation settings. In the unsupervised setting, plausibility is evaluated directly in embedding space without requiring labels or handcrafted rules. In the supervised setting, task-specific validity or reward functions can be integrated into the refinement stage, enabling optimization toward application-dependent objectives. We evaluate the proposed framework on multiple molecular and non-molecular benchmarks, including QM9, ZINC250K, MOSES, ANI-1x, QM7x, Transition1x, and MalNet-Tiny. We measure generation quality using standard metrics such as novelty, validity, and uniqueness. Novelty measures the fraction of generated graphs not present in the training set, validity measures the fraction of generated graphs satisfying domain-specific constraints, and uniqueness measures the proportion of non-duplicate generated samples. Experimental results show that the proposed approach substantially improves novelty while maintaining high validity and uniqueness, producing large numbers of novel graphs outside the training distribution with minimal duplication. The results demonstrate that controlled novelty and practical scalability can be achieved within lightweight causal sequence backbones, including recurrent LSTM decoders and Mamba-style state-space models. Our main contributions are summarized as follows: • We propose a strict structure-guided graph serialization strategy that combines structural node ranking derived from SIR-GN with BFS traversal to produce regular binary edge sequences for autoregressive generation. We empirically show that this serialization makes bit-wise edge generation learnable for lightweight autoregressive models while enabling sparse graph generation with near-log-linear complexity, i.e., |E| log |V |.• We introduce a two-phase training framework that balances exploration and plausibility through graph perturbation and ReST-style embedding-space refinement, supporting both unsupervised and supervised graph generation settings. This training strategy enables the model to generate a large number of novel yet valid molecular graphs that are substantially different from those observed during training. 2• We demonstrate that graph serialization quality plays a central role in autoregressive graph gen-eration, and show empirically that structurally guided ordering substantially improves sequence regularity, learnability, and generation quality in autoregressive architectures. • We perform an extensive experimental evaluation across multiple molecular and non-molecular graph benchmarks, showing that the proposed framework achieves high levels of novelty, validity, and uniqueness while maintaining scalable autoregressive generation. 
+
+# 2 Related Work 
+
+Autoregressive and Sequence-Based Graph Generation Autoregressive graph generators con-struct graphs through a sequence of local decisions, such as adding nodes, predicting edges, or generating blocks of structure. Early models such as DeepGMG and GraphRNN use recurrent net-works to generate graphs sequentially, with GraphRNN relying on BFS orderings to reduce the space of possible node permutations [Li et al., 2018, You et al., 2018]. GRAN improves efficiency by gener-ating nodes and edges in blocks, while BiGG exploits graph sparsity to avoid dense adjacency-matrix generation [Liao et al., 2019, Dai et al., 2020]. A central limitation of autoregressive graph generation is that graphs do not have a canonical linear order. As a result, the same graph may correspond to many different sequences, and the chosen serialization strongly affects both learning difficulty and generation quality. Recent work has revisited this problem with more compact representations and larger sequence models. GEEL uses a gap-encoded edge-list representation to reduce sequence and vocabulary size, while G2PT and AutoGraph use graph tokenizations with Transformer decoders [Jang et al., 2024, Chen et al., 2025b,a]. Our method follows this graph-as-sequence view, but uses a compact bit-level edge serialization with lightweight causal sequence backbones. 
+
+Ordering and Serialization Because graph likelihoods are permutation-invariant but sequence likelihoods are not, node ordering has become a central issue in autoregressive graph generation. Earlier methods rely on fixed traversal or heuristic orderings, such as BFS, DFS, degree-based orderings, or canonical ordering families. More recent work treats ordering as a modeling problem. Order Matters models the node sequence as a latent variable and uses variational inference to infer likely generation orders [Chen et al., 2021]. Latent Sort learns continuous embeddings whose sorted order induces a graph permutation [Bu et al., 2023]. LO-ARM introduces a trainable state-dependent order policy that dynamically chooses the autoregressive order and optimizes a variational lower bound [Wang et al., 2025]. Our ordering instead uses SIR-GN structural node embeddings as an explicit ranking signal, combining this structural ranking with a BFS constraint to produce a connectivity-aware serialization [Joaristi and Serra, 2021]. This places our approach in the broader line of structural node representation methods, such as struc2vec, GraphWave, and SIR-GN, which represent nodes by structural role rather than only proximity [Ribeiro et al., 2017, Donnat et al., 2018, Joaristi and Serra, 2021]. Other methods attempt to reduce order sensitivity without learning a full order. Orderless regulariza-tion encourages recurrent hidden states to be similar across different valid graph flattenings, while MAG avoids explicit next-node or next-edge ordering by generating graphs through coarse-to-fine latent scales. In contrast to these approaches, we regularize the induced sequence through a fixed structural ranking rather than by learning or marginalizing over orders. 
+
+Permutation-Invariant, Diffusion, and Hybrid Models A second family of graph generators avoids explicit dependence on a single serialization by modeling graphs more holistically. GraphVAE, EDP-GNN, GDSS, GraphGDP, and DiGress use latent-variable, score-based, or diffusion-based objectives with permutation-invariant or permutation-equivariant architectures [Simonovsky and Komodakis, 2018, Niu et al., 2020, Jo et al., 2022, Huang et al., 2022, Vignac et al., 2023]. Recent diffusion and flow-based models further improve this line: SparseDiff exploits graph sparsity, DisCo and Cometh formulate diffusion in continuous time over discrete graph states, and DeFoG uses discrete flow matching to decouple training from sampling [Qin et al., 2025b, Xu et al., 2024, Siraudin et al., 2024, Qin et al., 2025a]. These gains often come with nontrivial sampling cost. Dense graph generators may need to reason over possible node pairs, leading to quadratic dependence on graph size, and diffusion models require repeated graph-level updates during sampling. Recent 3scalable alternatives such as SparseDiff and Iterative Local Expansion address this issue through sparsity-preserving diffusion or localized generation [Qin et al., 2025b, Bergmeister et al., 2024]. Hybrid models combine autoregressive and diffusion-based ideas. GraphARM adds nodes and incident edges through an autoregressive diffusion process, while PARD defines a structural partial order and generates graphs block by block with a diffusion decoder for each conditional block [Kong et al., 2023, Zhao et al., 2024]. These models reduce ordering bias, but require graph decompositions, block schedules, or repeated denoising. Our method instead keeps the generator purely autoregressive and lightweight. 
+
+Novelty-Oriented Training Most graph generative models are trained to match the empirical training distribution through likelihood maximization, variational objectives, score matching, flow matching, or denoising losses. These objectives are effective for fidelity, but they do not necessarily encourage meaningful novelty. This tension is well known in molecular graph generation, where models are commonly evaluated using validity, uniqueness, novelty, and distributional metrics, which do not always move together. Graph perturbations have also been widely used as augmentations in graph representation learning, for example through edge dropping in DropEdge and contrastive views in GraphCL [Rong et al., 2020, You et al., 2020]. In contrast, we use edge additions and removals not to learn invariant representations, but to broaden the support of the autoregressive generator during pretraining. Our refinement stage is inspired by Reinforced Self-Training (ReST), which iteratively generates candidate samples and uses selected samples to improve the model [Gulcehre et al., 2023]. This is also related to broader self-training and rejection-sampling fine-tuning procedures, such as STaR and RAFT, where models are trained on filtered self-generated outputs [Zelikman et al., 2022, Dong et al., 2023]. In our setting, the acceptance criterion is not a task reward, correctness label, or molecule-specific oracle: Phase 2 retains generated graphs that are plausible under a GMM fitted in graph embedding space. Overall, our method differs from prior work in three ways: it uses structural node representations to guide serialization, adopts a compact bit-level edge representation, and explicitly separates exploration from exploitation through perturbed pretraining and GMM-based refinement. This combination is designed to support scalable and novelty-oriented generation with a lightweight sequential backbone. 
+
+# 3 Methods 
+
+3.1 Problem Setup 
+
+Let D = {Gi}Ni=1 be a dataset of attributed graphs. Each graph G = ( V, E ) contains discrete node and edge attributes. Our goal is to learn a generative model that produces novel graphs while remaining consistent with the structural and attribute patterns observed in the training data. We adopt an autoregressive formulation in which each graph is serialized into a discrete sequence under a node ordering π(G). Because graphs in the dataset may differ in size and connectivity, the resulting sequences generally have different lengths. Denoting the serialized sequence by 
+
+s(G) = ( x1, . . . , x T ), generation is modeled as 
+
+p(s(G)) = 
+
+> T
+
+Y
+
+> t=1
+
+p(xt | x<t ).
+
+In our setting, the node ordering used during serialization has a major impact on learning, since it determines the sequence presented to the autoregressive model and therefore the patterns the model must learn in order to predict the next token. 
+
+3.2 Structural Node Ordering 
+
+We define a node ordering based on structural properties of the graph. This procedure induces a partial ordering over the nodes, since structurally equivalent nodes may receive the same rank. Our goal is not to compute a fully canonical total ordering, but rather to reduce the ambiguity of graph serialization by preferring node orders that are consistent with node structure. 4A purely structure-based ranking, however, does not by itself guarantee that the serialization proceeds coherently within a connected component. Since our generation process is intended to construct one connected component at a time, we combine the structural ordering with a breadth-first search (BFS) traversal. In this way, structural information determines node priority, while BFS enforces a connectivity-aware exploration order. More precisely, we first compute structural node representations using SIR-GN, and use them to assign node ranks. During serialization, BFS restricts the set of admissible next nodes to those on the current frontier of the component being explored, while the structural ranking is used to prioritize candidates within that set. Thus, the final ordering is not given by the structural ranking alone, but by a structure-guided BFS traversal. For graphs with multiple connected components, we apply the same procedure to each component independently. After completing the BFS traversal of the current component, a new component is initialized from the highest-ranked unvisited node, and the process is repeated. This ordering is particularly important in our setting because the downstream generator operates on a binary serialization, whose learnability depends strongly on the regularity of the induced sequence. 
+
+3.3 Graph Serialization 
+
+Given the structural node ordering described above, each graph is converted into an ordered edge list, which is then flattened into a bit-level representation for autoregressive modeling. After reindexing nodes according to the structural order, the edge list is constructed so that edge pairs appear in strictly increasing lexicographic order. This reduces arbitrariness in the serialization and yields a more predictable sequence for the autoregressive model. Each node appearing in an edge is represented through a fixed binary encoding. The representation of an edge is then obtained by combining the binary encodings of its two endpoints together with the corresponding edge attributes. Concatenating these bit representations over the ordered edge list yields a variable-length binary sequence s(G) = ( x1, . . . , x T ), which serves as the target sequence for the autoregressive model. The autoregressive decoder processes this flattened bit sequence one step at a time. In addition to the previously generated bit, the model receives a positional encoding that indicates which bit of the current edge representation is being predicted. This provides the decoder with local context about its position inside the edge encoding and helps stabilize sequence generation. Although such binary encodings are often viewed as difficult to model due to their sensitivity to serialization choices, we find that the combination of structure-guided ordering and phased training makes this representation effective in practice. 
+
+3.4 Autoregressive Sequence Backbones 
+
+The ordered graph serialization described above is modeled using a causal autoregressive sequence de-coder. Given the flattened bit sequence s(G) = ( x1, . . . , x T ), the model predicts each bit sequentially from the prefix observed so far, 
+
+p(s(G)) = 
+
+> T
+
+Y
+
+> t=1
+
+p(xt | x<t ).
+
+At each step, the input consists of the previously generated bit together with a positional encoding indicating which position within the current edge representation is being predicted. This positional signal allows the decoder to distinguish between endpoint bits, edge-attribute bits, and stopping-related positions inside the serialized edge representation. The hidden representation at each step is used to predict the next bit in the sequence. In addition, the decoder predicts a stopping signal that determines when generation should terminate. During training, the model is optimized with teacher forcing, using the ground-truth previous bit at each step. At inference time, predictions are generated autoregressively until the stopping criterion is met. 
+
+LSTM backbone. Our primary implementation uses an LSTM decoder. This choice is intentional: the LSTM provides a lightweight and transparent recurrent backbone, allowing us to test whether 5the proposed structure-guided ordering, bit-level serialization, and two-phase training procedure are sufficient for strong graph generation without relying on a large or highly specialized architecture. Because the model processes the serialized edge stream one bit at a time, the LSTM naturally matches the causal structure of the generation problem. 
+
+Mamba backbone. We also evaluate a Mamba-based decoder, motivated primarily by scalability rather than modeling capacity. Because each edge contributes Θ(log |V |) bits to the serialized sequence, the total sequence length T grows with both the number of edges and the graph size; large sparse graphs such as the MalNet-Tiny function-call graphs therefore produce bit streams orders of magnitude longer than those of small molecular graphs. For an LSTM decoder, teacher-forced training cost scales linearly in T through a strictly sequential recurrence: each step depends on the previous hidden state, so the T recurrent transitions cannot be parallelized along the sequence dimension. At the sequence lengths induced by MalNet-Tiny, this sequential dependence becomes the binding bottleneck: the per-epoch training time grows sharply, and the PyTorch/cuDNN LSTM backend does not support the longest tested MalNet-Tiny sequence configurations, as shown in Section 5.4. Mamba [Gu and Dao, 2023] replaces the recurrent transition with a selective state-space model whose recurrence admits a hardware-aware parallel-scan formulation, retaining linear dependence on T
+
+while substantially reducing the step-by-step training latency that limits the LSTM in this regime. We therefore use Mamba as the backbone for the long-sequence experiments, while retaining the LSTM as the default on the shorter molecular benchmarks, where it remains both competitive and more compact. 
+
+Autoregressive compatibility. To preserve the autoregressive semantics of graph generation, the Mamba decoder is used in a strictly causal form. The prediction at position t is allowed to depend only on tokens up to position t − 1 during generation, and only on the corresponding prefix during teacher-forced training. When token representations are aggregated before prediction, we use prefix aggregation: the representation at position t is computed from tokens up to t, rather than from the full sequence. This prevents information leakage from future bits and makes the Mamba model directly compatible with autoregressive sampling. Overall, we treat the sequence backbone as a modular component of the proposed framework. The LSTM version tests whether the serialization and training strategy are effective with a compact recurrent model, while the Mamba version evaluates whether a more scalable causal sequence architecture improves generation on longer serialized graphs. 
+
+3.5 Phase 1: Pretraining with Perturbed Graphs 
+
+In the first phase, the autoregressive sequence model is trained with teacher forcing on both the original training graphs and a dynamically generated set of perturbed graphs. The role of this augmentation is not merely to increase the amount of training data, but to explicitly encourage exploratory behavior in the generator. By exposing the model to graph configurations that deviate from the empirical training distribution, this phase reduces the tendency of the decoder to concentrate too narrowly on exact training patterns. The perturbed graphs are generated online at each epoch by randomly adding and removing edges from training examples. At every epoch, we generate as many perturbed graphs as there are training observations, and serialize them using the same structure-guided ordering and bit-level edge encoding as the original graphs. As a result, the model is trained on a mixture of valid observed examples and structurally modified variants that broaden the support of the sequence distribution it encounters during training. This design is motivated by an exploration–exploitation perspective. If the model is trained only on the original graph distribution, it may learn a highly concentrated next-token distribution that favors reconstruction of observed patterns while assigning negligible probability to nearby but novel configurations. The perturbed graphs counteract this effect by maintaining an exploratory component in the learned generator. The exploitative component is introduced only in the second phase, where candidate generations are filtered according to an embedding-space notion of plausibility. 63.6 Phase 2: ReST-style Refinement with GMM-based Filtering 
+
+We use the term ReST-style to denote an iterative self-training procedure inspired by Reinforced Self-Training (ReST), in which the current generator produces candidate samples and a filtering criterion selects examples for subsequent training. ReST was originally proposed as a generate-and-improve framework in which samples from an initial policy are reused to improve the policy through offline training. Once the model has been pretrained, we continue training in a ReST-style iterative fashion, no longer using either the original training graphs or the perturbed graphs from Phase 1. At each iteration, the current model generates a set of candidate graphs, and only a selected subset of these samples is retained for subsequent training. In our experiments, we generate approximately 5,000 candidate graphs per iteration. Rather than relying on supervision from a molecular evaluation toolkit such as RDKit, we use a Gaussian Mixture Model (GMM) to assess whether a generated graph is consistent with the training distribution. This choice is motivated by two considerations. First, RDKit-based filtering is domain-specific and does not naturally extend to general graph settings. Second, our goal is to keep the refinement stage efficient and broadly applicable, without introducing task-specific supervision into the iterative loop. The GMM is fitted on graph embeddings computed from the training set. During Phase 2, each generated graph is mapped into the same embedding space and scored under the fitted GMM. Samples falling below a chosen likelihood threshold are treated as anomalous and discarded, while the remaining samples are retained and used to continue training the autoregressive model. In practice, the threshold is selected through a quantile-based rule. This second phase provides the exploitative component of the overall method. Whereas Phase 1 intentionally broadens the support seen by the generator through perturbations, Phase 2 selectively keeps only those generated graphs that remain sufficiently close to the training distribution in embedding space. The resulting procedure balances novelty generation with iterative refinement toward distributionally plausible samples. Detailed pseudocode for ordering, serialization, perturbation, and both training phases is provided in Appendix C. 
+
+# 4 Experimental Setup 
+
+4.1 Datasets Datasets. We evaluate our method on six molecular datasets: QM9, ZINC250K, MOSES, ANI-1x, QM7x, and Transition1x. QM9 is a standard benchmark for small organic molecules, while ZINC250K and MOSES provide larger collections of drug-like molecules commonly used in molecu-lar graph generation. ANI-1x, QM7x, and Transition1x complement these benchmarks with quantum-chemical structures, including non-equilibrium geometries and configurations sampled along reaction pathways. Because these quantum-chemical datasets are defined at the 3D-structure level, they often contain multiple geometrically distinct conformations of the same underlying molecule. Since our task is molecular graph generation rather than conformer generation, we canonicalize molecules by their SMILES strings and remove duplicate molecular graphs before training and evaluation. This prevents repeated molecular identities from dominating the training set and ensures that novelty is evaluated at the graph level. We additionally evaluate on MalNet-Tiny, a non-molecular dataset of Android malware function-call graphs, to test whether the proposed framework transfers beyond molecular generation. For the current MalNet-Tiny experiment, we use one representative family only. This experiment is intended as an initial non-molecular scalability and structural-fidelity test rather than a full multi-family MalNet-Tiny benchmark. This setting provides a structurally distinct benchmark with graphs substantially larger than those in the molecular datasets, while keeping the experimental scope manageable. Together, these datasets cover standard molecular benchmarks, quantum-chemical molecular graphs, and non-molecular function-call graphs. 
+
+4.2 Evaluation Metrics Metrics. Following standard practice in molecular graph generation, we report Validity, Uniqueness, and Novelty whenever applicable. Validity measures the fraction of generated molecules that are 7Algorithm 1 Structure-Guided Two-Phase Autoregressive Graph Generation 
+
+Require: Training graphs D, graph encoder ϕ, Phase 1 epochs E1, Phase 2 iterations K, candidates 
+
+M , GMM components C, training quantile q
+
+Ensure: Trained autoregressive generator pθ 
+
+> 1:
+
+Initialize generator parameters θ
+
+Serialization precomputation  
+
+> 2:
+
+for all G ∈ D do  
+
+> 3:
+
+πG ← STRUCTURE GUIDED BFS (G) 
+
+> 4:
+
+s(G) ← BIT SERIALIZE (G, π G) 
+
+> 5:
+
+end for Phase 1: exploration-oriented pretraining  
+
+> 6:
+
+for e = 1 , . . . , E 1 do  
+
+> 7:
+
+Build eDe by random edge additions/removals on each G ∈ D  
+
+> 8:
+
+Serialize each eG ∈ eDe via S TRUCTURE GUIDED BFS and B IT SERIALIZE 9: Update θ by teacher forcing on {s(G) : G ∈ D} ∪ { s( eG) : eG ∈ eDe} 
+
+> 10:
+
+end for Phase 2: ReST-style GMM refinement  
+
+> 11:
+
+Fit GMM with C components on {ϕ(G) : G ∈ D}  
+
+> 12:
+
+τ ← q-quantile of {log pGMM (ϕ(G)) : G ∈ D}  
+
+> 13:
+
+for k = 1 , . . . , K do  
+
+> 14:
+
+Sample M bit sequences from pθ and decode well-formed ones into graphs { bGj } 
+
+> 15:
+
+Ck ← { bGj : log pGMM (ϕ( bGj )) ≥ τ } 
+
+> 16:
+
+Serialize each bG ∈ C k and continue teacher-forced training of pθ 
+
+> 17:
+
+end for  
+
+> 18:
+
+return pθ
+
+chemically valid, Uniqueness measures the fraction of generated molecules that are non-duplicate, and Novelty measures the fraction of generated molecules that do not appear in the training set. On QM9, following prior work, we additionally report Atom Stability and Molecule Stability, where Atom Stability denotes the fraction of atoms with valid valency and Molecule Stability denotes the fraction of generated molecules whose atoms are all stable. While some prior work de-emphasizes Novelty on QM9 because of the dataset’s near-exhaustive nature, we still report it for this benchmark since a central goal of our method is to encourage controlled novelty beyond the empirical training distribution. On ZINC250K and MOSES, we also report Fréchet ChemNet Distance (FCD), which compares generated and reference molecules in the ChemNet feature space. Although FCD is widely used in molecular generation, it should not be read as a complete proxy for quality in our setting. Because it rewards closeness to the reference distribution in ChemNet feature space, it is naturally aligned with imitative generation and may penalize methods that intentionally push toward controlled novelty. We therefore report FCD for comparability with prior work, but do not treat it as the primary criterion for judging the proposed method. While these metrics are standard and facilitate comparison with prior work, we note that they should be interpreted jointly rather than in isolation. In particular, some quantities are conditional on earlier criteria (e.g., Novelty is computed over unique valid molecules in MOSES), so a high score on a single metric does not by itself provide a complete picture of generation quality. 
+
+4.3 Baselines Baselines. Our primary external baseline is PARD, which provides the closest point of comparison to the proposed method in terms of autoregressive graph generation on molecular benchmarks. Rather than aiming for a broad comparison across many heterogeneous architectures, we focus on a controlled evaluation against this closely related baseline. In addition, we consider several internal baselines to isolate the contribution of the main components of our framework. These include: (i) removing the structure-guided node ordering, (ii) replacing the proposed ordering with weaker alternatives such as random or plain BFS-based orderings, (iii) training without perturbed graphs in Phase 1, and (iv) removing the Phase 2 ReST-style refinement 8with GMM-based filtering. These comparisons allow us to assess whether the gains of the full model arise from the ordering strategy, the exploration-oriented training scheme, or their combination. 
+
+4.4 Backbone Variants 
+
+In addition to comparisons with external graph-generation baselines, we evaluate two internal sequence backbones within the same proposed framework: an LSTM decoder and a Mamba decoder. Both models use the same structure-guided node ordering, bit-level edge serialization, stopping-signal formulation, Phase 1 perturbed pretraining, and Phase 2 GMM-filtered refinement. Therefore, this comparison isolates the effect of the sequence architecture while keeping the graph-generation pipeline fixed. We report backbone comparisons on QM9, Transition1x, and MalNet-Tiny. QM9 evaluates perfor-mance on small molecular graphs, Transition1x evaluates generation on quantum-chemical molecular graphs with reaction-pathway structure, and MalNet-Tiny evaluates scalability to larger non-molecular function-call graphs. This set of experiments allows us to test whether the Mamba backbone is most useful in the long-sequence regime, while also verifying that the original LSTM backbone remains competitive on smaller molecular datasets. We also report practical runtime and memory measure-ments on RTX 4090 and NVIDIA GH200 systems to separate neural training cost from generation, filtering, and graph-processing overhead. For the runtime study only, we additionally include a linear Transformer decoder as a reference point. The linear Transformer is not used as a generative backbone in our quality evaluation (Tables 1–4); we report it solely to contextualize the training cost of the lightweight recurrent and state-space backbones against an attention-based decoder. 
+
+# 5 Results 
+
+5.1 Main Results 
+
+Tables 1 and 2 compare the proposed method against prior graph generators on standard and ex-tended molecular benchmarks. Across datasets, our method achieves very high Novelty and im-proves over PARD where comparable Novelty val-ues are available, while maintaining high Validity and near-perfect Uniqueness, supporting the goal of controlled novelty rather than strict imitation of the empirical training distribution. The gains in Novelty are particularly pronounced. On QM9, Novelty increases from 37.23% for PARD to 97.31%, while Validity and Uniqueness both reach approximately 100%. Similarly large improvements are observed on MOSES, ANI-1x, QM7x, and Transition1x. Table 2: Extended molecular benchmarks. 
+
+Higher is better. Our method improves Novelty and Uniqueness while improving or maintain-ing comparable Validity.                             
+
+> Dataset Method Val. ↑Uniq. ↑Nov. ↑
+> ANI-1x PARD 84.18 98.17 89.70 Ours 98.23 100.00 99.63
+> QM7x PARD 97.99 96.13 49.24 Ours 97.82 100.00 96.94
+> Transition1x PARD 92.82 98.15 75.09 Ours 97.33 100.00 94.39
+
+On ZINC250K, PARD does not report Novelty in the table, whereas our method reaches 100% Novelty together with high Validity and Uniqueness. Overall, these results indicate that the proposed training and refinement strategy succeeds in generating substantially more novel graphs without sacrificing sample diversity. The results also reveal the expected novelty–fidelity tradeoff. On ZINC250K and MOSES, our FCD is higher than the strongest distribution-matching baselines, indicating that the generated molecules are farther from the reference distribution in ChemNet feature space. This does not make FCD irrelevant: rather, it shows that the proposed exploration–refinement scheme does not optimize strict distributional imitation. The method instead targets valid and unique molecules beyond the empirical training set, with the GMM filter acting as a plausibility constraint rather than a ChemNet-level distribution-matching objective. The training curves (Figure 1) further clarify how these improvements arise. Across all datasets, Uniqueness remains essentially saturated throughout training, indicating that the generator does not 9Table 1: Comparison on standard molecular graph benchmarks. Higher is better except FCD. ‘–’ denotes metrics not reported or not applicable. Our main results use the LSTM backbone unless otherwise stated. Our method achieves very high Novelty on all datasets and improves over PARD where comparable Novelty values are available. The higher FCD suggests that the generated molecules are farther from the reference ChemNet distribution, consistent with the method’s emphasis on exploration beyond exact distributional imitation.                                                    
+
+> Dataset Method Val. ↑Uniq. ↑Nov. ↑Atom. ↑Mol. ↑FCD QM9 PARD 96.73 95.99 37.23 98.40 86.10 2.13 Ours (LSTM) 99.90 100.00 97.31 99.31 92.73 9.66 ZINC250K PARD 95.23 99.99 –––1.98 Ours (LSTM) 99.11 99.95 100.00 ––32.19 MOSES PARD 86.80 100.00 78.20 ––1.00 Ours (LSTM) 95.25 100.00 98.72 ––19.20
+
+collapse to repeated outputs. Novelty typically increases over epochs, often reaching very high levels, while Validity remains high but exhibits dataset-dependent tradeoffs. This behavior is consistent with the intended design of the method: Phase 1 pushes the generator toward broader exploration, while Phase 2 filters this exploration back toward plausible samples. In addition to the reported generation metrics, the proposed model remains much more compact than PARD where parameter counts are available, requiring approximately 1.5M parameters versus 4.1M. 
+
+Figure 1: Training dynamics of the full method. Left: QM7x. Right: Transition1x. Across datasets, novelty increases substantially while uniqueness remains high and validity stays broadly stable, illustrating the intended exploration–refinement behavior of the two-phase training scheme. 
+
+5.2 Ablation Summary 
+
+We summarize the main ablation findings here and provide full curves and discussion in Appendix D. Removing ReST after perturbed pretraining leads to exploratory but poorly controlled generation, while removing both perturbations and ReST produces a conservative model with declining novelty. These results support the exploration–exploitation interpretation of the two-phase procedure. Ordering is also critical. Fully random ordering causes a severe validity collapse, showing that bit-level generation is highly sensitive to serialization. Plain BFS recovers much of the lost structure but is less stable than the full structure-guided traversal on harder datasets. Appendix B further shows that the proposed structural ranking yields more distinct node ranks than degree and PARD-style orderings. Finally, removing perturbed graphs from Phase 1 makes refinement predominantly exploitative, while replacing perturbations with BA graphs remains competitive. This suggests that Phase 1 benefits from structured exploratory pressure rather than one specific perturbation mechanism. 10 5.3 Backbone Comparison: LSTM and Mamba 
+
+We evaluate whether the proposed serialization and training procedure can support different causal sequence backbones. The main molecular benchmark results use the LSTM backbone, which remains the stronger default on small molecular graphs. In particular, replacing the LSTM with Mamba does not by itself guarantee improved molecular validity, suggesting that the main gains of the method come from the structure-guided serialization and two-phase training scheme rather than from architectural scale alone. The potential advantage of Mamba is more relevant in the long-sequence regime. MalNet-Tiny contains function-call graphs with up to thousands of edges, which produce substantially longer serialized bit streams than the molecular datasets. In this setting, Mamba is intended to reduce the teacher-forced training bottleneck associated with recurrent processing of long sequences. We therefore interpret the Mamba experiments primarily as a test of backbone flexibility and long-sequence scalability, rather than as a replacement for the LSTM backbone on all datasets. Table 3: Backbone comparison between LSTM and Mamba. Both backbones use the same structure-guided serialization, Phase 1 perturbed pretraining, and Phase 2 GMM-based refinement. Higher is better for validity, uniqueness, and novelty. Dataset Backbone Validity ↑ Uniqueness ↑ Novelty ↑
+
+QM9 LSTM 99.90 100.0 97.31 QM9 Mamba 98.77 100.0 99.63 Transition1x LSTM 97.33 100.0 94.39 Transition1x Mamba 92.32 99.96 87.27 
+
+MalNet-Tiny target-family evaluation. To evaluate whether refinement steers non-molecular generation toward the desired MalNet-Tiny family, we train an external binary classifier in graph embedding space. The classifier is trained only on real MalNet-Tiny graphs and distinguishes the target family from the remaining families. On held-out real graphs, this classifier achieves 86.86% test accuracy, indicating that the embedding space contains a usable but imperfect family-discrimination signal. We then apply this fixed classifier to generated graphs from successive Phase 2 epochs. Importantly, the classifier is used only for evaluation and is not used to train or filter the generator. Therefore, the reported “Binary target acc.” measures how often generated graphs are classified as belonging to the target family by an external evaluator. As shown in Table 4, this fraction increases from 19% at epoch 1 to 78% at epoch 4, suggesting that the refinement loop progressively steers generation toward the desired family while not directly optimizing the binary classifier used for evaluation. Table 4: MalNet-Tiny single-family refinement. The real-test row reports held-out accuracy of the external binary embedding classifier trained on real MalNet-Tiny graphs. Generated rows report the fraction of generated graphs classified as the target family by the same fixed classifier. Setting # gen. Binary target acc. (%) Real test set – 86.86 Phase 2, epoch 1 100 19.0 Phase 2, epoch 2 100 55.0 Phase 2, epoch 3 100 75.0 Phase 2, epoch 4 100 78.0 Overall, the backbone comparison suggests that the proposed framework is architecture-flexible. The LSTM version provides a compact and effective baseline for molecular graph generation, while the Mamba version provides a candidate scalable alternative for long-sequence graph generation. 11 5.4 Runtime and Memory Scaling on RTX 4090 and NVIDIA GH200 
+
+A central motivation for this work is scalable graph generation with long serialized edge sequences. Although the proposed model avoids dense adjacency-matrix generation, the resulting autoregressive sequences can still be long, especially for large sparse graphs. This makes the hardware environment important: larger memory capacity and higher sustained throughput directly affect which graph sizes, hidden dimensions, batch sizes, and candidate-generation settings can be explored. We report runtime separately for three stages of the pipeline: Phase 1 pretraining, autoregressive generation, and Phase 2 refinement. This separation is important because the bottlenecks differ across stages. Phase 1 is dominated by teacher-forced optimization with online perturbation and serialization; generation is dominated by sequential sampling and graph decoding; and Phase 2 combines generation, GMM filtering, serialization, and additional training on retained samples. Table 5: Phase 1 training runtime and memory comparison across GPUs. Full epoch time includes data loading, online graph perturbation, serialization, and neural-network training. Train-only time isolates the optimization step after data preparation. GPU-only time measures the portion of the epoch spent on GPU computation. Peak memory is the maximum allocated GPU memory observed during the run. DNC denotes a configuration that did not complete under the tested settings. Dataset GPU Backbone Batch Full epoch (s) Train-only (s) GPU-only (s) Peak mem. / status QM9 RTX 4090 Mamba 256 301.52 269.01 265.89 17.0 QM9 GH200 Mamba 256 264.73 235.16 229.96 17.1 QM9 RTX 4090 Mamba 1024 DNC DNC DNC OOM QM9 GH200 Mamba 1024 279.29 249.77 247.01 67.7 QM9 RTX 4090 LSTM 1024 129.10 95.62 93.29 11.1 QM9 GH200 LSTM 1024 63.42 34.40 31.42 11.0 QM9 RTX 4090 Lin. Transformer 32 1900.89 1868.34 1852.92 22.2 QM9 GH200 Lin. Transformer 32 1108.68 1080.00 1050.51 22.0 MalNet-Tiny RTX 4090 LSTM 1 DNC DNC DNC cuDNN unsupported MalNet-Tiny GH200 LSTM 1 DNC DNC DNC cuDNN unsupported MalNet-Tiny RTX 4090 Mamba 1 DNC DNC DNC OOM MalNet-Tiny GH200 Mamba 1 1503.55 1446.50 1440.29 63.4 Table 6: Generation runtime and decoding statistics across GPUs. Generation time measures autoregressive sampling and graph decoding. Raw samples denotes the total number of sampled sequences attempted to obtain the target number of decoded graphs. Acceptance rate is computed as the number of accepted graphs divided by raw samples. DNC denotes a configuration that did not complete under the tested settings. Dataset GPU Backbone Raw samples Accepted / Raw (%) Gen. time (s) Sec./graph QM9 RTX 4090 Mamba 5510 90.74 664.60 0.13 QM9 GH200 Mamba 5482 91.21 658.33 0.13 MalNet-Tiny RTX 4090 Mamba 100 DNC DNC OOM MalNet-Tiny GH200 Mamba 100 100.0 15755.76 157.56 Table 7: Phase 2 refinement runtime across GPUs. Values are reported as mean runtime per Phase 2 iteration; total runtime is not compared because runs may contain different numbers of refinement iterations. Each iteration generates candidate graphs, filters generated samples using the GMM likelihood threshold, serializes the retained graphs, and continues teacher-forced training on the accepted set. Generation time denotes autoregressive sampling and decoding, GMM filter time denotes embedding-space filtering, train-only time denotes teacher-forced optimization, and total iteration time includes all measured Phase 2 steps. DNC denotes a configuration that did not complete under the tested settings. Dataset GPU Backbone Gen. (s) GMM (s) Train-only (s) Total (s) QM9 RTX 4090 Mamba 374.12 10.60 4.26 406.66 QM9 GH200 Mamba 395.43 15.74 2.64 443.63 MalNet-Tiny RTX 4090 Mamba DNC DNC DNC OOM MalNet-Tiny GH200 Mamba 16900.72 189.85 18.86 17118.82 12 Runtime interpretation. The GH200 provides two practical advantages in our experiments: it enables larger-memory configurations that are not feasible on the RTX 4090, and it improves several teacher-forced training measurements. These benefits are most visible in Phase 1 and in the train-only component of Phase 2, where the neural optimization step can better exploit the accelerator. End-to-end generation and Phase 2 iteration time, however, also include sequential autoregressive sampling, graph decoding, GMM filtering, serialization, and CPU-side graph processing. Consequently, these full-pipeline measurements do not always translate into a uniform wall-clock speedup, especially on MalNet-Tiny. We therefore interpret the GH200 results primarily as evidence that large-memory accelerators make long-sequence graph generation experiments feasible, while also accelerating selected training components. Table 5 also reports a linear Transformer decoder as a runtime reference. Even at a smaller batch size (32) than the LSTM and Mamba configurations, its per-epoch QM9 training time is the highest among all tested backbones on both GPUs. We include this configuration only to situate the cost of the lightweight backbones relative to an attention-based sequence decoder, not as a generation-quality baseline. 
+
+Long-sequence backbone behavior. The contrast between LSTM and Mamba is sharpest on MalNet-Tiny. Molecular graphs produce relatively short bit sequences, where the LSTM remains efficient and achieves stronger generation quality (Table 3). MalNet-Tiny is qualitatively different: function-call graphs can contain thousands of edges and induce much longer serialized bit streams. Under the tested MalNet-Tiny setting, the LSTM configurations did not complete because the PyTorch/cuDNN backend did not support the resulting long-sequence configuration, whereas the Mamba backbone completed Phase 1 on the GH200 (Table 5). We therefore interpret the Mamba results on MalNet-Tiny as evidence of long-sequence feasibility rather than improved generation quality. During Phase 2, the train-only component is lower on GH200 (Table 7), but the full refinement loop also includes autoregressive sampling, graph decoding, GMM filtering, serialization, and evaluation overhead. These non-training components dominate especially on MalNet-Tiny, where each accepted sample requires producing and decoding a much longer edge-bit sequence than in QM9 (Table 6). 
+
+# 6 Conclusion 
+
+In this work, we introduced a lightweight autoregressive framework for graph generation based on structure-guided binary serialization and embedding-space refinement. The proposed approach repre-sents graphs as sparse ordered edge streams and combines SIR-GN structural node representations with BFS traversal to produce regular binary sequences that are easier for autoregressive models to learn. This design enables scalable sparse graph generation with near-log-linear complexity while avoiding the expensive operations commonly associated with diffusion-based methods. To balance novelty and plausibility, we further introduced a two-phase training strategy that combines structural graph perturbations with a ReST-style refinement procedure guided by a Gaussian Mixture Model in graph embedding space. The framework supports both unsupervised and supervised graph generation settings and generalizes across molecular and non-molecular graph domains. Experimental results across multiple benchmark datasets demonstrated that the proposed framework achieves high validity, uniqueness, and substantially improved novelty, generating diverse graphs that extend beyond the empirical training distribution while preserving realistic structural properties. The backbone comparison further suggests that the same serialization and training pipeline can support both recurrent LSTM decoders and Mamba-style state-space models, while the GH200 experiments show the practical importance of large-memory accelerators for enabling long graph-sequence experiments. Overall, the results demonstrate that lightweight autoregressive architectures can provide an effective, scalable, and flexible alternative for controlled graph generation when combined with appropriate structural serialization and refinement mechanisms. 13 Acknowledgment 
+
+This research was sponsored in part by the Artificial Intelligence Initiative as part of the Laboratory Directed Research and Development Program of Oak Ridge National Laboratory, managed by UT-Battelle, LLC, for the U.S. Department of Energy under contract DE-AC05-00OR22725. This work was also supported in part by the Supermicro NVIDIA Grace Enablement Evaluation Program by providing a Supermicro ARS-111GL-NHR server equipped with an NVIDIA GH200 Grace Hopper Superchip, which supported the evaluation and research activities reported in this paper. 
+
+# References 
+
+Andreas Bergmeister, Karolis Martinkus, Nathana"el Perraudin, and Roger Wattenhofer. Efficient and scalable graph generation through iterative local expansion. In International Conference on Learning Representations , 2024. URL https://openreview.net/forum?id=2XkTz7gdpc .Jie Bu, Kazi Sajeed Mehrab, and Anuj Karpatne. Let there be order: Rethinking ordering in autoregressive graph generation. arXiv preprint arXiv:2305.15562 , 2023. URL https://arxiv. org/abs/2305.15562 .Dexiong Chen, Markus Krimmel, and Karsten Borgwardt. Flatten graphs as sequences: Transformers are scalable graph generators. In Advances in Neural Information Processing Systems , 2025a. URL 
+
+https://arxiv.org/abs/2502.02216 . To appear. Xiaohui Chen, Xu Han, Jiajing Hu, Francisco J. R. Ruiz, and Liping Liu. Order matters: Probabilistic modeling of node sequence for graph generation. In Proceedings of the 38th International Conference on Machine Learning , volume 139 of Proceedings of Machine Learning Research ,pages 1630–1639. PMLR, 2021. URL https://proceedings.mlr.press/v139/chen21j. html .Xiaohui Chen, Yinkai Wang, Jiaxing He, Yuanqi Du, Soha Hassoun, Xiaolin Xu, and Li-Ping Liu. Graph generative pre-trained transformer. In Proceedings of the 42nd International Conference on Machine Learning , volume 267 of Proceedings of Machine Learning Research . PMLR, 2025b. URL https://proceedings.mlr.press/v267/chen25bl.html .Hanjun Dai, Azade Nazi, Yujia Li, Bo Dai, and Dale Schuurmans. Scalable deep generative modeling for sparse graphs. In Proceedings of the 37th International Conference on Machine Learning ,volume 119 of Proceedings of Machine Learning Research , pages 2302–2312. PMLR, 2020. URL 
+
+https://proceedings.mlr.press/v119/dai20b.html .Hanze Dong, Wei Xiong, Deepanshu Goyal, Yihan Zhang, Winnie Chow, Rui Pan, Shizhe Diao, Jipeng Zhang, Kashun Shum, and Tong Zhang. RAFT: Reward ranked finetuning for generative foundation model alignment. arXiv preprint arXiv:2304.06767 , 2023. URL https://arxiv. org/abs/2304.06767 .Claire Donnat, Marinka Zitnik, David Hallac, and Jure Leskovec. Learning structural node em-beddings via diffusion wavelets. In Proceedings of the 24th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , pages 1320–1329. ACM, 2018. doi: 10.1145/3219819.3220025. URL https://doi.org/10.1145/3219819.3220025 .Albert Gu and Tri Dao. Mamba: Linear-time sequence modeling with selective state spaces. arXiv preprint arXiv:2312.00752 , 2023. Caglar Gulcehre, Tom Le Paine, Srivatsan Srinivasan, Ksenia Konyushkova, Lotte Weerts, Abhishek Sharma, Aditya Siddhant, Alex Ahern, Miaosen Wang, Chenjie Gu, Wolfgang Macherey, Arnaud Doucet, Orhan Firat, and Nando de Freitas. Reinforced self-training (ReST) for language modeling. 
+
+arXiv preprint arXiv:2308.08998 , 2023. URL https://arxiv.org/abs/2308.08998 .Han Huang, Leilei Sun, Bowen Du, Yanjie Fu, and Weifeng Lv. GraphGDP: Generative diffusion processes for permutation invariant graph generation. In 2022 IEEE International Conference on Data Mining , pages 201–210. IEEE, 2022. doi: 10.1109/ICDM54844.2022.00030. URL 
+
+https://arxiv.org/abs/2212.01842 .14 Yunhui Jang, Seul Lee, and Sungsoo Ahn. A simple and scalable representation for graph generation. In International Conference on Learning Representations , 2024. URL https://openreview. net/forum?id=nO344avRib .Jaehyeong Jo, Seul Lee, and Sung Ju Hwang. Score-based generative modeling of graphs via the system of stochastic differential equations. In Proceedings of the 39th International Conference on Machine Learning , volume 162 of Proceedings of Machine Learning Research , pages 10362–10383. PMLR, 2022. URL https://proceedings.mlr.press/v162/jo22a.html .Mikel Joaristi and Edoardo Serra. SIR-GN: A fast structural iterative representation learning approach for graph nodes. In ACM Transactions on Knowledge Discovery from Data , volume 15, pages 1–39. ACM, 2021. doi: 10.1145/3450315. URL https://doi.org/10.1145/3450315 .Lingkai Kong, Jiaming Cui, Haotian Sun, Yuchen Zhuang, B. Aditya Prakash, and Chao Zhang. Autoregressive diffusion model for graph generation. In Proceedings of the 40th International Conference on Machine Learning , volume 202 of Proceedings of Machine Learning Research ,pages 17391–17408. PMLR, 2023. URL https://proceedings.mlr.press/v202/kong23b. html .Yujia Li, Oriol Vinyals, Chris Dyer, Razvan Pascanu, and Peter Battaglia. Learning deep generative models of graphs. In International Conference on Learning Representations , 2018. URL https: //openreview.net/forum?id=Hy1d-ebAb .Renjie Liao, Yujia Li, Yang Song, Shenlong Wang, William L. Hamilton, David K. Du-venaud, Raquel Urtasun, and Richard Zemel. Efficient graph generation with graph recurrent attention networks. In Advances in Neural Information Processing Sys-tems , volume 32, 2019. URL https://proceedings.neurips.cc/paper/2019/hash/ d0921d442ee91b896ad95059d13df618-Abstract.html .Chenhao Niu, Yang Song, Jiaming Song, Shengjia Zhao, Aditya Grover, and Stefano Ermon. Permutation invariant graph generation via score-based generative modeling. In Proceed-ings of the 23rd International Conference on Artificial Intelligence and Statistics , volume 108 of Proceedings of Machine Learning Research , pages 4474–4484. PMLR, 2020. URL 
+
+https://proceedings.mlr.press/v108/niu20a.html .Yiming Qin, Manuel Madeira, Dorina Thanou, and Pascal Frossard. DeFoG: Discrete flow matching for graph generation. In Proceedings of the 42nd International Conference on Machine Learning ,2025a. URL https://openreview.net/forum?id=KPRIwWhqAZ .Yiming Qin, Clement Vignac, and Pascal Frossard. SparseDiff: Sparse discrete diffusion for scalable graph generation. Transactions on Machine Learning Research , 2025b. URL https: //openreview.net/forum?id=kuJ3lpxnVC .Leonardo F. R. Ribeiro, Pedro H. P. Saverese, and Daniel R. Figueiredo. struc2vec: Learning node representations from structural identity. In Proceedings of the 23rd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining , pages 385–394. ACM, 2017. doi: 10.1145/ 3097983.3098061. URL https://doi.org/10.1145/3097983.3098061 .Yu Rong, Wenbing Huang, Tingyang Xu, and Junzhou Huang. DropEdge: Towards deep graph convo-lutional networks on node classification. In International Conference on Learning Representations ,2020. URL https://openreview.net/forum?id=Hkx1qkrKPr .Martin Simonovsky and Nikos Komodakis. GraphVAE: Towards generation of small graphs using variational autoencoders. In Artificial Neural Networks and Machine Learning – ICANN 2018 ,pages 412–422. Springer, 2018. URL https://arxiv.org/abs/1802.03480 .Antoine Siraudin, Fragkiskos D. Malliaros, and Christopher Morris. Cometh: A continuous-time discrete-state graph diffusion model. arXiv preprint arXiv:2406.06449 , 2024. URL https: //arxiv.org/abs/2406.06449 .Clement Vignac, Igor Krawczuk, Antoine Siraudin, Bohan Wang, Volkan Cevher, and Pascal Frossard. DiGress: Discrete denoising diffusion for graph generation. In International Conference on Learning Representations , 2023. URL https://openreview.net/forum?id=UaAD-Nu86WX .15 Zhe Wang, Jiaxin Shi, Nicolas Heess, Arthur Gretton, and Michalis K. Titsias. Learning-order autoregressive models with application to molecular graph generation. In Proceedings of the 42nd International Conference on Machine Learning , 2025. URL https://openreview.net/ forum?id=EY6pXIDi3G .Zhe Xu, Ruizhong Qiu, Yuzhong Chen, Huiyuan Chen, Xiran Fan, Menghai Pan, Zhichen Zeng, Mahashweta Das, and Hanghang Tong. Discrete-state continuous-time diffusion for graph generation. In Advances in Neural Information Processing Systems , vol-ume 37, 2024. URL https://proceedings.neurips.cc/paper_files/paper/2024/ hash/91813e5ddd9658b99be4c532e274b49c-Abstract-Conference.html .Jiaxuan You, Rex Ying, Xiang Ren, William L. Hamilton, and Jure Leskovec. GraphRNN: Generating realistic graphs with deep auto-regressive models. In Proceedings of the 35th International Conference on Machine Learning , volume 80 of Proceedings of Machine Learning Research , pages 5708–5717. PMLR, 2018. URL https://proceedings.mlr.press/v80/you18a.html .Yuning You, Tianlong Chen, Yongduo Sui, Ting Chen, Zhangyang Wang, and Yang Shen. Graph contrastive learning with augmentations. In Advances in Neural Information Processing Systems ,volume 33, pages 5812–5823, 2020. URL https://proceedings.neurips.cc/paper/2020/ hash/3fe230348e9a12c13120749e3f9fa4cd-Abstract.html .Eric Zelikman, Yuhuai Wu, Jesse Mu, and Noah D. Goodman. STaR: Bootstrapping reasoning with reasoning. In Advances in Neural Information Processing Systems , volume 35, pages 15476– 15488, 2022. URL https://proceedings.neurips.cc/paper_files/paper/2022/hash/ 639a9a172c044fbb64175b5fad42e9a5-Abstract-Conference.html .Lingxiao Zhao, Xueying Ding, and Leman Akoglu. PARD: Permutation-invariant autoregres-sive diffusion for graph generation. In Advances in Neural Information Processing Systems ,volume 37, 2024. URL https://proceedings.neurips.cc/paper_files/paper/2024/ hash/0d89cf183391e12063cb63ff0d75ed95-Abstract-Conference.html .
+
+# A Complexity Analysis 
+
+We analyze the per-graph time complexity of the proposed pipeline. Let n = |V | and m = |E|. We focus on sparse graphs with m = O(n), as in the molecular and structural benchmarks considered in this work, and treat the LSTM hidden size, SIR-GN iteration count, edge-attribute width, and graph embedding dimension as constants. 
+
+Ordering. Computing structural node representations with SIR-GN requires linear work in the graph size per iteration, hence O(n + m) for a constant number of iterations. Ranking the resulting node representations costs O(n log n). The structure-guided BFS traversal uses a FIFO queue and visits each node and edge a constant number of times; structural ranking is used only to order neighbors before they are enqueued. Sorting neighbor lists contributes P 
+
+> v
+
+O(deg( v) log deg( v)) ≤
+
+O(m log n). Thus, ordering costs O(n log n + m log n), which is O(n log n) for sparse graphs. 
+
+Serialization. Each node index requires b = ⌈log 2 n⌉ bits, so each edge contributes O(log n) bits to the sequence. Lexicographic edge sorting costs O(m log m), and writing the bit sequence costs 
+
+O(m log n). The resulting sequence length is T = Θ( m log n), which is O(n log n) for sparse graphs. 
+
+Sequence model. A forward or sampling pass through the LSTM costs O(T d 2) for hidden size 
+
+d. Treating d as fixed and using T = O(n log n) on sparse graphs, training and autoregressive generation are near-log-linear per graph. This avoids constructing or attending over the full n × n
+
+adjacency matrix, a common bottleneck in dense graph generators. For the Mamba variant, the causal state-space backbone has linear dependence on sequence length for fixed hidden dimension, so the sequence-length dependence remains proportional to T = O(m log n).16 Phase 1. At each epoch, the model trains on the original graphs and one perturbed graph per original graph. The perturbation step removes O(pdrop n) edges and adds O(padd n) candidate edges for constant perturbation rates. Since added edges are sampled by rejection rather than by constructing the full non-edge set, this step is linear in expectation for sparse graphs. The dominant per-epoch cost is therefore O(|D| nmax log nmax ).
+
+Phase 2. Each ReST iteration samples M candidate graphs, scores them under the fitted GMM, and trains on the accepted subset Ck. Generating one candidate costs O(nmax log nmax ). Com-puting a linear-time graph embedding adds O(nmax ), and GMM scoring with C components costs O(C) for fixed embedding dimension. Since |C k| ≤ M , the dominant term per iteration is O(M n max log nmax ).
+
+Fitting the GMM. The GMM is fit once before Phase 2 on training graph embeddings. Standard EM with C components and |D| samples costs O(I C |D| ) for I iterations when the embedding dimension is fixed. This is a one-time preprocessing cost. Table 8: Per-graph generation complexity of representative graph generative models on sparse graphs (m = O(n)). Tsteps denotes the number of denoising, diffusion, or flow-matching sampling steps. Our general cost is O(m log n); the table reports the sparse case.                      
+
+> Family Representative method Generation cost Dense diffusion / flow DiGress, GDSS, DeFoG O(Tsteps ·n2)
+> Hybrid AR–diffusion PARD, GraphARM O(Tsteps ·n2)
+> Dense AR GraphRNN, GRAN O(n2)
+> Sparse AR BiGG O(( n+m) log n)
+> Sparse AR bit stream Ours O(nlog n)
+
+Comparison with prior work. Table 8 summarizes representative generation costs. Dense adjacency-based autoregressive and diffusion models scale at least quadratically in graph size, with diffusion or flow-based methods also requiring multiple sampling steps. Sparse autoregressive models avoid this by exploiting edge sparsity. Our method follows this sparse regime through a bit-level edge stream, giving O(m log n) generation cost in general and O(n log n) on sparse graphs. 
+
+# B Additional Ordering Analysis 
+
+To further characterize the proposed structural ordering, we measure the average number of distinct node embeddings induced by different structural ranking schemes. A larger value indicates that the ordering signal separates more nodes before BFS tie-breaking, reducing the number of structurally tied nodes during serialization. Table 9 compares degree ordering, the PARD structural ordering at depths 1–5, and our SIR-GN-based ordering with and without node/edge attributes. Across datasets, our ordering produces substantially more distinct embeddings than degree and PARD-style ordering, indicating a more discriminative structural ranking signal. The gap is largest on ZINC250K and MOSES, where degree produces only about three distinct ranks on average, while our attribute-aware depth-5 ordering separates roughly 22 and 20 distinct embeddings, respectively. This suggests that the proposed structural ranking produces a much finer ordering signal than degree and PARD-style structural neighborhoods. Importantly, this analysis does not by itself prove improved generation quality; rather, it supports the mechanism behind the method by showing that the ordering used for serialization contains substantially more discriminative structural information. 
+
+# C Additional Algorithms 
+
+This appendix collects the detailed pseudocode referenced in Section 3, covering structure-guided ordering, bit-level serialization, edge perturbation, and the two training phases (Algorithms 2–6). 17 Table 9: Ordering discriminativeness measured by the average number of distinct structural embed-dings/ranks. Higher values indicate fewer ties in the structural ranking before BFS tie-breaking. Values for PARD and our orderings are reported for depths 1–5.                                                                                                                               
+
+> Order Depth QM9 ZINC250K MOSES ANI-1x QM7x Transition1x Avg. nodes –18.07 23.09 21.60 16.57 15.02 13.62 Degree –3.57 3.27 3.21 3.61 3.58 3.57 PARD ordering 14.32 5.21 5.20 4.15 3.87 3.67 PARD ordering 25.59 7.57 7.28 5.61 5.07 4.73 PARD ordering 37.02 11.25 10.56 6.84 5.71 5.49 PARD ordering 47.47 12.56 11.65 7.29 5.88 5.63 PARD ordering 57.52 13.07 12.01 7.39 5.89 5.64 Ours, no attr. 19.12 12.77 15.23 10.11 8.77 9.90 Ours, no attr. 212.48 18.29 19.02 12.49 10.87 9.90 Ours, no attr. 313.50 20.20 19.69 13.14 11.14 10.16 Ours, no attr. 413.62 20.61 19.80 13.26 11.15 10.17 Ours, no attr. 513.63 20.70 19.82 13.28 11.15 10.17 Ours, attr. 19.45 17.53 16.47 10.34 8.91 8.15 Ours, attr. 212.67 21.20 19.32 12.66 11.05 10.01 Ours, attr. 313.57 21.82 19.80 13.26 11.28 10.26 Ours, attr. 413.68 21.93 19.88 13.37 11.29 10.27 Ours, attr. 513.68 21.95 19.89 13.38 11.29 10.27
+> (a) Phase 1 only, with perturbed graphs and without ReST.
+> (b) Phase 1 only, without perturbed graphs and without ReST.
+
+Figure 2: Ablation of the two-phase training scheme on Transition1x. (a) With perturbed graphs but without ReST, the model explores more broadly but fails to maintain high validity. (b) Without perturbed graphs and without ReST, the model remains more conservative but exhibits a steady decline in novelty. 
+
+# D Additional Ablations 
+
+D.1 Ablation on Phase 1 and the Role of ReST 
+
+To assess whether the components of the proposed training pipeline are individually necessary, we performed ablation studies on QM9 and Transition1x. The goal of these experiments is not merely to show that the full model performs best, but to clarify the functional role of each design choice across datasets of different difficulty. In particular, the proposed method is built around an exploration– exploitation decomposition: Phase 1 broadens the support of the generator through perturbed graphs, while Phase 2 refines this exploratory behavior through ReST-style filtering. The ablations below test what happens when one of these ingredients is removed. 18 Algorithm 2 Structure-Guided BFS Ordering 
+
+Require: Graph G = ( V, E )
+
+Ensure: Node ordering π over V 
+
+> 1:
+
+{hv }v∈V ← SIR-GN (G) 
+
+> 2:
+
+Compute structural rank r(v) for each v ∈ V from {hv } 
+
+> 3:
+
+π ← [ ] ; visited ← ∅  
+
+> 4:
+
+Sort all nodes by structural rank to obtain component-start order  
+
+> 5:
+
+while |visited | < |V | do  
+
+> 6:
+
+Select the highest-ranked unvisited node v∗ 
+
+> 7:
+
+Initialize FIFO queue Q ← [v∗] 
+
+> 8:
+
+inQueue ← { v∗} 
+
+> 9:
+
+while Q̸ = ∅ do  
+
+> 10:
+
+u ← front( Q) 
+
+> 11:
+
+Append u to π; visited ← visited ∪ { u} 
+
+> 12:
+
+Nu ← neighbors of u sorted by structural rank  
+
+> 13:
+
+for all w ∈ N u do  
+
+> 14:
+
+if w / ∈ visited and w / ∈ inQueue then  
+
+> 15:
+
+Append w to the back of Q 
+
+> 16:
+
+inQueue ← inQueue ∪ { w} 
+
+> 17:
+
+end if  
+
+> 18:
+
+end for  
+
+> 19:
+
+Pop u from the front of Q 
+
+> 20:
+
+inQueue ← inQueue \ { u} 
+
+> 21:
+
+end while  
+
+> 22:
+
+end while  
+
+> 23:
+
+return π
+
+Algorithm 3 Bit-Level Edge Serialization 
+
+Require: Graph G = ( V, E ) with edge attributes, ordering π
+
+Ensure: Bit sequence s(G) = ( x1, . . . , x T ) 
+
+> 1:
+
+Relabel each v ∈ V by its position in π 
+
+> 2:
+
+Esort ← edges sorted lexicographically by (u, v ) with u < v  
+
+> 3:
+
+b ← ⌈ log 2 |V |⌉ ▷ bits per node index  
+
+> 4:
+
+s ← [ ]  
+
+> 5:
+
+for all (u, v, a ) ∈ Esort do  
+
+> 6:
+
+βu ← BINARY (u, b ) 
+
+> 7:
+
+βv ← BINARY (v, b ) 
+
+> 8:
+
+βa ← ENCODE ATTR (a) 
+
+> 9:
+
+Append βu∥βv ∥βa to s 
+
+> 10:
+
+end for  
+
+> 11:
+
+return s
+
+D.1.1 Phase 1 only, with perturbed graphs and without ReST 
+
+The first ablation considers Phase 1 only, with perturbed graphs included during training but without the Phase 2 ReST-style refinement. This setting isolates the exploratory component of the method. As expected, introducing perturbed graphs broadens the support seen during training and encourages the generator to move away from a narrow imitation of the empirical distribution. However, without the exploitative refinement provided by ReST, this broader support is not filtered back toward plausible regions of graph space. The result is a generator that explores aggressively but does not sufficiently specialize, leading to weaker validity and less reliable final samples (Figure 2). Empirically, this failure is especially clear on Transition1x (Figure 2a), where Validity remains very low and Novelty also deteriorates over time. On QM9, the same ablation maintains relatively high Novelty, but Validity collapses to roughly the 50–60% range. In both cases, the conclusion is the same: perturbation-based pretraining alone is not enough, and the second phase is necessary to turn exploratory behavior into controlled novelty. 19 Algorithm 4 Edge-Level Graph Perturbation 
+
+Require: Graph G = ( V, E ), drop rate pdrop , add rate padd 
+
+Ensure: Perturbed graph eG = ( eV , eE) 
+
+> 1:
+
+eG ← copy( G) 
+
+> 2:
+
+kdrop ← min( ⌊pdrop |V |⌋ , |E|) 
+
+> 3:
+
+Erem ← uniformly sample kdrop edges from E 
+
+> 4:
+
+Remove all edges in Erem from eG 
+
+> 5:
+
+kadd ← ⌊ padd |V |⌋  
+
+> 6:
+
+a ← 0 
+
+> 7:
+
+while a < k add do  
+
+> 8:
+
+Sample distinct nodes u, v ∈ eV uniformly at random  
+
+> 9:
+
+if (u, v ) /∈ eE then  
+
+> 10:
+
+Add edge (u, v ) to eG with the default or empirical edge attribute  
+
+> 11:
+
+a ← a + 1  
+
+> 12:
+
+end if  
+
+> 13:
+
+end while  
+
+> 14:
+
+Remove isolated nodes from eG 
+
+> 15:
+
+return eG
+
+Algorithm 5 Phase 1: Exploration Pretraining with Perturbed Graphs 
+
+Require: Training graphs D, precomputed sequences {s(G) : G ∈ D} , epochs E1, perturbation rates pdrop , p add 
+
+Ensure: Pretrained generator pθ 
+
+> 1:
+
+Initialize generator parameters θ 
+
+> 2:
+
+for e = 1 , . . . , E 1 do  
+
+> 3:
+
+eDe ← ∅  
+
+> 4:
+
+for all G ∈ D do  
+
+> 5:
+
+eG ← PERTURB (G, p drop , p add ) 
+
+> 6:
+
+eDe ← eDe ∪ { eG} 
+
+> 7:
+
+end for  
+
+> 8:
+
+eSe ← { BIT SERIALIZE ( eG, STRUCTURE GUIDED BFS ( eG)) : eG ∈ eDe} 
+
+> 9:
+
+Se ← { s(G) : G ∈ D} ∪ eSe 
+
+> 10:
+
+for all mini-batches B ⊂ S e do  
+
+> 11:
+
+Update θ by teacher forcing on B 
+
+> 12:
+
+end for  
+
+> 13:
+
+end for  
+
+> 14:
+
+return pθ
+
+D.1.2 Phase 1 only, without perturbed graphs and without ReST 
+
+The second ablation removes both ReST and the perturbed-graph augmentation, leaving only standard Phase 1 training on the original dataset. In this case, the model no longer benefits from the exploration– exploitation mechanism introduced by the full method. Instead, it is trained purely to reproduce the observed training distribution, which leads to a noticeably narrower generative behavior. Compared with the previous ablation, this setting maintains substantially higher Validity, but does so at the cost of reduced exploratory behavior. On Transition1x (Figure 2b), this is reflected in a pronounced decline in Novelty, which drops from roughly 70% to around 30% over training. On QM9, the effect is milder but still visible: Validity and Uniqueness remain near-perfect, while Novelty stays confined to a relatively narrow range around 88–91%, far below the levels reached by the full method. Thus, while this setting remains more conservative than the perturbed-graph variant, it also fails to generate sufficiently interesting or diverse samples. This supports the view that the perturbed graphs are not a superficial augmentation, but the mechanism through which the model acquires an exploratory bias. 20 Algorithm 6 Phase 2: ReST-Style Refinement with GMM Filtering 
+
+Require: Pretrained generator pθ , encoder ϕ, training graphs D, iterations K, candidates M , GMM components C, training quantile q
+
+Ensure: Refined generator pθ 
+
+> 1:
+
+Fit GMM with C components on {ϕ(G) : G ∈ D}  
+
+> 2:
+
+τ ← q-quantile of {log pGMM (ϕ(G)) : G ∈ D}  
+
+> 3:
+
+for k = 1 , . . . , K do  
+
+> 4:
+
+Sample M bit sequences from pθ and decode well-formed ones into graphs { bGj } 
+
+> 5:
+
+Ck ← ∅  
+
+> 6:
+
+for all bGj do  
+
+> 7:
+
+ℓj ← log pGMM (ϕ( bGj ))  
+
+> 8:
+
+if ℓj ≥ τ then  
+
+> 9:
+
+Ck ← C k ∪ { bGj } 
+
+> 10:
+
+end if  
+
+> 11:
+
+end for  
+
+> 12:
+
+Sk ← { BIT SERIALIZE ( bG, STRUCTURE GUIDED BFS ( bG)) : bG ∈ C k} 
+
+> 13:
+
+for all mini-batches B ⊂ S k do  
+
+> 14:
+
+Continue teacher-forced training of pθ on B 
+
+> 15:
+
+end for  
+
+> 16:
+
+end for  
+
+> 17:
+
+return pθ 
+
+> (a) Fully random ordering. (b) Plain BFS without structural guidance.
+
+Figure 3: Ablation of the node ordering strategy on Transition1x. Fully random ordering causes a severe collapse in Validity, while plain BFS without structural guidance recovers part of the lost structure but remains weaker than the full structure-guided traversal. Taken together, these two ablations illustrate the complementary roles of the two phases. Phase 1 with perturbed graphs encourages exploration but requires Phase 2 to refine that exploration into valid and distributionally plausible samples. Phase 1 without perturbed graphs remains too close to pure imitation and therefore fails to produce the same level of novelty. The full method is effective precisely because it combines both ingredients. The contrast is sharper on Transition1x than on QM9, suggesting that the benefits of the two-phase exploration–refinement scheme become especially important on structurally harder datasets. 
+
+D.2 Ablation on Node Ordering 
+
+To evaluate the importance of the proposed structure-guided serialization, we compare the full ordering scheme against two weaker alternatives: (i) a fully random node ordering, and (ii) a plain BFS traversal without structural guidance. These ablations test whether the gains of the full model genuinely arise from the ordering strategy, rather than from the autoregressive architecture alone. For fairness, the final edge list is still sorted lexicographically after node relabeling, so the ablation changes only the node ordering and not the final edge-list sorting rule. 21 D.2.1 Fully random ordering 
+
+In the first ablation, node identities are assigned through a fully random permutation, removing both the structural guidance and the BFS constraint. This produces the weakest possible serialization among the considered variants, since the autoregressive model no longer receives any meaningful ordering signal. This ablation leads to the clearest failure mode. On both QM9 and Transition1x, Validity collapses dramatically, showing that the induced bit-level sequence becomes too irregular for the decoder to model reliably. Although the conditional Novelty and Uniqueness scores remain relatively high, these values must be interpreted with care: Novelty is computed only over the subset of generated samples that are already valid and unique. Consequently, high Novelty in this setting does not indicate successful generation, but only that the small fraction of samples surviving the validity filter are often unseen. Overall, the random-ordering ablation shows that without a meaningful serialization, the model fails to produce reliable graphs (Figure 3). 
+
+D.2.2 Plain BFS without structural guidance 
+
+In the second ablation, we retain the BFS traversal but remove the structural node ranking used to prioritize candidate nodes during expansion. This preserves a connectivity-aware traversal bias while isolating the contribution of the structural information. The results show that plain BFS is substantially better than a fully random ordering, confirming that traversal-based locality already provides a strong inductive bias for sequence generation. On QM9, plain BFS performs comparably to the full structure-guided ordering, suggesting that on this relatively regular benchmark the traversal signal alone is already sufficient to induce a highly learnable serialization. By contrast, on the more challenging Transition1x dataset, removing structural guidance leads to lower and less stable Validity, even when Uniqueness and conditional Novelty remain high. This indicates that structural ranking is not uniformly beneficial across all datasets, but becomes especially useful when BFS alone is not enough to organize the serialized sequence effectively. Taken together, these ablations reveal a clear hierarchy. Fully random ordering is the least effective and leads to severe validity collapse. Plain BFS recovers a substantial part of the lost structure and is already competitive on easier datasets such as QM9. The strongest benefit of the proposed structure-guided traversal emerges on harder datasets, where BFS alone does not sufficiently regularize the generation sequence. This suggests that the role of structural ordering is not simply to replace BFS, but to strengthen it in regimes where traversal locality alone is insufficient. 
+
+D.3 Ablation on Exploration: Removing Perturbed Graphs 
+
+To isolate the role of the exploratory component of the proposed method, we consider a variant in which the perturbed graphs of Phase 1 are removed entirely. In this setting, the model is first pretrained only on the original training graphs and is then refined through the same Phase 2 ReST-style procedure. This ablation tests whether the second phase alone is sufficient to produce strong novelty, or whether the exploratory bias induced by perturbed graphs is a necessary ingredient of the full pipeline. The results on Transition1x show that removing perturbed graphs makes the generator substantially more conservative. During Phase 1, Validity remains reasonably high, but Novelty steadily declines over training, indicating that the model increasingly concentrates on a narrow approximation of the empirical training distribution. In Phase 2, this tendency becomes even more pronounced: the refinement process further improves plausibility-related metrics, but Novelty collapses to much lower levels, with only occasional spikes. In other words, once the exploratory component is removed, the overall pipeline becomes predominantly exploitative. This ablation shows that Phase 2 cannot by itself create meaningful novelty; it can only refine what Phase 1 makes available. Perturbed graphs are therefore not a secondary augmentation trick, but the mechanism that gives the generator access to a broader and more exploratory set of graph configurations. Without them, the refinement stage still specializes the model, but largely at the expense of the novelty that the full method is designed to preserve. 22 D.4 Alternative Exploration Sources: BA Graphs Instead of Perturbations 
+
+To test whether the exploratory role of Phase 1 depends specifically on perturbed training graphs, we replace them with Barabási–Albert (BA) graphs having comparable size statistics. This ablation probes whether the benefit of the first phase arises from the particular perturbation mechanism, or more generally from exposing the generator to a broader structured graph distribution before refinement. The results are surprisingly strong. On QM9, replacing perturbed graphs with BA graphs still yields near-perfect Validity and Uniqueness together with very high Novelty. On Transition1x, the same modification remains highly competitive, again maintaining strong novelty while preserving good validity. These results suggest that the exploratory component of the method is not tied to a single augmentation scheme. Rather, what appears to matter is the presence of an additional structured graph source that broadens the support of the generator before the exploitative refinement stage. At the same time, this ablation should be interpreted with care. Perturbed graphs remain more closely coupled to the empirical training distribution, whereas BA graphs provide a more generic structural prior. We therefore view perturbed graphs as the most natural default choice in the proposed framework, but the BA results indicate that the method is robust to alternative forms of structured exploratory augmentation. More broadly, they support the conclusion that Phase 1 benefits from exploratory pressure itself, not necessarily from one unique perturbation mechanism. 23

@@ -1,0 +1,638 @@
+Title: Link Prediction or Perdition: the Seeds of Instability in Knowledge Graph Embeddings
+
+URL Source: https://arxiv.org/pdf/2606.03365v1
+
+Published Time: Wed, 03 Jun 2026 00:53:04 GMT
+
+Number of Pages: 22
+
+Markdown Content:
+# Link Prediction or Perdition: the Seeds of Instability in Knowledge Graph Embeddings 
+
+Guillaume Méroué [0009 −0004 −7111 −3202] , Fabien Gandon [0000 −0003 −0543 −1232] ,and Pierre Monnin [0000 −0002 −2017 −8426] 
+
+Université Côte d’Azur, Inria, CNRS, I3S, France 
+
+firstname.lastname@inria.fr 
+
+Abstract. Embedding models (KGEMs) constitute the main link pre-diction approach to complete knowledge graphs. Standard evaluation protocols emphasize rank-based metrics such as MRR or Hits@ K, but usually overlook the influence of random seeds on result stability. More-over, these metrics conceal potential instabilities in individual predictions and in the organization of embedding spaces. In this work, we conduct a systematic stability analysis of multiple KGEMs across several datasets. We find that high-performance models actually produce divergent pre-dictions at the triple level and highly variable embedding spaces. By isolating stochastic factors ( i.e. , initialization, triple ordering, negative sampling, dropout, hardware), we show that each independently induces instability of comparable magnitude. Furthermore, for a given model, hy-perparameter configurations with better MRR are not guaranteed to be more stable. Moreover, voting, albeit a known remediation mechanism, only provides a limited enhancement of stability. These findings highlight critical limitations of current benchmarking protocols, and raise concerns about the reliability of KGEMs for knowledge graph completion. 
+
+Keywords: Random Seeds · Machine Learning · Knowledge Graph Com-pletion. 
+
+## 1 Introduction 
+
+Knowledge Graphs (KGs) [11] serve as foundational structures for a wide range of applications in both academia and industry, including question answering [41], semantic parsing [1], recommendation systems [37], among others [11]. They pro-vide a formal and explicit network of facts in many downstream application do-mains (e.g., bio-chemistry, geography, pharmacology, linguistics, etc.) [5,11,25]. They do so by encoding structured representations of information, typically de-fined within standard frameworks such as RDF [16], where knowledge is repre-sented as triples (h, r, t ), indicating that a relation r links a head entity h to a tail entity t. But, despite their widespread adoption, real-world KGs are often incomplete due to their manual or semi-automatic construction process [26]. For instance, in 2015, 58% of scientists in DBpedia lacked a link to their field of ex-pertise [15]. This incompleteness has motivated various refinement tasks [11,26].  
+
+> arXiv:2606.03365v1 [cs.LG] 2 Jun 2026 2Méroué et al.
+
+Among them, link prediction (LP) aims to infer missing entities in incomplete triples of the form (h, r, ?) or (? , r, t ). Over the years, a variety of Knowledge Graph Embedding Models (KGEMs) have been proposed for LP and have now become the preponderant methods [2,14]. Being machine learning models, KGEMs inherently rely on stochastic ele-ments during training, which can be controlled through random seeds. As a con-sequence, model performance may vary across seeds. A common good practice in machine learning is to report performance by averaging results over multiple runs with identical configurations but different seeds, and to ensure that the standard deviation remains small, indicating stable performance. However, even when following this practice, two runs trained with different seeds may attain similar aggregate scores while nonetheless producing significantly different top-
+
+K predictions. For example, in Figure 1, all runs exhibit the same MRR despite displaying substantial query-by-query variability in their predictions. Such behaviour raises a critical issue for the operational task of KG comple-tion: under different seeds, adding the top-K predicted triples to the KG may yield substantially different completed graphs. Even in settings where predic-tions are only considered as candidates rather than directly added to the graph (e.g. , discovering drug treatments for some diseases), verifying these candidates may incur significant costs. In such scenarios, it is crucial that entities are worth testing, requiring stability in predictions. To illustrate, in Figure 1, completing the graph with the top-2 predictions for the query ( Ribavirin, treatmentFor, ? )using three models with identical performance may produce Hepatitis and Bron-chitis , Asthma and Bronchitis , or Anemia and Botulism , depending solely on the seed. KGEM stability is thus a critical issue for operational KG completion, where seed-dependent instability may lead to unreliable and inconsistent comple-tions, thereby undermining the trustworthiness of completed KGs as grounding structures for downstream decision-making systems. Prior work [43] has already shown that global rank-based metrics commonly used for link prediction, such as MRR or Hits@ K, fail to capture the seed-induced variability of KGEM predictions at the triple level. These authors investigated trained model agreement on predicting the gold truth entity within the top-K, which does not fully align with the operational setting of KG completion. Moreover, once a KGEM has been trained, its learned embedding space is of-ten reused for downstream tasks beyond link prediction, such as entity similarity assessment [33], conceptual clustering [9], or logical rule mining [39]. These down-stream tasks assume the stability of the embedding space for reliability, which, to the best of our knowledge, has never been examined with respect to random-ness factors. Hence, there is a need for more comprehensive stability measures targeting the top-K candidates and the embedding space. This motivated our work, where we question and quantify the extent to which randomness affects both the predictive behavior and the internal representations of KGEMs. In particular, our research questions are as follows: 
+
+RQ1. Are KGEMs stable across different random seeds? We conducted multiple runs of the same models while varying the sources of randomness. The Seeds of Instability in Knowledge Graph Embeddings 3MRR  MRR  
+
+> Predictions
+> MRR
+> Aggregates
+> Metrics
+> MRR
+> Pred-Overlap@
+> Brimonidine
+> Cetirizine
+> Ribavirin
+> (?, treatmentFor, Hepatitis)
+> Amoxicillin
+> Botulism
+> Chlamydia
+> Diabetes
+> (Ribavirin, treatmentFor, ?)
+> Hepatitis
+> Model Seed 1
+> Brimonidine
+> Cetirizine
+> Duloxetine
+> (?, treatmentFor, Hepatitis)
+> Ribavirin
+> Botulism
+> Chlamydia
+> Hepatitis
+> (Ribavirin, treatmentFor, ?)
+> Asthma
+> Bisoprolol
+> Carvedilol
+> Dilevalol
+> (?, treatmentFor, Hepatitis)
+> Ribavirin
+> Bronchitis
+> Cystitis
+> Hepatitis
+> (Ribavirin, treatmentFor, ?)
+> Anemia
+> Pred-Overlap@
+> Model Seed 2 Model Seed 3
+> MRR
+> Pred-Overlap@
+> (Ribavirin, treatmentFor, Hepatitis)
+> Ground Truth
+
+Fig. 1: Illustration of three runs evaluated on two queries that yield the same MRR but with substantial differences in predictions. Runs 1 and 2 rank the ground-truth entities differently but still predict largely overlapping candidate sets (Pred-Overlap@3 = 0 .67 ). In contrast, runs 2 and 3 assign the same rank to the ground truth, yet all other predicted entities differ, which would lead to entirely different completed graphs (Pred-Overlap@3 = 0 .17 ). Grey cells identify entities common to the predictions of different runs. We introduced metrics ( e.g. , Pred-Overlap , Space-Overlap ) to assess the sim-ilarity of predictions at the triple level, and the similarity of the learned embedding space. Our experimental analysis reveals that, despite apparent stability in aggregate metrics such as MRR, models exhibit pronounced vari-ability both at the triple level and in their embedding spaces. 
+
+RQ2. How do the different sources of randomness contribute to in-stability? 
+
+We considered the contribution of each usual source of randomness in ma-chine learning, i.e. , initialization, triple ordering, negative sampling, dropout, and also identified hardware ( i.e. , GPU) as an additional source of random-ness. We showed that varying sources in isolation or jointly induces instabil-ity of comparable magnitude. 
+
+RQ3. Is model stability correlated with link prediction performance? 
+
+We measured the stability of the best, median, and worst performing config-urations identified in an hyperparameter search. While the worst-performing models are clearly highly unstable, a higher MRR does not guarantee greater stability, neither in the embedding space nor in the predicted triples. We describe our proposed formalism to address these questions in Section 3. The experimental protocol and results are reported in Section 4. We summarise our findings and perspectives in Section 5. 4 Méroué et al. 
+
+## 2 Related Work 
+
+2.1 Knowledge Graph Embedding Models for Link Prediction 
+
+KGEMs encode KG entities and, in most cases, relations into a d-dimensional vector space with the aim of preserving as much as possible the structural reg-ularities of the original KG while offering a compact encoding. In the context of link prediction, this transformation allows the model to capture implicit but statistically plausible patterns and facts, subsequently used to infer new triples. Link prediction (LP) with KGEMs is typically achieved by defining a scoring function φ(h, r, t ) that evaluates the plausibility of a triple (h, r, t ) based on the corresponding embedding vectors of h, r, and t. The inferred facts can then complete the original KG. Over the past decade, a wide range of KGEMs has been proposed, which can be broadly grouped into three major families. 
+
+Geometric methods define the scoring function as a distance between en-tities after applying a geometric transformation corresponding to the relation. This transformation can take various forms such as a translation for TransE [4], a translation in a projected space for TransR [18], or a rotation for RotatE [34]. 
+
+Tensor factorization methods define the scoring function as a bilinear product capturing the similarity between entities under a linear transformation associated with the relation. The bilinear product can be restricted to a diagonal matrix as for DistMult [40], to a commuting normal matrix for ANALOGY [19], or extended to a complex embedding space for ComplEx [36]. 
+
+Neural network approaches learn the scoring function. Convolutional models such as ConvE [8] and ConvKB [24] use convolutional layers to cap-ture patterns in embeddings, similarly to computer vision. Alternatively, Graph Neural Network models such as RGCN [30] or NBFNET [44] exploit message passing to aggregate information from neighboring entities. Transformer-based approaches either operate solely on the KG structure (like all previous models) as for Hitter [6] or incorporate textual descriptions as for MoCoKGC [17]. While these approaches differ in architecture and expressive power, they all share a common feature: their training process inherently involves randomness. In this work, we focus specifically on understanding the impact of such random-ness on KGEM stability. 
+
+2.2 Impacts of Randomness on Knowledge Graph Embedding Models 
+
+Machine learning settings involve several factors that depend on randomness such as dataset splits, initialization of parameters, or dropout, with known impacts. In NLP, [20] reports that random seeds alter attention patterns and influential words, while, in GNNs, [32] shows that data splits yield divergent performances. More generally, [21] defines the notion of multiplicity as the fact that similar global performance of models conceal substantial variations at the local level due to randomness factors. They also propose two metrics to quantify this phe-nomenon: Discrepancy and Ambiguity .The Seeds of Instability in Knowledge Graph Embeddings 5
+
+In the KGEM literature, the impact of randomness during training is sel-dom addressed. Section 4.3 of [3] studies the effect of initialization seeds and concludes that most models are robust as global metrics such as MRR exhibit low variance. In contrast, [43] adapts the notion of multiplicity to KGEMs and shows that models retrained with different seeds may produce different triple-level predictions, even when their overall Hits@10 scores are nearly identical. They demonstrate that this instability can be alleviated with ensemble voting. However, their evaluation focuses solely on whether the gold entity appears or not within the top-K predictions of each model, thereby ignoring the rest of the ranked candidates. We argue that such a ground-truth–centric perspective fails to capture the full extent of model disagreement in settings where KG completion is used operationally by adding the top-K predictions to the KG. For instance, runs 2 and 3 in Figure 1 would exhibit no disagreement under this evaluation, since for each query they consistently concur on whether the ground-truth entity lies inside or outside the top-3. Yet, despite this apparent agreement, the two models produce almost entirely different sets of predicted entities, which yield radically different completed KGs. This highlights the need for stability mea-sures that reveal divergence in the predicted KG completion , beyond agreement on the position of the ground truth, aligning with the operational setting of KG completion. Beside the stability of predictions, other works investigated the impacts of randomness on the embedding space itself. For example, [31] compare the topolo-gies of learned embedding spaces across seeds and report substantial instability, leading to unstable individual predictions even if global accuracy remain sta-ble. Nonetheless, their work only focuses on embedding models for homogeneous graphs. In the KGEM literature, [13] and [12] investigate properties of embed-ding spaces, such as the (non-)preservation of class membership and the preser-vation of graph proximity. But, to the best of our knowledge, no prior work has examined the stability of these spaces with respect to randomness. Given the growing deployment of KGEMs in operational settings, there is a pressing need for stability evaluation protocols that reflect real-world usage. We therefore introduce measures that quantify the similarity of KG completions produced by different KGEMs, as well as metrics that assess the consistency of their embedding spaces across random seeds. 
+
+## 3 Measuring KGEM (In)stability 
+
+3.1 Preliminaries and Notations on KGEM Training 
+
+In our work, we consider the formal representation of a KG as a set of entities E,a set of relations R, and a collection of triples T ⊆ E × R × E encoding facts. Each triple (h, r, t ) consists of a head entity h, a relation r, and a tail entity t,
+
+e.g. , (France , hasCapital , Paris ).We focus on KGEMs trained for LP. In this case, T is split into train ( Ttrain ), validation ( Tval ), and test ( Ttest ) sets, the latter being used for model evaluation. 6 Méroué et al. 
+
+Given a test triple (h, r, t ) ∈ T test , LP consists in predicting missing entities in 
+
+(h, r, ?) or (? , r, t ) by scoring and ranking all entities of the KG and expecting the gold-truth entity to be as highly ranked as possible. Model quality is there-fore assessed over Ttest with rank-based metrics such as Mean Rank (MR), Mean Reciprocal Rank (MRR), and Hits@ K (typically K ∈ { 1, 3, 10 }). The training of KGEMs typically involves an hyperparameter tuning phase to obtain a hy-perparameter configuration C that maximizes validation MRR or Hits@ K.A less explored aspect lies in the impacts of randomness during training, associated with the choice of random seeds. In this work, we investigate the impact of such random factors on model results and performance. We identify four independent sources of randomness: 
+
+Negative sampling ( N ) random corruption of positive triples to generate neg-ative examples. 
+
+Triple ordering ( O) random shuffling of training triples at each epoch. 
+
+Parameter initialization ( I) random initialization of model parameters. 
+
+Dropout ( D) random subset of neurons deactivated at each batch. We define a seed configuration S as a tuple that assigns a specific value to each source of randomness. For example, S = {SN = sa, SO = sb, SI =
+
+sc, SD = sd} sets the seed SN controlling negative sampling to sa, and the other components follow analogously. An instance I is defined as I = Instance (Dataset , KGEM , C, S, H), indi-cating that a KGEM is trained on the specified Dataset with hyperparameter configuration C, seed configuration S, and on hardware H. In our experiments, we fix H to ensure identical execution conditions across all runs, and therefore omit it from the notation. We also omit the Dataset and KGEM when clear from context, and thus denote instances compactly by IC 
+
+> S
+
+.Let S = {s1, . . . , s n} be a set of seed values. We define a comparison group 
+
+G as a set of instances obtained by varying one seed of S over S, while keeping the others fixed to s1. For example, the group of instances where only negative sampling varies is GC 
+
+> N
+
+=
+
+n
+
+IC        
+
+> {SN=si,SO=s1,SI=s1,SD=s1}
+
+si ∈ S
+
+o
+
+. We define 
+
+GC 
+
+> I
+
+, GC 
+
+> O
+
+, GC 
+
+> D
+
+similarly for the other sources of randomness, and GC 
+
+> A
+
+for the case where all seeds vary jointly over S. Our objective is to determine whether predictions and embedding space organization of instances within the same group remain consistent, using spatial and prediction metrics introduced below. 
+
+3.2 Metrics Overlap on Predictions and Embedding Space Neighbors. To assess the instability of a group GC 
+
+> X
+
+for any source X of randomness, we rely on metrics that capture agreement either in predictions or in the embedding space. We adopt the top-K overlap, which quantifies the intersection between two unordered sets of size K, ranging from 0 (disjoint sets) to 1 (identical sets). It supports straight-forward interpretation, covers both the cases of automatic insertion and semi-automatic approaches with humans reviewing candidates. It also applies when the ground truth is unknown (e.g., recommendation, drug discovery). The Seeds of Instability in Knowledge Graph Embeddings 7
+
+Aligned with classical link prediction metrics such as Hits@1 and Hits@10, we focus on Overlap@1 and Overlap@10. We apply this measure both to the top-K predictions (Pred-Overlap@ K) and to the K nearest neighbors in the embedding space (Space-Overlap@ K), as detailed below. 
+
+Pred-Overlap@ K. Link Prediction–based KG completion can be assumed as populating the KG by adding, for each incomplete query (h, r, ?) or (? , r, t ), the top-K predicted entities, in line with usual evaluation metrics such as Hits@ K.Pred-Overlap@ K thus measures the extent to which two instances of a model would insert the same triples into the KG. Let us denote Qtest all the test queries that can be derived from test triples, 
+
+i.e. , queries (h, r, ?) and (? , r, t ) for each test triple (h, r, t ). Let ν(I, q, K ) be the top-K predictions returned by instance I for query q. For two instances I1 and 
+
+I2, Pred-Overlap@ K is defined as: Pred-Overlap@ K(I1, I 2) = 1
+
+|Q test |
+
+X
+
+> q∈Q test
+
+|ν(I1, q, K ) ∩ ν(I2, q, K )|
+
+K (1) A value close to 1 indicates that I1 and I2 produce almost the same predictions. To illustrate, in Figure 1, runs 1 and 2 share two of their top three predicted entities for each query and thus have a Pred-Overlap@3 of 0.67 . Runs 2 and 3 share only one entity for the first query and none for the second, resulting in a Pred-Overlap@3 of only 0.17 .
+
+Space-Overlap@ K. We also seek to measure the agreement between embedding spaces E1 and E2 learned by two instances I1 and I2. Embedding spaces are not directly comparable, since they may differ by various transformations, e.g. ,translation, rotation or scaling. Rather than aligning embeddings, we assess sta-bility through neighborhood preservation. For each entity ei ∈ E , let N Ej 
+
+> K
+
+(ei) denote its K nearest neighbors in the embedding space Ej , computed using the ℓ2 distance 1. Space-Overlap@ K reflects the degree to which local neighbors are shared across instances: Space-Overlap@ K(I1, I 2) = 1
+
+|E| 
+
+X
+
+> ei∈E
+
+N E1 
+
+> K
+
+(ei) ∩ N E2 
+
+> K
+
+(ei)
+
+K (2) 
+
+Aggregation over groups. To obtain stability scores for a group GC 
+
+> X
+
+, we compute the above metrics across all pairs (I1, I 2) ∈ GC 
+
+> X
+
+, and report the mean and stan-dard deviation. We denote these aggregated versions Pred-Overlap@ K(GC 
+
+> X
+
+) and Space-Overlap@ K(GC 
+
+> X
+
+).
+
+Consistency@K and Homogeneity@K. Moving beyond pairwise aggregation, we introduce metrics that quantify stability across all runs jointly for one query   
+
+> 1Cosine distance was also tested, yielding similar results; see our GitHub repository 28Méroué et al.
+
+q. First, we define Consistency@ K as a direct generalization of the overlap: we evaluate for one query q the proportion of entities that appear simultaneously in the top-K lists of all instances. Second, we define Homogeneity@ K as a gen-eralization of the Jaccard index. Consistency@ K(q) = 
+
+> n
+
+\
+
+> i=1
+
+ν(Ii, q, K )
+
+K Homogeneity@ K(q) = 
+
+> n
+
+\
+
+> i=1
+
+ν(Ii, q, K )
+
+> n
+
+[
+
+> i=1
+
+ν(Ii, q, K )
+
+While Consistency@ K quantifies the agreement on top-K predictions, Homogeneity@ K additionally penalizes dispersion across instances. 
+
+Aggregation over queries. To aggregate consistency and homogeneity metrics on all queries q ∈ Q , we compute the mean and standard deviation of the above met-rics. We denote these aggregated versions Consistency@ K and Homogeneity@ K .
+
+Other Metrics. We also considered alternative similarity measures. A natural candidate is Jaccard similarity. However, under the assumption that |A| = |B| =
+
+K, Jaccard and Overlap are bijectively related, and thus capture the same phe-nomenon, but Overlap is more interpretable. We also considered Rank-Biased Overlap (RBO), which operates on ranked lists and emphasizes top-ranked agree-ment, as well as Ambiguity and Discrepancy [43], which quantify agreement on ranking the gold truth within the top-K predictions. Their description and the obtained results are provided in Appendix A. Crucially, all these measures lead to the same conclusion: KGEMs exhibit substantial instability across runs. 
+
+## 4 Experimentation 
+
+4.1 Experimental setting 
+
+Models. We select representative KGEMs from different families: TransE [4] and RotatE [34] (geometric-based), DistMult [40] and ComplEx [36] (tensor factorization method), ConvE [8] (convolutional neural networks), RGCN [30] (graph neural networks), and a Transformer (transformer) without neighbor-hood context (Section 2.1 of [6]). 
+
+Datasets. We evaluate our models on standard KG datasets from the literature. Specifically, we consider WN18RR [8], a lexical subset of WordNet character-ized by its hierarchical structure; FB15k-237 [35] and Codex-S [29], which are subsets of Freebase and Wikidata, respectively, and contain real-world facts. Table 1 provides their statistics. For completeness, we additionally report in our GitHub repository 2 results on the smaller Kinship and Nations datasets, commonly used in prior work and describing familial and political relations, respectively. The Seeds of Instability in Knowledge Graph Embeddings 9
+
+Table 1: Dataset statistics.              
+
+> Dataset # Entities # Relations # Edges Mean in-degree WN18RR 40,943 11 93,003 2.72 FB15k-237 14,541 237 310,116 20.34 CoDEx-S 2,034 42 36,543 32.53
+
+In our experiments, the set S of seed values has been fixed to 
+
+{42 , 283 , 358 , 698 , 887 }, and the hardware H has been fixed to a GPU Nvidia GeForce RTX 2080 Ti (11 GiB) , except for the specific hardware-variance anal-ysis conducted in Section 4.2. PyKEEN and LibKGE do not explicitly separate the different sources of randomness, which was necessary for our controlled experiments. Therefore, we implemented a minimal KGE library that provides fine-grained and independent control over the four sources of randomness. It is built on PyTorch, and the RGCN layers are imported from PyTorch Geometric. Our implementation and the used datasets are publicly accessible 2.
+
+Hyperparameter Search. The purpose of this tuning step is not to identify the optimal model configuration, a task that would require exploring a substantially larger search space [28], but rather to provide a meaningful spectrum of models with different LP performance levels to answer RQ3. We fixed the seed configuration to S = {SN = s1, SO = s1, SI =
+
+s1, SD = s1}. We fixed the dropout rates for entities and relations to 0.2,the batch size to 256 , and the number of negative samples to 500 . We used Xavier normal for initialization of weight, and we employ the cross-entropy loss, as [28] shows that this choice consistently yields reliable results. More details are provided on GitHub 2.Subsequently, we conducted a compact hyperparameter search over embedding dimensions {128 , 256 , 512 } and learning rates 
+
+{10 −6, 10 −5, 10 −4, 10 −3, 10 −2, 10 −1}. The resulting configurations were ranked by increasing MRR and those failing to meet a minimum performance threshold (MRR < 0.05 ) were discarded. We then selected three representative configu-rations: the best-performing model CB (highest MRR), the worst-performing model CW (lowest MRR), and the median-performing model CM located at the median position of the list. Note that the best configurations we identified obtain, almost unanimously, performances that lie within a range comparable to state-of-the-art results (see our GitHub repository for the detailed comparison 2).  
+
+> 2https://github.com/Wimmics/LinkPerdition
+
+10 Méroué et al. 
+
+4.2 Result Analysis RQ1: Stability w.r.t. Randomness. If one only considers aggregate scores such as MRR, KGE models appear to be remarkably stable. Table 2 reports the mean MRR and standard deviation across five runs in GCB 
+
+> A
+
+(i.e., the best model with all seed components varying jointly). Deviations appear consistently small, suggesting that models trained under the same hyperparameter configuration but with varying seeds still achieve comparable overall predictive performance measured by the aggregated ranks of the gold-truth entities. Table 2: Mean and standard deviation of MRR over the five runs in GCB 
+
+> A
+
+, i.e. ,the best model configuration with all seeds jointly varying over S3.                                                                    
+
+> Dataset TransE ConvE DistMult Transformer RGCN ComplEx RotatE WN18RR 0.194 ±0.002 0.410 ±0.003 0.422 ±0.001 0.269 ±0.010 0.415 ±0.001 0.435 ±0.001 0.326 ±0.039
+> FB15k-237 0.315 ±0.001 0.324 ±0.001 0.312 ±0.002 0.295 ±0.001 N/A 0.315 ±0.001 0.288 ±0.001
+> codex-s 0.348 ±0.001 0.434 ±0.003 0.413 ±0.003 0.360 ±0.006 0.350 ±0.017 0.396 ±0.002 0.359 ±0.003
+
+(a) Pred-Overlap @10 (b) Pred-Overlap @1 
+
+(c) Space-Overlap @10 
+
+Fig. 2: Stability analysis across all datasets and models 3. Colors represent the datasets: WN18RR FB15k-237 CoDEx-S. However, our results show that small variations in MRR say little about the stability of individual predictions, and that aggregate metrics mask substantial  
+
+> 3
+
+Results for RGCN on FB15k-237 are omitted; under our unified pipeline, this con-figuration exceeds the memory budget of the GPU used. The Seeds of Instability in Knowledge Graph Embeddings 11 
+
+variability both within and across queries. In Figures 2a and 2b, prediction sta-bility is visualized through Pred-Overlap @10 and Pred-Overlap @1 . For example, two RotatE instances trained with different seeds share on average only 4.3 of the top-10 predicted entities on FB15k-237, dropping to 2.3 on WN18RR. A similar pattern holds for the top-1 prediction, where overlaps are close to or below 0.6 for most (model, dataset) pairs, meaning that even when completing the KG with only the top-ranked entity, roughly 40% of triples differ across in-stances. Note that the small standard deviations suggest that the magnitude of divergence between any two instances is itself remarkably stable across all pairs. To further examine variability at the query level, Figure 3 reports the distri-butions of Consistency@10 and Homogeneity@10 for TransE and RotatE over WN18RR. Other results are available on GitHub 2. For RotatE on FB15k-237, Figure 3a shows that nearly 25% of queries have a Consistency@10 of 0, meaning that no entity is common to the top-10 of all five runs, and only 54 queries (out of 40 932 ) share an identical top-10. Homogeneity@10 provides an even stricter perspective: as shown in Figure 3b, scores are heavily skewed toward low values, with only 3% of queries exceeding 0.5, indicating substantial dispersion among non-shared entities. This behavior is characteristic of most models and datasets. TransE, how-ever, stands out as notably more stable: according to Figure 2, its Overlap@1 consistently falls between 0.8 and 1, and its Overlap@10 comprises on average nearly eight shared entities across runs. This trend is further confirmed by Fig-ures 3c and 3d, although 16% of queries still exhibit a Consistency@10 below or equal to 0.5.This instability is not limited to predicted rankings but also manifests in the organization of the embedding space itself, visible through the complementary perspective of Space-Overlap @10 in Figure 2c. For instance, an entity shares on average only 5.6 common neighbors among its 10 nearest ones when comparing two independently trained DistMult instances on FB15k-237. Taken together, variability in both embedding neighborhoods and predicted rankings indicates that models learn different latent structures and therefore en-code different knowledge. Yet none of this variability is reflected in standard LP metrics such as MRR, which depend only on the predicted rank of gold enti-ties. As a result, models with similar MRR can produce substantially divergent completed KGs. This observation underscores the need for complementary eval-uation metrics to more accurately assess KGEM behaviour, a requirement that is particularly important in applications where KGs support decision-making. 
+
+RQ2: Impact of Individual Sources of Randomness. We now examine the impact of each source of randomness in isolation. In particular, we com-pare stability across GCB 
+
+> N
+
+, GCB 
+
+> I
+
+, GCB 
+
+> O
+
+, GCB 
+
+> D
+
+(varying random seeds indepen-dently for each source of randomness on a fixed hardware), and GCB 
+
+> A
+
+(varying all seeds simultaneously on a fixed hardware). Figure 4a and Figure 4b report, for WN18RR, the instability associated with each group, respectively at the prediction level and in the embedding space. Instability measures of the other 12 Méroué et al.    
+
+> (a) C@10-RotatE (b) H@10-RotatE (c) C@10-TransE (d) H@10-TransE
+
+Fig. 3: Distribution of Consistency@10 and Homogeneity@10 across queries on FB15k-237 for RotatE and TransE.  
+
+> (a) Pred-Overlap @10 (b) Space-Overlap @10
+
+Fig. 4: Impact of individual sources of randomness on WN18RR. Each source of randomness (including hardware) is varied independently while keeping all others fixed. Colors indicate the corresponding comparison group: GCB 
+
+> I
+
+(init) 
+
+GCB 
+
+> D
+
+(dropout) GCB 
+
+> N
+
+(neg) GCB 
+
+> O
+
+(order) GCB 
+
+> A
+
+(all) GCB ,S
+
+> H
+
+(hardware). The category “all” includes all sources of randomness but hardware. considered datasets are available in Figure 8 of Appendix B. Our results indicate that, for each model, each source independently is sufficient to induce instability at both the embedding and prediction levels. This highlights the inherent and persistent instability induced by randomness factors in model training. Across all datasets and metrics, no particular seed emerges as a dominant factor of instability. The observed variations in instability appear to be more strongly tied to the model architecture than to the specific source of randomness. Note that the comparable impact of each source of randomness validates the design choice of frameworks such as PyKeen and LibKGE to expose only a single seed controlling all stochastic factors. Furthermore, we define an additional group GCB ,S 
+
+> H
+
+, in which the hyperpa-rameter and seed configurations CB and S are fixed, while the hardware varies. Each model in this group has been trained on a different GPU: Nvidia GeForce RTX 2080 Ti (11 GiB) , Nvidia GeForce GTX 1080 Ti (11 GiB) , Nvidia Tesla T4 (15 GiB) , Nvidia A40 (45 GiB) , and Nvidia A100-SXM4-40GB (40 GiB) .Strikingly, this setting exhibits instability of the same magnitude as seed vari-ation (in beige in 4b), highlighting the challenge of ensuring reproducibility in The Seeds of Instability in Knowledge Graph Embeddings 13   
+
+> (a) Pred-Overlap@10 (b) Space-Overlap@10 (c) Homogeneity@10
+
+Fig. 5: Impact of model performance on stability. both research and production environments, particularly in cloud computing scenarios where hardware choice may be beyond the user’s control. 
+
+RQ3: Relationship Between Stability and Link Prediction Perfor-mance. We now investigate the model-wise relationship between the predictive performance (MRR) of a configuration and its stability. We aim to identify, for each model, which of GCB 
+
+> A
+
+, GCM 
+
+> A
+
+, and GCW 
+
+> A
+
+, respectively the best, medium, and worst configurations from the hyperparameter search, exhibits the greatest instability. Our observations (Figures 5a and 5b) show that poorly performing model configurations ( GCW 
+
+> A
+
+) tend to be less stable, which aligns with intuition. Nev-ertheless, counterintuitively, we observe no clear relationship between perfor-mance and stability between high ( GCB 
+
+> A
+
+) and median ( GCM 
+
+> A
+
+) performing model configurations. At both the embedding and prediction levels, high-performing model configurations do not consistently exhibit greater stability than median-performing ones. Figure 5 thus suggests that stability is largely independent of configuration performance , except for poorly trained instances, and is more strongly influenced by model architecture. 
+
+4.3 Complementary Study: Voting as an Instability Remediation? 
+
+Voting was proposed by Zhu et al. [43] to alleviate instability, motivating us to evaluate its effect on our proposed stability metrics. In particular, we used Borda Vote and Range Vote. For this experiment, for each model, we reused the model instances trained in the previous sections and randomly partitioned them into five bins of five 14 Méroué et al. 
+
+instances each, independently of their original group GC 
+
+> X
+
+. Within each bin, we applied the voting procedure, yielding one aggregated model per bin for each vot-ing method. We then computed the stability measures between these aggregated models, for each of the two voting procedures.  
+
+> (a) WN18RR (b) FB15k-237
+> (c) CoDEx-S
+
+Fig. 6: Improvement on Pred-Overlap @10 brought by voting across all models and datasets. Colors represent the voting method: No voting baseline ( GC
+
+> A
+
+instability) Borda Score. Figure 6 displays the obtained results, as well as Pred-Overlap @10 obtained on GC 
+
+> A
+
+as a baseline instability. It demonstrates that voting improves stabil-ity across all models. However, the instability is reduced but not eliminated, and voting comes with additional computational cost since it requires training multiple instances of the same model. Moreover, although voting can be straight-forwardly used on predictions, it is not applicable to embedding-space neighbor-hoods. Hence, instability at the embedding space level remains an unaddressed issue. 
+
+## 5 Discussion and Conclusion 
+
+We conducted a systematic stability analysis of several KGEMs across multiple datasets, focusing on the impact of random seeds (initialization, triple ordering, negative sampling, and dropout) as well as hardware (e.g., GPUs) on KGEMs overall performance, predictions, and embedding space organization. Although aggregate metrics such as MRR and Hits@ K appear stable, they conceal pro-nounced instabilities. At the prediction level, models produce divergent top-K
+
+candidates for identical incomplete triples. At the embedding level, latent neigh-borhoods are also seed-dependent. Our observations connect with prior work The Seeds of Instability in Knowledge Graph Embeddings 15 
+
+[12,13], which cautioned that embeddings do not necessarily preserve semantics or graph proximity. This underscores the risks of treating KGEMs as faithful neu-ral counterparts of KGs and questions the validity of downstream operations on the embedding space such as similarity measurement, clustering, neighborhood-based or space-based reasoning [23,38,42]. Together, these observations raise concerns for KG completion and downstream applications. Seed-dependent vari-ability may undermine the reliability of the systems that rely on completed KGs or KGEMs for decision making. Our analysis shows that altering any of these factors is sufficient to induce comparable instability, leaving reproducibility highly sensitive to seemingly mi-nor stochastic choices. Worrisomely, the impact of GPU types on stability raises additional concerns for reproducibility, particularly in cloud or shared comput-ing environments where users have limited control over the underlying hardware. We also show that performance and stability are not aligned criteria, highlight-ing the need to treat them as distinct evaluation dimensions for model selection. This motivates the design and adoption of broader evaluation protocols for link prediction that reflect not only benchmark performance but also the robustness required in practical applications. For future work, our results indicate that certain models, such as TransE, ex-hibit relatively higher stability. This suggests a promising avenue for designing new architectures or training procedures (e.g., stability-aware losses) that ex-plicitly enforce stability. To do so, it would be valuable to analyze the impact of hyperparameters (such as learning rate, dropout rate or embedding dimensions) on stability. Another direction lies in exploring whether other KGEM formalisms like RDF2Vec [27], NBFNet [44], or MINERVA [7], rule-mining systems such as AMIE+ [10] or AnyBURL [22], or hybrid approaches like IterE [42], provide more stable predictions and spaces. 
+
+## Acknowledgement 
+
+This work has been supported by the French government, through the 3IA Côte d’Azur Investments in the project managed by the National Research Agency (ANR) with the reference number ANR-23-IACL-0001. Experiments presented in this paper were carried out using the Grid’5000 testbed, supported by a sci-entific interest group hosted by Inria and including CNRS, RENATER and sev-eral Universities as well as other organizations (see https://www.grid5000.fr ). This publication is based upon work from COST Action CA23147 GOBLIN -Global Network on Large-Scale, Cross-domain and Multilingual Open Knowl-edge Graphs, supported by COST (European Cooperation in Science and Tech-nology, https://www.cost.eu ). 
+
+## Supplemental Material Statement 
+
+To ensure the reproducibility of our findings, all code and datasets (WN18RR, FB15k-237, CoDEx-s, kinship and nations) are provided in our GitHub 16 Méroué et al. 
+
+repository 2, allowing to reproduce training, evaluation, and similarity compu-tations. Hyperparameter configurations of grid search and selected models are documented in the README. We also precisely report the hardware (GPUs) and seeds employed in each experiment in the paper. 
+
+## Use of Generative AI 
+
+In the preparation of this paper, ChatGPT was used as a writing assistant for grammar and spelling checks. In addition, Windsurf Editor, powered by Claude 3.5, was used as a coding assistant for implementation details. All scientific contributions, analyses, and experimental results presented in this paper are the authors’ own. 
+
+## References 
+
+1. Berant, J., Chou, A., Frostig, R., Liang, P.: Semantic parsing on Freebase from question-answer pairs. In: Proceedings of the 2013 Conference on Empirical Meth-ods in Natural Language Processing. pp. 1533–1544. Association for Computa-tional Linguistics, Seattle, Washington, USA (Oct 2013), https://aclanthology. org/D13-1160/ 
+
+2. Biswas, R., Kaffee, L., Cochez, M., Dumbrava, S., Jendal, T.E., Lissandrini, M., López, V., Mencía, E.L., Paulheim, H., Sack, H., Vakaj, E., de Melo, G.: Knowl-edge graph embeddings: Open challenges and opportunities. TGDK 1(1), 4:1–4:32 (2023). https://doi.org/10.4230/TGDK.1.1.4 
+
+3. Bonner, S., Barrett, I.P., Ye, C., Swiers, R., Engkvist, O., Hoyt, C.T., Hamilton, W.L.: Understanding the performance of knowledge graph embeddings in drug discovery. Artificial Intelligence in the Life Sciences 2, 100036 (2022) 4. Bordes, A., Usunier, N., García-Durán, A., Weston, J., Yakhnenko, O.: Translating embeddings for modeling multi-relational data. In: Advances in Neural Information Processing Systems 26: 27th Annual Conference on Neural Information Processing Systems 2013. Proceedings of a meeting held December 5-8, 2013, Lake Tahoe, Nevada, United States. pp. 2787–2795 (2013), https://proceedings.neurips.cc/ paper/2013/hash/1cecc7a77928ca8133fa24680a88d2f9-Abstract.html 
+
+5. Chen, J., Dong, H., Hastings, J., Jiménez-Ruiz, E., López, V., Monnin, P., Pesquita, C., Skoda, P., Tamma, V.: Knowledge graphs for the life sciences: Re-cent developments, challenges and opportunities. TGDK 1(1), 5:1–5:33 (2023). 
+
+https://doi.org/10.4230/TGDK.1.1.5 
+
+6. Chen, S., Liu, X., Gao, J., Jiao, J., Zhang, R., Ji, Y.: HittER: Hierarchical trans-formers for knowledge graph embeddings. In: Proceedings of the 2021 Confer-ence on Empirical Methods in Natural Language Processing. pp. 10395–10407. Association for Computational Linguistics, Online and Punta Cana, Domini-can Republic (Nov 2021). https://doi.org/10.18653/v1/2021.emnlp-main.812 ,
+
+https://aclanthology.org/2021.emnlp-main.812/ 
+
+7. Das, R., Dhuliawala, S., Zaheer, M., Vilnis, L., Durugkar, I., Krishnamurthy, A., Smola, A., McCallum, A.: Go for a walk and arrive at the answer: Reasoning over paths in knowledge bases using reinforcement learning (2018), https://arxiv. org/abs/1711.05851 The Seeds of Instability in Knowledge Graph Embeddings 17 8. Dettmers, T., Minervini, P., Stenetorp, P., Riedel, S.: Convolutional 2d knowledge graph embeddings. In: Proceedings of the Thirty-Second AAAI Conference on Arti-ficial Intelligence, (AAAI-18), the 30th innovative Applications of Artificial Intelli-gence (IAAI-18), and the 8th AAAI Symposium on Educational Advances in Artifi-cial Intelligence (EAAI-18), New Orleans, Louisiana, USA, February 2-7, 2018. pp. 1811–1818. AAAI Press (2018). https://doi.org/10.1609/AAAI.V32I1.11573 ,
+
+https://doi.org/10.1609/aaai.v32i1.11573 
+
+9. Gad-Elrab, M.H., Ho, V.T., Levinkov, E., Tran, T., Stepanova, D.: Towards uti-lizing knowledge graph embedding models for conceptual clustering. In: Taylor, K.L., Gonçalves, R.S., Lécué, F., Yan, J. (eds.) Proceedings of the ISWC 2020 Demos and Industry Tracks: From Novel Ideas to Industrial Practice co-located with 19th International Semantic Web Conference (ISWC 2020), Globally online, November 1-6, 2020 (UTC). CEUR Workshop Proceedings, vol. 2721, pp. 281–286. CEUR-WS.org (2020), https://ceur-ws.org/Vol-2721/paper572.pdf 
+
+10. Galárraga, L., Teflioudi, C., Hose, K., Suchanek, F.M.: Fast rule min-ing in ontological knowledge bases with AMIE+. VLDB J. 24 (6), 707–730 (2015). https://doi.org/10.1007/S00778-015-0394-1 , https://doi.org/10. 1007/s00778-015-0394-1 
+
+11. Hogan, A., Blomqvist, E., Cochez, M., d’Amato, C., Melo, G.D., Gutierrez, C., Kirrane, S., Gayo, J.E.L., Navigli, R., Neumaier, S., et al.: Knowledge graphs. ACM Computing Surveys (Csur) 54 (4), 1–37 (2021) 12. Hubert, N., Paulheim, H., Brun, A., Monticolo, D.: Do similar entities have similar embeddings? In: The Semantic Web - 21st International Conference, ESWC 2024, Hersonissos, Crete, Greece, May 26-30, 2024, Proceedings, Part I. Lecture Notes in Computer Science, vol. 14664, pp. 3–21. Springer (2024). https://doi.org/10. 1007/978-3-031-60626-7_1 
+
+13. Jain, N., Kalo, J.C., Balke, W.T., Krestel, R.: Do embeddings actually cap-ture knowledge graph semantics? In: The Semantic Web: 18th International Conference, ESWC 2021, Virtual Event, June 6–10, 2021, Proceedings. p. 143–159. Springer-Verlag, Berlin, Heidelberg (2021). https://doi.org/10.1007/ 978-3-030-77385-4_9 , https://doi.org/10.1007/978-3-030-77385-4_9 
+
+14. Ji, S., Pan, S., Cambria, E., Marttinen, P., Yu, P.S.: A survey on knowledge graphs: Representation, acquisition, and applications. IEEE Transactions on Neural Net-works and Learning Systems 33 (2), 494–514 (2022). https://doi.org/10.1109/ TNNLS.2021.3070843 
+
+15. Krompaß, D., Baier, S., Tresp, V.: Type-constrained representation learning in knowledge graphs. In: The Semantic Web - ISWC 2015 - 14th International Se-mantic Web Conference, Bethlehem, PA, USA, October 11-15, 2015, Proceedings, Part I. Lecture Notes in Computer Science, vol. 9366, pp. 640–655. Springer (2015). 
+
+https://doi.org/10.1007/978-3-319-25007-6_37 , https://doi.org/10.1007/ 978-3-319-25007-6_37 
+
+16. Lanthaler, M., Cyganiak, R., Wood, D.: RDF 1.1 concepts and abstract syntax. W3C recommendation, W3C (Feb 2014), https://www.w3.org/TR/2014/REC-rdf11-concepts-20140225/ 17. Li, Q., Zhong, Y., Qin, Y.: MoCoKGC: Momentum contrast entity encod-ing for knowledge graph completion. In: Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing. pp. 14940–14952. As-sociation for Computational Linguistics, Miami, Florida, USA (Nov 2024). 
+
+https://doi.org/10.18653/v1/2024.emnlp-main.832 , https://aclanthology. org/2024.emnlp-main.832/ 18 Méroué et al. 18. Lin, Y., Liu, Z., Sun, M., Liu, Y., Zhu, X.: Learning entity and relation embed-dings for knowledge graph completion. In: Proceedings of the Twenty-Ninth AAAI Conference on Artificial Intelligence, January 25-30, 2015, Austin, Texas, USA. pp. 2181–2187. AAAI Press (2015). https://doi.org/10.1609/AAAI.V29I1.9491 ,
+
+https://doi.org/10.1609/aaai.v29i1.9491 
+
+19. Liu, H., Wu, Y., Yang, Y.: Analogical inference for multi-relational embeddings. In: Proceedings of the 34th International Conference on Machine Learning, ICML 2017, Sydney, NSW, Australia, 6-11 August 2017. Proceedings of Machine Learning Research, vol. 70, pp. 2168–2178. PMLR (2017), http://proceedings.mlr.press/ v70/liu17d.html 
+
+20. Madhyastha, P., Jain, R.: On model stability as a function of random seed (2019), 
+
+https://arxiv.org/abs/1909.10447 
+
+21. Marx, C.T., du Pin Calmon, F., Ustun, B.: Predictive multiplicity in classification (2020), https://arxiv.org/abs/1909.06677 
+
+22. Meilicke, C., Chekol, M.W., Betz, P., Fink, M., Stuckenschmidt, H.: Anytime bottom-up rule learning for large-scale knowledge graph completion. VLDB Journal 
+
+33 (1), 131–161 (2024). https://doi.org/10.1007/S00778-023-00800-5 , https: //doi.org/10.1007/s00778-023-00800-5 
+
+23. Monnin, P., Raïssi, C., Napoli, A., Coulet, A.: Discovering alignment relations with graph convolutional networks: A biomedical case study. Semantic Web 13 (3), 379–398 (2022). https://doi.org/10.3233/SW-210452 
+
+24. Nguyen, D.Q., Nguyen, T.D., Nguyen, D.Q., Phung, D.Q.: A novel embedding model for knowledge base completion based on convolutional neural network. In: Proceedings of the 2018 Conference of the North American Chapter of the Asso-ciation for Computational Linguistics: Human Language Technologies, NAACL-HLT, New Orleans, Louisiana, USA, June 1-6, 2018, Volume 2 (Short Papers). pp. 327–333. Association for Computational Linguistics (2018). https://doi.org/10. 18653/V1/N18-2053 , https://doi.org/10.18653/v1/n18-2053 
+
+25. Noy, N.F., Gao, Y., Jain, A., Narayanan, A., Patterson, A., Taylor, J.: Industry-scale knowledge graphs: lessons and challenges. Commun. ACM 62 (8), 36–43 (2019). https://doi.org/10.1145/3331166 
+
+26. Paulheim, H.: Knowledge graph refinement: A survey of approaches and evalua-tion methods. Semantic Web 8(3), 489–508 (2017). https://doi.org/10.3233/ SW-160218 
+
+27. Ristoski, P., Paulheim, H.: Rdf2vec: Rdf graph embeddings for data mining. In: Groth, P., Simperl, E., Gray, A., Sabou, M., Krötzsch, M., Lecue, F., Flöck, F., Gil, Y. (eds.) The Semantic Web – ISWC 2016. pp. 498–514. Springer International Publishing, Cham (2016) 28. Ruffinelli, D., Broscheit, S., Gemulla, R.: You CAN teach an old dog new tricks! on training knowledge graph embeddings. In: 8th International Conference on Learn-ing Representations, ICLR 2020, Addis Ababa, Ethiopia, April 26-30, 2020. Open-Review.net (2020), https://openreview.net/forum?id=BkxSmlBFvr 
+
+29. Safavi, T., Koutra, D.: CoDEx: A Comprehensive Knowledge Graph Comple-tion Benchmark. In: Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP). pp. 8328–8350. Association for Com-putational Linguistics, Online (Nov 2020). https://doi.org/10.18653/v1/2020. emnlp-main.669 , https://www.aclweb.org/anthology/2020.emnlp-main.669 
+
+30. Schlichtkrull, M.S., Kipf, T.N., Bloem, P., van den Berg, R., Titov, I., Welling, M.: Modeling relational data with graph convolutional networks. In: The Semantic Web - 15th International Conference, ESWC 2018, Heraklion, Crete, Greece, June The Seeds of Instability in Knowledge Graph Embeddings 19 3-7, 2018, Proceedings. Lecture Notes in Computer Science, vol. 10843, pp. 593– 607. Springer (2018). https://doi.org/10.1007/978-3-319-93417-4_38 , https: //doi.org/10.1007/978-3-319-93417-4_38 
+
+31. Schumacher, T., Wolf, H., Ritzert, M., Lemmerich, F., Grohe, M., Strohmaier, M.: The Effects of Randomness on the Stability of Node Embeddings, p. 197–215. Springer International Publishing (2021). https://doi.org/10.1007/ 978-3-030-93736-2_16 , http://dx.doi.org/10.1007/978-3-030-93736-2_16 
+
+32. Shchur, O., Mumme, M., Bojchevski, A., Günnemann, S.: Pitfalls of graph neural network evaluation (2019), https://arxiv.org/abs/1811.05868 
+
+33. Sun, Z., Zhang, Q., Hu, W., Wang, C., Chen, M., Akrami, F., Li, C.: A bench-marking study of embedding-based entity alignment for knowledge graphs. Pro-ceedings of the VLDB Endowment 13 (11), 2326–2340 (2020), http://www.vldb. org/pvldb/vol13/p2326-sun.pdf 
+
+34. Sun, Z., Deng, Z., Nie, J., Tang, J.: Rotate: Knowledge graph embedding by re-lational rotation in complex space. In: 7th International Conference on Learning Representations, ICLR 2019, New Orleans, LA, USA, May 6-9, 2019. OpenRe-view.net (2019), https://openreview.net/forum?id=HkgEQnRqYQ 
+
+35. Toutanova, K., Chen, D.: Observed versus latent features for knowledge base and text inference. In: Proceedings of the 3rd Workshop on Continuous Vector Space Models and their Compositionality, CVSC 2015, Beijing, China, July 26-31, 2015. pp. 57–66. Association for Computational Linguistics (2015). https://doi.org/ 10.18653/V1/W15-4007 , https://doi.org/10.18653/v1/W15-4007 
+
+36. Trouillon, T., Welbl, J., Riedel, S., Gaussier, É., Bouchard, G.: Complex embed-dings for simple link prediction. In: Proceedings of the 33nd International Confer-ence on Machine Learning, ICML 2016, New York City, NY, USA, June 19-24, 2016. JMLR Workshop and Conference Proceedings, vol. 48, pp. 2071–2080. JMLR.org (2016), http://proceedings.mlr.press/v48/trouillon16.html 
+
+37. Wang, H., Zhang, F., Wang, J., Zhao, M., Li, W., Xie, X., Guo, M.: Ripplenet: Propagating user preferences on the knowledge graph for recommender systems. In: Proceedings of the 27th ACM International Conference on Information and Knowl-edge Management. p. 417–426. CIKM ’18, Association for Computing Machin-ery, New York, NY, USA (2018). https://doi.org/10.1145/3269206.3271739 ,
+
+https://doi.org/10.1145/3269206.3271739 
+
+38. Xiong, B., Nayyeri, M., Jin, M., He, Y., Cochez, M., Pan, S., Staab, S.: Geometric relational embeddings: A survey. CoRR abs/2304.11949 
+
+(2023). https://doi.org/10.48550/ARXIV.2304.11949 , https://doi.org/10. 48550/arXiv.2304.11949 
+
+39. Yang, B., Yih, W., He, X., Gao, J., Deng, L.: Embedding entities and relations for learning and inference in knowledge bases. In: Bengio, Y., LeCun, Y. (eds.) 3rd International Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings (2015), http://arxiv. org/abs/1412.6575 
+
+40. Yang, B., Yih, W., He, X., Gao, J., Deng, L.: Embedding entities and relations for learning and inference in knowledge bases. In: 3rd International Conference on Learning Representations, ICLR 2015, San Diego, CA, USA, May 7-9, 2015, Conference Track Proceedings (2015), http://arxiv.org/abs/1412.6575 
+
+41. Yasunaga, M., Ren, H., Bosselut, A., Liang, P., Leskovec, J.: QA-GNN: Reasoning with language models and knowledge graphs for question answering. In: Proceed-ings of the 2021 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies. pp. 535–546. Asso-ciation for Computational Linguistics, Online (Jun 2021). https://doi.org/10. 20 Méroué et al. 
+
+18653/v1/2021.naacl-main.45 , https://aclanthology.org/2021.naacl-main. 45/ 
+
+42. Zhang, W., Paudel, B., Wang, L., Chen, J., Zhu, H., Zhang, W., Bernstein, A., Chen, H.: Iteratively learning embeddings and rules for knowledge graph reasoning. In: The World Wide Web Conference, WWW 2019, San Francisco, CA, USA, May 13-17, 2019. pp. 2366–2377. ACM (2019). https://doi.org/10.1145/3308558. 3313612 , https://doi.org/10.1145/3308558.3313612 
+
+43. Zhu, Y., Potyka, N., Nayyeri, M., Xiong, B., He, Y., Kharlamov, E., Staab, S.: Predictive multiplicity of knowledge graph embeddings in link prediction. In: Findings of the Association for Computational Linguistics: EMNLP 2024. pp. 334–354. Association for Computational Linguistics, Miami, Florida, USA (Nov 2024). https://doi.org/10.18653/v1/2024.findings-emnlp.19 , https:// aclanthology.org/2024.findings-emnlp.19/ 
+
+44. Zhu, Z., Zhang, Z., Xhonneux, L.P., Tang, J.: Neural bellman-ford networks: A general graph neural network framework for link prediction. Advances in Neural Information Processing Systems 34 (2021) The Seeds of Instability in Knowledge Graph Embeddings 21 
+
+## APPENDICES A Other Metrics 
+
+Jaccard similarity is a natural candidate. However, under the assumption |A| =
+
+|B| = K, it is bijectively related to Overlap: Jaccard (A, B ) = |A ∩ B||A ∪ B| = |A ∩ B|
+
+2K − | A ∩ B| = Overlap@ K(A, B )2 − Overlap@ K(A, B ) . (3) 
+
+Rank-Biased Overlap (RBO) weights top-ranked elements more heavily: (Space/Pred)-RBO@ K(I1, I 2) = 1
+
+K
+
+> K
+
+X
+
+> d=1
+
+(Space/Pred)-Overlap@ d(I1, I 2). (4) 
+
+Ambiguity , adapted from [43], measures disagreement on whether the gold entity is ranked within the top-K:Ambiguity@ K(GC 
+
+> X
+
+) = 1
+
+|Q test |
+
+X
+
+> q∈Q test
+
+max 
+
+> I1,I 2∈GC
+> X
+
+∆(I1, I 2, q, K ). (5) where ∆(I1, I 2, q, K ) = 0 if both runs place the correct entity either inside or outside the top-K, and 1 otherwise. Unlike the other metrics, higher Ambiguity indicates more frequent disagreement; we therefore plot 1 − Ambiguity @K for comparability.      
+
+> (a) Pred-Overlap @10 (b) Pred-Jaccard@10
+> (c) Pred-RBO@10 (d) 1−Ambiguity@ 10
+
+Fig. 7: Comparison of the different metrics across all datasets and models 3. Colors denote datasets: WN18RR FB15k-237 CoDEx-S. 22 Méroué et al. 
+
+As shown in Figure 7, Pred-Jaccard@10 and Pred-RBO@10 follow patterns similar to Pred-Overlap@10 across all (model, dataset) pairs. Pred-RBO@10 yields slightly higher values on WN18RR, suggesting more agreement among top-ranked predictions, though instability remains. Ambiguity@10 paints a dif-ferent picture where models mostly agree on placing the gold truth entity either within or out of the top-K predictions. That is why, we argue that Ambiguity only captures a restricted view of model instability, motivating the need for our proposed metrics. 
+
+## B Instability Results for RQ2 on Other Datasets   
+
+> (a) FB15k-237 – Pred-Overlap@10 (b) FB15k-237 – Space-Overlap@10
+> (c) CoDEx-S – Pred-Overlap@10 (d) CoDEx-S – Space-Overlap@10
+
+Fig. 8: Individual impact for each sources of randomness across datasets. Colors indicate the corresponding comparison group: GCB 
+
+> I
+
+(init) GCB 
+
+> D
+
+(dropout) 
+
+GCB 
+
+> N
+
+(neg) GCB 
+
+> O
+
+(order) GCB 
+
+> A
+
+(all) GCB ,S 
+
+> H
+
+(hardware). The category “all” includes all sources of randomness but hardware. Figure 8 confirms our analysis in Section 4.2 using the other datasets: 1. Each source is independently sufficient to induce instability at both the em-bedding and prediction levels; 2. There is an inherent and persistent instability induced by randomness factors in model training; 3. The observed variations in instability appear to be more strongly tied to the model architecture than to the specific source of randomness.

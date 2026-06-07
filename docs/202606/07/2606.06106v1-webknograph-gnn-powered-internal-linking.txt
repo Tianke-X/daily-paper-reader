@@ -1,0 +1,252 @@
+Title: WebKnoGraph: GNN-Powered Internal Linking
+
+URL Source: https://arxiv.org/pdf/2606.06106v1
+
+Published Time: Fri, 05 Jun 2026 01:23:56 GMT
+
+Number of Pages: 8
+
+Markdown Content:
+# WebKnoGraph: GNN-Powered Internal Linking 
+
+# Emilija Gjorgjevska 
+
+emilia.gjorgjevska@tum.de Technical University of Munich Heilbronn, Germany 
+
+# Georgina Mirceva 
+
+georgina.mirceva@finki.ukim.mk Ss. Cyril and Methodius University in Skopje Skopje, North Macedonia 
+
+# Miroslav Mirchev 
+
+miroslav.mirchev@finki.ukim.mk Ss. Cyril and Methodius University in Skopje Skopje, North Macedonia 
+
+## Abstract 
+
+Internal link optimization is a recurring task in search engine opti-mization, yet many production workflows rely on manual judgment, fixed page templates, or generic tool recommendations. Practition-ers need ways to evaluate candidate links before deployment be-cause link changes can redistribute authority and affect semantic coherence in ways that are difficult to isolate after release. We present WebKnoGraph , an open-source framework for evaluating internal linking strategies on website crawls. The framework mod-els a website as a directed graph, represents pages by embeddings, scores candidate links with GraphSAGE, and evaluates interven-tions by embedding the site into larger host environments. We instantiate WebKnoGraph on a production crawl of Kalicube.com and compare automatic with expert-assisted link selection in an em-pirical FineWeb-based host graph and a synthetic Barabási–Albert host graph, using PageRank-based authority metrics and seman-tic coherence. The results show that automatic selection generally produces stronger authority redistribution, with higher Author-ity Yield, but also larger semantic coherence costs. Expert-assisted selection better preserves semantic coherence and, when target-ing low-PageRank pages, achieves the highest Authority Yield, al-though with the least favorable loss–gain balance. Authority Volatil-ity provides an additional stability perspective, but is interpreted cautiously because the two regimes use different numbers of inter-vention sets. These findings support a practical workflow in which candidate intervention sets are generated at scale, evaluated jointly across authority gain, volatility, loss–gain balance, and semantic coherence, and then reviewed for editorial deployability before implementation. 
+
+## CCS Concepts 
+
+• Information systems → World Wide Web ; • Computing methodologies → Machine Learning .
+
+## Keywords 
+
+Search engine optimization, Internal linking, Graph learning 
+
+## 1 Introduction 
+
+Search visibility has direct economic and reputational value, making search engine optimization (SEO) a high-impact applied domain [ 17 ,21 , 22 , 24 ]. Internal links shape how search engines discover pages, interpret site structure, and distribute authority across a website [31 ]. Yet internal linking remains difficult to evaluate systematically in production workflows. 
+
+> M.M. is also affiliated with the Complexity Science Hub, Vienna, Austria. E.Gj. was also affiliated with WordLift and Kalicube.
+
+The core challenge is operational. Teams add links through tem-plates, navigation elements, editorial modules, and manual cross-linking, but must decide which pages should receive authority, which pages should act as donors, and whether proposed links are semantically appropriate and feasible to implement. As websites grow, these decisions become harder because site structures often evolve without strategic planning, content can become difficult to discover [12], and manual optimization becomes costly [18]. PageRank and related link analysis methods offer a formal model of authority propagation [ 8, 28 ], but this theory is rarely translated into reproducible internal-link evaluation workflows. In practice, teams often rely on manual judgment, fixed rules, or generic rec-ommendations, with limited ability to compare candidate interven-tions before deployment. Live evaluation is also noisy: deployed link changes interact with content updates, external links, crawl behavior, seasonality, ranking-system changes, and signals such as relevance, anchor context, freshness, topical consistency, and spam safeguards [ 1, 10 , 14 , 32 ]. This makes it difficult to attribute observed outcomes to a specific internal-link intervention. We introduce WebKnoGraph [ 13 ], an open-source framework for evaluating internal-linking strategies on production website crawls before implementation. The framework models a website as a directed graph, uses semantic content embeddings and GraphSAGE-based link identification to propose candidate links, and evaluates interventions by embedding the site into larger host graphs. This provides a controlled graph-based analysis for comparing candidate strategies using measurable indicators of authority gain, volatility, loss-gain balance, and semantic coherence. We instantiate WebKnoGraph on a production crawl of Kalicube.com and compare automatic with expert-assisted link selection in two host environments: an empirical FineWeb-based graph and a synthetic Barabási–Albert graph. Rather than claim-ing direct ranking or traffic effects, we provide reproducible pre-deployment evidence on the structural and semantic tradeoffs of candidate internal-link interventions. In this paper, we make four contributions: (i) we formulate in-ternal link optimization as an applied graph intervention problem grounded in production SEO workflows; (ii) we release WebKno-Graph , a reproducible open-source framework for evaluating can-didate internal links before deployment; (iii) we evaluate automatic and expert-assisted strategies on a production website crawl em-bedded into empirical and synthetic host graphs; and (iv) we derive practitioner-facing lessons about tradeoffs between authority re-distribution, volatility, loss-gain balance, and semantic coherence. 
+
+## 2 Related work 
+
+Work on single-site internal-link rewiring under realistic SEO and editorial constraints remains limited. Our approach connects two  
+
+> arXiv:2606.06106v1 [cs.IR] 4 Jun 2026 Conference’17, July 2017, Washington, DC, USA Gjorgjevska et al.
+
+research strands: PageRank optimization through link-level inter-ventions, and learning-based link prediction with graph learning. PageRank and related authority models provide the theoreti-cal basis for link-based ranking [ 8, 28 ]. Prior work has studied how link structure can be manipulated or optimized under differ-ent constraints. Baeza-Yates et al. [ 5 ] analyze collusive link struc-tures, showing that low-ranked pages can benefit from coordi-nated linking, while high-ranked pages face diminishing returns. Avrachenkov and Litvak [ 4] decompose PageRank into core and dangling contributions, providing strategies for redistributing au-thority flow. Csáji, Jungers, and Blondel [ 9] formulate PageRank maximization as an edge-selection problem, while Ohsaka et al. [ 27 ] study heuristics for boosting PageRank with a limited num-ber of internal links. These works motivate link intervention as an optimization problem, but they do not directly address produc-tion websites where links must also satisfy semantic, editorial, and implementation constraints. Search-engine practice and patent literature further indicate that link evaluation extends beyond raw graph topology. Prior work and filings describe link-context weighting, freshness-sensitive scoring, graph proximity measures, template abstraction, and spam-resistant link evaluation [ 2 , 3, 15 , 25 , 29 ]. Sundin [ 33 ] argues that AI-driven search shifts retrieval toward answer-oriented systems, increasing the need to model interactions between content structure, semantic interpretation, and authority distribution. This supports the need for internal-link evaluation methods that account for both structural authority flow and semantic coherence. Learning-based link prediction provides the second founda-tion of our work. Hyperlink prediction has been explored for Wikipedia links, news-to-Wikipedia suggestions, and blog networks [ 11 , 23 , 36 ]. Earlier approaches relied on topological heuristics or shallow graph embeddings, while graph neural networks provide more expressive models that combine graph structure with node at-tributes. Representative architectures include Graph Convolutional Networks [ 20 ], Graph Attention Networks [ 34 ], and GraphSAGE [16], within the broader graph neural networks literature [19]. 
+
+WebKnoGraph builds on these foundations by applying GNN-based link identification to real website graphs and evaluating proposed internal links through PageRank-based graph analysis in both empirical and synthetic host environments. This bridges link-prediction methods with production-crawl SEO evaluation, where candidate links must be assessed not only for authority redis-tribution, but also for semantic coherence and editorial feasibility. 
+
+## 3 Problem Statement 
+
+We consider the problem of optimizing the internal link struc-ture of a website in order to improve the distribution of authority across its pages. The target website is modeled as a directed site graph 𝐺 𝑆 = (𝑉 𝑆 , 𝐸 𝑆 ), where nodes 𝑉 𝑆 represent pages and edges 
+
+𝐸 𝑆 ⊆ 𝑉 𝑆 × 𝑉 𝑆 represent existing internal hyperlinks. 
+
+Intervention model. An internal-link boosting intervention con-sists of adding a set of directed links 𝐸 𝑘 ⊆ ( 𝑉 𝑆 × 𝑉 𝑆 ) \ 𝐸 𝑆 to the site graph, yielding an augmented site graph 𝐺 ′ 
+
+> 𝑆
+
+= (𝑉 𝑆 , 𝐸 𝑆 ∪ 𝐸 𝑘 ).The intervention size is fixed at approximately 240 links to reflect realistic editorial constraints; we denote this intervention budget by 𝑘 . Intervention links are selected from a candidate link space in either the automatic or expert-assisted regime. 
+
+Objective. Let ΔPR 𝑖 denote the relative change in PageRank of site page 𝑖 ∈ 𝑉 𝑆 induced by an intervention. The objective of internal-link optimization is to identify interventions that improve authority across site pages under this fixed intervention budget. 
+
+Hosting and external context. Because page authority on the Web is externally influenced, the effect of internal-link interventions cannot be assessed in isolation. We therefore model the website within a broader context by embedding the site graph 𝐺 𝑆 into an external host graph 𝐺 𝐻 = (𝑉 𝐻 , 𝐸 𝐻 ) and introducing a set of directed bridging edges 𝐸 𝐵 ⊆ ( 𝑉 𝑆 × 𝑉 𝐻 ) ∪ ( 𝑉 𝐻 × 𝑉 𝑆 ), representing links between the site and the surrounding web. This yields a baseline composite graph 𝐺 𝐶 = (𝑉 𝐶 , 𝐸 𝐶 ) = (𝑉 𝑆 ∪ 𝑉 𝐻 , 𝐸 𝑆 ∪ 𝐸 𝐻 ∪ 𝐸 𝐵 ) and an intervention composite graph 𝐺 𝐶 ′ = (𝑉 𝐶 , 𝐸 𝐶 ∪ 𝐸 𝑘 ) including the added internal links. Authority is computed on these composite graphs, while all reported outcomes are restricted to site pages 𝑉 𝑆 .
+
+Evaluation. Intervention effects are evaluated by measuring PageRank changes of individual pages and aggregating them into overall metrics. We assess (i) the average authority gain normalized by the intervention budget ( Authority Yield ), (ii) the stability of this gain across repeated embeddings into the host environment ( Au-thority Volatility ), (iii) the ratio between authority losses and gains across site pages ( Authority Down/Up Ratio ), and (iv) the change in semantic coherence induced by the added links ( Semantic-Coherence change ). Formal definitions are provided in Section 4.6. 
+
+## 4 Methodology 
+
+This section outlines the multi-faceted methodology designed to investigate the effect of internal linking on website architecture and authority. Figure 1 summarizes the four-stage pipeline that guides the organization of this section. We present the data and graph representation, the modeling and algorithm used to generate link recommendations (including feature construction via content embeddings), the internal linking strategies, the human-in-the-loop review protocol, and the evaluation framework definitions. 
+
+## 4.1 Data 
+
+Kalicube data. Our primary dataset is a full production crawl of 
+
+Kalicube.com , conducted in Q2 2025. The crawl comprises approx-imately 2,000 English pages, of which 1,841 are incorporated into the site graph after URL normalization and parsing. The website architecture has clearly defined topical sections and a stable edi-torial structure. For each page, we extract the internal hyperlink neighborhood and the full textual content, and we compute direc-tory depth from the URL path, assigning the homepage depth 0. This representation supports analysis of authority redistribution induced by controlled internal-link interventions. 
+
+FineWeb dataset. To place the Kalicube site graph into a broader web-scale context, we draw on the FineWeb dataset [ 30 ], a large-scale web corpus designed for research use and derived from multiple Common Crawl snapshots. Using streaming access to the HuggingFaceFW/fineweb dataset, we collect 200 ,000 training records from the sample_10BT configuration. For each record, we retain the fields url and text . Records with missing content, mal-formed URLs, or non-HTTP(S) schemes are removed. The resulting WebKnoGraph: GNN-Powered Internal Linking Conference’17, July 2017, Washington, DC, USA 
+
+Figure 1: A flowchart of the WebKnoGraph system design 
+
+collection of FineWeb pages provides an empirical basis for con-structing a realistic external web environment, as described below. 
+
+## 4.2 Host environments 
+
+To evaluate internal-link interventions under different network conditions, we use two host environments: an empirical network derived from FineWeb and a synthetic Barabási–Albert (BA) net-work. These environments provide structurally distinct contexts in which the same site graph and intervention strategies are evaluated. 
+
+FineWeb-based host environment. From the 200,000 sampled FineWeb pages described in Section 4.1, we construct a directed page-level host graph with 500,000 edges. The graph combines four edge-generation mechanisms: (i) explicit URL references extracted from page text ( ∼40%), which capture direct references to other pages; (ii) links between pages with similar URL-path structure (∼20%), which approximate section-level navigation and topical neighborhoods; (iii) intra-domain links ( ∼30%), which approximate menus, breadcrumbs, and internal cross-references; and (iv) ran-dom links ( ∼10%), which introduce controlled topological noise. All edges are normalized, merged, and deduplicated. The final FineWeb-based host contains 224,242 unique page identifiers and 500,000 directed edges. While node identifiers correspond to real pages, the edge set should be interpreted as a controlled empirical proxy for web connectivity rather than as a reconstruction of the Web. 
+
+Barabási–Albert synthetic host environment. As a complementary baseline, we generate a synthetic host graph using the Barabási– Albert preferential-attachment model [ 6]. The BA model produces scale-free networks with heterogeneous degree distributions and hub nodes, properties commonly associated with the World Wide Web. The graph contains 𝑁 = 100 ,000 nodes and 𝑚 = 2 links per new node, resulting in approximately 200,000 directed edges. This environment abstracts away content- and domain-specific effects while providing a controlled reference topology. 
+
+## 4.3 Graph-based candidate-link scoring 
+
+This stage turns page content and graph structure into candidate donor–target links. 
+
+Content embeddings. During data preparation, boilerplate ele-ments such as navigation menus, footers, and advertisements are removed with trafilatura [ 7]. The remaining text is embedded using nomic-embed-text-v1 [ 26 ], with task prefixes for page and anchor-text representations, producing 768-dimensional, L2-normalized vectors. We select this model because it provides open weights, training code, and data, while achieving retrieval performance com-parable to widely used proprietary embedding models. These con-tent embeddings serve as input features for the graph encoder. 
+
+Graph-contextual node embeddings. We use the GraphSAGE archi-tecture [ 16 ] because it supports scalable and inductive representa-tion learning on large graphs through neighborhood sampling and aggregation. In our implementation, a two-layer mean-aggregation model combines page-level content features with information from immediate and second-order graph neighborhoods. Sampling a fixed-size set of neighbors at each layer keeps training feasible on large host graphs. Operating in an inductive setting, GraphSAGE can generate embeddings for new or modified pages from features Conference’17, July 2017, Washington, DC, USA Gjorgjevska et al. 
+
+and local neighborhoods, without retraining the full model. The re-sulting node embeddings encode topical information and structural context, including for pages with sparse textual content. 
+
+Generating candidate links. The model scores potential donor– target links by combining global graph topology, local neighbor-hood structure, and content similarity, so that the resulting rankings reflect structural link opportunities rather than semantic similarity alone. These rankings are used within the strategy-specific candi-date link spaces defined in Section 4.4. 
+
+## 4.4 Internal linking strategies 
+
+We define five strategies that construct candidate link spaces target-ing different aspects of website structure. The High strategy focuses on boosting high-PageRank pages at directory depth 5, leverag-ing established authority distribution principles. The Low strategy boosts low-PageRank pages at the same depth to enhance underper-forming content visibility. The Mixed strategy combines both high-and low-performing pages at depth 5 for simultaneous optimization across performance tiers. The Folder strategy targets pages within depths 4 and 5 to improve connectivity among mid-level content. Finally, the Random strategy serves as an unguided baseline, defin-ing a candidate link space without restrictions based on PageRank, semantic relevance, directory depth, or other strategic criteria. 
+
+## 4.5 Intervention-set construction 
+
+For each strategy and selection regime, an intervention set follows the intervention budget 𝑘 defined above. In all experiments, this intervention size is chosen to reflect a realistic editorial budget, while allowing minor deviations in the realized updated graphs when selected links are duplicates or already present in the base-line site graph. The automatic and expert-assisted regimes operate within the candidate link space defined by each strategy, allowing us to examine how the mode of selecting links affects the resulting intervention. 
+
+Automatic selection. In the automatic regime, GraphSAGE ranks candidate donor–target pairs within the strategy-specific candidate link space. Candidate links are filtered to remove self-links and existing links, and are constrained by the relevant strategy criteria, such as PageRank tier, directory depth, or folder membership. To avoid concentrating added links on a small number of pages, load-balancing lowers the priority of pages that have already contributed or received several selected links. Links are then selected iteratively until the intervention set reaches the target budget. 
+
+Expert-assisted selection. In the expert-assisted regime, WordLift SEO professionals select links from the GraphSAGE-ranked candi-date link space defined by each strategy. Two intermediate-level experts conduct the primary selection, with oversight and vali-dation by a senior expert. Their selection criteria include page-template compatibility, directory or section alignment, semantic relevance, user-experience implications, and operational implemen-tation constraints. The resulting intervention sets therefore incor-porate deployment-related considerations that are not explicitly optimized in the automatic selection procedure. For the Random strategy, boosted pages and added links are se-lected without GraphSAGE ranking or expert relevance assessment: the selection is performed algorithmically at random in the auto-matic regime and manually at random in the expert-assisted regime. Different intervention sets within the same strategy and regime capture variation in the selected donor–target links. This design enables comparison between automatic and expert-assisted selec-tion while holding the intervention budget and the strategy-defined candidate link spaces constant. 
+
+## 4.6 Evaluation framework 
+
+We evaluate intervention effects by measuring how authority is redistributed within the site graph when it is evaluated in a broader network context. For each intervention, we compare PageRank out-comes on the baseline and intervention composite graphs in both the FineWeb-based and BA host environments defined in Section 4.2. This allows identical internal-link interventions to be evaluated under structurally distinct external network conditions, rather than on the site graph alone. Intervention effects are summarized us-ing four configuration-level metrics that capture complementary dimensions of performance: Authority Yield , Authority Volatility ,
+
+Authority Down/Up Ratio , and Semantic-Coherence Change . All re-ported outcomes concern the target site graph 𝐺 𝑆 .
+
+Relative PageRank change. For each page 𝑖 ∈ 𝑉 𝑆 and simula-tion run 𝑟 , we compute the relative PageRank change between the baseline 𝐺 𝐶,𝑟 and intervention 𝐺 𝐶 ′,𝑟 composite graphs as 
+
+ΔPR 𝑖,𝑟 (%) = PR 𝑖 (𝐺 𝐶 ′,𝑟 ) − PR 𝑖 (𝐺 𝐶,𝑟 )
+
+PR 𝑖 (𝐺 𝐶,𝑟 ) × 100 .
+
+We then summarize page-level changes within each run by 𝜇 𝑟 ,defined as the mean of ΔPR 𝑖,𝑟 over all site pages, and summarize the overall effect by ¯𝜇 , defined as the average of 𝜇 𝑟 across all runs. 
+
+Authority Yield. Authority Yield (AY) measures the marginal effectiveness of an intervention, normalized by the intervention budget 𝑘 , and is defined as 
+
+AY = ¯𝜇 𝑘 . (1) This normalization isolates the efficiency of a linking strategy rela-tive to the intervention budget, enabling meaningful comparison across configurations. 
+
+Authority Volatility. Authority Volatility (AV) captures the stabil-ity of Authority Yield across simulation runs: 
+
+AV = 𝜎 𝜇 
+
+𝑘 , (2) where 𝜎 𝜇 denotes the standard deviation of 𝜇 𝑟 across runs. Low volatility indicates more predictable authority gains, whereas high volatility signals sensitivity to stochastic variation in graph embed-ding or link placement. 
+
+Authority Down/Up Ratio To characterize the balance between authority losses and gains, we analyze the direction of page-level changes. Using a neutrality threshold 𝜏 = 0.025% , we define 𝑈 𝑟 
+
+and 𝐷 𝑟 as the number of site pages in run 𝑟 with ΔPR 𝑖,𝑟 > 𝜏 and 
+
+ΔPR 𝑖,𝑟 < −𝜏 , respectively. Let ¯𝑈 and ¯𝐷 denote the corresponding averages across runs. Authority Down/Up Ratio can be defined as 
+
+RD/U = ¯𝐷 
+
+max ( ¯𝑈 , 1) , (3) where values below one indicate that authority gains dominate losses, while values larger than one indicate the opposite. WebKnoGraph: GNN-Powered Internal Linking Conference’17, July 2017, Washington, DC, USA 
+
+Semantic-Coherence. Let x𝑖 be the L2-normalized content embed-ding of page 𝑖 . For a site graph 𝐺 𝑆 = (𝑉 𝑆 , 𝐸 𝑆 ), semantic coherence is the average cosine similarity across internal links: 
+
+SC (𝐺 𝑆 ) = 1
+
+|𝐸 𝑆 |∑︁ (𝑖,𝑗 ) ∈ 𝐸 𝑆 
+
+x⊤ 
+
+> 𝑖
+
+x𝑗 .
+
+Higher values indicate links between more topically related pages, while lower values indicate weaker content-level support. The re-ported intervention effect is the run-averaged change 
+
+ΔSC = 1
+
+𝑅 
+
+> 𝑅
+
+∑︁  
+
+> 𝑟 =1
+
+SC (𝐺 𝑆 ′,𝑟 ) − SC (𝐺 𝑆 ) ,
+
+where 𝐺 𝑆 ′,𝑟 denotes the realized updated site graph for run 𝑟 , con-taining approximately 𝑘 ≈ 240 added internal links. Positive values indicate improved coherence, while negative values indicate re-duced coherence. 
+
+## 5 Results 5.1 Experimental Setup 
+
+We compare five internal-linking strategies—High, Low, Mixed, Folder, and Random—under automatic and expert-assisted selec-tion regimes. For each strategy and selection regime, intervention sets are constructed under the same intervention budget 𝑘 , corre-sponding to approximately 240 added internal links. We evaluate these interventions in the two host environments defined in Sec-tion 4.2: a synthetic Barabási–Albert (BA) graph and an empirical FineWeb-based graph. The complete Kalicube.com site graph with 1,841 pages serves as the fixed intervention target. Each intervention set is evaluated through repeated bridging simulations. Our primary analysis uses the middle bridging range, 
+
+[35 , 65 ], representing moderate external connectivity. As an addi-tional analysis, we evaluate the lower and higher ranges, [5, 35 ] and 
+
+[65 , 95 ], to examine how outcomes vary with external connectivity. In each simulation, the selected intervention set remains fixed while the external environment varies. We keep the total simulation bud-get constant across selection regimes. For automatic selection, each strategy has 10 intervention sets, each evaluated with 100 bridging simulations, yielding 10 × 100 = 1,000 simulations per strategy and range. For expert-assisted selection, each strategy has 2 in-tervention sets, corresponding to the two independently selected expert link batches, and each set is evaluated with 500 bridging simulations, yielding 2 × 500 = 1,000 simulations per strategy and range. Because the two selection regimes use different numbers of intervention sets, AV is primarily used as a stability indicator within each regime rather than to compare volatility between regimes. 
+
+## 5.2 Strategy-Level Effects 
+
+We first examine the strategy-level effects of the interventions in Figure 2. Panels (a) and (b) report the Barabási–Albert results, while panels (d) and (e) report the corresponding FineWeb results. These panels report the primary analysis based on the middle bridging range, [35 , 65 ]. Semantic-Coherence Change is reported in panel (g). Because Semantic-Coherence Change is computed on the aug-mented site graph rather than on the composite host graph, the Δ𝑆𝐶 
+
+values are independent of the BA and FineWeb host environments. The host environment affects the PageRank-based metrics, but not the semantic similarity between connected site pages. Across both host environments, the automatic strategies show relatively small differences in AY compared with the larger sepa-ration observed for RD/U. This suggests that, within the automatic regime, the strategies differ less in their average authority gain relative to the intervention budget than in how authority gains and losses are distributed across the site. Similar AY values can therefore correspond to different loss–gain profiles: one strategy may achieve a comparable average gain while affecting fewer pages negatively, whereas another may produce a similar gain with a less favorable balance between pages gaining and losing authority. The expert-assisted regime shows a different AY pattern. In both host environments, the expert-assisted Low strategy achieves the highest strategy-level AY. However, it also has the least favorable 
+
+RD/U profile, indicating that its stronger average authority gain is accompanied by a less favorable distribution of gains and losses across site pages. Under expert-assisted selection, Folder and High 
+
+produce more favorable RD/U values, whereas Mixed and Random 
+
+fall between these extremes. Under automatic selection, Folder produces the most favorable 
+
+RD/U profile in both host environments, while Random also remains comparatively favorable. The High strategy does not achieve a better loss–gain balance than Random when the final donor–target links are selected automatically. Under expert-assisted selection, however, High achieves a more favorable RD/U profile than Random 
+
+in both host environments. This suggests that the strategic objective of boosting high-authority pages is sensitive to the final link choices made within the candidate space. Expert-assisted selection appears to translate the High strategy into a more favorable loss–gain profile, indicating that expert review can be important when translating a strategy-defined candidate space into the final intervention set. The semantic-coherence results in panel (g) add a further dimen-sion to this comparison. All intervention configurations produce small negative changes in semantic coherence, indicating that the added links slightly reduce the average semantic similarity among connected page pairs. This is expected when the internal link struc-ture is expanded beyond the original site architecture. Nevertheless, the magnitude of the decrease differs across configurations. Auto-matic interventions generally introduce larger negative Δ𝑆𝐶 values than their expert-assisted counterparts, suggesting that expert re-view helps preserve semantic coherence. Among the automatic strategies, Folder produces the smallest semantic penalty, whereas 
+
+High , Mixed , and Low introduce larger losses. Taken together, the strategy-level results show that no single metric is sufficient for evaluating an internal-link intervention. The expert-assisted Low strategy achieves the highest strategy-level AY, but this gain is accompanied by the least favorable RD/U profile. Conversely, configurations with more moderate authority gains may better preserve the distribution of authority across pages or the semantic coherence of the link structure. Since these qualita-tive patterns are largely preserved across both host environments, the principal difference between the Barabási–Albert and FineWeb settings appears to be the magnitude of the observed effects rather than the underlying strategy-level tradeoffs. Conference’17, July 2017, Washington, DC, USA Gjorgjevska et al. 
+
+Figure 2: Authority-flow and semantic-coherence effects by host environment, strategy, and selection regime. Panels (a)–(c) report results for the BA host environment, while panels (d)–(f) report the corresponding FineWeb results. Panels (a), (b), (d), and (e) use the representative 35–65 bridging range. Panels (c) and (f) report Authority Yield across bridging ranges, averaged across strategies, with Authority Volatility shown as error bars. Panel (g) reports Semantic-Coherence Change ( Δ𝑆𝐶 ), which is computed on the augmented site graph and is therefore shared across host environments. 
+
+## 5.3 Automatic vs. Expert-Assisted Selection 
+
+We next examine the aggregate difference between automatic and expert-assisted selection across bridging ranges. Panels (c) and (f) WebKnoGraph: GNN-Powered Internal Linking Conference’17, July 2017, Washington, DC, USA 
+
+of Figure 2 report AY averaged across strategies for each bridging range, with Authority Volatility (AV) shown as error bars. Unlike the strategy-level comparison above, this analysis summarizes the average authority-redistribution effect of each selection regime as external connectivity varies. Across both host environments, automatic interventions gener-ally produce higher average AY than expert-assisted interventions, and this difference becomes more pronounced at higher bridging ranges. This indicates that, when averaged across strategies, auto-matic selection has stronger authority-redistribution potential as the site is embedded into increasingly connected host environments. However, this aggregate pattern does not imply that automatic se-lection is preferable for every strategy or evaluation objective. As shown in the strategy-level analysis, the expert-assisted Low con-figuration achieves the highest AY at the primary bridging range, although with the least favorable RD/U profile. The AV error bars are generally smaller for expert-assisted than for automatic selection in both host environments. However, be-cause the two selection regimes use different numbers of interven-tion sets, this pattern is reported descriptively and is not interpreted as evidence that expert-assisted selection is inherently more stable. Overall, the results indicate that automatic selection is effective for generating interventions with stronger average authority gains, whereas expert assistance better preserves semantic coherence and can produce competitive or superior AY in specific strategy-level settings. The results therefore support a workflow in which automatic generation is combined with multi-objective evaluation and expert review, rather than treating either selection regime as uniformly preferable. 
+
+## 6 Limitations 
+
+The framework relies on link structure and page content extracted from a permitted production crawl and from web-corpus data. This makes the approach reproducible and usable without privileged access to analytics systems, but excludes behavioral and operational signals such as clicks, impressions, conversions, crawl frequency, and server logs. We do not evaluate the system through live A/B testing on pro-duction websites. Because SEO environments change continuously through content updates, external links, technical changes, and algorithm updates, our results should be interpreted as production-crawl evaluation analyses of authority redistribution and semantic coherence, not as direct measurements of ranking or traffic impact. Finally, the empirical evaluation is limited to a single production domain. Although interventions are tested in both empirical and synthetic host graphs, further validation across domains such as e-commerce, news, and documentation sites is needed to assess broader robustness. 
+
+## 7 Conclusion and discussion 
+
+We presented WebKnoGraph , a graph-based framework for eval-uating internal-link interventions before deployment. The frame-work combines content embeddings, GraphSAGE-based link iden-tification, controlled intervention strategies, and PageRank-based evaluation in empirical and synthetic host environments. Our results show that internal linking should be treated as a multi-objective graph intervention problem. WebKnoGraph ex-poses tradeoffs between authority redistribution, volatility, loss-gain balance, and semantic coherence, helping practitioners to com-pare candidate links before live SEO outcomes become difficult to attribute. These findings support a practical workflow in which candidate intervention sets are generated at scale, evaluated jointly across complementary criteria, and then reviewed for editorial de-ployability before implementation. 
+
+## 8 Future work 
+
+We will extend WebKnoGraph in three directions. First, we will validate the framework on other production websites, including e-commerce, news, and documentation sites, to test whether the observed tradeoffs generalize across architectures and editorial con-straints. Second, we will connect WebKnoGraph to operational SEO workflows, including the planned integration with WordLift’s Internal Links solution [ 35 ]. This will support recommendation generation, expert review, rollout, monitoring, and practitioner feedback. Third, we will extend production-crawl evaluation to-ward monitored live rollout and broaden interventions from link addition to link removal and pruning. Where attribution conditions allow, monitoring may include crawl frequency, indexed pages, impressions, clicks, engagement, conversions, and other business-relevant indicators. Together, these extensions will move WebKnoGraph from pre-deployment evaluation toward an operational decision-support system for internal-link management, in which recommendations can be generated, evaluated, deployed, and monitored. 
+
+## Data and Code Availability 
+
+The WebKnoGraph framework, experiment scripts, and configu-ration files are available at https://github.com/martech-engineer/ WebKnoGraph. We also release the Kalicube.com crawled dataset. The evaluation relies on the FineWeb dataset [ 30 ], available at https://huggingface.co/datasets/HuggingFaceFW/fineweb. Syn-thetic Barabási–Albert graphs were generated with standard proce-dures and are reproducible with the released code. 
+
+## Acknowledgments 
+
+M.M. was partially funded by the Austrian Ministry for Innova-tion, Mobility and Infrastructure through CSH’s PostDoc Program. The authors thank WordLift and Kalicube for sharing data and contextual information and support relevant to this study. 
+
+## References              
+
+> [1] [n. d.]. Yandex Ranking Factors. https://yandex-ranking-factors.netlify.app/ [2] Anurag Acharya, Matt Cutts, Jeffrey Dean, Paul Haahr, Monika Henzinger, Steve Lawrence, Karl Pfleger, and Simon Tong. 2013. Document scoring based on link-based criteria. Expired – fee related; priority application filed Sept 30, 2003. [3] Shaun Anderson. 2025. Strategic SEO. https://www.hobo-web.co.uk/strategic-seo-2025/ [4] Konstantin Avrachenkov and Nelly Litvak. 2004. Decomposition of the google pagerank and optimal linking strategy. INRIA Research Report (2004). [5] Ricardo A Baeza-Yates, Carlos Castillo, Vicente López, and Cátedra Telefónica. 2005. Pagerank Increase under Different Collusion Topologies. In AIRWeb , Vol. 5. 25–32. [6] Albert-László Barabási and Réka Albert. 1999. Emergence of scaling in random networks. Science 286, 5439 (1999), 509–512.
+
+Conference’17, July 2017, Washington, DC, USA Gjorgjevska et al. 
+
+[7] Adrien Barbaresi. 2021. Trafilatura: A web scraping library and command-line tool for text discovery and extraction. In Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing: System Demonstrations . 122–131. [8] Sergey Brin and Lawrence Page. 1998. The anatomy of a large-scale hypertextual web search engine. Computer networks and ISDN systems 30, 1-7 (1998), 107–117. [9] Balázs Csanád Csáji, Raphaël M Jungers, and Vincent D Blondel. 2014. PageRank optimization by edge selection. Discrete Applied Mathematics 169 (2014), 73–87. [10] Dennis Fetterly, Mark Manasse, and Marc Najork. 2004. Spam, damn spam, and statistics: Using statistical analysis to locate spam web pages. In Proceedings of the 7th International Workshop on the Web and Databases: colocated with ACM SIGMOD/PODS 2004 . 1–6. [11] Martin Gerlach, Marshall Miller, Rita Ho, Kosta Harlan, and Djellel Difallah. 2021. Multilingual entity linking system for wikipedia with a machine-in-the-loop approach. In Proceedings of the 30th ACM International Conference on Information & Knowledge Management . 3818–3827. [12] Emilija Gjorgjevska and Georgina Mirceva. 2021. Content Engineering for State-of-the-art SEO Digital Strategies by Using NLP and ML. In 2021 3rd International Congress on Human-Computer Interaction, Optimization and Robotic Applications (HORA) . IEEE, 1–6. [13] Emilija Gjorgjevska, Miroslav Mirchev, and Georgina Mircheva. 2024. Web-KnoGraph: AI-Driven Framework for Large-Scale Internal Link Optimization. https://github.com/martech-engineer/WebKnoGraph [14] GrowthSRC Media. 2025. Leaked Google Search Algorithm Ranking Factors Database: By GrowthSRC Media. searchrankingfactors.com (2025). https:// searchrankingfactors.com/ Accessed: 12 September 2025. [15] Nissan Hajaj. 2015. Producing a ranking for pages using distances in a web-link graph. Term extended by 268 days under 35 U.S.C. 154(b). [16] Will Hamilton, Zhitao Ying, and Jure Leskovec. 2017. Inductive representation learning on large graphs. Advances in neural information processing systems 30 (2017). [17] Mordor Intelligence. 2025. SEO Market Size & Share Analysis – Growth Trends & Forecasts (2025–2030) . https://www.mordorintelligence.com/industry-reports/ seo-market Accessed: 2025-09-29. [18] Ivan Franko Lviv National University, O I Marchuk, and T M Kushnir. 2024. Evaluation of the effectiveness of offline search optimization in the SEO toolbox. 
+
+Mark. Digit. Technol. 8, 4 (Dec. 2024), 44–57. [19] Shima Khoshraftar and Aijun An. 2024. A survey on graph representation learning methods. ACM Transactions on Intelligent Systems and Technology 15, 1 (2024), 1–55. [20] Thomas N Kipf and Max Welling. 2016. Semi-supervised classification with graph convolutional networks. arXiv preprint arXiv:1609.02907 (2016). [21] Jerri L Ledford. 2015. Search engine optimization bible . Vol. 584. John Wiley & Sons. [22] Dirk Lewandowski, Sebastian Sünkler, and Nurce Yagci. 2021. The influence of search engine optimization on Google’s results: A multi-dimensional approach for detecting SEO. In Proceedings of the 13th ACM Web Science Conference 2021 .12–20. [23] Lijun Lyu and Besnik Fetahu. 2018. Real-time event-based news suggestion for Wikipedia pages from news streams. In Companion Proceedings of the The Web Conference 2018 . 1793–1799. [24] Ross A Malaga. 2008. Worst practices in search engine optimization. Commun. ACM 51, 12 (2008), 147–150. [25] Natasa Milic-Frayling, Eduarda Mendes Rodrigues, and Shashank Pandit. 2008. Website structure analysis. Application publication; priority filing Dec 5, 2006. [26] Zach Nussbaum, John X. Morris, Brandon Duderstadt, and Andriy Mulyar. 2024. Nomic Embed: Training a Reproducible Long Context Text Embedder. arXiv:2402.01613 [cs.CL] [27] Naoto Ohsaka, Tomohiro Sonobe, Naonori Kakimura, Takuro Fukunaga, Sumio Fujita, and Ken-ichi Kawarabayashi. 2018. Boosting PageRank scores by optimiz-ing internal link structure. In International Conference on Database and Expert Systems Applications . Springer, 424–439. [28] Lawrence Page, Sergey Brin, Rajeev Motwani, and Terry Winograd. 1999. The PageRank citation ranking: Bringing order to the web. Technical Report. Stanford infolab. [29] Anna Patterson and Paul Haahr. 2013. Ranking based on reference contexts. Priority and filing both on 2004-03-15; expected expiry March 28, 2032. [30] Guilherme Penedo, Hynek Kydlíček, Loubna Ben allal, Anton Lozhkov, Margaret Mitchell, Colin Raffel, Leandro Von Werra, and Thomas Wolf. 2024. The FineWeb Datasets: Decanting the Web for the Finest Text Data at Scale. In The Thirty-eight Conference on Neural Information Processing Systems Datasets and Benchmarks Track . https://openreview.net/forum?id=n6SCkn2QaG [31] Memet Sanjaya, Rizaldi Putra, Deni Utama, and Arif Prayoga. 2025. Optimizing website ranking using long-tail keywords and internal linking: A case study. jidt 
+
+(Aug. 2025), 31–36. [32] Hasnae Amnoun 1 Naoual Smaili, Hamza Barboucha 1, and Mohcine Kodad. 2024. The Future of Search Attention: Leveraging AI to Enhance PageRank’s Influence. 
+
+Advances in Smart Medical, IoT & Artificial Intelligence: Proceedings of ICSMAI’2024, Volume 1 11 (2024), 125. [33] Olof Sundin. 2025. Theorising notions of searching, (re)sources and evaluation in the light of generative AI. Information Research 30, CoLIS (May 2025), 291–302. doi:10.47989/ir30CoLIS52258 [34] Petar Veličković, Guillem Cucurull, Arantxa Casanova, Adriana Romero, Pietro Lio, and Yoshua Bengio. 2017. Graph attention networks. arXiv preprint arXiv:1710.10903 (2017). [35] wordLift. [n. d.]. Creating Internal Links | WordLift Developer Documenta-tion — docs.wordlift.io. https://docs.wordlift.io/agent-wordlift/workflows/create-internal-links/. [Accessed 03-09-2025]. [36] Shanchan Wu, Louiqa Raschid, and William Rand. 2011. Future link prediction in the blogosphere for recommendation. In Proceedings of the International AAAI Conference on Web and Social Media , Vol. 5. 642–645. 
+
+## Appendix A. GenAI Usage Disclosure 
+
+Large Language Models (LLMs) were used as assistants during the preparation of this paper. Specifically, LLMs supported (i) cod-ing assistance for prototype implementation and experimentation, and (ii) grammar correction, stylistic polishing, and improving the organization and flow of the text. All conceptual contributions, experimental design, analyses, and conclusions were performed by the authors, who take full responsibility for this work.
