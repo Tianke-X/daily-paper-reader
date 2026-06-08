@@ -1,0 +1,304 @@
+Title: AIS-Based Vessel Trajectory Prediction Using Memory-Augmented Neural Networks
+
+URL Source: https://arxiv.org/pdf/2606.06311v1
+
+Published Time: Fri, 05 Jun 2026 01:22:04 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# AIS-Based Vessel Trajectory Prediction Using Memory-Augmented Neural Networks 
+
+Wonmo Koo 1 Sanha Chang 1 Heeyoung Kim 1,†
+
+Abstract — Accurate vessel trajectory prediction is essential for safe and efficient maritime operations, enabling colli-sion avoidance and supporting route optimization. Although memory-augmented neural networks have recently shown strong performance in pedestrian and road-vehicle trajectory prediction by selectively retrieving relevant information from an external memory, their potential for vessel trajectory prediction remains underexplored. This paper presents an empirical inves-tigation of memory-based trajectory prediction using Automatic Identification System (AIS) data. Experiments on data from the Gulf of Mexico and the New York Bight demonstrate consistent and substantial performance gains over a range of deep learning baselines that do not incorporate an external memory. 
+
+I. INTRODUCTION Spatio-temporal data analysis has been widely studied across various domains due to its importance in understand-ing and predicting dynamic patterns over geographical areas [1], [2], [3]. Among its various applications, vessel trajectory prediction has gained increasing attention as a fundamen-tal technology for maritime situational awareness, enabling collision avoidance and supporting route optimization [4], [5]. As maritime traffic continues to grow in density and complexity, these capabilities are crucial for ensuring safe and efficient maritime operations, and have become even more important with the rapid development of autonomous navigation technologies [6]. Recent studies predominantly rely on data from the Au-tomatic Identification System (AIS) [4], [7], [5], [8], [6], [9], which automatically identifies and tracks vessels through vessel-to-vessel and vessel-to-shore communication. Each AIS record typically includes vessel identifiers, such as Maritime Mobile Service Identity (MMSI) and call sign; dynamic navigational attributes, such as spatial position (lat-itude and longitude), speed over ground (SOG), and course over ground (COG); and static attributes, such as vessel type, length, and width. The mandatory installation of AIS for vessels above a certain gross tonnage under the International Maritime Organization (IMO) regulations has led to the availability of large-scale AIS data [10]. Consequently, a wide range of deep neural network-based approaches have been proposed for vessel trajectory prediction [11], [12], [13], [14]. When humans predict the future positions of moving agents (e.g., vessels, pedestrians, and road vehicles), they typically rely on reasoning informed by knowledge accu-mulated from past experiences and retrieved from memory. 
+
+> 1Department of Industrial and Systems Engineering, Korea Advanced Institute of Science and Technology (KAIST), Daejeon, Republic of Korea.
+> †Corresponding author: heeyoungkim@kaist.ac.kr
+
+Inspired by this human behavior, several approaches [15], [16], [17], [18], [19] that leverage memory-augmented neural networks (MANNs) have been proposed, achieving remark-able performance across diverse trajectory prediction tasks. Such line of work commonly employs an external memory constructed from the training data in which each memory item stores a past-future encoding pair: the past encoding represents an observed trajectory segment, and the future encoding represents the associated future-side information. During prediction, they selectively retrieve relevant memory items by computing similarities between the current past encoding and stored past encodings. The retrieved future encodings are then decoded to provide future trajectory predictions. Such memory-based approaches may be particularly ap-pealing for vessel trajectory prediction because vessel motion patterns tend to be dominated by frequent cruising behaviors, whereas maneuvering patterns are more diverse but rare. By storing instance-level encodings, the external memory can explicitly retain individual trajectory instances, which may be beneficial for capturing both common cruising patterns and rare maneuvering behaviors [20], [21], [22], [23]. However, existing memory-based approaches have been developed for pedestrians and road vehicles, and their potential for vessel trajectory prediction remains underexplored. In this paper, we provide empirical evidence that memory-based approaches can be highly effective for AIS-based vessel trajectory prediction. We adopt MANTRA [15], a seminal MANN for trajectory prediction. Unlike the original implementation, we incorporate SOG and COG values in addition to spatial positions as input features for memory writing and retrieval, given their importance in vessel tra-jectory prediction [5]. We use AIS data collected in the Gulf of Mexico and the New York Bight, and demonstrate the superior performance of the memory-based approach in terms of Average Displacement Error (ADE) and Final Displacement Error (FDE), compared to a variety of deep learning baselines that do not employ an external memory. The contributions of this work are summarized as follows:  
+
+> •
+
+To the best of our knowledge, we present the first empir-ical investigation of memory-based trajectory prediction in AIS-based vessel trajectory prediction.  
+
+> •
+
+Experiments on AIS data demonstrate that memory-based prediction can lead to substantial performance gains for vessel trajectory prediction.  
+
+> •
+
+Across multiple prediction horizons, we reduced ADE and FDE by up to 46.4% and 54.7%, respectively, compared to the best-performing baseline on the Gulf 
+
+> arXiv:2606.06311v1 [cs.AI] 4 Jun 2026
+
+of Mexico dataset (and by up to 33.3% and 27.7% on the New York Bight dataset). II. RELATED WORK 
+
+A. Memory-Based Trajectory Prediction 
+
+Several memory-based approaches [15], [16], [17], [18], [19] have been proposed for trajectory prediction. They typ-ically leverage an external memory of past-future encoding pairs and a selective memory retrieval mechanism based on the similarity between the current past encoding and stored past encodings. However, they may differ in (i) what information is encoded in the future encodings and (ii) how similarity is computed for retrieval [24], [25]. Specifically, each future encoding may represent the full trajectory [15], [18], a partially masked version of the trajectory [19], or only the trajectory endpoint [16]. Memory retrieval can be based on a fixed similarity measure (e.g., cosine similarity) [15], [18], [19] or a learnable similarity function [16], [17]. Despite the success of memory-based approaches in various trajectory prediction tasks, their effectiveness for vessel trajectory prediction remains underexplored. 
+
+B. Vessel Trajectory Prediction 
+
+In recent years, numerous deep neural network-based approaches have been proposed for vessel trajectory predic-tion [5], [6]. To capture temporal dependencies in vessel trajectories, several sequence modeling architectures have been widely adopted. Earlier approaches often rely on re-current neural networks (RNNs) [11], [26] and temporal convolutional networks (TCNs) [12], [27]. More recently, Transformer-based models [13], [28] have gained popular-ity due to their ability to capture long-range dependencies through temporal self-attention mechanisms. In addition, spatio-temporal graph neural networks (ST-GNNs) [14], [29], [30] have been explored to explicitly model inter-vessel interactions. III. METHODOLOGY We adopt MANTRA [15], a seminal memory-based tra-jectory prediction approach, with minor architectural modi-fications. In other words, the methodology described in this section closely follows the original MANTRA paper [15], except for the changes introduced to accommodate AIS data. 
+
+A. Problem Statement 
+
+Let t ∈ { 1, . . . , T P + TF } be the time index, where 1 : TP
+
+denotes the observed history, and TP +1 : TP +TF denotes the prediction horizon. For trajectory segment i, we denote the spatial position at time t by 
+
+yit = ( ϕit, λ it) ∈ R2,
+
+where ϕit and λit are latitude and longitude (in degrees), respectively. Given the past trajectory sequence yiP and the associated covariates xiP , our goal is to find a model f that predicts the future trajectory sequence yiF . This can be formulated as follows: 
+
+ˆyiF = f ([ yiP , xiP ]) ,
+
+where ˆyiF = {ˆyiTP +1 , . . . , ˆyiTP +TF } is the predicted trajectory for yiF = {yiTP +1 , . . . , y iTP +TF }, yiP = {yi
+
+> 1
+
+, . . . , y iTP }, xiP =
+
+{xi
+
+> 1
+
+, . . . , x iTP }, and [·] denotes the concatenation operation. As SOG and COG are known to be important features for vessel trajectory prediction [5], we incorporate them as the input covariates and define xit ∈ xiP as follows: 
+
+xit = ( vit, cos( ψit), sin( ψit), m it) ∈ R4,
+
+where vit and ψit are SOG (in knots) and COG (in radians) at t, respectively. Because AIS records may contain miss-ing entries due to various reasons (e.g., limited coverage, communication outages, and sensor malfunctions), we apply imputation as a data preprocessing step to ensure that there are no missing values in yit and xit by independently inter-polating each channel along the time axis. Additionally, we incorporate a binary indicator mit, where the value is 1 if yit is observed (and 0 otherwise), to inform the prediction model whether the position information at time t was originally unobserved. 
+
+B. Memory Construction and Model Training 
+
+Using the training data consisting of N trajectory seg-ments, we construct an external memory through the follow-ing steps. First, we design an autoencoder consisting of two separate encoders, g (past encoder) and h (future encoder), and one decoder d. For each trajectory segment i, the past encoder takes [yiP , xiP ] as input, while the future encoder takes [yiF , xiF ] as input. The resulting past encoding πi and future encoding δi are then concatenated and fed into the decoder to reconstruct yiF . Specifically, 
+
+πi = g([ yiP , xiP ]) ∈ Rde , δi = h([ yiF , xiF ]) ∈ Rde ,
+
+˜yiF = d([ πi, δ i]) ,
+
+where ˜yiF = {˜yiTP +1 , . . . , ˜yiTP +TF } denotes the reconstructed trajectory for yiF and xiF = {xiTP +1 , . . . , x iTP +TF }.Second, the encoders and decoder are trained jointly by minimizing the reconstruction loss: 
+
+Lae = 1
+
+N T FNX
+
+> i=1
+> TF
+
+X
+
+> t=1
+
+∥yiTP +t − ˜yiTP +t∥22,
+
+where ∥ · ∥ 2 denotes the ℓ2-norm. Finally, we introduce a memory controller c to construct a compact yet expressive external memory Ω from the set of N past-future encoding pairs {(πi, δ i)}Ni=1 produced by the encoders g and h from N training trajectory segments. The controller initializes the memory by randomly sampling a few encoding pairs and sequentially processes the training trajectory segments in a randomly shuffled order to decide whether each segment (its past-future encoding pair) should be written to the memory. To this end, the controller calcu-lates a memory-write score pi ∈ (0 , 1) , depending on the novelty of the target segment with respect to the current memory. The novelty of segment i is quantified based on its future trajectory prediction error ei, assuming the future part of segment i is yet to be observed (the future prediction Fig. 1. An overview of the memory-based trajectory prediction process. 
+
+process will be described in Section III-C). The memory-write score pi is computed as follows: 
+
+pi = c(ei) = Sigmoid (wc · ei + bc),ei = 1 − 1
+
+TFTFX
+
+> t=1
+
+1 ∥yiTP +t − ˆyiTP +t∥2 < ϵ ,
+
+where wc ∈ R and bc ∈ R are learnable weight and bias, respectively; 1(·) is an indicator function; ϵ is a hyperpa-rameter. The controller writes (πi, δ i) into the memory if 
+
+pi > 0.5.During controller training, only the controller parameters (wc and bc) are updated (i.e., the encoders ( g and h) and the decoder d remain fixed). At the start of each training epoch, the external memory is reinitialized, after which the memory is written sequentially while optimizing the controller with the following loss: 
+
+Lc = ei · (1 − pi) + (1 − ei) · pi,
+
+which encourages pi to increase with ei. As a result, the controller is trained to interpret a high prediction error as evidence that the current memory lacks relevant memory items, and to write the corresponding trajectory segment into the memory. 
+
+C. Memory-Based Trajectory Prediction 
+
+Given an external memory Ω = {(πnj , δ nj )}Mj=1 , where 
+
+nj ∈ { 1, . . . , N } and M < N , we aim to predict the future trajectory ynew  
+
+> F
+
+when only [ynew  
+
+> P
+
+, xnew  
+
+> P
+
+] is observed. We compute the current past encoding πnew = g([ ynew  
+
+> P
+
+, xnew  
+
+> P
+
+]) 
+
+and retrieve relevant memory items from Ω based on cosine similarity between πnew and πnj :
+
+ρj = πnew πn′
+
+> j
+
+∥πnew ∥2 · ∥ πnj ∥2
+
+, j = 1 , . . . M. 
+
+In this work, considering the multi-modal nature of vessel motions, we select the future encodings corresponding to the top-K indices of ρj . Then, the selected future encodings are separately concatenated with πnew and decoded into K future trajectory predictions {ˆynew 
+
+> F,k
+
+}Kk=1 . We provide an illustration of the prediction process in Fig. 1. IV. EXPERIMENTS 
+
+A. Dataset Description 
+
+We used AIS data from the Gulf of Mexico and New York Bight collected by the National Oceanic and Atmospheric Administration (NOAA) 1 from March 6 to March 8, 2023. The study regions were defined by latitude-longitude bounds of [27 .0◦, 29 .0◦] and [−94 .0◦, −89 .0◦] for the Gulf of Mex-ico, and [39 .6◦, 40 .6◦] and [−74 .0◦, −72 .2◦] for the New York Bight. Fig. 2 shows the selected regions, highlighted by red boxes. Only vessels with a length of at least 70 meters were considered. The resulting datasets contain 130,126 records from 369 vessels in the Gulf of Mexico and 22,741 records from 55 vessels in the New York Bight. We removed records with SOG exceeding 30 knots, which were considered anomalous. The remaining data were resam-pled to a fixed 1-minute interval using mean aggregation. For each vessel, a continuous gap longer than 1 hour with no received records was regarded as the boundary between two voyages, while the remaining gaps ( ≤ 1 hour) were treated as intra-voyage missing observations and imputed by applying cubic spline interpolation to spatial positions and linear interpolation to covariates. The voyages shorter than 1 hour were discarded. We performed a chronological split along the time axis, allocating the first 60% of the time steps for training, the next 20% for validation, and the remaining 20% for testing. We applied z-score normalization to latitude, longitude, and SOG. 
+
+B. Evaluation Metrics 
+
+To evaluate the prediction performance, we adopted two widely used metrics for trajectory prediction: ADE and FDE. ADE measures the average positional error over the prediction horizon, whereas FDE quantifies the error at the final destination.  
+
+> 1https://hub.marinecadastre.gov Fig. 2. The red boxes indicate the study regions: (A) the Gulf of Mexico and (B) the New York Bight.
+
+Following the evaluation protocol of prior work [31], [32], we calculated the minimum error over K predicted trajectories to account for the intrinsic multi-modality of future vessel motions. As AIS data typically contain missing values, ADE was computed only over the observed time steps for which ground-truth positions are available, while FDE was evaluated at the last observed position. These metrics were computed as follows: ADE = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+min 
+
+> k∈{ 1,...,K }
+
+ 1
+
+|SiF |
+
+X
+
+> t∈SiF
+
+∥yiTP +t − ˆyiTP +t,k ∥2
+
+
+
+,
+
+FDE = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+min  
+
+> k∈{ 1,...,K }
+
+|| yiTP +t∗ 
+
+> i
+
+− ˆyiTP +t∗ 
+
+> i,k
+
+∥2,
+
+where SiF = {t ∈ { 1, . . . , T F }| miTP +t = 1 }, t∗ 
+
+> i
+
+denotes the last time step of SiF , and ˆyiTP +t,k is the k-th prediction result for yiTP +t among K multi-modal predictions. 
+
+C. Baselines 
+
+We compared MANTRA with six baselines that reflect recent research trends in vessel trajectory prediction, particu-larly the growing interest in multi-agent (vessel) interaction-aware models and Transformer-based architectures. Unlike most baselines—except TransformerTF—MANTRA does not explicitly model inter-agent interactions. Thus, improved performance would indicate that a memory-based approach can achieve competitive predictive capability even without explicit inter-agent interaction modeling.  
+
+> •
+
+STGAT [33]: Spatio-Temporal Graph Attention Net-work (STGAT) is a sequence-to-sequence trajectory prediction model that employs a long short-term mem-ory (LSTM) [34]-based encoder-decoder architecture. It models inter-agent interactions via a graph attention network [35] and introduces random noise into the decoder input to enable multi-modal prediction.  
+
+> •
+
+Social-STGCNN [36]: Social Spatio-Temporal Graph Convolutional Neural Network (Social-STGCNN) mod-els trajectories of multiple agents as a dynamic spatio-temporal graph, where nodes represent agents and edges are weighted according to pairwise distances. It integrates spatial graph convolutions with temporal convolutions to capture inter-agent interactions and tem-poral motion dynamics, and provides bivariate Gaussian predictive distributions.  
+
+> •
+
+TransformerTF [31]: Transformer for Trajectory Fore-casting (TransformerTF) employs a vanilla encoder-decoder Transformer [37] to capture long-range tempo-ral dependencies in observed trajectories via temporal self-attention and autoregressively predicts future posi-tions. It does not account for inter-agent interactions.  
+
+> •
+
+AgentFormer [38] : Agent-Aware Transformer (Agent-Former) is a Transformer-based trajectory prediction method that jointly models temporal dependencies and inter-agent interactions through a unified self-attention mechanism. For multi-modal prediction, it adopts a conditional variational autoencoder (CVAE) framework [39], drawing multiple samples from the latent distribu-tion to generate multiple plausible future trajectories.  
+
+> •
+
+Social-Implicit [40]: Social-Implicit is a multi-agent trajectory prediction model. It clusters agents based on the maximum change in their speed. For each cluster, spatial and temporal CNNs are employed to model inter-agent interactions and temporal motion dynamics, re-spectively. For multi-modal prediction, it injects random noise into the model input to generate multiple plausible future trajectories.  
+
+> •
+
+TUTR [32]: Trajectory Unified Transformer (TUTR) is an encoder-decoder Transformer that models inter-agent interactions in the decoder and employs a dual-head structure to generate multi-modal trajectory predictions with associated mode probabilities. 
+
+D. Implementation Details 
+
+We used the original implementation of MANTRA 2. All components were trained using the Adam optimizer with a learning rate of 10 −3 for up to 500 epochs. Early stopping with a patience of 20 was employed, and the batch size was set to 32 to approximate Lae . The hyperparameter for the memory controller ϵ was set to 3e−3. We used single-layer Gated Recurrent Unit (GRU) networks [41] with a hidden size of 96 for the two encoders and 192 for the decoder (i.e., de = 96 ). We set TP = 30 (corresponding to 30 minutes) and evaluated ADE and FDE over three prediction horizons, 
+
+TF ∈ { 10 , 20 , 30 }, with K = 5 . We performed sliding-window segmentation with a window length of TP + TF
+
+time steps and a stride of 5. When TF = 30 , this produced 18,259/6,398/5,529 training/validation/test segments for the Gulf of Mexico and 2,799/715/952 segments for the New York Bight (shorter TF yielded slightly larger sample sizes). 
+
+E. Quantitative Analysis 
+
+Table I shows the results over five independent runs, with the average values and standard errors in parentheses. At all prediction horizons, MANTRA outperformed all baselines by a large margin in both ADE and FDE, despite the absence of explicit inter-vessel interaction modeling. Specifically, in the Gulf of Mexico, compared to the best-performing base-line, MANTRA improved ADE by 43 .8%/46 .4%/46 .0%
+
+> 2https://github.com/Marchetz/MANTRA-CVPR20
+
+TABLE I PERFORMANCE COMPARISON ACROSS DIFFERENT PREDICTION HORIZONS . T HE VALUES IN BOLD INDICATE THE BEST SCORES , WHILE UNDERLINED VALUES REPRESENT THE SECOND -BEST SCORES . ADE AND FDE ARE REPORTED IN UNITS OF 0.1◦ .
+
+Gulf of Mexico Method ADE FDE 10 minutes 20 minutes 30 minutes 10 minutes 20 minutes 30 minutes 
+
+STGAT 0.0644 (0.0089) 0.2172 (0.0510) 0.4276 (0.0229) 0.1320 (0.0232) 0.4495 (0.1194) 0.8787 (0.0264) Social-STGCNN 1.1488 (0.0445) 1.5184 (0.1249) 1.8010 (0.0948) 1.2408 (0.0947) 1.6822 (0.1452) 2.0271 (0.1104) TransformerTF 0.1300 (0.0129) 0.1480 (0.0165) 0.2628 (0.0810) 0.0882 (0.0081) 0.1196 (0.0209) 0.2398 (0.0629) AgentFormer 0.4576 (0.0401) 0.7173 (0.1377) 0.9912 (0.3994) 0.4556 (0.0455) 0.7118 (0.1357) 0.9856 (0.4290) Social-Implicit 0.0292 (0.0061) 0.0532 (0.0068) 0.0847 (0.0128) 0.0468 (0.0116) 0.0965 (0.0131) 0.1616 (0.0243) TUTR 0.0251 (0.0002) 0.0470 (0.0119) 0.0758 (0.0040) 0.0413 (0.0009) 0.0875 (0.0226) 0.1457 (0.0054) MANTRA 0.0141 (0.0001) 0.0252 (0.0004) 0.0409 (0.0005) 0.0187 (0.0004) 0.0431 (0.0009) 0.0771 (0.0008) 
+
+New York Bight 
+
+STGAT 0.0644 (0.0089) 0.2172 (0.0510) 0.4276 (0.0229) 0.1320 (0.0232) 0.4495 (0.1194) 0.8787 (0.0264) Social-STGCNN 1.0251 (0.0689) 1.5642 (0.0632) 1.9880 (0.1059) 1.0935 (0.0447) 1.7199 (0.0436) 2.2190 (0.1058) TransformerTF 0.1086 (0.0222) 0.1278 (0.0292) 0.1970 (0.0381) 0.0884 (0.0210) 0.1245 (0.0326) 0.2313 (0.0658) AgentFormer 0.3375 (0.0347) 0.4260 (0.0329) 0.4438 (0.0288) 0.3280 (0.0346) 0.4044 (0.0330) 0.4138 (0.0114) Social-Implicit 0.0282 (0.0018) 0.0544 (0.0050) 0.0878 (0.0072) 0.0451 (0.0036) 0.0993 (0.0097) 0.1670 (0.0138) TUTR 0.0724 (0.0019) 0.0784 (0.0059) 0.1252 (0.0062) 0.1226 (0.0096) 0.1469 (0.0075) 0.2453 (0.0122) MANTRA 0.0188 (0.0011) 0.0396 (0.0011) 0.0638 (0.0006) 0.0326 (0.0019) 0.0735 (0.0018) 0.1241 (0.0023) 
+
+and FDE by 54 .7%/50 .7%/47 .1% for prediction hori-zons of 10/20/30, respectively. In the New York Bight, the corresponding improvements were 33 .3%/28 .5%/27 .3%
+
+in ADE and 27 .7%/26 .0%/25 .7% in FDE. Moreover, MANTRA consistently exhibited the smallest standard errors across all settings, indicating more stable performance over random seeds compared to the baselines. These findings may highlight the potential of memory-based prediction as a powerful paradigm for vessel trajectory prediction. 
+
+F. Qualitative Analysis 
+
+In Fig. 3, we visualize the best-of-5 trajectory predictions of MANTRA (with the lowest ADE) on the Gulf of Mexico dataset for a 30-minute prediction horizon (TF = 30 ). In each panel, blue markers indicate the past trajectory, green markers denote the ground-truth future trajectory, and red markers represent the predicted trajectory. For the past and ground-truth future trajectories, gaps between markers indicate intervals with missing observations. As shown in the figure, MANTRA closely matches the ground-truth future trajectories for both cruising (upper-left panel) and maneuvering cases (remaining panels). V. CONCLUSION In this study, we empirically investigated the effectiveness of memory-based trajectory prediction for AIS-based vessel trajectory prediction. Experiments demonstrated substantial improvements over a range of deep learning baselines that do not incorporate an external memory. By explicitly storing instance-level trajectory representations, the memory-based approach (MANTRA) was able to capture both common cruising patterns and rare maneuvering behaviors of mar-itime vessels. These findings suggest that memory-based approaches may provide a promising direction for modeling complex and diverse vessel movement patterns and may hold 
+
+Fig. 3. Examples of trajectory prediction results on the Gulf of Mexico with a 30-minute observation window and a 30-minute prediction horizon. In each panel, blue markers indicate the past trajectory, green markers indicate the ground-truth future trajectory, and red markers indicate the predicted trajectories. Gaps between markers in the past and ground-truth future trajectories indicate intervals with missing observations. 
+
+significant potential for improving vessel trajectory predic-tion systems. Future work will incorporate high-dimensional navigational contextual variables, such as vessel type and size, weather conditions, and waterway geometry, that may significantly affect vessel operations, following the approach in [42]. In addition, we will investigate methods for quanti-fying prediction uncertainty [43], [44]. VI. ACKNOWLEDGMENT This work was supported by the National Research Foun-dation of Korea (NRF) grant funded by the Korea govern-ment (MSIT) (2023R1A2C2005453, RS-2023-00218913). REFERENCES [1] J. Chung and H. Kim, “Crime risk maps: A multivariate spatial analysis of crime data,” Geographical analysis , vol. 51, no. 4, pp. 475–499, 2019. [2] Y. Lee and H. Kim, “Bayesian nonparametric joint mixture model for clustering spatially correlated time series,” Technometrics , vol. 62, no. 3, pp. 313–329, 2020. [3] W. Koo, E.-Y. Ma, and H. Kim, “Deep latent factor model for spatio-temporal forecasting,” Technometrics , vol. 66, no. 3, pp. 470–482, 2024. [4] S. Kim, H. Kim, and Y. Park, “Early detection of vessel delays using combined historical and real-time information,” Journal of the operational research society , vol. 68, no. 2, pp. 182–191, 2017. [5] X. Zhang, X. Fu, Z. Xiao, H. Xu, and Z. Qin, “Vessel trajectory predic-tion in maritime transportation: Current approaches and beyond,” IEEE Transactions on Intelligent Transportation Systems , vol. 23, no. 11, pp. 19 980–19 998, 2022. [6] Z. Xie, E. Tu, X. Fu, G. Yuan, and Y. Han, “Ais data-driven maritime monitoring based on transformer: A comprehensive review,” in 2025 International Joint Conference on Neural Networks (IJCNN) . IEEE, 2025, pp. 1–8. [7] J. Park and S. Kim, “Maritime anomaly detection based on vae-cusum monitoring system,” Journal of the Korean Institute of Industrial Engineers , vol. 46, no. 4, pp. 432–442, 2020. [8] Y. Oh and S. Kim, “Grid-based bayesian bootstrap approach for real-time detection of abnormal vessel behaviors from ais data in maritime logistics,” IEEE Transactions on Automation Science and Engineering ,vol. 21, no. 4, pp. 6680–6692, 2023. [9] Y. Oh, K. Yoon, J. Park, and S. Kim, “Comparative evaluation of vae-based monitoring statistics for real-time anomaly detection in ais data,” Maritime Policy & Management , vol. 52, no. 4, pp. 609–626, 2025. [10] K. Wolsing, L. Roepert, J. Bauer, and K. Wehrle, “Anomaly detection in maritime ais tracks: A review of recent approaches,” Journal of Marine Science and Engineering , vol. 10, no. 1, p. 112, 2022. [11] I. Slaughter, J. L. Charla, M. Siderius, and J. Lipor, “Vessel trajectory prediction with recurrent neural networks: An evaluation of datasets, features, and architectures,” Journal of Ocean Engineering and Sci-ence , vol. 10, no. 2, pp. 229–238, 2025. [12] Y. Shin, N. Kim, H. Lee, S. Y. In, M. Hansen, and Y. Yoon, “Deep learning framework for vessel trajectory prediction using auxiliary tasks and convolutional networks,” Engineering Applications of Ar-tificial Intelligence , vol. 132, p. 107936, 2024. [13] H. Xue, S. Wang, M. Xia, and S. Guo, “G-trans: A hierarchical approach to vessel trajectory prediction with gru-based transformer,” 
+
+Ocean Engineering , vol. 300, p. 117431, 2024. [14] J. Jiang, Y. Zuo, Y. Xiao, W. Zhang, and T. Li, “Stmgf-net: a spatiotem-poral multi-graph fusion network for vessel trajectory forecasting in intelligent maritime navigation,” IEEE Transactions on Intelligent Transportation Systems , 2024. [15] F. Marchetti, F. Becattini, L. Seidenari, and A. D. Bimbo, “Mantra: Memory augmented networks for multiple trajectory prediction,” in 
+
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2020, pp. 7143–7152. [16] C. Xu, W. Mao, W. Zhang, and S. Chen, “Remember intentions: Retrospective-memory-based trajectory prediction,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recogni-tion , 2022, pp. 6488–6497. [17] F. Marchetti, F. Becattini, L. Seidenari, and A. Del Bimbo, “Ex-plainable sparse attention for memory-based trajectory predictors,” in 
+
+European Conference on Computer Vision . Springer, 2022, pp. 543– 560. [18] B. Yang, F. Fan, R. Ni, J. Li, L. Kiong, and X. Liu, “Continual learning-based trajectory prediction with memory augmented net-works,” Knowledge-Based Systems , vol. 258, p. 110022, 2022. [19] Y. Dong, L. Wang, S. Zhou, and G. Hua, “Sparse instance conditioned multimodal trajectory prediction,” in proceedings of the IEEE/CVF international conference on computer vision , 2023, pp. 9763–9772. [20] A. Santoro, S. Bartunov, M. Botvinick, D. Wierstra, and T. Lillicrap, “Meta-learning with memory-augmented neural networks,” in Interna-tional conference on machine learning . PMLR, 2016, pp. 1842–1850. [21] M. Choy, D. Kim, J.-G. Lee, H. Kim, and H. Motoda, “Looking back on the current day: interruptibility prediction using daily behavioral features,” in Proceedings of the 2016 ACM international joint confer-ence on pervasive and ubiquitous computing , 2016, pp. 1004–1015. [22] Y. Hyun and H. Kim, “Memory-augmented convolutional neural networks with triplet loss for imbalanced wafer defect pattern classifi-cation,” IEEE Transactions on Semiconductor Manufacturing , vol. 33, no. 4, pp. 622–634, 2020. [23] H. Lee, J. Lee, and H. Kim, “Semi-supervised learning for simul-taneous location detection and classification of mixed-type defect patterns in wafer bin maps,” IEEE Transactions on Semiconductor Manufacturing , vol. 36, no. 2, pp. 220–230, 2023. [24] K. Lee, A. Gray, and H. Kim, “Dependence maps, a dimensionality reduction with dependence distance for high-dimensional data,” Data Mining and Knowledge Discovery , vol. 26, no. 3, pp. 512–532, 2013. [25] W. Soh, H. Kim, and B.-J. Yum, “Application of kernel principal com-ponent analysis to multi-characteristic parameter design problems,” 
+
+Annals of Operations research , vol. 263, no. 1, pp. 69–91, 2018. [26] H. Tang, Y. Yin, and H. Shen, “A model for vessel trajectory prediction based on long short-term memory neural network,” Journal of marine engineering & technology , vol. 21, no. 3, pp. 136–145, 2022. [27] Z. Lin, W. Yue, J. Huang, and J. Wan, “Ship trajectory prediction based on the ttcn-attention-gru model,” Electronics , vol. 12, no. 12, p. 2556, 2023. [28] C. Xiong, H. Shi, J. Li, X. Wu, and R. Gao, “Informer-based model for long-term ship trajectory prediction,” Journal of Marine Science and Engineering , vol. 12, no. 8, p. 1269, 2024. [29] R. W. Liu, M. Liang, J. Nie, Y. Yuan, Z. Xiong, H. Yu, and N. Guizani, “Stmgcn: Mobile edge computing-empowered vessel trajectory predic-tion using spatio-temporal multigraph convolutional network,” IEEE Transactions on Industrial Informatics , vol. 18, no. 11, pp. 7977–7987, 2022. [30] S. Wang, Y. Li, and H. Xing, “A novel method for ship trajectory prediction in complex scenarios based on spatio-temporal features extraction of ais data,” Ocean Engineering , vol. 281, p. 114846, 2023. [31] F. Giuliari, I. Hasan, M. Cristani, and F. Galasso, “Transformer networks for trajectory forecasting,” in 2020 25th international confer-ence on pattern recognition (ICPR) . IEEE, 2021, pp. 10 335–10 342. [32] L. Shi, L. Wang, S. Zhou, and G. Hua, “Trajectory unified transformer for pedestrian trajectory prediction,” in Proceedings of the IEEE/CVF International Conference on Computer Vision , 2023, pp. 9675–9684. [33] Y. Huang, H. Bi, Z. Li, T. Mao, and Z. Wang, “Stgat: Modeling spatial-temporal interactions for human trajectory prediction,” in Proceedings of the IEEE/CVF international conference on computer vision , 2019, pp. 6272–6281. [34] S. Hochreiter and J. Schmidhuber, “Long short-term memory,” Neural computation , vol. 9, no. 8, pp. 1735–1780, 1997. [35] P. Veliˇ ckovi´ c, G. Cucurull, A. Casanova, A. Romero, P. Lio, and Y. Bengio, “Graph attention networks,” arXiv preprint arXiv:1710.10903 , 2017. [36] A. Mohamed, K. Qian, M. Elhoseiny, and C. Claudel, “Social-stgcnn: A social spatio-temporal graph convolutional neural network for human trajectory prediction,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition , 2020, pp. 14 424–14 432. [37] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” 
+
+Advances in neural information processing systems , vol. 30, 2017. [38] Y. Yuan, X. Weng, Y. Ou, and K. M. Kitani, “Agentformer: Agent-aware transformers for socio-temporal multi-agent forecasting,” in 
+
+Proceedings of the IEEE/CVF international conference on computer vision , 2021, pp. 9813–9823. [39] D. P. Kingma and M. Welling, “Auto-encoding variational bayes,” 
+
+arXiv preprint arXiv:1312.6114 , 2013. [40] A. Mohamed, D. Zhu, W. Vu, M. Elhoseiny, and C. Claudel, “Social-implicit: Rethinking trajectory prediction evaluation and the effec-tiveness of implicit maximum likelihood estimation,” in European Conference on Computer Vision . Springer, 2022, pp. 463–479. [41] K. Cho, B. Van Merri¨ enboer, C. Gulcehre, D. Bahdanau, F. Bougares, H. Schwenk, and Y. Bengio, “Learning phrase representations using rnn encoder-decoder for statistical machine translation,” arXiv preprint arXiv:1406.1078 , 2014. [42] H. Kim and H. Kim, “Contextual anomaly detection for high-dimensional data using dirichlet process variational autoencoder,” IISE Transactions , vol. 55, no. 5, pp. 433–444, 2023. [43] K. Kim, J. Shin, and H. Kim, “Locally most powerful bayesian test for out-of-distribution detection using deep generative models,” Advances in Neural Information Processing Systems , vol. 34, pp. 14 913–14 924, 2021. [44] T. Yoon and H. Kim, “Uncertainty estimation by density aware evidential deep learning,” arXiv preprint arXiv:2409.08754 , 2024.

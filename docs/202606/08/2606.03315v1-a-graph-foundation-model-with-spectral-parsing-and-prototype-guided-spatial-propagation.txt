@@ -1,0 +1,1602 @@
+Title: A Graph Foundation Model with Spectral Parsing and Prototype-Guided Spatial Propagation
+
+URL Source: https://arxiv.org/pdf/2606.03315v1
+
+Published Time: Wed, 03 Jun 2026 00:49:12 GMT
+
+Number of Pages: 31
+
+Markdown Content:
+# A Graph Foundation Model with Spectral Parsing and Prototype-Guided Spatial Propagation 
+
+Ankang Yang †, Jitao Zhao †, Dongxiao He ∗, Di Jin 
+
+School of Computer Science and Technology Tianjin University Tianjin, China 
+
+{yak123,zjtao,hedongxiao,jindi}@tju.edu.cn 
+
+Liang Yang 
+
+School of Artificial Intelligence Hebei University of Technology Tianjin, China 
+
+yangliang@vip.qq.com 
+
+Weixiong Zhang 
+
+Department of Health Technology and Informatics Department of Data Science and Artificial Intelligence The Hong Kong Polytechnic University Kowloon, Hong Kong 
+
+weixiong.zhang@polyu.edu.hk 
+
+## Abstract 
+
+Graph foundation models aim to learn transferable knowledge from diverse graphs for generalization to unseen graphs and tasks. Unlike text and images, graphs lack a shared vocabulary or regular spatial grid, making cross-graph transfer challenging. This challenge comes from both feature discrepancies and, more critically, diverse graph structures. Existing GFMs mainly improve transferability by unifying feature spaces or incorporating structural tokens and vocabularies. However, existing topology-aware designs still have limitations. Structural tokens are usually discrete, while structural vocabularies often rely on predefined substructures such as trees and cycles, whose limited coverage may miss richer relational patterns across graphs. Moreover, graph signals contain both high-frequency local patterns and smoother low-frequency patterns, which require different propagation behaviors. These components are often entangled in raw graph signals, while this spectral perspective is rarely explored in existing GFMs. To address these challenges, we propose SPG, a graph foundation model with spectral parsing and prototype-guided spatial propagation. SPG applies learnable Chebyshev filters to decompose node features into multiple spectral responses, reducing the mismatch between frequency-specific graph signals and propagation behaviors. It then constructs a Gromov-Wasserstein prototype geometry to distill transferable pairwise relations beyond predefined substructures into a shared structural space. The learned prototype geometry is further projected back as a prototype-guided propagation operator. Experiments demonstrate consistent improvements in cross-domain generalization. 
+
+## 1 Introduction 
+
+Inspired by the success of foundation models in natural language processing and computer vision, graph learning has recently begun to move beyond task-specific and dataset-specific models toward graph foundation models (GFMs). Rather than training a separate model for each graph or task, GFMs aim to learn universal knowledge from diverse graph domains and transfer it to unseen graphs or 
+
+> †Equal contribution.
+> *Corresponding author. Preprint.
+> arXiv:2606.03315v1 [cs.LG] 2 Jun 2026
+
+downstream tasks[ 1, 2]. This paradigm holds great potential for applications such as recommendation, scientific discovery, and social network analysis, where graphs are diverse, labeled data are often limited and building models for every domain or task can be costly[ 3 ]. However, building such a transferable graph model is more challenging than building foundation models for text or images. Because text can be represented through shared token vocabularies and images are defined on regular grids, both provide consistent input formats for generalization[ 4 , 5 ]. Graphs, in contrast, have neither a universal node vocabulary nor a regular spatial grid. Across graph domains, node attributes may differ in dimension and semantics, while graph structures vary widely in scale, local patterns, and higher-order topology[ 6, 7]. As a result, the key challenge of GFMs is not merely to align input feature distributions across graphs, but also to determine what structural knowledge can be transferred and how such knowledge should participate in propagation on unseen graphs. For cross-graph transfer, a central challenge is how to transfer universal knowledge across different graphs[ 2 ]. Although existing GFMs have made initial progress, two key issues remain: how to unify feature space and how to transfer structural knowledge. To align feature distributions, many methods construct a shared input feature space across graphs. For example, SVD-based projection unifies attribute dimensions and LLM-based encoding reduces semantic discrepancies[ 8 –12 ]. These designs enable a single model to process graphs with different feature dimensions and semantics. Nevertheless, feature alignment alone does not solve structural transfer. Graph knowledge is deeply encoded in structure, including local connectivity patterns, higher-order dependencies, and graph diffusion patterns[ 13 – 15 ]. Since these structural patterns can vary substantially across graph domains, cross-graph transfer requires a mechanism to identify transferable structural regularities and reuse them during propagation on unseen graphs[16–18]. To improve structural transfer, recent GFMs incorporate topology-aware designs such as structural encodings, structural tokens, mixture-of-experts, and structural vocabularies [ 19 – 21 , 18 ]. Open-Graph and SAMGPT represent graphs through reusable tokens: OpenGraph introduces a unified graph tokenizer with a global-topology-aware transformer [ 19 ], while SAMGPT designs structure tokens and prompts for multi-domain adaptation [ 20 ]. Beyond token-based designs, AutoGFM adapts GNN architectures to different graph domains through architecture search [ 21 ], and Rie-mannGFM constructs a Riemannian structural vocabulary from shared substructures such as trees and cycles [ 18 ]. Nevertheless, they often represent shared topological knowledge using discrete structural units or a limited set of substructures that capture certain recurring patterns such as trees and cycles. These designs improve topology awareness, but do not explicitly preserve fine-grained pairwise relations, making it difficult to directly project such knowledge back to a new graph as a propagation prior. Moreover, graph spectral signals themselves mix structural components with different transferability[ 22 , 23 ]. As shown in Figure 1, raw features exhibit substantially different spectral energy distributions across datasets. This suggests that structural mismatch across graphs appears not only in explicit connectivity patterns, but also in topology-induced spectral characteristics. Directly propagating aligned features with a unified operator may therefore cause spectral mismatch: high-frequency local information can be smoothed, while stable low-frequency regularities useful for transfer may not be properly separated[ 23 , 24 ]. This motivates frequency-aware spectral parsing before propagation. 
+
+Figure 1: Spectral energy distribution of raw node features. Motivated by these observations, we propose a graph foundation model with spectral pars-ing and prototype-guided spatial propagation. We use learnable Chebyshev spectral filters to separate node features into different fre-quency responses before propagation, so that high-frequency local changes and low-frequency global patterns can be better separated[ 25 , 23 ]. Since spectral parsing is still performed within each individual graph, we further construct a Gromov-Wasserstein structural prototype space to organize transferable cross-graph regulari-ties with explicit internal relations[ 26 –28 ]. The learned prototype geometry is then projected back to each graph and used as a prototype-guided propagation prior, enabling the model to combine domain-specific signals with shared structural knowledge during representation learning. Finally, we 2integrate local adjacency propagation, global heat-kernel diffusion, and prototype-guided propaga-tion through a gated mechanism, allowing the model to adaptively combine local variation, global consistency, and transferable structural priors. Our contributions are summarized as follows: • We propose SPG, which learns a Gromov-Wasserstein prototype geometry to capture internal node-pair relations and directly reuse them as propagation priors on unseen graphs, with theoretical guarantees on distortion-controlled lifting and stable low-rank propagation. • We introduce a frequency-aware spectral parsing module that transforms raw node features into unified spectral representations, providing cleaner and structure-aware inputs for multi-path propagation. • Extensive experiments demonstrate the effectiveness of the proposed framework on cross-graph generalization and multi-domain transfer tasks. 
+
+## 2 Preliminaries 
+
+Gromov-Wasserstein Geometry. Gromov-Wasserstein (GW) geometry compares relational spaces without requiring aligned elements[ 29 ]. Let (X , d X , μ ) and (Y, d Y , ν ) be two metric measure spaces, where dX , d Y define intrinsic pairwise distances and μ, ν are probability measures. The GW discrepancy is defined as 
+
+GW( μ, ν ) = min 
+
+> π∈Π( μ,ν )
+
+Z
+
+> X ×Y
+
+Z
+
+> X ×Y
+
+|dX (x, x ′) − dY (y, y ′)|2 dπ (x, y ) dπ (x′, y ′), (1) where Π( μ, ν ) is the set of couplings with marginals μ and ν. The coupling π gives a soft correspon-dence between the two spaces, and GW seeks an alignment that preserves pairwise relations. For graphs, let G1 = ( V1, E 1) and G2 = ( V2, E 2), with |V1| = n1 and |V2| = n2. We set X = V1
+
+and Y = V2. Let C1 ∈ Rn1×n1 and C2 ∈ Rn2×n2 be structural cost matrices, where C1(i, i ′) and 
+
+C2(j, j ′) measure intra-graph structural distances. These costs can be based on shortest-path distance, diffusion distance, or heat-kernel distance. Given node distributions p ∈ ∆n1 and q ∈ ∆n2 , the discrete GW discrepancy is 
+
+GW( C1, C 2, p, q ) = min  
+
+> T∈Π( p,q )
+> n1
+
+X
+
+> i,i ′=1
+> n2
+
+X
+
+> j,j ′=1
+
+|C1(i, i ′) − C2(j, j ′)|2 Tij Ti′j′ , (2) where Π( p, q ) = {T ∈ Rn1×n2 
+
+> +
+
+| T 1n2 = p, T ⊤1n1 = q}. Here, Tij denotes the mass transported from node i in G1 to node j in G2, and thus T represents a soft node correspondence. GW is suitable for cross-graph structural comparison because it does not require equal graph sizes or features with same dims. It aligns graphs through internal structural relations[ 26 –28 ]. In SPG, this allows us to compare source graphs via structural cost matrices, learn a shared prototype geometry, and use prototype-guided transport to project this geometry back as a transferable propagation prior. 
+
+Spectral Graph Neural Networks. Spectral graph neural networks define graph filtering in the eigenbasis of the graph Laplacian[ 30 , 31 ]. Let A be the adjacency matrix, D the degree matrix, and 
+
+L = I − D−1/2AD −1/2 the normalized Laplacian. With eigendecomposition L = U ΛU ⊤, the spectral convolution of a graph signal x is defined as 
+
+gθ ∗ x = U g θ (Λ) U ⊤x, (3) where gθ (Λ) is a learnable spectral filter. Since exact eigendecomposition is often expensive, practical methods approximate gθ (L) with polynomials, e.g., 
+
+gθ (L)x =
+
+> K
+
+X
+
+> k=0
+
+θkTk(eL)x, (4) where Tk(·) is the Chebyshev polynomial and eL is the rescaled Laplacian[ 32 , 25 ]. Spectral GNNs therefore provide a principled way to model graph signals in terms of frequency components, enabling the separation of low-frequency smoothing effects and high-frequency variations. 3Chebyshev Filter Spectral Parsing GNN GNN GNN ATKT TDownstream Task Classification Few Shot    
+
+> ...  ...
+> Local Propagation Global Propagation Heat Kernel K Adjacency A Transport T Proto Assignment Cross-domain Propagation Shared Geometry By GW Barycenter Propagation Matrix TT*KGNN
+
+Figure 2: Overview of SPG. 
+
+## 3 Method 
+
+Our goal is to address two key obstacles in cross-graph transfer: the mismatch between coupled graph-signal components and propagation behaviors, and the limited transfer of pairwise structural knowledge caused by the restricted coverage of predefined substructures. As shown in Figure 2, SPG combines spectral parsing with prototype-guided spatial propagation. We first use spectral parsing to transform raw node features into unified spectral representations. We then use GW barycenter learning to align and distill node-pair relations into a shared prototype geometry C⋆, together with prototype-guided transports {Tm}. This geometry is converted into a prototype kernel K⋆ and projected back to each graph as Pm = TmK⋆T ⊤ 
+
+> m
+
+, enabling cross-graph structural knowledge to directly guide node propagation. Finally, a gating mechanism adaptively combines local adjacency, global diffusion, and prototype-guided propagation. 
+
+3.1 Spectral Structural Parsing 
+
+Directly sharing an encoder across graphs is difficult when raw features have different dimensions or incompatible spectral characteristics. To reduce this mismatch, we first transform each graph into a unified spectral representation before propagation. Let A be the adjacency matrix, D the degree matrix, and S = D−1/2AD −1/2 the normalized propagation operator. Based on S, we apply a set of learnable Chebyshev filters to decompose the input signal into multiple frequency-aware responses [ 25 ]. We set T0(X) = X and T1(X) = SX ,and compute 
+
+Tk(X) = 2 S T k−1(X) − Tk−2(X), k ≥ 2, Zα =
+
+> K
+
+X
+
+> k=0
+
+θα,k Tk(X), α = 1 , . . . , M f . (5) where Tk(X) denotes the k-order Chebyshev basis response, θα,k are the learnable coefficients of the α-th spectral filter, and Zα is the corresponding filtered signal obtained by combining these basis responses. Different coefficient patterns allow different filters to emphasize different spectral ranges, producing complementary graph-signal components before propagation. This design avoids expensive eigendecomposition and enables the model to learn multiple frequency responses from graph signals, allowing local variations and smoother global structure to be adaptively modeled before propagation. As a result, the extracted signals are more stable across domains than raw node attributes. To remove redundant directions in each spectral band and obtain a unified feature dimension, we apply truncated SVD to each filtered response [ 33 ]. Specifically, for each spectral component, we 4retain the leading r singular directions and discard low-energy components. The reduced spectral responses are then concatenated across all frequency bands and projected into a unified space using a learnable linear transformation. Therefore, spectral parsing is not merely used for dimensional alignment. It reorganizes raw node features into frequency-aware structural components, providing a cleaner basis for subsequent local, global, and prototype-guided propagation. We further justify the robustness of the Chebyshev filtering step with the following stability result. 
+
+Proposition 1 (Stability of Chebyshev spectral filtering) . For two aligned graph signals (S, X )
+
+and ( eS, eX), where S and eS are symmetric normalized propagation operators with ∥S∥2, ∥ eS∥2 ≤ 1,each spectral filter satisfies ∥pα(S)X − pα( eS) eX∥F ≤ aα∥X − eX∥F + bα∥S − eS∥2∥ eX∥F , where 
+
+pα(S) = PKch  
+
+> k=0
+
+θα,k Tk(S), and aα and bα depend only on the coefficients of the α-th filter and the Chebyshev order. 
+
+Proposition 1 bounds the filtered-signal difference by a feature perturbation term and a graph-operator perturbation term. This separation shows that spectral parsing does not arbitrarily amplify feature or topology mismatch; instead, its sensitivity is controlled by the learned filter coefficients and Chebyshev order. Therefore, Chebyshev spectral parsing provides a stable preprocessing step before multi-path propagation. The proof is provided in Appendix A.1. 
+
+3.2 Shared Prototype Geometry 
+
+Spectral parsing provides frequency-aware structural cues for propagation, but these cues remain domain-specific. To obtain a reusable cross-domain structural prior, we further construct a shared prototype geometry from multiple source graphs. Unlike isolated structural tokens and a limited set of substructures, this prototype space preserves internal relations among prototypes and can be projected back to each graph to directly guide propagation. For each source graph Gm, we compute the normalized Laplacian Lm = I − D−1/2 
+
+> m
+
+AmD−1/2
+
+> m
+
+and define a heat kernel K(m) 
+
+> t
+
+= exp( −tgw Lm). Based on this kernel, we compute the diffusion distance: 
+
+dt(i, j )2 = K(m) 
+
+> t
+
+(i, i ) + K(m) 
+
+> t
+
+(j, j ) − 2K(m) 
+
+> t
+
+(i, j ). (6) This distance induces a structural cost matrix Cm with entries Cm(i, j ) = dt(i, j ). The motivation for using diffusion geometry is that it captures intrinsic multi-hop structure more robustly than raw adjacency. This is particularly important in the cross-domain setting, where transferable patterns are often geometric rather than strictly local. Given the source cost matrices {Cm}Mm=1 , we estimate a shared prototype geometry C⋆ ∈ Rp×p
+
+through a GW barycenter: 
+
+C⋆ = arg min 
+
+> C, {Tm}
+> M
+
+X
+
+> m=1
+
+λm
+
+X
+
+> i,i ′,k,l
+
+ Cm(i, i ′) − C(k, l )2 Tm(i, k )Tm(i′, l ), (7) where Tm ∈ Rnm×p is the transport from graph m to the p prototypes, and λm is the domain weight[34]. This step aligns graphs through their internal relational structure. The learned geometry C⋆ encodes pairwise relations among structural prototypes, while the transports {Tm} connect nodes in each source graph to this shared prototype space. Intuitively, when two nodes in a source graph have a strong structural relation and are softly matched to two prototypes, GW barycenter learning encourages the corresponding prototype pair to preserve this relation. Thus, C⋆ represents the relational geometry distilled from source graphs, rather than independent prototype units. Then we convert the prototype cost matrix C⋆ into a similarity-based prototype kernel K⋆. Since C⋆
+
+encodes distances among prototypes, we first transform it into a symmetric prototype affinity graph and then compute a heat-diffusion kernel: 
+
+K⋆ = exp( −L(A⋆)) . (8) The kernel K⋆ defines how information propagates among structural prototypes, and therefore serves as a shared structural prior learned from all source graphs. For each graph Gm, this prior is projected back to the node space through the prototype-guided transport: 
+
+Pm = TmK⋆T ⊤ 
+
+> m
+
+. (9) 5Here, Tm maps nodes to the shared prototype space, K⋆ performs propagation among prototypes, and 
+
+T ⊤ 
+
+> m
+
+maps the propagated prototype information back to nodes. Thus, Pm defines a prototype-induced node-to-node propagation operator, allowing structural relations learned across source graphs to directly guide graph-specific node updates. The following propositions justify this projected prototype prior from two perspectives: whether the shared prototype geometry can faithfully return to graph-specific node space, and whether the resulting propagation operator remains stable. 
+
+Proposition 2 (Distortion-controlled prototype geometry) . Given node-to-prototype transport Tm
+
+and Rm = diag( wm)−1Tm, where wm = Tm1, the lifted geometry Cm = RmC⋆R⊤ 
+
+> m
+
+satisfies 
+
+∥Cm − Cm∥2 
+
+> wm⊗wm
+
+≤ D GW (Cm, C ⋆, T m).
+
+Proposition 2 shows that the shared prototype geometry can be lifted back to each graph with an error controlled by the corresponding GW distortion. Thus, a well-aligned transport Tm ensures that the lifted geometry Cm preserves graph-specific pairwise relations. This supports using the prototype space as a universal structural prior for propagation. The proof is provided in Appendix A.2. 
+
+Proposition 3 (Stable prototype-guided propagation) . Let PT = T K ⋆T ⊤. If K⋆ ⪰ 0 is entrywise nonnegative, then PT ⪰ 0, rank( PT ) ≤ p, and bPT = D−1/2 
+
+> T
+
+PT D−1/2 
+
+> T
+
+satisfies ∥ bPT H∥F ≤ ∥ H∥F
+
+on the positive-degree support. Moreover, for transports T, eT , ∥PT − P eT ∥F ≤ ∥ K⋆∥2(∥T ∥2 +
+
+∥ eT ∥2)∥T − eT ∥F .
+
+Proposition 3 shows that the induced propagation operator is low-rank, non-expansive after normaliza-tion, and stable under transport perturbations. Thus, prototype-guided propagation can inject shared structural knowledge without introducing uncontrolled feature amplification or excessive sensitivity to transport estimation. The proof is provided in Appendix A.3. 
+
+3.3 Gated Multi-path Structural Propagation 
+
+After obtaining the spectral representation Xspec and the shared prototype kernel K⋆, we perform multi-path structural propagation. We initialize node states as H(0) = Xspec Win . At each layer, SPG uses the adjacency operator A, the heat-diffusion operator Ktℓ , and the prototype-induced operator Pproto = T K ⋆T ⊤, which encode local adjacency structure, global diffusion structure, and transferable prototype-guided structure, respectively. The three propagation paths are computed as 
+
+H(ℓ) 
+
+> A
+
+= σ(AH (ℓ−1) W (ℓ) 
+
+> A
+
+), H(ℓ) 
+
+> K
+
+= σ(Ktℓ H(ℓ−1) W (ℓ) 
+
+> K
+
+), H(ℓ) 
+
+> P
+
+= σ(Pproto H(ℓ−1) W (ℓ) 
+
+> P
+
+). (10) These three paths provide complementary structural views: H(ℓ) 
+
+> A
+
+captures neighborhood-level in-formation, H(ℓ) 
+
+> K
+
+captures smoother long-range diffusion patterns, and H(ℓ) 
+
+> P
+
+injects structural priors transferred through the shared prototype space. Instead of using fixed weights, SPG learns a node-wise gate to adaptively combine these paths: 
+
+g(ℓ) 
+
+> i
+
+= softmax 
+
+
+
+W (ℓ) 
+
+> g
+
+[H(ℓ)
+
+> A,i
+
+∥H(ℓ)
+
+> K,i
+
+∥H(ℓ)
+
+> P,i
+
+]
+
+
+
+, H(ℓ) 
+
+> i
+
+= g(ℓ)
+
+> A,i
+
+H(ℓ) 
+
+> A,i
+
++ g(ℓ)
+
+> K,i
+
+H(ℓ) 
+
+> K,i
+
++ g(ℓ)
+
+> P,i
+
+H(ℓ)
+
+> P,i
+
+, (11) where g(ℓ) 
+
+> i
+
+= [ g(ℓ)
+
+> A,i
+
+, g (ℓ)
+
+> K,i
+
+, g (ℓ)
+
+> P,i
+
+]. This adaptive fusion allows each node to balance local adjacency, global diffusion, and prototype-guided structural priors according to its structural context. Com-bined with spectral parsing, it further routes the decomposed graph-signal components to suitable propagation paths, reducing the mismatch between spectral components and propagation behaviors. 
+
+3.4 Adaptation to Unseen Graphs 
+
+An important advantage of SPG is that it supports lightweight adaptation to unseen graphs. For a new graph Gnew , we first compute its spectral representation Xspec ,new using the same spectral parsing module as in pretraining, which maps the new graph into the pretrained frequency-aware input space. We then keep the pretrained prototype kernel K⋆ fixed and only estimate a node-to-prototype transport matrix Tnew ∈ Rn×p. For small and medium-sized graphs, we compute the diffusion-distance matrix 
+
+Cnew and obtain Tnew by entropic GW alignment to the learned prototype geometry C⋆, following the same objective as Eq. (7) with C⋆ fixed and graph-specific variables replaced by Cnew and Tnew .6For large graphs, we use a scalable KMeans-style soft assignment. Importantly, we do not use arbitrary KMeans cluster labels as prototype indices. Instead, nodes are assigned to prototype-aligned centers {c⋆k}pk=1 , whose ordering is tied to the rows and columns of K⋆:
+
+Tnew (i, k ) = exp( −∥ xi − c⋆k∥22/τ )
+
+Ppℓ=1 exp( −∥ xi − c⋆ℓ ∥22/τ ) . (12) The centers {c⋆k}pk=1 are obtained by averaging source-graph spectral representations assigned to each prototype through the pretrained transports {Tm}, so the k-th center is tied to the k-th prototype in 
+
+K⋆. Thus, soft assignment controls node-to-prototype weights, while the prototype ordering remains fixed by the learned prototype space. Finally, the shared prototype prior is projected back to the new graph: 
+
+Pproto ,new = Tnew K⋆T ⊤
+
+> new
+
+. (13) 
+
+## 4 Experiments 
+
+We evaluate SPG on node and graph classification tasks across diverse graph domains. For node classification, SPG is pretrained on four graphs, i.e., Cora, Photo, CS, and Chameleon and evaluated on cross-domain graphs, including Computers, Physics, Citeseer, Pubmed, Cornell, Wisconsin, ogbn-arxiv, and ogbn-products[ 35 – 37 , 36 , 38 ]. For graph classification, we evaluate on COLLAB, DD, ENZYMES, IMDB-B, and PROTEINS[ 39 ]. We consider both the 1:1:8 train/validation/test split and the 1-shot setting to assess representation quality and few-shot transferability under extreme label scarcity. We compare SPG with self-supervised graph learning methods, including GRACE, BGRL, and GraphMAE2 [ 40 –42 ], as well as graph foundation models, including GCOPE, GraphAny, SAMGPT, TIG, and GraphGlue [ 43 , 44 , 20 , 45 , 46 ]. More experimental details, including the pre-training loss, are provided in Appendix D. 
+
+4.1 1-shot Node and Graph Classification 
+
+Table 1 reports the 1-shot results on node classification and graph classification tasks, where only one labeled sample per class is available. This setting directly evaluates whether different pretrained models can adapt to downstream tasks with extremely limited supervision. For 1-shot node classification, SPG achieves the best results on most in-domain and cross-domain datasets. The improvement is more evident on cross-domain target graphs, where the model must adapt to different feature spaces, graph scales, and structural distributions with only one labeled node per class. Compared with self-supervised baselines such as BGRL, GraphMAE2, and GRACE, SPG obtains higher mean accuracy on all datasets, indicating that self-pretraining alone is insufficient for 1-shot transfer. SPG also consistently outperforms graph foundation models. These methods enhance transferability through shared feature spaces, prompts, structural tokens, or geometric alignment, but they still have limited ability to preserve fine-grained relational structure and directly use it in propagation. In contrast, SPG preserves transferable pairwise relations in a shared Gromov-Wasserstein prototype geometry and projects them back as a propagation operator, providing more effective structural guidance for few-shot node classification across graph domains. For 1-shot graph classification, SPG achieves the best results on all reported graph-level benchmarks. In this setting, each class provides only one labeled graph, while graph labels often depend on subgraph organization and node-pair structural relations, making it difficult to learn class-specific decision boundaries from supervision alone. SPG alleviates this issue by using the prototype-guided structural space to characterize graphs through shared relational patterns. This allows the model to rely less on raw node features or domain-specific signals and produce graph representations that are easier to distinguish across classes under extreme label scarcity. 
+
+4.2 Self-Supervised Pre-training Evaluation 
+
+Table 2 reports the node and graph classification results after self-supervised pre-training. SPG is pretrained on four source graphs and evaluated with a linear classifier under both in-domain and cross-domain settings. This tests whether the learned encoder can transfer across different feature spaces, graph scales, and topological patterns. 7Table 1: 1-shot performance comparison on node and graph classification. Results are accuracy (%, mean ± std); best and runner-up results are bolded and underlined, respectively. 
+
+Graph Foundation Models Self-supervised Pre-training SPG GCOPE GraphAny TIG SAMGPT GraphGlue BGRL GraphMAE2 GRACE 
+
+In-domain Node Classification 
+
+Cora 53 .29 ± 10 .12 50 .59 ± 9.05 39 .40 ± 8.41 46 .06 ± 10 .78 39 .65 ± 7.27 32 .83 ± 6.24 36 .85 ± 5.98 44 .14 ± 9.22 41 .34 ± 5.74 
+
+Photo 64 .63 ± 10 .19 49 .90 ± 7.57 61 .53 ± 9.87 53 .95 ± 9.47 55 .32 ± 9.01 48 .33 ± 2.69 42 .59 ± 9.21 57 .88 ± 9.49 55 .70 ± 8.40 
+
+CS 71 .99 ± 6.87 63 .04 ± 8.11 70 .04 ± 6.99 70 .89 ± 7.14 64 .29 ± 8.41 67 .43 ± 9.08 41 .05 ± 7.42 65 .56 ± 6.98 60 .72 ± 6.94 
+
+Chameleon 28 .01 ± 4.42 27 .66 ± 4.41 24 .91 ± 4.20 24 .96 ± 4.82 24 .94 ± 4.21 21 .68 ± 1.79 21 .16 ± 2.72 25 .15 ± 4.77 23 .52 ± 3.34 
+
+Cross-domain Node Classification 
+
+Citeseer 45 .44 ± 9.68 39 .58 ± 8.29 35 .58 ± 6.99 40 .55 ± 8.78 34 .58 ± 7.12 28 .70 ± 4.70 25 .97 ± 3.21 38 .86 ± 8.85 23 .03 ± 2.74 
+
+Pubmed 55 .73 ± 11 .65 48 .32 ± 8.36 51 .84 ± 9.42 51 .01 ± 6.54 49 .20 ± 8.52 48 .65 ± 6.27 37 .69 ± 7.40 51 .56 ± 8.81 39 .80 ± 6.64 
+
+Physics 83 .84 ± 7.66 58 .03 ± 9.67 75 .01 ± 11 .41 68 .14 ± 15 .76 61 .55 ± 13 .04 69 .99 ± 8.69 54 .56 ± 10 .27 78 .76 ± 9.14 50 .44 ± 10 .98 
+
+Cornell 44 .52 ± 12 .37 35 .25 ± 10 .94 36 .22 ± 9.52 29 .36 ± 11 .34 30 .46 ± 7.77 36 .89 ± 9.49 26 .47 ± 9.91 31 .36 ± 10 .60 26 .47 ± 7.49 
+
+Wisconsin 52 .81 ± 15 .06 37 .25 ± 11 .32 23 .32 ± 8.61 31 .01 ± 8.48 32 .19 ± 7.27 36 .17 ± 9.23 22 .36 ± 9.18 33 .61 ± 10 .91 23 .50 ± 9.89 
+
+Arxiv 23 .04 ± 6.06 7.47 ± 1.43 12 .64 ± 2.15 2.62 ± 1.01 17 .25 ± 3.94 4.73 ± 0.85 4.15 ± 0.82 14 .46 ± 3.47 7.72 ± 1.89 
+
+Products 17 .96 ± 5.10 3.80 ± 0.78 10 .97 ± 4.48 4.02 ± 1.37 15 .16 ± 2.72 3.71 ± 0.86 11 .21 ± 2.39 14 .17 ± 4.34 13 .07 ± 2.21 
+
+Cross-domain Graph Classification 
+
+COLLAB 53 .68 ± 10 .60 38 .06 ± 6.97 – 50 .27 ± 1.19 46 .46 ± 10 .57 38 .22 ± 5.76 43 .42 ± 11 .74 42 .64 ± 7.97 42 .72 ± 8.08 
+
+DD 74 .84 ± 11 .98 59 .61 ± 13 .10 – 52 .08 ± 0.34 52 .15 ± 5.20 51 .81 ± 5.32 51 .14 ± 4.23 51 .95 ± 5.68 51 .69 ± 4.22 
+
+ENZYMES 35 .66 ± 5.28 19 .75 ± 3.66 – 20 .02 ± 0.54 20 .12 ± 3.73 19 .75 ± 3.44 19 .19 ± 2.93 20 .07 ± 3.72 20 .11 ± 3.52 
+
+IMDB-B 64 .50 ± 11 .89 51 .91 ± 6.50 – 55 .74 ± 0.55 53 .30 ± 6.56 53 .56 ± 6.04 53 .44 ± 6.67 52 .81 ± 6.82 53 .09 ± 6.23 
+
+PROTEINS 65 .46 ± 7.14 54 .52 ± 8.71 – 53 .31 ± 0.31 53 .41 ± 9.29 53 .36 ± 9.41 51 .62 ± 5.96 53 .37 ± 9.13 53 .62 ± 8.83 
+
+Table 2: Self-supervised representation learning performance on node and graph classification. Re-sults are accuracy (%, mean ± std); best and runner-up results are bolded and underlined, respectively. 
+
+Graph Foundation Models Self-supervised Pre-training SPG GCOPE GraphAny TIG SAMGPT GraphGlue BGRL GraphMAE2 GRACE 
+
+In-domain Node Classification 
+
+Cora 84 .10 ± 0.54 79 .97 ± 0.50 78 .83 ± 2.11 81 .19 ± 1.26 81 .79 ± 0.71 77 .54 ± 0.64 81 .22 ± 1.17 82 .38 ± 1.10 77 .28 ± 0.34 
+
+Photo 93 .60 ± 0.19 80 .65 ± 0.54 87 .48 ± 3.44 92 .88 ± 0.35 89 .92 ± 0.65 87 .57 ± 0.40 89 .48 ± 0.93 90 .24 ± 0.15 91 .51 ± 0.23 
+
+CS 93 .45 ± 0.26 86 .13 ± 0.20 90 .66 ± 0.50 92 .62 ± 0.26 88 .76 ± 0.20 86 .14 ± 0.27 88 .55 ± 0.97 91 .82 ± 0.09 91 .97 ± 0.08 
+
+Chameleon 46 .18 ± 1.07 53 .10 ± 0.83 57 .50 ± 1.47 34 .52 ± 2.80 30 .19 ± 2.53 24 .26 ± 3.48 26 .95 ± 1.28 44 .18 ± 2.90 35 .54 ± 0.52 
+
+Cross-domain Node Classification 
+
+Computers 88 .85 ± 0.46 75 .04 ± 0.19 86 .38 ± 0.36 87 .66 ± 0.33 78 .57 ± 0.16 83 .91 ± 1.01 87 .42 ± 2.24 79 .81 ± 0.54 83 .23 ± 0.03 
+
+Physics 95 .83 ± 0.06 92 .34 ± 0.11 85 .55 ± 1.13 95 .36 ± 0.13 90 .95 ± 0.56 93 .46 ± 0.34 85 .97 ± 0.73 92 .36 ± 0.08 90 .35 ± 0.28 
+
+Citeseer 72 .81 ± 0.73 71 .56 ± 0.89 68 .94 ± 1.51 70 .18 ± 0.99 69 .16 ± 0.37 62 .80 ± 1.71 69 .17 ± 1.41 71 .39 ± 0.76 55 .09 ± 1.71 
+
+Pubmed 87 .41 ± 0.18 81 .73 ± 0.22 84 .56 ± 0.22 85 .34 ± 0.28 79 .07 ± 1.20 81 .48 ± 0.31 77 .85 ± 1.83 83 .11 ± 0.59 74 .25 ± 0.21 
+
+Cornell 61 .24 ± 2.81 45 .89 ± 14 .54 54 .20 ± 3.28 42 .65 ± 7.85 49 .54 ± 4.89 44 .22 ± 1.67 47 .03 ± 3.03 48 .49 ± 2.05 44 .60 ± 1.63 
+
+Wisconsin 68 .75 ± 2.50 52 .04 ± 11 .10 61 .99 ± 2.49 47 .51 ± 6.69 49 .47 ± 2.58 46 .76 ± 2.26 46 .87 ± 0.20 56 .12 ± 1.59 43 .28 ± 2.84 
+
+Arxiv 70 .21 ± 0.71 65 .24 ± 0.43 59 .64 ± 0.52 16 .14 ± 0.04 61 .32 ± 0.77 64 .14 ± 0.49 59 .20 ± 0.45 57 .19 ± 0.53 66 .80 ± 0.62 
+
+Products 81 .89 ± 1.14 58 .58 ± 0.37 79 .49 ± 0.68 27 .31 ± 0.02 79 .10 ± 0.82 80 .88 ± 0.96 77 .16 ± 0.87 81 .07 ± 0.91 77 .68 ± 0.64 
+
+Cross-domain Graph Classification 
+
+COLLAB 93 .73 ± 0.61 71 .41 ± 1.10 – 72 .34 ± 1.19 71 .26 ± 1.25 70 .74 ± 1.89 73 .78 ± 1.06 71 .48 ± 1.13 72 .29 ± 1.14 
+
+DD 91 .75 ± 1.48 74 .00 ± 2.12 – 66 .38 ± 1.71 65 .32 ± 1.89 67 .36 ± 1.35 65 .15 ± 2.55 66 .38 ± 2.74 64 .84 ± 1.33 
+
+ENZYMES 49 .29 ± 4.62 20 .88 ± 2.35 – 22 .13 ± 2.82 24 .08 ± 1.63 23 .25 ± 3.79 24 .17 ± 2.25 23 .83 ± 1.43 25 .63 ± 0.86 
+
+IMDB-B 90 .37 ± 1.28 66 .02 ± 3.24 – 69 .27 ± 1.83 69 .60 ± 1.37 65 .55 ± 2.13 67 .67 ± 3.98 67 .10 ± 3.25 67 .22 ± 2.80 
+
+PROTEINS 89 .16 ± 1.76 72 .53 ± 0.61 – 66 .44 ± 2.20 68 .53 ± 1.13 65 .90 ± 2.82 63 .95 ± 2.87 69 .11 ± 0.74 65 .99 ± 4.30 
+
+For node classification, under in-domain setting, SPG achieves the best results on the homophilous source graphs Cora, Photo, and CS, showing that it can effectively preserve class-discriminative structural signals during pre-training. On the heterophilous source graph Chameleon, SPG remains competitive although GraphAny performs best. For cross-domain node classification, SPG obtains the best performance on all target datasets. The gains are especially clear on heterophilous datasets such as Cornell and Wisconsin, where simple neighborhood aggregation may introduce noisy information. This suggests that spectral parsing helps separate useful frequency components before propagation, while prototype-guided propagation provides transferable structural priors across graphs. For graph classification, SPG also achieves the best results. The strong performance on social, bioinformatics, and molecular datasets shows that the prototype-guided structural space can capture structural patterns that are shared across domains. Overall, these results demonstrate that SPG effectively combines spectral parsing, local-global propagation, and transferable structural priors, leading to robust performance across both node classification and graph classification tasks. 8(a) Citeseer (b) Cornell 
+
+Figure 3: Prototype assignment on Citeseer and Cornell. 
+
+4.3 Ablation Study 
+
+Table 3: Ablation on SPG key components                                                                                      
+
+> Setting Cora Cornell COLLAB ENZYMES SPG 84 .10 ±0.54 61 .24 ±2.81 93 .73 ±0.61 49 .29 ±4.62
+> w/o spectral 83 .62 ±0.12 49 .79 ±2.90 74 .73 ±1.70 40 .21 ±3.21
+> proto_only 83 .85 ±0.74 58 .90 ±2.37 96 .03 ±0.19 53 .13 ±4.99
+> adj_only 80 .31 ±1.68 46 .07 ±4.75 83 .18 ±0.78 46 .50 ±4.17
+> heat_only 81 .23 ±0.54 43 .04 ±3.67 84 .44 ±0.36 49 .08 ±4.55
+> w/o proto 80 .64 ±1.45 46 .48 ±3.61 92 .08 ±0.27 47 .33 ±3.96
+> w/o adj 84 .59 ±0.40 59 .31 ±2.83 95 .27 ±0.43 52 .29 ±5.13
+> w/o heat 84 .26 ±0.50 58 .62 ±2.99 93 .58 ±0.60 50 .33 ±3.55
+> w/o adapt 81 .18 ±1.52 45 .38 ±3.25 92 .77 ±0.78 48 .00 ±5.27
+
+Table 3 evaluates the contribution of each com-ponent in SPG. Overall, SPG achieves strong and balanced performance, showing the effec-tiveness of spectral parsing, prototype-guided propagation, and adaptation to unseen graphs. For node classification, removing the prototype branch or target-graph adaptation leads to clear degradation, especially on Cornell, where la-bels are less aligned with neighborhoods. This indicates that the learned prototype geometry provides useful cross-graph structural priors. The drop of w/o adapt shows that estimating the target-graph transport is important for transferring the learned prototype geometry to unseen graphs. Here, we replace the feature-guided transport with a uniform transport, so the pretrained prototype prior cannot be properly aligned with the target structure, weakening cross-domain transfer. Re-moving spectral parsing also hurts performance, confirming that frequency-aware decomposition provides better inputs for structural propagation. For graph classification, w/o adj , w/o heat , and 
+
+proto_only can outperform SPG on some datasets. This may be because graph-level labels often depend more on transferable node-pair relations and subgraph organization than on raw adjacency neighborhoods. In such cases, the prototype space provides a compact structural abstraction, while adjacency or heat diffusion may introduce graph-specific local noise. Nevertheless, these variants are not consistently better across all tasks, and SPG remains more balanced across node-level and graph-level settings by adaptively combining the complementary propagation operators. 
+
+4.4 Model Analysis  
+
+> (a) CS (b) Wisconsin
+
+Figure 4: Effect of filters and prototypes on ACC. 
+
+(a) Spectral distribution. (b) Spectral filter responses. 
+
+Figure 5: Spectral analysis of SPG. We further analyze the behavior of SPG from three perspectives: the sensitivity to spectral filters and prototypes, the learned spectral re-sponses, and the assignment of the prototypes. Figure 3 shows prototype assignments on Cite-seer and Cornell. Different graphs activate dif-ferent prototype regions, and different classes within each graph concentrate on distinct pro-totype subsets, indicating that the learned pro-totypes capture class-relevant structural roles. The assignments are neither uniform nor col-lapsed, suggesting that the prototype space pro-vides a discriminative structural partition. The stronger concentration on Cornell further shows that heterophilous graphs rely more on informa-tive structural prototypes, where direct neighbor-hood aggregation is less aligned with labels. As shown in Figure 4, we vary the number of spec-tral filters and structural prototypes. CS remains stable across most settings, while Wisconsin is more sensitive, especially to the number of filters. Using too few filters hurts performance on both datasets, showing that a single or small number of 9filters cannot cover the needed frequency patterns. This is more evident on heterophilous graphs, where both low-frequency smoothing and high-frequency local variations are useful. Very large prototype sets slightly reduce performance, suggesting that a compact prototype space is sufficient to capture the main structural relations. Figure 5 shows the spectral behavior of SPG. The right figure visualizes the learned filter responses computed from the Chebyshev coefficients. Details are provided in Appendix D. The filters have different response peaks and power-weighted centers, indicating that they cover complementary frequency regions rather than collapsing to one filter. The left figure shows that spectral parsing reduces excessive high-frequency energy and strengthens low-and mid-frequency components. This suggests that SPG reorganizes raw node features into more useful spectral representations before local, global, and prototype-guided propagation. 
+
+## 5 Conclusion 
+
+This paper tackles structural transfer in graph foundation models, where graphs differ in features, spectra, and topology. SPG moves beyond feature alignment, discrete structural units, and limited structural vocabularies by learning transferable pairwise relations through a Gromov-Wasserstein prototype geometry. Together with spectral parsing, it separates frequency-aware graph signals and reuses the learned prototype relations as propagation priors on unseen graphs. 
+
+## References 
+
+[1] Haitao Mao, Zhikai Chen, Wenzhuo Tang, Jianan Zhao, Yao Ma, Tong Zhao, Neil Shah, Mikhail Galkin, and Jiliang Tang. Position: Graph foundation models are already here. In Forty-first International Conference on Machine Learning, ICML 2024, Vienna, Austria, July 21-27, 2024 .OpenReview.net, 2024. [2] Zehong Wang, Zheyuan Liu, Tianyi Ma, Jiazheng Li, Zheyuan Zhang, Xingbo Fu, Yiyang Li, Zhengqing Yuan, Wei Song, Yijun Ma, et al. Graph foundation models: A comprehensive survey. arXiv preprint arXiv:2505.15116 , 2025. [3] Jiawei Liu, Cheng Yang, Zhiyuan Lu, Junze Chen, Yibo Li, Mengmei Zhang, Ting Bai, Yuan Fang, Lichao Sun, Philip S Yu, et al. Towards graph foundation models: A survey and beyond. 
+
+arXiv preprint arXiv:2310.11829 , 2023. [4] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. Bert: Pre-training of deep bidirectional transformers for language understanding. In Proceedings of the 2019 conference of the North American chapter of the association for computational linguistics: human language technologies, volume 1 (long and short papers) , pages 4171–4186, 2019. [5] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, et al. An image is worth 16x16 words: Transformers for image recognition at scale. arXiv preprint arXiv:2010.11929 , 2020. [6] Zonghan Wu, Shirui Pan, Fengwen Chen, Guodong Long, Chengqi Zhang, and Philip S. Yu. A comprehensive survey on graph neural networks. IEEE Trans. Neural Networks Learn. Syst. , 32 (1):4–24, 2021. doi: 10.1109/TNNLS.2020.2978386. [7] Jie Zhou, Ganqu Cui, Shengding Hu, Zhengyan Zhang, Cheng Yang, Zhiyuan Liu, Lifeng Wang, Changcheng Li, and Maosong Sun. Graph neural networks: A review of methods and applications. AI open , 1:57–81, 2020. [8] Mikhail Belkin and Partha Niyogi. Laplacian eigenmaps for dimensionality reduction and data representation. Neural Computation , 15(6):1373–1396, 2003. [9] Hao Liu, Jiarui Feng, Lecheng Kong, Ningyue Liang, Dacheng Tao, Yixin Chen, and Muhan Zhang. One for all: Towards training one graph model for all classification tasks. arXiv preprint arXiv:2310.00149 , 2023. [10] Duo Wang, Yuan Zuo, Fengzhi Li, and Junjie Wu. Llms as zero-shot graph learners: Alignment of gnn representations with llm token embeddings. Advances in neural information processing systems , 37:5950–5973, 2024. 10 [11] Runjin Chen, Tong Zhao, Ajay Kumar Jaiswal, Neil Shah, and Zhangyang Wang. Llaga: Large language and graph assistant. In Ruslan Salakhutdinov, Zico Kolter, Katherine A. Heller, Adrian Weller, Nuria Oliver, Jonathan Scarlett, and Felix Berkenkamp, editors, Forty-first International Conference on Machine Learning, ICML 2024, Vienna, Austria, July 21-27, 2024 , Proceedings of Machine Learning Research, pages 7809–7823. PMLR / OpenReview.net, 2024. URL 
+
+https://proceedings.mlr.press/v235/chen24bh.html .[12] Jiabin Tang, Yuhao Yang, Wei Wei, Lei Shi, Lixin Su, Suqi Cheng, Dawei Yin, and Chao Huang. Graphgpt: Graph instruction tuning for large language models. In Grace Hui Yang, Hongning Wang, Sam Han, Claudia Hauff, Guido Zuccon, and Yi Zhang, editors, Proceedings of the 47th International ACM SIGIR Conference on Research and Development in Information Retrieval, SIGIR 2024, Washington DC, USA, July 14-18, 2024 , pages 491–500. ACM, 2024. doi: 10.1145/3626772.3657775. URL https://doi.org/10.1145/3626772.3657775 .[13] Thomas N. Kipf and Max Welling. Semi-supervised classification with graph convolutional networks. In 5th International Conference on Learning Representations, ICLR 2017, Toulon, France, April 24-26, 2017, Conference Track Proceedings . OpenReview.net, 2017. URL 
+
+https://openreview.net/forum?id=SJU4ayYgl .[14] Sami Abu-El-Haija, Bryan Perozzi, Amol Kapoor, Nazanin Alipourfard, Kristina Lerman, Hrayr Harutyunyan, Greg Ver Steeg, and Aram Galstyan. Mixhop: Higher-order graph convolutional architectures via sparsified neighborhood mixing. In international conference on machine learning , pages 21–29. PMLR, 2019. [15] Johannes Klicpera, Stefan Weißenberger, and Stephan Günnemann. Diffusion improves graph learning. In Hanna M. Wallach, Hugo Larochelle, Alina Beygelzimer, Florence d’Alché-Buc, Emily B. Fox, and Roman Garnett, editors, Advances in Neural Infor-mation Processing Systems 32: Annual Conference on Neural Information Processing Systems 2019, NeurIPS 2019, December 8-14, 2019, Vancouver, BC, Canada , pages 13333–13345, 2019. URL https://proceedings.neurips.cc/paper/2019/hash/ 23c894276a2c5a16470e6a31f4618d73-Abstract.html .[16] Zehong Wang, Zheyuan Zhang, Nitesh V. Chawla, Chuxu Zhang, and Yanfang Ye. GFT: graph foundation model with transferable tree vocabulary. In Amir Globersons, Lester Mackey, Danielle Belgrave, Angela Fan, Ulrich Paquet, Jakub M. Tomczak, and Cheng Zhang, edi-tors, Advances in Neural Information Processing Systems 38: Annual Conference on Neural Information Processing Systems 2024, NeurIPS 2024, Vancouver, BC, Canada, December 10 - 15, 2024 , 2024. URL http://papers.nips.cc/paper_files/paper/2024/hash/ c23ccf9eedf87e4380e92b75b24955bb-Abstract-Conference.html .[17] Shuo Wang, Bokui Wang, Zhixiang Shen, Boyan Deng, and Zhao Kang. Multi-domain graph foundation models: Robust knowledge transfer via topology alignment. In Aarti Singh, Maryam Fazel, Daniel Hsu, Simon Lacoste-Julien, Felix Berkenkamp, Tegan Maharaj, Kiri Wagstaff, and Jerry Zhu, editors, Forty-second International Conference on Machine Learning, ICML 2025, Vancouver, BC, Canada, July 13-19, 2025 , Proceedings of Machine Learning Research. PMLR / OpenReview.net, 2025. URL https://proceedings.mlr.press/v267/wang25dj.html .[18] Li Sun, Zhenhao Huang, Suyang Zhou, Qiqi Wan, Hao Peng, and Philip Yu. Riemanngfm: Learning a graph foundation model from riemannian geometry. In Proceedings of the ACM on Web Conference 2025 , pages 1154–1165, 2025. [19] Lianghao Xia, Ben Kao, and Chao Huang. Opengraph: Towards open graph foundation models. In Findings of the Association for Computational Linguistics: EMNLP 2024 , pages 2365–2379, 2024. [20] Xingtong Yu, Zechuan Gong, Chang Zhou, Yuan Fang, and Hui Zhang. Samgpt: Text-free graph foundation model for multi-domain pre-training and cross-domain adaptation. In Proceedings of the ACM on Web Conference 2025 , pages 1142–1153, 2025. [21] Haibo Chen, Xin Wang, Zeyang Zhang, Haoyang Li, Ling Feng, and Wenwu Zhu. Autogfm: Automated graph foundation model with adaptive architecture customization. In Forty-second International Conference on Machine Learning , 2025. 11 [22] Zeyang Zhang, Xin Wang, Ziwei Zhang, Zhou Qin, Weigao Wen, Hui Xue, Haoyang Li, and Wenwu Zhu. Spectral invariant learning for dynamic graphs under distribution shifts. Advances in Neural Information Processing Systems , 36:6619–6633, 2023. [23] Yushun Dong, Patrick Soga, Yinhan He, Song Wang, and Jundong Li. Graph neural networks are more than filters: Revisiting and benchmarking from A spectral perspective. In The Thirteenth International Conference on Learning Representations, ICLR 2025, Singapore, April 24-28, 2025 . OpenReview.net, 2025. URL https://openreview.net/forum?id=nWdQX5hOL9 .[24] Jingyuan Zhang, Xin Wang, Lei Yu, Zhirong Huang, Li Yang, and Fengjun Zhang. Restricted global-aware graph filters bridging gnns and transformer for node classification. In The Thirty-ninth Annual Conference on Neural Information Processing Systems .[25] Michaël Defferrard, Xavier Bresson, and Pierre Vandergheynst. Convolutional neural networks on graphs with fast localized spectral filtering. Advances in neural information processing systems , 29, 2016. [26] Facundo Mémoli. Gromov-wasserstein distances and the metric approach to object matching. 
+
+Found. Comput. Math. , 11(4):417–487, 2011. doi: 10.1007/S10208-011-9093-5. URL https: //doi.org/10.1007/s10208-011-9093-5 .[27] Vayer Titouan, Nicolas Courty, Romain Tavenard, and Rémi Flamary. Optimal transport for structured data with application on graphs. In International Conference on Machine Learning ,pages 6275–6284. PMLR, 2019. [28] Xinyu Ma, Xu Chu, Yasha Wang, Yang Lin, Junfeng Zhao, Liantao Ma, and Wenwu Zhu. Fused gromov-wasserstein graph mixup for graph-level classifications. In Alice Oh, Tris-tan Naumann, Amir Globerson, Kate Saenko, Moritz Hardt, and Sergey Levine, editors, 
+
+Advances in Neural Information Processing Systems 36: Annual Conference on Neural Information Processing Systems 2023, NeurIPS 2023, New Orleans, LA, USA, December 10 - 16, 2023 , 2023. URL http://papers.nips.cc/paper_files/paper/2023/hash/ 3173c427cb4ed2d5eaab029c17f221ae-Abstract-Conference.html .[29] Facundo Mémoli. Gromov–wasserstein distances and the metric approach to object matching. 
+
+Foundations of computational mathematics , 11(4):417–487, 2011. [30] Joan Bruna, Wojciech Zaremba, Arthur Szlam, and Yann LeCun. Spectral networks and locally connected networks on graphs. In Yoshua Bengio and Yann LeCun, editors, 2nd International Conference on Learning Representations, ICLR 2014, Banff, AB, Canada, April 14-16, 2014, Conference Track Proceedings , 2014. URL http://arxiv.org/abs/1312.6203 .[31] Antonio Ortega, Pascal Frossard, Jelena Kovacevic, José M. F. Moura, and Pierre Vandergheynst. Graph signal processing: Overview, challenges, and applications. Proc. IEEE , 106(5):808–828, 2018. doi: 10.1109/JPROC.2018.2820126. URL https://doi.org/10.1109/JPROC.2018. 2820126 .[32] David K. Hammond, Pierre Vandergheynst, and Rémi Gribonval. Wavelets on graphs via spectral graph theory. CoRR , abs/0912.3848, 2009. URL http://arxiv.org/abs/0912.3848 .[33] Gene H Golub and Christian Reinsch. Singular value decomposition and least squares solutions. In Linear algebra , pages 134–151. Springer, 1971. [34] Gabriel Peyré, Marco Cuturi, and Justin Solomon. Gromov-wasserstein averaging of kernel and distance matrices. In International conference on machine learning , pages 2664–2672. PMLR, 2016. [35] Prithviraj Sen, Galileo Namata, Mustafa Bilgic, Lise Getoor, Brian Galligher, and Tina Eliassi-Rad. Collective classification in network data. AI magazine , 29(3):93–93, 2008. [36] Hongbin Pei, Bingzhe Wei, Kevin Chen-Chuan Chang, Yu Lei, and Bo Yang. Geom-gcn: Geometric graph convolutional networks. In 8th International Conference on Learning Repre-sentations, ICLR 2020, Addis Ababa, Ethiopia, April 26-30, 2020 . OpenReview.net, 2020. URL 
+
+https://openreview.net/forum?id=S1e2agrFvS .12 [37] Oleksandr Shchur, Maximilian Mumme, Aleksandar Bojchevski, and Stephan Günnemann. Pitfalls of graph neural network evaluation. CoRR , abs/1811.05868, 2018. URL http:// arxiv.org/abs/1811.05868 .[38] Weihua Hu, Matthias Fey, Marinka Zitnik, Yuxiao Dong, Hongyu Ren, Bowen Liu, Michele Catasta, and Jure Leskovec. Open graph benchmark: Datasets for machine learning on graphs. 
+
+Advances in neural information processing systems , 33:22118–22133, 2020. [39] Christopher Morris, Nils M. Kriege, Franka Bause, Kristian Kersting, Petra Mutzel, and Marion Neumann. Tudataset: A collection of benchmark datasets for learning with graphs. CoRR ,abs/2007.08663, 2020. URL https://arxiv.org/abs/2007.08663 .[40] Yanqiao Zhu, Yichen Xu, Feng Yu, Qiang Liu, Shu Wu, and Liang Wang. Deep graph contrastive representation learning. arXiv preprint arXiv:2006.04131 , 2020. [41] Shantanu Thakoor, Corentin Tallec, Mohammad Gheshlaghi Azar, Rémi Munos, Petar Veliˇ ckovi´ c, and Michal Valko. Bootstrapped representation learning on graphs. In ICLR 2021 workshop on geometrical and topological representation learning , pages 1–14. OpenReview. net, 2021. [42] Zhenyu Hou, Yufei He, Yukuo Cen, Xiao Liu, Yuxiao Dong, Evgeny Kharlamov, and Jie Tang. Graphmae2: A decoding-enhanced masked self-supervised graph learner. In Proceedings of the ACM web conference 2023 , pages 737–746, 2023. [43] Haihong Zhao, Aochuan Chen, Xiangguo Sun, Hong Cheng, and Jia Li. All in one and one for all: A simple yet effective method towards cross-domain graph pretraining. In Proceedings of the 30th ACM SIGKDD Conference on Knowledge Discovery and Data Mining , pages 4443–4454, 2024. [44] Jianan Zhao, Zhaocheng Zhu, Mikhail Galkin, Hesham Mostafa, Michael Bronstein, and Jian Tang. Fully-inductive node classification on arbitrary graphs. arXiv preprint arXiv:2405.20445 ,2024. [45] Jitao Zhao, Yi Wang, Yawen Li, Dongxiao He, Di Jin, Zhiyong Feng, and Weixiong Zhang. Towards graph foundation model: Node feature transfer invariant modeling on general graphs. In Hakim Hacid, Yoelle Maarek, Francesco Bonchi, Ido Guy, and Emine Yilmaz, editors, 
+
+Proceedings of the ACM Web Conference 2026, WWW 2026, Dubai, United Arab Emirates, originally scheduled for April 13-17, 2026, rescheduled for June 29 - July 3, 2026 , pages 810–821. ACM, 2026. doi: 10.1145/3774904.3792236. URL https://doi.org/10.1145/ 3774904.3792236 .[46] Li Sun, Zhenhao Huang, Silei Chen, Lanxu Yang, Junda Ye, Sen Su, and Philip S. Yu. Multi-domain riemannian graph gluing for building graph foundation models. CoRR , abs/2603.00618, 2026. doi: 10.48550/ARXIV.2603.00618. URL https://doi.org/10.48550/arXiv.2603. 00618 .[47] Petar Veliˇ ckovi´ c, William Fedus, William L Hamilton, Pietro Liò, Yoshua Bengio, and R Devon Hjelm. Deep graph infomax. arXiv preprint arXiv:1809.10341 , 2018. [48] Hao Liu, Jiarui Feng, Lecheng Kong, Ningyue Liang, Dacheng Tao, Yixin Chen, and Muhan Zhang. One for all: Towards training one graph model for all classification tasks. In The Twelfth International Conference on Learning Representations, ICLR 2024, Vienna, Austria, May 7-11, 2024 . OpenReview.net, 2024. [49] Yufei He, Yuan Sui, Xiaoxin He, and Bryan Hooi. Unigraph: Learning a unified cross-domain foundation model for text-attributed graphs. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V. 1 , pages 448–459, 2025. [50] Zehong Wang, Zheyuan Zhang, Nitesh V Chawla, Chuxu Zhang, and Yanfang Ye. Gft: Graph foundation model with transferable tree vocabulary. Advances in neural information processing systems , 37:107403–107443, 2024. 13 A Detailed Theory and Proofs 
+
+We provide detailed proofs for the three propositions stated in the main text. The three results justify the main theoretical components of SPG: the Chebyshev filtering step is stable under feature and topology perturbations, the GW prototype geometry can be lifted back to each graph with distortion-controlled error, and the prototype-guided propagation operator is low-rank, non-expansive after normalization, and stable with respect to the estimated transport. Throughout the appendix, let S = D−1/2AD −1/2 be the normalized propagation operator and 
+
+pα(S) = PKch  
+
+> k=0
+
+θα,k Tk(S) be the α-th Chebyshev spectral filter. In Proposition 1, aα and bα
+
+denote scalar constants depending on the coefficients of the α-th filter and the Chebyshev order. In Proposition 2, wm = Tm1 denotes the node-mass vector of graph m. All norms without further qualification are spectral norms for matrices, except ∥ · ∥ F , which denotes the Frobenius norm. 
+
+A.1 Proof of Stable Spectral Parsing 
+
+The spectral parsing step maps raw node features into frequency-aware responses before message passing. Since source and target graphs may differ in both node attributes and graph topology, the desired stability statement must separate two effects: perturbation of the input signal and perturbation of the graph operator. We first control the size of each Chebyshev filter and then control how this filter changes when S is replaced by eS.Assume that S is symmetric and ∥S∥2 ≤ 1. By the spectral theorem, S = QΛQ⊤, where Q is orthogonal and every eigenvalue λi of S lies in [−1, 1] . Applying a polynomial to a symmetric matrix is equivalent to applying it to its eigenvalues, and therefore 
+
+Tk(S) = QT k(Λ) Q⊤,
+
+∥Tk(S)∥2 = ∥Tk(Λ) ∥2 = max  
+
+> i
+
+|Tk(λi)| ≤ 1, (14) because |Tk(λ)| ≤ 1 on [−1, 1] . Hence the whole filter satisfies 
+
+∥pα(S)∥2 =
+
+> Kch
+
+X
+
+> k=0
+
+θα,k Tk(S)
+
+> 2
+
+≤
+
+> Kch
+
+X
+
+> k=0
+
+|θα,k | ∥ Tk(S)∥2 ≤
+
+> Kch
+
+X
+
+> k=0
+
+|θα,k |. (15) This preliminary bound shows that a single spectral channel cannot amplify its input more than the 
+
+ℓ1-size of its Chebyshev coefficients. We next bound the operator perturbation. Let eS be another symmetric contraction, define ∆k =
+
+Tk(S) − Tk( eS), δk = ∥∆k∥2, and ε = ∥S − eS∥2. We prove by induction that δk ≤ ℓkε, where 
+
+ℓ0 = 0 , ℓ1 = 1 , and ℓk = 2 ℓk−1 + ℓk−2 + 2 for k ≥ 2. The base cases are explicit: 
+
+δ0 = ∥I − I∥2 = 0 = ℓ0ε, δ1 = ∥S − eS∥2 = ε = ℓ1ε. (16) For k ≥ 2, the Chebyshev recurrence Tk(x) = 2 xT k−1(x) − Tk−2(x) gives the following decompo-sition: 
+
+Tk(S) − Tk( eS) = 2 ST k−1(S) − Tk−2(S) − 2 eST k−1( eS) + Tk−2( eS)= 2 S
+
+
+
+Tk−1(S) − Tk−1( eS)
+
+
+
++ 2( S − eS)Tk−1( eS)
+
+−
+
+
+
+Tk−2(S) − Tk−2( eS)
+
+
+
+.
+
+(17) The first term propagates the existing (k−1) -order discrepancy, the second term is the new discrepancy introduced by replacing eS with S, and the third term carries the (k − 2) -order discrepancy. Taking spectral norms, using submultiplicativity, ∥S∥2 ≤ 1, and ∥Tk−1( eS)∥2 ≤ 1, we obtain 
+
+δk = ∥Tk(S) − Tk( eS)∥2
+
+≤ 2∥S∥2 ∥Tk−1(S) − Tk−1( eS)∥2 + 2 ∥S − eS∥2 ∥Tk−1( eS)∥2
+
++ ∥Tk−2(S) − Tk−2( eS)∥2
+
+≤ 2δk−1 + 2 ε + δk−2 ≤ 2ℓk−1ε + 2 ε + ℓk−2ε
+
+= (2 ℓk−1 + 2 + ℓk−2) ε = ℓkε. 
+
+(18) 14 This closes the induction. Therefore, every Chebyshev basis operator varies Lipschitz-continuously with the normalized graph operator. Summing the basis perturbations with the learned coefficients yields 
+
+∥pα(S) − pα( eS)∥2 =
+
+> Kch
+
+X
+
+> k=0
+
+θα,k 
+
+
+
+Tk(S) − Tk( eS)
+
+
+
+> 2
+
+≤
+
+> Kch
+
+X
+
+> k=0
+
+|θα,k | ∥ Tk(S) − Tk( eS)∥2 ≤
+
+> Kch
+
+X
+
+> k=0
+
+ℓk|θα,k |
+
+!
+
+∥S − eS∥2.
+
+(19) Now let Zα = pα(S)X and eZα = pα( eS) eX. Adding and subtracting pα(S) eX separates feature mismatch from topology mismatch. We also use the standard inequality ∥AB ∥F ≤ ∥ A∥2∥B∥F :
+
+∥Zα − eZα∥F = ∥pα(S)X − pα( eS) eX∥F
+
+= ∥pα(S)( X − eX) + 
+
+
+
+pα(S) − pα( eS)
+
+ eX∥F
+
+≤ ∥ pα(S)( X − eX)∥F + ∥
+
+
+
+pα(S) − pα( eS)
+
+ eX∥F
+
+≤ ∥ pα(S)∥2∥X − eX∥F + ∥pα(S) − pα( eS)∥2∥ eX∥F
+
+≤
+
+> Kch
+
+X
+
+> k=0
+
+|θα,k |
+
+!
+
+∥X − eX∥F +
+
+> Kch
+
+X
+
+> k=0
+
+ℓk|θα,k |
+
+!
+
+∥S − eS∥2∥ eX∥F .
+
+(20) Setting aα = PKch  
+
+> k=0
+
+|θα,k | and bα = PKch  
+
+> k=0
+
+ℓk|θα,k | gives exactly the claimed bound. The first term is purely feature-driven, while the second term is topology-driven and scales with both the operator perturbation and the magnitude of the target feature matrix. This proves Proposition 1. 
+
+A.2 Proof of Distortion-Controlled Prototype Geometry 
+
+The GW prototype space in SPG stores transferable structural relations rather than independent prototype embeddings. Each source graph is softly aligned to this shared prototype space through a transport plan. We show that, when the GW distortion is small, pulling the prototype geometry back to the node space preserves the graph’s diffusion geometry with controlled weighted error. Let Tm ∈ Π( wm, b ) be a node-to-prototype transport, where Tm1 = wm, T ⊤ 
+
+> m
+
+1 = b, Tm(i, k ) ≥ 0,and both marginals have total mass one. Assume wm(i) > 0 on the node support and define 
+
+Rm = diag( wm)−1Tm on this support. Then 
+
+Rm1 = diag( wm)−1Tm1 = diag( wm)−1wm = 1,Rm(i, k ) = Tm(i, k )
+
+wm(i) ≥ 0. (21) Thus each row Rm(i, ·) is a probability distribution over prototypes and can be interpreted as the conditional distribution of the prototype assignment given node i. The lifted geometry is 
+
+Cm = RmC⋆R⊤
+
+> m
+
+. For each node pair (i, i ′), its lifted distance can be written as the average prototype-pair distance induced by the two soft assignments: 
+
+Cm(i, i ′) = e⊤ 
+
+> i
+
+RmC⋆R⊤
+
+> m
+
+ei′ = X
+
+> k,l
+
+Rm(i, k )C⋆(k, l )Rm(i′, l )= E[C⋆(K, L ) | K ∼ Rm(i, ·), L ∼ Rm(i′, ·)] .
+
+(22) Therefore, SPG reconstructs a graph-specific structural relation by averaging relational information from the shared prototype geometry according to the graph-to-prototype transport. For a fixed node pair (i, i ′), let K ∼ Rm(i, ·) and L ∼ Rm(i′, ·) independently under the product assignment distribution. Since Cm(i, i ′) is fixed with respect to (K, L ), we have 
+
+Cm(i, i ′) − Cm(i, i ′) = E[Cm(i, i ′) − C⋆(K, L ) | i, i ′] . (23) 15 Applying Jensen’s inequality to the convex function x 7 → x2 gives the pointwise lifting bound 
+
+ Cm(i, i ′) − Cm(i, i ′)2 = ( E[Cm(i, i ′) − C⋆(K, L ) | i, i ′]) 2
+
+≤ E
+
+h Cm(i, i ′) − C⋆(K, L )2 | i, i ′i
+
+= X
+
+> k,l
+
+ Cm(i, i ′) − C⋆(k, l )2Rm(i, k )Rm(i′, l ).
+
+(24) This inequality says that the squared error after lifting is no larger than the expected squared relational mismatch measured before averaging over prototypes. The averaging step can only reduce the squared error because it replaces a random prototype-pair distance by its conditional mean. Finally, we aggregate this pointwise bound over node pairs using the product node measure wm ⊗
+
+wm, where ∥B∥2 
+
+> wm⊗wm
+
+= P 
+
+> i,i ′
+
+wm(i)wm(i′)B(i, i ′)2. Because wm(i)Rm(i, k ) = Tm(i, k ), the weighted lifting error can be converted exactly into the GW distortion form: 
+
+∥Cm − Cm∥2 
+
+> wm⊗wm
+
+= X
+
+> i,i ′
+
+wm(i)wm(i′) Cm(i, i ′) − Cm(i, i ′)2
+
+≤ X
+
+> i,i ′,k,l
+
+wm(i)wm(i′) Cm(i, i ′) − C⋆(k, l )2Rm(i, k )Rm(i′, l )= X
+
+> i,i ′,k,l
+
+ Cm(i, i ′) − C⋆(k, l )2 wm(i)Rm(i, k )  wm(i′)Rm(i′, l )
+
+= X
+
+> i,i ′,k,l
+
+ Cm(i, i ′) − C⋆(k, l )2Tm(i, k )Tm(i′, l )= DGW (Cm, C ⋆, T m).
+
+(25) Therefore, the reconstruction error of the lifted geometry is bounded by the GW distortion of the transport. In particular, if Tm is an optimizer or an approximately optimized transport for the GW barycenter objective, then a small optimized distortion directly implies a small weighted discrepancy between the original graph diffusion geometry and its prototype-lifted approximation. The argument does not require a hard node-to-prototype assignment: the only ingredients are the marginal constraint 
+
+Tm1 = wm, nonnegativity, and convexity of the square loss. The result is weighted by wm ⊗ wm, so node pairs with negligible mass do not dominate the guarantee. This proves Proposition 2. 
+
+A.3 Proof of Stable Prototype-Guided Propagation 
+
+After learning the shared prototype geometry, SPG converts it into a prototype kernel K⋆ and pulls it back to the node space through PT = T K ⋆T ⊤. This operator is used as the prototype-guided propagation path. We prove four properties in order: positive semidefiniteness, low rank, non-expansiveness after degree normalization, and stability under transport perturbation. First, suppose K⋆ ⪰ 0. For any vector h, the quadratic form of PT can be written only in terms of the prototype-space vector T ⊤h:
+
+h⊤PT h = h⊤T K ⋆T ⊤h = ( T ⊤h)⊤K⋆(T ⊤h) ≥ 0. (26) Thus PT ⪰ 0. Since T ∈ Rn×p, the image of PT is contained in the image of T , and its rank is at most the number of prototypes: 
+
+rank( PT ) = rank( T K ⋆T ⊤) ≤ min {rank( T ), rank( K⋆), rank( T ⊤)}≤ rank( T ) ≤ p. (27) Thus, the prototype-guided path may be dense in the node space, but its degrees of freedom are restricted by the shared prototype space rather than by all node pairs. Next, let dT = PT 1, DT = diag( dT ), and bPT = D−1/2 
+
+> T
+
+PT D−1/2 
+
+> T
+
+. We restrict the argument to nodes with dT (i) > 0; zero-degree rows, if any, can be removed from the support or handled by the usual convention of leaving the corresponding normalized row equal to zero. Because bPT is a congruence transform of PT , it remains positive semidefinite: 
+
+h⊤ bPT h = ( D−1/2 
+
+> T
+
+h)⊤PT (D−1/2 
+
+> T
+
+h) ≥ 0. (28) 16 If K⋆ is entrywise nonnegative and T ≥ 0, then PT = T K ⋆T ⊤ is also entrywise nonnegative. Define 
+
+MT = D−1 
+
+> T
+
+PT . Its rows sum to one, and bPT is similar to MT :
+
+MT 1 = D−1 
+
+> T
+
+PT 1 = D−1 
+
+> T
+
+dT = 1,
+
+bPT = D−1/2 
+
+> T
+
+PT D−1/2 
+
+> T
+
+= D1/2 
+
+> T
+
+MT D−1/2 
+
+> T
+
+. (29) Therefore, MT is row-stochastic. Since a nonnegative row-stochastic matrix satisfies ∥MT ∥∞ = 1 ,all its eigenvalues have magnitude at most one. Similar matrices have the same eigenvalues, so every eigenvalue of bPT also has magnitude at most one. On the other hand, bPT is symmetric positive semidefinite, hence its eigenvalues are real and nonnegative. Combining the two facts gives 
+
+σ( bPT ) ⊂ [0 , 1] and consequently ∥ bPT ∥2 ≤ 1.The role of the degree normalization is worth making explicit. The unnormalized matrix PT may have different row sums because some nodes receive more prototype mass than others. Normalizing by D−1/2 
+
+> T
+
+converts this positive kernel into a symmetric diffusion operator whose scale is determined by the induced degrees rather than by the absolute mass of the transport. Thus the bound below is a stability property of the propagation step itself, not only of the prototype kernel. For any node representation H = [ h1, . . . , h d], the Frobenius norm is the sum of column-wise Euclidean norms. Hence the spectral-norm bound gives 
+
+∥ bPT H∥2 
+
+> F
+
+=
+
+> d
+
+X
+
+> j=1
+
+∥ bPT hj ∥22 ≤
+
+> d
+
+X
+
+> j=1
+
+∥ bPT ∥22∥hj ∥22
+
+≤
+
+> d
+
+X
+
+> j=1
+
+∥hj ∥22 = ∥H∥2 
+
+> F
+
+.
+
+(30) Taking square roots yields ∥ bPT H∥F ≤ ∥ H∥F . Thus, prototype-guided propagation can inject shared structural priors without amplifying node representations uncontrollably. Finally, we prove stability with respect to the graph-to-prototype transport. This property is important for adaptation to unseen graphs: after pretraining, K⋆ is fixed, but the transport T must be estimated for each new graph. Let P eT = eT K ⋆ eT ⊤. Adding and subtracting eT K ⋆T ⊤ gives 
+
+PT − P eT = T K ⋆T ⊤ − eT K ⋆ eT ⊤
+
+= T K ⋆T ⊤ − eT K ⋆T ⊤ + eT K ⋆T ⊤ − eT K ⋆ eT ⊤
+
+= ( T − eT )K⋆T ⊤ + eT K ⋆(T − eT )⊤.
+
+(31) Applying the triangle inequality and the mixed Frobenius-spectral submultiplicative bounds, namely 
+
+∥AB ∥F ≤ ∥ A∥F ∥B∥2 and ∥AB ∥F ≤ ∥ A∥2∥B∥F , yields 
+
+∥PT − P eT ∥F ≤ ∥ (T − eT )K⋆T ⊤∥F + ∥ eT K ⋆(T − eT )⊤∥F
+
+≤ ∥ T − eT ∥F ∥K⋆T ⊤∥2 + ∥ eT K ⋆∥2∥T − eT ∥F
+
+≤ ∥ T − eT ∥F ∥K⋆∥2∥T ∥2 + ∥ eT ∥2∥K⋆∥2∥T − eT ∥F
+
+= ∥K⋆∥2
+
+ ∥T ∥2 + ∥ eT ∥2
+
+∥T − eT ∥F .
+
+(32) If both transports are probability couplings with total mass one, then every entry is nonnegative and 
+
+∥T ∥2 ≤ ∥ T ∥F =
+
+X
+
+> i,k
+
+T (i, k )2
+
+
+
+> 1/2
+
+≤ X
+
+> i,k
+
+T (i, k ) = 1 , (33) and the same argument applies to eT . Substituting these two bounds into Eq. (32) gives 
+
+∥PT − P eT ∥F ≤ 2∥K⋆∥2∥T − eT ∥F . (34) This matrix bound immediately gives a representation-level perturbation bound before degree normal-ization. For any feature matrix H,
+
+∥(PT − P eT )H∥F ≤ ∥ PT − P eT ∥F ∥H∥2
+
+≤ 2∥K⋆∥2∥T − eT ∥F ∥H∥2 ≤ 2∥K⋆∥2∥T − eT ∥F ∥H∥F . (35) 17 Thus the same transport error controls both the induced node-to-node kernel and the propagated representation. This means that, as long as the estimated transport changes only slightly, the corresponding prototype-guided propagation matrix also changes only slightly, with a Lipschitz constant controlled by the size of the prototype kernel. The dependence on K⋆ is natural: a sharper prototype kernel has larger operator norm and therefore turns the same transport error into a larger node-space perturbation. We emphasize that the stability statement is formulated before the subsequent learnable linear maps and nonlinearities. If a propagation layer uses the normalized operator followed by a weight matrix 
+
+W and a 1-Lipschitz activation ϕ, then the propagation part contributes no expansion and the layer satisfies the standard bound 
+
+∥ϕ( bPT HW ) − ϕ( bPT eHW )∥F ≤ ∥ bPT (H − eH)W ∥F
+
+≤ ∥ bPT ∥2∥H − eH∥F ∥W ∥2 ≤ ∥ H − eH∥F ∥W ∥2. (36) Hence the prototype-guided branch does not introduce an additional graph-size-dependent ampli-fication factor. Its contribution to sensitivity is controlled by the learned weight norm and by the transport perturbation bound in Eq. (34). Together, these properties prove Proposition 3. 
+
+## B Notations Used in Our Method 
+
+Table 4 summarizes the main notation used by SPG. Unless otherwise specified, all graphs are treated as undirected during propagation, and sparse matrices are used for adjacency-based operations. Table 4: Notation used throughout the method and appendix. 
+
+Symbol Shape / Type Description 
+
+Gm graph The m-th graph domain. 
+
+Vm, E m node / edge set Node set and edge set of Gm.
+
+nm, e m scalar Number of nodes and edges in Gm.
+
+Am nm × nm Adjacency matrix of Gm.
+
+Dm nm × nm Degree matrix of Am.
+
+Lm nm × nm Normalized graph Laplacian. 
+
+Sm nm × nm Normalized propagation operator used by the spectral frontend. 
+
+Xm nm × dm Raw node feature matrix, where dm may vary across domains. 
+
+Mf scalar Number of learnable Chebyshev spectral filters. 
+
+Zα nm × dm Filtered response produced by the α-th Chebyshev spectral filter. 
+
+Kc scalar Chebyshev polynomial order. 
+
+r scalar Truncated SVD rank for each spectral filter response. 
+
+d scalar Unified spectral feature dimension after parsing. 
+
+h scalar Hidden dimension of the propagation backbone. 
+
+dz scalar Output embedding dimension. 
+
+Cm nm × nm Diffusion-distance structural cost matrix for graph Gm.
+
+p scalar Number of structural prototypes. 
+
+C⋆ p × p Shared GW barycenter cost matrix in prototype space. 
+
+A⋆ p × p Prototype affinity matrix derived from C⋆.
+
+K⋆ p × p Prototype heat kernel derived from C⋆.
+
+Tm nm × p Node-to-prototype transport plan for graph Gm.
+
+Pm nm × nm Prototype-induced propagation operator on graph Gm.
+
+K(m) 
+
+> tℓ
+
+nm × nm Heat-diffusion operator at layer ℓ.
+
+H(ℓ) nm × h Node representation after layer ℓ.
+
+H(ℓ) 
+
+> A
+
+nm × h Local adjacency-path representation. 
+
+H(ℓ) 
+
+> K
+
+nm × h Heat-diffusion-path representation. 
+
+H(ℓ) 
+
+> P
+
+nm × h Prototype-path representation. 
+
+g(ℓ) 
+
+> i
+
+R3 Node-wise gate over the three propagation paths. 
+
+M set of nodes Masked node set for spectral-feature reconstruction. 
+
+18 C Algorithm 
+
+Algorithm 1 Spectral Prototype-Guided Pre-Training 
+
+1: Input: Source graphs {Gm = ( Vm, E m, X m)}Mm=1 , domain weights {λm}Mm=1 ;
+
+2: prototype number p, filter number Mf , Chebyshev order Kc, SVD rank r;
+
+3: layers L, heat times {tℓ}Lℓ=1 .
+
+4: Output: Pretrained encoder fθ , shared prototype kernel K⋆.
+
+5: (1) Shared prototype geometry 
+
+6: for each source graph Gm do 
+
+7: Lm ← I − D− 12 
+
+> m
+
+AmD− 12
+
+> m
+
+8: K(m) 
+
+> tgw
+
+← exp( −tgw Lm)
+
+9: Cm ← DiffCost( K(m) 
+
+> tgw
+
+)
+
+10: end for 
+
+11: C⋆, {Tm}Mm=1 ← GWBarycenter( {Cm}Mm=1 , {λm}Mm=1 , p )
+
+12: A⋆ ← Affinity( C⋆)
+
+13: K⋆ ← exp( −L(A⋆)) 
+
+14: while not converged do 
+
+15: for each source graph Gm do 
+
+16: (2) Spectral frontend 
+
+17: Sm ← D− 12 
+
+> m
+
+AmD− 12
+
+> m
+
+18: for α = 1 to Mf do 
+
+19: Zα ← PKc 
+
+> k=0
+
+θα,k Tk(Sm, X m)
+
+20: eZα ← SVD r (Zα)
+
+21: end for 
+
+22: Xspec ,m ← Proj([ eZ1∥ · · · ∥ eZMf ]) 
+
+23: (3) Prototype-guided graph propagation 
+
+24: Pm ← TmK⋆T ⊤
+
+> m
+
+25: H(0)  
+
+> m
+
+← InputProj( Xspec ,m )
+
+26: H(0) 
+
+> A,m
+
+, H (0) 
+
+> K,m
+
+, H (0)  
+
+> P,m
+
+← H(0)  
+
+> m
+
+, H (0)  
+
+> m
+
+, H (0) 
+
+> m
+
+27: for ℓ = 1 to L do 
+
+28: H(ℓ) 
+
+> A,m
+
+← GCN (ℓ) 
+
+> A
+
+( bAm, H (ℓ−1)  
+
+> A,m
+
+)
+
+29: H(ℓ) 
+
+> K,m
+
+← GCN (ℓ) 
+
+> K
+
+( bK(m) 
+
+> tℓ
+
+, H (ℓ−1)  
+
+> K,m
+
+)
+
+30: H(ℓ) 
+
+> P,m
+
+← GCN (ℓ) 
+
+> P
+
+(Pm, H (ℓ−1)  
+
+> P,m
+
+)
+
+31: [g(ℓ)
+
+> A,m
+
+, g (ℓ)
+
+> K,m
+
+, g (ℓ)
+
+> P,m
+
+] ← Softmax(Gate([ H(ℓ)
+
+> A,m
+
+∥H(ℓ)
+
+> K,m
+
+∥H(ℓ)
+
+> P,m
+
+])) 
+
+32: H(ℓ) 
+
+> m
+
+← g(ℓ) 
+
+> A,m
+
+⊙ H(ℓ) 
+
+> A,m
+
++ g(ℓ) 
+
+> K,m
+
+⊙ H(ℓ) 
+
+> K,m
+
++ g(ℓ) 
+
+> P,m
+
+⊙ H(ℓ)
+
+> P,m
+
+33: H(ℓ)
+
+> A,m
+
+, H (ℓ)
+
+> K,m
+
+, H (ℓ) 
+
+> P,m
+
+← H(ℓ) 
+
+> m
+
+, H (ℓ) 
+
+> m
+
+, H (ℓ)
+
+> m
+
+34: end for 
+
+35: Zm ← H(L)
+
+> m
+
+36: (4) Self-supervised losses 
+
+37: Lnode ← InfoNCE( Zm, Z ′
+
+> m
+
+)
+
+38: Lfeat ← ∥ fdec (Zm) − Xspec ,m ∥22
+
+39: Lm ← 1.5Lnode + 0 .3Lfeat 
+
+40: Update θ by minimizing Lm.
+
+41: end for 
+
+42: end while 
+
+43: return fθ and K⋆
+
+Algorithm 1 summarizes SPG pre-training. It first learns a shared GW prototype geometry and converts it into K⋆. Each source graph is then encoded by spectral parsing, followed by gated propagation over adjacency, heat diffusion, and the prototype-induced operator Pm = TmK⋆T ⊤ 
+
+> m
+
+.The encoder is trained with node-level contrastive learning and spectral feature reconstruction. 19 D Implementation Details 
+
+Table 5: Main hyper-parameters. 
+
+Category Hyper-parameter Value Pre-training domains Source graphs Cora, CS, Photo, Chameleon Backbone epoch 25 
+
+Backbone Input / hidden / output dimensions 128 /1024 /768 
+
+Backbone GCN layers 3
+
+Backbone Dropout 0.12 
+
+Backbone Heat times [0 .5, 1.0, 1.5] 
+
+Spectral frontend Number of Chebyshev filters Mf 6
+
+Spectral frontend Chebyshev order Kc 3
+
+Spectral frontend SVD rank r 32 
+
+Spectral frontend projected dimensions for input 128 
+
+Prototype module Number of prototypes p 96 
+
+Prototype module GW diffusion time tgw 0.58 
+
+Prototype module GW entropy regularization ϵgw 0.005 
+
+Optimization Optimizer Adam Optimization Learning rate 1.2 × 10 −4
+
+Optimization Weight decay 10 −5
+
+Loss Loss weights 1.5/0.3 for node/feature Downstream adaptation K-means assignment temperature 0.2
+
+Downstream adaptation Sparse prototype assignment top-8
+
+Downstream adaptation Linear probing epochs 10000 
+
+Downstream adaptation Linear probing learning rate 0.015 
+
+Baselines. The baselines cover self-supervised graph representation learning and graph foundation or transfer learning methods. Specifically, we compare with GraphMAE2, BGRL, GRACE, GCOPE, GraphAny, TIG, SAMGPT, and GraphGlue. Whenever official code allows it, we follow the released implementations and keep their recommended settings. For a fair comparison, all methods use the same preprocessing and evaluation splits when supported by the official code. Otherwise, we keep the original baseline protocol and report unsupported datasets as missing. 
+
+Data splits and evaluation protocol. For node classification, we use stratified 1:1:8 
+
+train/validation/test splits for all datasets and report the mean and standard deviation over 10 seeds. For graph classification datasets, all node features are unified to 128 dimensions. Featureless datasets such as COLLAB and IMDB-BINARY use degree-based one-hot features with truncation or zero-padding, while datasets with raw attributes such as DD, ENZYMES, PROTEINS use their raw features zero-padded to 128 dimensions. For linear probing, the pretrained SPG encoder is frozen and only a lightweight linear classifier is trained on the extracted node embeddings, with model selection based on validation performance. For graph classification, we obtain graph embeddings by mean pooling node embeddings, hG = |VG|−1 P 
+
+> i∈VG
+
+zi, and train a linear classifier on the frozen graph embeddings. For 1-shot transfer, we sample one labeled node per class as the support set, compute class prototypes from the support embeddings, and classify query nodes by similarity to these prototypes while keeping the pretrained encoder frozen. 
+
+Running environment. All experiments are conducted on a Linux server with 125 GiB RAM and 8 NVIDIA GeForce RTX 5090 GPUs, each with 32 GB memory. We use Python 3.9.23, PyTorch 2.8.0 with CUDA 12.8, and DGL 1.1.3. 
+
+Pre-training details. The model is pre-trained for 25 epochs. The encoder uses input, hidden, and output dimensions 128 /1024 /768 , three propagation layers, dropout 0.12 , heat times [0 .5, 1.0, 1.5] ,20 gate temperature 1.0, and path-stream mix 1.0. The spectral frontend applies Mf = 6 Chebyshev filters of order Kc = 3 to the normalized operator S = D−1/2AD −1/2 without self-loops. Each graph uses rG = min(32 , n G, d raw ) SVD components per filter, zero-padded to 32 if needed. With 6 filters, this gives a fixed 192-dimensional representation projected to 128 dimensions. Thus all graphs still produce the same Mf r-dimensional spectral representation before the final projection. The prototype module uses p = 96 prototypes, diffusion time tgw = 0 .58 , and GW entropy regularization 
+
+ϵgw = 0 .005 . The encoder is trained with two self-supervised objectives: node-level contrastive learning and spectral feature reconstruction. Given two augmented views of the same graph, we encourage consistency between the representations of the same node by 
+
+Lnode = − 1
+
+N
+
+X
+
+> i
+
+log exp(sim( qi, q ′
+
+> i
+
+)/τ c)
+
+P 
+
+> j
+
+exp(sim( qi, q ′ 
+
+> j
+
+)/τ c) , (37) where qi and q′ 
+
+> i
+
+are the representations of node i in the two views. We also mask a subset of nodes 
+
+M and reconstruct their parsed spectral features: 
+
+Lfeat = 1
+
+|M| 
+
+X
+
+> i∈M
+
+∥frec (zi) − xspec ,i ∥22. (38) The final pre-training loss is 1.5Lnode + 0 .3Lfeat . Using xspec as the reconstruction target encourages the encoder to preserve frequency-aware information extracted by the spectral parsing module. We optimize the model with Adam using learning rate 1.2 × 10 −4 and weight decay 10 −5. Node contrast uses two edge-perturbed views and negative node pairs, masked reconstruction hides 25% of nodes and reconstructs Xspec .
+
+Spectral energy visualization. All spectral visualizations are computed from graph-signal energy rather than classifier outputs. For graphs where eigendecomposition is feasible, we compute the normalized Laplacian L = I − D−1/2AD −1/2 = U ΛU ⊤. Given a row-normalized representation 
+
+X, its normalized Fourier energy on eigenvector ui is 
+
+Ei(X) = ∥u⊤ 
+
+> i
+
+X∥22
+
+P 
+
+> j
+
+∥u⊤ 
+
+> j
+
+X∥22
+
+. (39) We sort eigenvalues increasingly and sum the first, middle, and last thirds of the energies as low-, mid-, and high-frequency ratios. The “spectral distribution after parsing” figure uses X = Xspec ,showing how Chebyshev filtering and SVD compression redistribute graph-signal energy. For large graphs, we use a residual-shell proxy: with P = D−1/2˜A
+
+˜AD −1/2˜A and ˜A = A + I, we set Rk = P kX,compute sk = ∥Rk − Rk+1 ∥2 
+
+> F
+
+for k = 0 , . . . , 7 and s8 = ∥R8∥2 
+
+> F
+
+. After normalization by P8 
+
+> k=0
+
+sk,we use s0 + s1, P7 
+
+> k=2
+
+sk, and s8 as high-, mid-, and low-frequency proxies. 
+
+Prototype assignment visualization. We visualize class-prototype associations to examine how different classes use the learned global prototype space. For each target dataset, we first compute a soft node-to-prototype transport matrix T ∈ RN ×P using the same KMeans-based transport procedure as in adaptation, where N is the number of nodes and P is the number of global prototypes. Each entry 
+
+Ti,p measures the assignment strength between node i and prototype p. We then row-normalize T to obtain per-node prototype assignment probabilities A, so that each node has a probability distribution over prototypes. For each class c, we average the assignment probabilities over all nodes belonging to that class: 
+
+Mc,p = 1
+
+|V c|
+
+X
+
+> i∈V c
+
+Ai,p , Vc = {i : yi = c}. (40) The resulting matrix M ∈ RC×P is visualized as a heatmap, where rows denote classes and columns denote global prototypes. Brighter entries indicate stronger association between a class and a prototype. 
+
+Learned filter-response visualization. The learned filter-response figure is computed directly from the trained Chebyshev coefficients, rather than from downstream predictions. Since the spectral frontend filters the normalized propagation operator S = D−1/2AD −1/2, and S = I − L for the 21 normalized Laplacian L, a Laplacian frequency λ ∈ [0 , 2] corresponds to the propagation-domain value 1 − λ. Therefore, the response of the α-th learned Chebyshev filter at frequency λ is 
+
+gα(λ) = 
+
+> Kc
+
+X
+
+> k=0
+
+θα,k Tk(1 − λ). (41) We evaluate gα(λ) on a dense grid over [0 , 2] and plot the normalized power |gα(λ)|2. To summarize each filter’s dominant frequency preference, we also compute its power-weighted center. This visualization is used to verify whether the learned filters collapse to similar low-pass responses or instead cover complementary spectral regions. 
+
+Comparison models. The baselines cover self-supervised graph representation learning and graph foundation or transfer learning. Whenever official code allows it, all methods use the same pre-processing and evaluation splits; otherwise we keep the official protocol and report unsupported datasets as missing. Node classification uses a linear probe on frozen embeddings with stratified 
+
+1:1:8 train/validation/test splits for all datasets, and results are reported over 10 random seeds. The 1-shot protocol samples one labeled node per class and averages over 100 runs. 
+
+## E Datasets 
+
+Table 6: Dataset statistics. For graph classification datasets, Nodes and Edges are averages per graph.                                                                                                                   
+
+> Dataset Family Graphs Nodes Edges Features Classes
+> Node Classification Datasets
+> Cora Citation 12,708 10,556 1,433 7Citeseer Citation 13,327 9,104 3,703 6Pubmed Citation 119,717 88,648 500 3Photo Amazon co-purchase 17,650 238,162 745 8Computers Amazon co-purchase 113,752 491,722 767 10 CS Coauthor 118,333 163,788 6,805 15 Physics Coauthor 134,493 495,924 8,415 5Cornell WebKB 1183 298 1,703 5Texas WebKB 1183 325 1,703 5Wisconsin WebKB 1251 515 1,703 5Chameleon WikipediaNetwork 12,277 36,101 2,325 5ogbn-arxiv OGB citation 1169,343 1,166,243 128 40 ogbn-products OGB co-purchase 12,449,029 61,859,140 100 47
+> Graph Classification Datasets
+> COLLAB Social 5,000 74.49 2,457.78 –3DD Bioinformatics 1,178 284.32 715.66 –2ENZYMES Bioinformatics 600 32.63 62.14 –6IMDB-B Social 1,000 19.77 96.53 –2PROTEINS Bioinformatics 1,113 39.06 72.82 –2
+
+We evaluate SPG on diverse node- and graph-level benchmarks. For node classification, the datasets cover citation networks, Amazon co-purchase graphs, co-authorship graphs, WebKB/Wikipedia graphs, and large-scale OGB graphs. The source graphs, Cora, CS, Photo, and Chameleon, differ in feature semantics, graph scale, and homophily, allowing us to test whether SPG learns structural regularities beyond a single domain. For graph classification, we evaluate on COLLAB, IMDB-B, DD, ENZYMES, and PROTEINS, which test whether the learned structural priors transfer from node-level pretraining to whole-graph prediction. Dataset statistics are reported in Table 6. 
+
+## F Related Works 
+
+Self-supervised graph learning. Self-supervised graph learning aims to learn transferable node or graph representations without relying on task-specific labels. Representative methods design 22 pretext objectives such as contrastive learning, bootstrapping, and masked feature reconstruction. For example, DGI maximizes mutual information between node-level and graph-level representations[ 47 ], GRACE learns invariant representations from augmented graph views[ 40 ], BGRL uses bootstrapped targets without negative samples[ 41 ], and GraphMAE2 reconstructs masked node features with an enhanced decoding scheme[ 42 ]. These methods provide effective pre-training objectives and improve downstream performance under limited supervision. However, they are usually developed within a single graph domain or under relatively fixed feature and structural distributions, and thus do not explicitly address the cross-domain feature discrepancy and structural heterogeneity faced by graph foundation models. 
+
+Graph foundation models. Graph foundation models aim to learn reusable knowledge from diverse graph domains and generalize to unseen graphs and tasks. Existing GFMs mainly face two challenges: discrepancies in node feature spaces and structural distributions across graphs. For feature discrepancies, many methods construct shared input or semantic spaces using SVD projection, domain tokens, or LLM-based encoders, such as OFA and UniGraph[ 48 –50 ]. For structural discrepancies, methods learn reusable structural units or adaptive mechanisms: GFT builds a tree vocabulary, RiemannGFM models trees and cycles in Riemannian spaces, SAMGPT uses structure tokens, and AutoGFM relies on adaptive architecture search[ 18 , 20 , 21 ]. While these methods improve feature alignment and topology awareness, they often represent structure through discrete tokens, selected substructures, or model-level adaptation. In contrast, SPG learns a Gromov–Wasserstein prototype geometry that preserves continuous prototype relations and projects them back to each graph as propagation priors. 
+
+## G Complexity Analysis 
+
+Let n and e be the number of nodes and edges of an input graph, d0 the raw feature dimension, d
+
+the unified spectral dimension, h the hidden dimension, dz the output dimension, Mf the number of spectral filters, Kc the Chebyshev order, r the SVD rank, p the number of prototypes, and L the number of propagation layers. 
+
+Spectral parsing. The Chebyshev frontend applies Mf filters of order Kc. Since each Chebyshev recursion requires sparse multiplication with the normalized propagation operator S, the cost of computing all filter responses is O(Mf Kced 0). For each filtered response, randomized truncated SVD with rank r costs approximately O(nd 0r), giving O(Mf nd 0r) over all filters. The final projection from the concatenated Mf r-dimensional representation to d dimensions costs O(nM f rd ).Therefore, the overall spectral parsing cost is 
+
+O(Mf Kced 0 + Mf nd 0r + nM f rd ) . (42) The memory cost is O(e + nd 0 + nM f r), plus learnable parameters. 
+
+Prototype construction. For each source graph Gm, constructing a dense diffusion-distance matrix requires O(n2
+
+> m
+
+) memory. Exact heat-kernel computation by eigendecomposition costs O(n3
+
+> m
+
+), while the implementation uses an approximate normalized-adjacency surrogate for large graphs. In each GW update between a source graph and p prototypes, the linearized cost matrix costs O(n2
+
+> m
+
+p+nmp2),and Sinkhorn normalization costs O(nmp) per iteration. With B barycenter outer iterations, G GW iterations, and S Sinkhorn iterations, the dominant prototype construction cost is 
+
+O B X
+
+> m
+
+G(n2
+
+> m
+
+p + nmp2) + B X
+
+> m
+
+GS n mp
+
+!
+
+. (43) This cost is paid during pre-training and is amortized across downstream tasks. 
+
+Gated propagation. At each propagation layer, the adjacency path costs O(eh ). If the heat kernel is explicitly materialized, the heat path costs O(n2h); for large graphs, the implementation instead uses sparse or approximate propagation. The prototype path is defined by P = T K ⋆T ⊤. Explicitly forming P would cost O(np 2 + n2p), and applying it would cost O(n2h). In practice, the operator is applied implicitly as T (K⋆(T ⊤H)) , which costs O(nph + p2h) per layer, or O(nkh + p2h)
+
+when each node keeps only k nonzero prototype assignments. The node-wise gate and hidden 23 Table 7: Runtime and GPU profiling results.                          
+
+> Dataset Total Time Forward Time Linear Time Transport Time Peak GPU ogbn-arxiv 12.5s 0.7s 3.1s 1.1s 3037 MiB ogbn-products 53m 8.1s 51m 51.2s 1m 11.1s 5.8s 32099 MiB Cora 8.4s 0.2s 1.8s 0.6s 911 MiB Physics 1m 3.1s 0.8s 53.1s 2.1s 14307 MiB
+
+transformations cost O(nh 2) when hidden-to-hidden projections dominate. Under sparse adjacency and sparse prototype transport, the total L-layer propagation cost is 
+
+O L(eh + nkh + p2h + nh 2) . (44) 
+
+Adaptation to unseen graphs. For a small target graph, GW-based target transport has the same graph-to-prototype complexity as above. For a large target graph, K-means transport costs O(Inpd t),where I is the number of K-means iterations and dt is the transport feature dimension, followed by top-k soft assignment. The downstream linear classifier costs O(nd z c) per epoch for c classes. Since the encoder and K⋆ are frozen, adaptation only requires estimating Tnew and training a lightweight prediction head, which is substantially cheaper than re-learning the shared prototype geometry. 
+
+Large-graph handling strategy. For large-scale graphs, we avoid constructing full N ×N pairwise distance matrices, dense adjacency matrices, or full-graph transport plans. Instead, we decouple structure adaptation, backbone inference, and linear classification. Specifically, for ogbn-arxiv and ogbn-products, we use a KMeans-based transport mode with 96 prototypes and sparse top-k
+
+assignments, which approximates the structural transport cost without materializing the quadratic node-pair matrix. Large graphs are represented with sparse COO adjacency, and propagation is performed without explicitly materializing dense self-loop augmented adjacency matrices. For ogbn-products, we further disable the large-graph raw shortcut and perform subgraph-based inference with a batch size of 1024 and neighbor fanouts of (10 , 10 , 5) . Each mini-batch only moves the sampled local subgraph, node features, and transport-related tensors to GPU, computes the SPG forward pass, and writes the seed-node embeddings back to the embedding cache. After frozen-backbone embedding extraction, the backbone and transport tensors are released, GPU cache is cleared, and only a lightweight linear classifier is trained. This strategy substantially reduces peak memory usage while preserving the intended SPG+Linear evaluation protocol. 
+
+## H Limitations 
+
+Although SPG shows strong transfer performance across node classification, graph classification, and 1-shot settings, it has several limitations. First, constructing the shared Gromov-Wasserstein prototype geometry can be expensive for very large graphs, since exact diffusion distances and GW barycenters may require dense pairwise structural costs. We mitigate this with approximate diffusion operators, sparse adjacency representations, KMeans-based transport, and top-k prototype assignments, but these approximations may increase sensitivity to hyperparameters such as prototype number, assignment temperature, and sparsity level. Second, our evaluation focuses on standard public benchmarks and does not cover dynamic graphs, temporal graphs, or deployment settings with noisy, missing, or privacy-sensitive attributes, which remain important directions for future work. 
+
+## I Broader Impacts 
+
+As a foundational study on graph foundation models, SPG has no immediate deployment risks. The method focuses on improving cross-graph representation learning through spectral parsing and prototype-guided structural transfer, and all experiments use standard public graph benchmarks, which limits privacy concerns in this study. SPG may benefit applications such as scientific discovery, recommendation, citation analysis, and other graph-based learning scenarios where labels are limited or expensive to obtain. If adapted to sensitive real-world domains, potential risks such as bias propagation, privacy issues, or misuse should be carefully considered. 24 NeurIPS Paper Checklist 
+
+1. Claims 
+
+Question: Do the main claims made in the abstract and introduction accurately reflect the paper’s contributions and scope? Answer: [Yes] Justification: The abstract and introduction state the proposed SPG model, its spectral parsing and GW prototype-guided propagation components, and the claimed cross-domain generalization improvements. These claims are supported by the method, theory, experi-ments, ablations, and analyses in Sections 3–4 and Appendices A–G. Guidelines: • The answer [N/A] means that the abstract and introduction do not include the claims made in the paper. • The abstract and/or introduction should clearly state the claims made, including the contributions made in the paper and important assumptions and limitations. A [No] or [N/A] answer to this question will not be perceived well by the reviewers. • The claims made should match theoretical and experimental results, and reflect how much the results can be expected to generalize to other settings. • It is fine to include aspirational goals as motivation as long as it is clear that these goals are not attained by the paper. 2. Limitations 
+
+Question: Does the paper discuss the limitations of the work performed by the authors? Answer: [Yes] Justification: The paper includes a limitations discussion in the appendix, covering computa-tional cost, large-graph approximations and possible performance degradation under large source-target structural mismatch. Additional complexity analysis and large-graph handling details are provided in Appendix G, with ablation and sensitivity analyses in Section 4. Guidelines: • The answer [N/A] means that the paper has no limitation while the answer [No] means that the paper has limitations, but those are not discussed in the paper. • The authors are encouraged to create a separate “Limitations” section in their paper. • The paper should point out any strong assumptions and how robust the results are to violations of these assumptions (e.g., independence assumptions, noiseless settings, model well-specification, asymptotic approximations only holding locally). The authors should reflect on how these assumptions might be violated in practice and what the implications would be. • The authors should reflect on the scope of the claims made, e.g., if the approach was only tested on a few datasets or with a few runs. In general, empirical results often depend on implicit assumptions, which should be articulated. • The authors should reflect on the factors that influence the performance of the approach. For example, a facial recognition algorithm may perform poorly when image resolution is low or images are taken in low lighting. Or a speech-to-text system might not be used reliably to provide closed captions for online lectures because it fails to handle technical jargon. • The authors should discuss the computational efficiency of the proposed algorithms and how they scale with dataset size. • If applicable, the authors should discuss possible limitations of their approach to address problems of privacy and fairness. • While the authors might fear that complete honesty about limitations might be used by reviewers as grounds for rejection, a worse outcome might be that reviewers discover limitations that aren’t acknowledged in the paper. The authors should use their best judgment and recognize that individual actions in favor of transparency play an impor-tant role in developing norms that preserve the integrity of the community. Reviewers will be specifically instructed to not penalize honesty concerning limitations. 25 3. Theory assumptions and proofs 
+
+Question: For each theoretical result, does the paper provide the full set of assumptions and a complete (and correct) proof? Answer: [Yes] Justification: The paper states three theoretical results in Sections 3.1–3.2 and provides detailed assumptions and complete proofs in Appendix A, including stability of spectral parsing, distortion-controlled prototype geometry, and stable prototype-guided propagation. Guidelines: • The answer [N/A] means that the paper does not include theoretical results. • All the theorems, formulas, and proofs in the paper should be numbered and cross-referenced. • All assumptions should be clearly stated or referenced in the statement of any theorems. • The proofs can either appear in the main paper or the supplemental material, but if they appear in the supplemental material, the authors are encouraged to provide a short proof sketch to provide intuition. • Inversely, any informal proof provided in the core of the paper should be complemented by formal proofs provided in appendix or supplemental material. • Theorems and Lemmas that the proof relies upon should be properly referenced. 4. Experimental result reproducibility 
+
+Question: Does the paper fully disclose all the information needed to reproduce the main ex-perimental results of the paper to the extent that it affects the main claims and/or conclusions of the paper (regardless of whether the code and data are provided or not)? Answer: [Yes] Justification: The method architecture is specified in Section 3 and Algorithm 1, while Appendix D reports hyperparameters, losses, optimizer, data splits, evaluation protocols, and runtime environment needed to reproduce the main experiments. Guidelines: • The answer [N/A] means that the paper does not include experiments. • If the paper includes experiments, a [No] answer to this question will not be perceived well by the reviewers: Making the paper reproducible is important, regardless of whether the code and data are provided or not. • If the contribution is a dataset and/or model, the authors should describe the steps taken to make their results reproducible or verifiable. • Depending on the contribution, reproducibility can be accomplished in various ways. For example, if the contribution is a novel architecture, describing the architecture fully might suffice, or if the contribution is a specific model and empirical evaluation, it may be necessary to either make it possible for others to replicate the model with the same dataset, or provide access to the model. In general. releasing code and data is often one good way to accomplish this, but reproducibility can also be provided via detailed instructions for how to replicate the results, access to a hosted model (e.g., in the case of a large language model), releasing of a model checkpoint, or other means that are appropriate to the research performed. • While NeurIPS does not require releasing code, the conference does require all submis-sions to provide some reasonable avenue for reproducibility, which may depend on the nature of the contribution. For example (a) If the contribution is primarily a new algorithm, the paper should make it clear how to reproduce that algorithm. (b) If the contribution is primarily a new model architecture, the paper should describe the architecture clearly and fully. (c) If the contribution is a new model (e.g., a large language model), then there should either be a way to access this model for reproducing the results or a way to reproduce the model (e.g., with an open-source dataset or instructions for how to construct the dataset). 26 (d) We recognize that reproducibility may be tricky in some cases, in which case authors are welcome to describe the particular way they provide for reproducibility. In the case of closed-source models, it may be that access to the model is limited in some way (e.g., to registered users), but it should be possible for other researchers to have some path to reproducing or verifying the results. 5. Open access to data and code 
+
+Question: Does the paper provide open access to the data and code, with sufficient instruc-tions to faithfully reproduce the main experimental results, as described in supplemental material? Answer: [Yes] Justification: We provide the source code as supplementary material in the submission, together with instructions for reproducing the main experimental results. All datasets used in the paper are public graph benchmarks, and the paper provides detailed experimental settings, hyperparameters, data splits, evaluation protocols, and running environment. Guidelines: • The answer [N/A] means that paper does not include experiments requiring code. • Please see the NeurIPS code and data submission guidelines ( https://neurips.cc/ public/guides/CodeSubmissionPolicy ) for more details. • While we encourage the release of code and data, we understand that this might not be possible, so [No] is an acceptable answer. Papers cannot be rejected simply for not including code, unless this is central to the contribution (e.g., for a new open-source benchmark). • The instructions should contain the exact command and environment needed to run to reproduce the results. See the NeurIPS code and data submission guidelines ( https: //neurips.cc/public/guides/CodeSubmissionPolicy ) for more details. • The authors should provide instructions on data access and preparation, including how to access the raw data, preprocessed data, intermediate data, and generated data, etc. • The authors should provide scripts to reproduce all experimental results for the new proposed method and baselines. If only a subset of experiments are reproducible, they should state which ones are omitted from the script and why. • At submission time, to preserve anonymity, the authors should release anonymized versions (if applicable). • Providing as much information as possible in supplemental material (appended to the paper) is recommended, but including URLs to data and code is permitted. 6. Experimental setting/details 
+
+Question: Does the paper specify all the training and test details (e.g., data splits, hyperpa-rameters, how they were chosen, type of optimizer) necessary to understand the results? Answer: [Yes] Justification: Section 4 and Appendix D specify the datasets, baselines, splits, pre-training setup, downstream protocols, optimizer, hyperparameters, and evaluation details used to understand the reported results. Guidelines: • The answer [N/A] means that the paper does not include experiments. • The experimental setting should be presented in the core of the paper to a level of detail that is necessary to appreciate the results and make sense of them. • The full details can be provided either with the code, in appendix, or as supplemental material. 7. Experiment statistical significance 
+
+Question: Does the paper report error bars suitably and correctly defined or other appropriate information about the statistical significance of the experiments? Answer: [Yes] 27 Justification: Tables 1–3 report results as mean ± standard deviation. Appendix D states that node classification uses 10 seeds and the 1-shot protocol averages over 100 runs, which defines the reported variability for the main experiments. Guidelines: • The answer [N/A] means that the paper does not include experiments. • The authors should answer [Yes] if the results are accompanied by error bars, confidence intervals, or statistical significance tests, at least for the experiments that support the main claims of the paper. • The factors of variability that the error bars are capturing should be clearly stated (for example, train/test split, initialization, random drawing of some parameter, or overall run with given experimental conditions). • The method for calculating the error bars should be explained (closed form formula, call to a library function, bootstrap, etc.) • The assumptions made should be given (e.g., Normally distributed errors). • It should be clear whether the error bar is the standard deviation or the standard error of the mean. • It is OK to report 1-sigma error bars, but one should state it. The authors should preferably report a 2-sigma error bar than state that they have a 96% CI, if the hypothesis of Normality of errors is not verified. • For asymmetric distributions, the authors should be careful not to show in tables or figures symmetric error bars that would yield results that are out of range (e.g., negative error rates). • If error bars are reported in tables or plots, the authors should explain in the text how they were calculated and reference the corresponding figures or tables in the text. 8. Experiments compute resources 
+
+Question: For each experiment, does the paper provide sufficient information on the com-puter resources (type of compute workers, memory, time of execution) needed to reproduce the experiments? Answer: [Yes] Justification: Appendix D reports the hardware and software environment, including 125 GiB RAM, 8 NVIDIA GeForce RTX 5090 GPUs with 32 GB memory each, Python/PyTorch/DGL versions, and Appendix G provides runtime and peak GPU memory profiling in Table 7. Guidelines: • The answer [N/A] means that the paper does not include experiments. • The paper should indicate the type of compute workers CPU or GPU, internal cluster, or cloud provider, including relevant memory and storage. • The paper should provide the amount of compute required for each of the individual experimental runs as well as estimate the total compute. • The paper should disclose whether the full research project required more compute than the experiments reported in the paper (e.g., preliminary or failed experiments that didn’t make it into the paper). 9. Code of ethics 
+
+Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics https://neurips.cc/public/EthicsGuidelines ?Answer: [Yes] Justification: The work uses standard public graph benchmarks and algorithmic/modeling contributions, preserves author anonymity in the submitted manuscript, and does not appear to involve prohibited data collection or human-subject risks. Guidelines: • The answer [N/A] means that the authors have not reviewed the NeurIPS Code of Ethics. 28 • If the authors answer [No], they should explain the special circumstances that require a deviation from the Code of Ethics. • The authors should make sure to preserve anonymity (e.g., if there is a special consid-eration due to laws or regulations in their jurisdiction). 10. Broader impacts 
+
+Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed? Answer: [Yes] Justification: The paper discusses broader impacts in the appendix, noting that SPG is a foundational study without direct deployment risks. It also mentions potential benefits for graph-based applications and possible application-dependent risks such as bias, privacy concerns, and misuse. Guidelines: • The answer [N/A] means that there is no societal impact of the work performed. • If the authors answer [N/A] or [No], they should explain why their work has no societal impact or why the paper does not address societal impact. • Examples of negative societal impacts include potential malicious or unintended uses (e.g., disinformation, generating fake profiles, surveillance), fairness considerations (e.g., deployment of technologies that could make decisions that unfairly impact specific groups), privacy considerations, and security considerations. • The conference expects that many papers will be foundational research and not tied to particular applications, let alone deployments. However, if there is a direct path to any negative applications, the authors should point it out. For example, it is legitimate to point out that an improvement in the quality of generative models could be used to generate Deepfakes for disinformation. On the other hand, it is not needed to point out that a generic algorithm for optimizing neural networks could enable people to train models that generate Deepfakes faster. • The authors should consider possible harms that could arise when the technology is being used as intended and functioning correctly, harms that could arise when the technology is being used as intended but gives incorrect results, and harms following from (intentional or unintentional) misuse of the technology. • If there are negative societal impacts, the authors could also discuss possible mitigation strategies (e.g., gated release of models, providing defenses in addition to attacks, mechanisms for monitoring misuse, mechanisms to monitor how a system learns from feedback over time, improving the efficiency and accessibility of ML). 11. Safeguards 
+
+Question: Does the paper describe safeguards that have been put in place for responsible release of data or models that have a high risk for misuse (e.g., pre-trained language models, image generators, or scraped datasets)? Answer: [N/A] Justification: The paper does not release a high-risk dual-use model, generative model, scraped dataset, or other asset that would require special safeguards for responsible release. Guidelines: • The answer [N/A] means that the paper poses no such risks. • Released models that have a high risk for misuse or dual-use should be released with necessary safeguards to allow for controlled use of the model, for example by requiring that users adhere to usage guidelines or restrictions to access the model or implementing safety filters. • Datasets that have been scraped from the Internet could pose safety risks. The authors should describe how they avoided releasing unsafe images. • We recognize that providing effective safeguards is challenging, and many papers do not require this, but we encourage authors to take this into account and make a best faith effort. 29 12. Licenses for existing assets 
+
+Question: Are the creators or original owners of assets (e.g., code, data, models), used in the paper, properly credited and are the license and terms of use explicitly mentioned and properly respected? Answer: [Yes] Justification: The datasets and comparison methods involved in this paper are all publicly available. We quote them correctly in the paper. Guidelines: • The answer [N/A] means that the paper does not use existing assets. • The authors should cite the original paper that produced the code package or dataset. • The authors should state which version of the asset is used and, if possible, include a URL. • The name of the license (e.g., CC-BY 4.0) should be included for each asset. • For scraped data from a particular source (e.g., website), the copyright and terms of service of that source should be provided. • If assets are released, the license, copyright information, and terms of use in the package should be provided. For popular datasets, paperswithcode.com/datasets 
+
+has curated licenses for some datasets. Their licensing guide can help determine the license of a dataset. • For existing datasets that are re-packaged, both the original license and the license of the derived asset (if it has changed) should be provided. • If this information is not available online, the authors are encouraged to reach out to the asset’s creators. 13. New assets 
+
+Question: Are new assets introduced in the paper well documented and is the documentation provided alongside the assets? Answer: [Yes] Justification: We introduce the SPG model and provide source code as supplementary material; no new dataset is introduced. All the libraries and datasets used are publicly available, and we referenced them as required. We have provided the source code with the submission as supplementary material. In addition, the code will be made public upon acceptance of the paper. Guidelines: • The answer [N/A] means that the paper does not release new assets. • Researchers should communicate the details of the dataset/code/model as part of their submissions via structured templates. This includes details about training, license, limitations, etc. • The paper should discuss whether and how consent was obtained from people whose asset is used. • At submission time, remember to anonymize your assets (if applicable). You can either create an anonymized URL or include an anonymized zip file. 14. Crowdsourcing and research with human subjects 
+
+Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and screenshots, if applicable, as well as details about compensation (if any)? Answer: [N/A] Justification: The paper does not involve crowdsourcing experiments, user studies, or research with human subjects. Guidelines: • The answer [N/A] means that the paper does not involve crowdsourcing nor research with human subjects. 30 • Including this information in the supplemental material is fine, but if the main contribu-tion of the paper involves human subjects, then as much detail as possible should be included in the main paper. • According to the NeurIPS Code of Ethics, workers involved in data collection, curation, or other labor should be paid at least the minimum wage in the country of the data collector. 15. Institutional review board (IRB) approvals or equivalent for research with human subjects 
+
+Question: Does the paper describe potential risks incurred by study participants, whether such risks were disclosed to the subjects, and whether Institutional Review Board (IRB) approvals (or an equivalent approval/review based on the requirements of your country or institution) were obtained? Answer: [N/A] Justification: The paper does not involve crowdsourcing or human-subject research, so IRB approval or equivalent review is not applicable. Guidelines: • The answer [N/A] means that the paper does not involve crowdsourcing nor research with human subjects. • Depending on the country in which research is conducted, IRB approval (or equivalent) may be required for any human subjects research. If you obtained IRB approval, you should clearly state this in the paper. • We recognize that the procedures for this may vary significantly between institutions and locations, and we expect authors to adhere to the NeurIPS Code of Ethics and the guidelines for their institution. • For initial submissions, do not include any information that would break anonymity (if applicable), such as the institution conducting the review. 16. Declaration of LLM usage 
+
+Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research? Note that if the LLM is used only for writing, editing, or formatting purposes and does not impact the core methodology, scientific rigor, or originality of the research, declaration is not required. Answer: [N/A] Justification: The core method development does not use LLMs as an important, original, or non-standard component. LLM-based methods are mentioned only as related work for feature alignment, not as part of the proposed SPG method. Guidelines: • The answer [N/A] means that the core method development in this research does not involve LLMs as any important, original, or non-standard components. • Please refer to our LLM policy in the NeurIPS handbook for what should or should not be described. 31

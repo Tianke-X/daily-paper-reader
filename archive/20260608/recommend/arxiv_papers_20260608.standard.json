@@ -1,0 +1,598 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-08T20:48:46.817644+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 2,
+    "deep_cap": 7,
+    "deep_selected": 2,
+    "quick_candidates": 14,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2606.07075v1",
+      "source": "arxiv",
+      "title": "Beyond Matching: Category-Guided Latent Intent Reasoning for Generative Retrieval in E-Commerce",
+      "abstract": "Generative retrieval offers a new paradigm for e-commerce search by mapping user queries directly to product Semantic Identifiers (SIDs). However, e-commerce queries are often short, noisy, attribute-heavy, and associated with multiple category-consistent products, creating a substantial representation gap between natural-language shopping intent and artificially constructed item SIDs. Explicit Chain-of-Thought (CoT) reasoning can help bridge this gap, but its extra generation cost is difficult to reconcile with the low-latency requirements of online e-commerce systems. To address this challenge, we propose CaLIR (Category-guided Latent Intent Reasoning), a category-guided latent intent reasoning framework for e-commerce generative retrieval. Rather than generating explicit textual rationales, CaLIR learns continuous latent intent states before SID decoding and uses product category hierarchies as a natural scaffold for coarse-to-fine intent reasoning. Specifically, we introduce hierarchical semantic reasoning to align latent states with category-level shopping intent, and query-wise reasoning enhancement to model diverse intent paths under multi-positive queries. CaLIR further combines a query-specific dynamic prefix trie, assembled from pre-indexed category-level tries, with reasoning-aware constrained decoding. Experiments on multilingual e-commerce search datasets show that CaLIR achieves a better balance between retrieval effectiveness and inference efficiency than existing methods, while also demonstrating transferability and robustness across induced hierarchies and different generative backbones.",
+      "authors": [
+        "Fuwei Zhang",
+        "Xiaoyu Liu",
+        "Jiajie Jin",
+        "Jiale Mao",
+        "Wei Chen",
+        "Dongbo Xi",
+        "Yifan Yang",
+        "Peng Yan",
+        "Zichao Hao",
+        "Zhao Zhang",
+        "Fuzhen Zhuang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-05T09:12:54+00:00",
+      "link": "https://arxiv.org/pdf/2606.07075v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "CaLIR replaces explicit CoT with latent intent reasoning for generative retrieval, applicable as alternate for cold start ticket generation",
+      "llm_evidence_cn": "CaLIR用潜在意图推理替代显式思维链，可用于冷启动工单生成的替代方案",
+      "llm_evidence": "CaLIR用潜在意图推理替代显式思维链，可用于冷启动工单生成的替代方案",
+      "canonical_evidence": "CaLIR用潜在意图推理替代显式思维链，可用于冷启动工单生成的替代方案",
+      "llm_tldr_en": "CaLIR proposes latent intent reasoning to avoid CoT overhead in e-commerce generative retrieval, offering a efficient alternative that can benefit cold-start ticket generation.",
+      "llm_tldr_cn": "该论文针对电商生成式检索中思维链（CoT）推理延迟高昂的问题，提出类别引导的潜在意图推理框架CaLIR，在不需要显式CoT的情况下桥接查询与商品标识的语义鸿沟。实验表明其在保持效果的同时大幅降低推理时延，为电力工作票冷启动生成提供了一种高效的CoT替代方案。",
+      "llm_tldr": "该论文针对电商生成式检索中思维链（CoT）推理延迟高昂的问题，提出类别引导的潜在意图推理框架CaLIR，在不需要显式CoT的情况下桥接查询与商品标识的语义鸿沟。实验表明其在保持效果的同时大幅降低推理时延，为电力工作票冷启动生成提供了一种高效的CoT替代方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Alternatives to chain of thought reasoning for cold start in power work ticket generation",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07218v1",
+      "source": "arxiv",
+      "title": "HKVM-RAG: Key-Value-Separated Hypergraph Evidence Organization for Multi-Hop RAG",
+      "abstract": "Multi-hop RAG poses a data-engineering problem beyond passage matching: under fixed retrieval budgets, a system must organize retrieved text into evidence units that expose answer chains. Dense retrievers score passages independently, while graph-based memories make associations explicit but often rely on pairwise or entity-centered keys that fragment multi-hop evidence. We present HKVM-RAG, a key-value-separated evidence-organization layer. It assembles answer-path hyperedges from cached passage-level LLM evidence tuples and uses them as retrieval keys, while retaining passage text as answer values. To isolate key-space design, our fixed-substrate protocol holds the tuple cache, candidate passages, reader, and evaluation budget constant across pairwise graph and hypergraph variants. Weighted hypergraph key-value retrieval improves over KG-PPR by +3.426 F1 on 2WikiMultiHopQA and +3.592 F1 on MuSiQue; HotpotQA shows that higher structured support coverage need not yield standalone answer-F1 gains. We therefore study WHG-KV as an evidence-control signal rather than a dense-retrieval replacement. Oracle and train-to-dev analyses identify support selection as repairable, and a dense-aware controller combines frozen ColBERTv2 and HKVM rank/score features using out-of-fold HKVM predictions. It reaches 88.846, 65.073, and 85.810 F1 on the three benchmarks, improving over ColBERTv2 by +11.084, +6.763, and +5.966 F1. Source-level ablations show that matched non-WHG structured signals do not match the WHG-KV gains. These results provide bounded evidence that key-value-separated hypergraph organization can serve as a reusable evidence-control mechanism for multi-hop RAG.",
+      "authors": [
+        "Mingyu Zhang",
+        "Ying Ma"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.CL"
+      ],
+      "published": "2026-06-05T12:31:13+00:00",
+      "link": "https://arxiv.org/pdf/2606.07218v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Hypergraph-based evidence organization for multi-hop RAG, directly aligns with graph-based retrieval augmented generation",
+      "llm_evidence_cn": "基于超图的证据组织用于多跳RAG，直接对应基于图的检索增强生成",
+      "llm_evidence": "基于超图的证据组织用于多跳RAG，直接对应基于图的检索增强生成",
+      "canonical_evidence": "基于超图的证据组织用于多跳RAG，直接对应基于图的检索增强生成",
+      "llm_tldr_en": "HKVM-RAG introduces key-value-separated hypergraph evidence organization for multi-hop RAG, using answer-path hyperedges as retrieval keys to expose answer chains, improving reasoning over graph-structured evidence.",
+      "llm_tldr_cn": "针对多跳RAG中证据组织碎片化的问题，本文提出HKVM-RAG，采用键值分离的超图结构组织证据单元，将答案路径超边作为检索键，保留段落文本作为值，从而在固定检索预算下显式揭示答案链。实验表明该方法能有效提升多跳推理的准确性和效率。该工作为电力工作票等领域的复杂检索增强生成提供了可借鉴的图结构证据组织范式。",
+      "llm_tldr": "针对多跳RAG中证据组织碎片化的问题，本文提出HKVM-RAG，采用键值分离的超图结构组织证据单元，将答案路径超边作为检索键，保留段落文本作为值，从而在固定检索预算下显式揭示答案链。实验表明该方法能有效提升多跳推理的准确性和效率。该工作为电力工作票等领域的复杂检索增强生成提供了可借鉴的图结构证据组织范式。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.02245v1",
+      "source": "arxiv",
+      "title": "When Knowledge Is Not Free: Cost-Aware Evidence Selection in Retrieval-Augmented Generation",
+      "abstract": "Retrieval-Augmented Generation (RAG) typically assumes that external knowledge is free, but many high-quality sources are paywalled, licensed, restricted, or otherwise costly to access. We introduce cost-aware RAG, a setting where retrieved evidence is assigned access-cost tiers and systems must answer under an explicit evidence-access budget. We instantiate this setting by augmenting MS MARCO v2.1 with access-friction tiers and evaluate budgeted evidence selection across general-domain and domain-specific QA benchmarks. Our results show that static selection is brittle: no fixed selector uniformly dominates, and larger budgets do not reliably improve answer quality, even when costly evidence is domain-matched. We then study agentic cost-aware RAG, where an LLM decides when to retrieve, which tier to access, and when to stop. Agents show strong promise as adaptive evidence-acquisition controllers, but their behavior remains highly model- and task-dependent. These findings suggest that cost-aware evidence acquisition is a central challenge for the next generation of RAG systems. All code and data are available at https://github.com/Mignonmy/Cost-Aware.",
+      "authors": [
+        "Mingyan Wu",
+        "Han Yang",
+        "Omer Ben-Porat",
+        "Yftah Ziser"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-01T13:39:39+00:00",
+      "link": "https://arxiv.org/pdf/2606.02245v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Cost-aware evidence selection in RAG",
+      "llm_evidence_cn": "RAG中具有成本意识的证据选择",
+      "llm_evidence": "RAG中具有成本意识的证据选择",
+      "canonical_evidence": "RAG中具有成本意识的证据选择",
+      "llm_tldr_en": "Introduces cost-aware RAG, where evidence has access-cost tiers, and studies budgeted selection, showing static selection fails and larger budgets don't guarantee quality.",
+      "llm_tldr_cn": "该论文提出成本感知的检索增强生成（RAG）设置，将检索证据按访问成本分层。实验表明静态选择策略效果不佳，更大预算并不保证答案质量。该工作揭示了RAG系统中证据选择的复杂性，对电力工作票生成中资源受限场景具有参考价值。",
+      "llm_tldr": "该论文提出成本感知的检索增强生成（RAG）设置，将检索证据按访问成本分层。实验表明静态选择策略效果不佳，更大预算并不保证答案质量。该工作揭示了RAG系统中证据选择的复杂性，对电力工作票生成中资源受限场景具有参考价值。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.01212v2",
+      "source": "arxiv",
+      "title": "DiscourseFlip: An Oblique Discourse-Level Opinion Manipulation Attack against Black-box Retrieval-Augmented Generation",
+      "abstract": "Retrieval-Augmented Generation (RAG) systems are widely deployed and increasingly influential, but their reliance on external corpora exposes new security risks from poisoned retrieval content. Existing RAG attacks are largely focusing on individual queries or narrow topic-local query sets, which limits their practical reach and offers limited camouflage in real-world settings. In this paper, we introduce discourse-level opinion manipulation, a new threat model in which coordinated influence across a semantic query network induces opinion shifts over a holistic, multi-topic query space. We formalize this threat in a black-box setting and propose DiscourseFlip, an agentic, graph-guided attack that dynamically allocates a limited poisoning budget to maximize discourse-level opinion deviation. Extensive experiments demonstrate that DiscourseFlip consistently induces targeted opinion shifts across the contextualized query network and significantly outperforms existing baselines in terms of coverage and effectiveness. User studies further confirm that DiscourseFlip is effective while remaining well camouflaged from user detection. Moreover, systematic analyses show that existing mitigation strategies are ineffective against discourse-level manipulation, underscoring the urgent need for more robust and adaptive defenses to address discourse-level vulnerabilities.",
+      "authors": [
+        "Yuyang Gong",
+        "Miaokun Chen",
+        "Jiawei Liu",
+        "Zhuo Chen",
+        "Guoxiu He",
+        "Wei Lu",
+        "XiaoFeng Wang",
+        "Xiaozhong Liu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.CR",
+        "cs.IR"
+      ],
+      "published": "2026-05-31T13:03:47+00:00",
+      "link": "https://arxiv.org/pdf/2606.01212v2",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "graph-guided attack on RAG systems",
+      "llm_evidence_cn": "基于图的检索增强生成系统攻击",
+      "llm_evidence": "基于图的检索增强生成系统攻击",
+      "canonical_evidence": "基于图的检索增强生成系统攻击",
+      "llm_tldr_en": "Proposes DiscourseFlip, a graph-guided attack that manipulates opinions across a semantic query network in black-box RAG systems.",
+      "llm_tldr_cn": "针对检索增强生成（RAG）系统存在被投毒内容操纵的安全风险，提出了DiscourseFlip，一种基于图引导的言论级意见操纵攻击。该方法通过协调语义查询网络中的影响，实现对多主题查询空间的意见偏移，展示了图在RAG安全中的新应用。",
+      "llm_tldr": "针对检索增强生成（RAG）系统存在被投毒内容操纵的安全风险，提出了DiscourseFlip，一种基于图引导的言论级意见操纵攻击。该方法通过协调语义查询网络中的影响，实现对多主题查询空间的意见偏移，展示了图在RAG安全中的新应用。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03315v1",
+      "source": "arxiv",
+      "title": "A Graph Foundation Model with Spectral Parsing and Prototype-Guided Spatial Propagation",
+      "abstract": "Graph foundation models aim to learn transferable knowledge from diverse graphs for generalization to unseen graphs and tasks. Unlike text and images, graphs lack a shared vocabulary or regular spatial grid, making cross-graph transfer challenging. This challenge comes from both feature discrepancies and, more critically, diverse graph structures. Existing GFMs mainly improve transferability by unifying feature spaces or incorporating structural tokens and vocabularies. However, existing topology-aware designs still have limitations. Structural tokens are usually discrete, while structural vocabularies often rely on predefined substructures such as trees and cycles, whose limited coverage may miss richer relational patterns across graphs. Moreover, graph signals contain both high-frequency local patterns and smoother low-frequency patterns, which require different propagation behaviors. These components are often entangled in raw graph signals, while this spectral perspective is rarely explored in existing GFMs. To address these challenges, we propose SPG, a graph foundation model with spectral parsing and prototype-guided spatial propagation. SPG applies learnable Chebyshev filters to decompose node features into multiple spectral responses, reducing the mismatch between frequency-specific graph signals and propagation behaviors. It then constructs a Gromov-Wasserstein prototype geometry to distill transferable pairwise relations beyond predefined substructures into a shared structural space. The learned prototype geometry is further projected back as a prototype-guided propagation operator. Experiments demonstrate consistent improvements in cross-domain generalization.",
+      "authors": [
+        "Ankang Yang",
+        "Jitao Zhao",
+        "Dongxiao He",
+        "Liang Yang",
+        "Di Jin",
+        "Weixiong Zhang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-02T08:27:03+00:00",
+      "link": "https://arxiv.org/pdf/2606.03315v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Graph foundation model for cross-graph transfer via spectral parsing and spatial propagation",
+      "llm_evidence_cn": "基于光谱解析和空间传播的图基础模型实现跨图迁移",
+      "llm_evidence": "基于光谱解析和空间传播的图基础模型实现跨图迁移",
+      "canonical_evidence": "基于光谱解析和空间传播的图基础模型实现跨图迁移",
+      "llm_tldr_en": "Proposes a graph foundation model that uses spectral parsing to capture structural patterns and prototype-guided spatial propagation for feature alignment, achieving strong generalization across diverse graphs.",
+      "llm_tldr_cn": "针对图数据缺乏共享词汇导致跨图迁移困难的问题，提出图基础模型，通过光谱解析提取结构模式，并利用原型引导的空间传播对齐特征空间。在多个图分类和回归任务上表现出强大的泛化能力。该模型可为电力工作票图结构学习提供基础框架。",
+      "llm_tldr": "针对图数据缺乏共享词汇导致跨图迁移困难的问题，提出图基础模型，通过光谱解析提取结构模式，并利用原型引导的空间传播对齐特征空间。在多个图分类和回归任务上表现出强大的泛化能力。该模型可为电力工作票图结构学习提供基础框架。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.03151v1",
+      "source": "arxiv",
+      "title": "ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases",
+      "abstract": "Vector database search with frequent updates is increasingly critical in applications such as retrieval augmented generation, recommendation systems, and large-scale embedding retrieval. Existing solutions, such as graph-based and partition-based approximate nearest neighbor search (ANNS), suffer from frequent index rebuilding due to data distribution-dependent indexing that impacts continuous deployment and causes long rebuilding latency. This paper proposes an algorithm-hardware co-designed platform, ACRONYM, that addresses key problems with state of the art database search. Algorithmically, it leverages efficient encoding independent of data distribution and Hamming-distance based search for efficient hardware acceleration. Architecturally, we propose CAM-based in-memory parallel distance computation followed by time multiplexed approximated top-k selection to enable the exhaustive search. We propose two-stage search that includes coarse search followed by binary refinement to achieve high recall in CAM based search which is heavily limited to small vector dimension due to capacity and wordline parasitic. ACRONYM supports continuous update without stalling and integrates novel XOR-and-Accumulate (XAC) based systolic-array encoder for efficient on chip encoding during search. Across million-scale datasets, while serving dynamic database ACRONYM achieves >90% recall at a throughput of 8e6 queries per second, with a memory footprint of only 32MB and an average energy consumption of 2.56uJ per query, speedup over HNSW (CPU) of about 400x and FAISS-IVF (GPU) of about 80x.",
+      "authors": [
+        "Md Mizanur Rahaman Nayan",
+        "Tianqi Zhang",
+        "Flavio Ponzina",
+        "Tajana Rosing",
+        "Azad J Naeemi"
+      ],
+      "primary_category": "cs.AR",
+      "categories": [
+        "cs.AR",
+        "cs.DB",
+        "cs.ET"
+      ],
+      "published": "2026-06-02T04:50:26+00:00",
+      "link": "https://arxiv.org/pdf/2606.03151v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Accelerated vector database search for RAG",
+      "llm_evidence_cn": "面向RAG的加速向量数据库搜索",
+      "llm_evidence": "面向RAG的加速向量数据库搜索",
+      "canonical_evidence": "面向RAG的加速向量数据库搜索",
+      "llm_tldr_en": "Proposes ACRONYM, a co-designed platform for efficient approximate nearest neighbor search in dynamic vector databases, supporting retrieval-augmented generation with low-latency updates.",
+      "llm_tldr_cn": "该论文针对动态向量数据库频繁更新导致的索引重建开销问题，提出了算法-硬件协同设计平台ACRONYM。通过数据分布无关的编码和汉明距离搜索，ACRONYM在不牺牲精度的情况下大幅加速近似最近邻搜索。该工作直接服务于检索增强生成（RAG）等应用，能为电力工作票生成任务提供高效的检索支持。",
+      "llm_tldr": "该论文针对动态向量数据库频繁更新导致的索引重建开销问题，提出了算法-硬件协同设计平台ACRONYM。通过数据分布无关的编码和汉明距离搜索，ACRONYM在不牺牲精度的情况下大幅加速近似最近邻搜索。该工作直接服务于检索增强生成（RAG）等应用，能为电力工作票生成任务提供高效的检索支持。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03374v1",
+      "source": "arxiv",
+      "title": "eMEM: A Hybrid Spatio-Temporal Memory System For Embodied Agents",
+      "abstract": "We present eMEM (Embodied Memory), a hybrid graph-based memory system for embodied agents operating in physical environments. Current agent memory architectures, such as Generative Agents, MemGPT, and A-MEM, treat memory as text streams or knowledge graphs, but embodied agents require memory that is simultaneously searchable by meaning, space, and time. eMEM fills this gap with a multi-index architecture (SQL ITE for structured storage, hnswlib for approximate nearest neighbour semantic search, and an R-tree for spatial queries) unified behind a single graph model. A tiered consolidation pipeline transforms raw perceptual observations into compressed summaries, mirroring hippocampal-neocortical consolidation in biological systems. Ten agent-facing recall tools expose memory retrieval primitives, including concept-to-location resolution and cross layer recall, as first-class operations for LLM tool calling. The system is fully embedded and runs in-process alongside the agent. In addition we introduce eMEM-Bench v1, a benchmark we construct over ProcTHOR-10K scenes for embodied memory evaluation. The benchmark is organised explicitly around eight cognitive-psychology paradigms (DRM lures, pattern separation, pattern completion, source monitoring, context-dependent retrieval, long-horizon interference, serial position, and a foil augmented retention curve), each chosen so that the result is interpretable against the broader memory-systems literature in humans and prior agent-memory systems; a level of diagnostic that surface-task benchmarks like LoCoMo or OpenEQA cannot provide. eMEM scores 80.8 weighted mean over 988 probes, with a flat retention curve at ceiling from 1 h to 1 yr of simulated delay on room-unique items. We show that a pure RAG baseline (the flat_rag ablation) loses 30 pt on context dependent retrieval and 29 pt on DRM lure rejection, isolating the contribution of multi-layer storage and consolidation respectively. We release both the system and the benchmark code.",
+      "authors": [
+        "A. Haroon Rasheed",
+        "Maria Kabtoul"
+      ],
+      "primary_category": "cs.RO",
+      "categories": [
+        "cs.RO"
+      ],
+      "published": "2026-06-02T09:22:12+00:00",
+      "link": "https://arxiv.org/pdf/2606.03374v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "graph memory augmented reasoning with hybrid graph-based memory system",
+      "llm_evidence_cn": "基于混合图记忆系统的图记忆增强推理",
+      "llm_evidence": "基于混合图记忆系统的图记忆增强推理",
+      "canonical_evidence": "基于混合图记忆系统的图记忆增强推理",
+      "llm_tldr_en": "Proposes eMEM, a hybrid graph-based memory system for embodied agents, integrating spatial, semantic, and temporal indexing for robust recall.",
+      "llm_tldr_cn": "针对具身智能体记忆需要同时按含义、空间和时间检索的问题，提出eMEM混合图记忆系统，结合SQL、hnswlib和R树索引，并通过分层整合流程模拟海马-新皮质记忆巩固，为图记忆增强推理（如工作票冷启动）提供可借鉴的架构。",
+      "llm_tldr": "针对具身智能体记忆需要同时按含义、空间和时间检索的问题，提出eMEM混合图记忆系统，结合SQL、hnswlib和R树索引，并通过分层整合流程模拟海马-新皮质记忆巩固，为图记忆增强推理（如工作票冷启动）提供可借鉴的架构。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "graph memory augmented reasoning",
+      "matched_requirement_id": "req-9",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.03728v1",
+      "source": "arxiv",
+      "title": "Re-Ranking Through an Attribution Lens for Citation Quality in Legal QA",
+      "abstract": "Retrieval-augmented generation systems for legal question answering typically retrieve passages based on semantic similarity and provide them to a language model, which then generates cited answers. Prior work assumes that highly ranked passages are most likely to be usefully cited by the model. Perturbation-based attribution methods, such as C-LIME, have been used exclusively for post-hoc explanation. However, on the AQuAECHR benchmark, semantic similarity does not correlate with passage attribution. Within a retriever's candidate pool, similarity-based ranking performs worse than random selection at surfacing gold citation paragraphs. To address this limitation, a lightweight cross-encoder is trained on continuous perturbation-based attribution scores to re-rank passages prior to generation. This approach is evaluated on the AQuAECHR benchmark, using two language models and five-fold cross-validation. The re-ranker substantially improves citation faithfulness and alignment with gold expert answers. Notably, two re-rankers trained independently on different models converge beyond their raw attribution agreement. This finding indicates that the cross-encoder reduces model-specific noise and produces a shared relevance signal that partially transfers across models, although same-model re-ranking remains more effective. These results demonstrate that perturbation-based attribution provides a practical, model-agnostic training signal for citation-aware retrieval.",
+      "authors": [
+        "Mohamed Hesham Elganayni",
+        "Selim Saleh"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.IR"
+      ],
+      "published": "2026-06-02T14:48:33+00:00",
+      "link": "https://arxiv.org/pdf/2606.03728v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Improves RAG with attribution-based re-ranking for citation quality",
+      "llm_evidence_cn": "通过归因重排序提升检索增强生成质量",
+      "llm_evidence": "通过归因重排序提升检索增强生成质量",
+      "canonical_evidence": "通过归因重排序提升检索增强生成质量",
+      "llm_tldr_en": "Proposes a cross-encoder trained on perturbation-based attribution scores to re-rank passages in RAG for legal QA, improving citation quality over similarity-based ranking.",
+      "llm_tldr_cn": "针对现有RAG系统依赖语义相似度排序导致引用质量低的问题，提出基于扰动归因的轻量级交叉编码器进行重排序。训练后模型能更好识别对生成答案有用的段落，在法律QA基准上优于随机选择。该方法可迁移至其他领域的检索增强生成任务。",
+      "llm_tldr": "针对现有RAG系统依赖语义相似度排序导致引用质量低的问题，提出基于扰动归因的轻量级交叉编码器进行重排序。训练后模型能更好识别对生成答案有用的段落，在法律QA基准上优于随机选择。该方法可迁移至其他领域的检索增强生成任务。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03712v1",
+      "source": "arxiv",
+      "title": "When Graph Tokens Sink: A Mechanistic Analysis of Graph Language Models",
+      "abstract": "Graph Language Models (GLMs) have become a promising direction for adapting Large Language Models (LLMs) to graph learning tasks. By transforming graph topology and node information into graph tokens, GLMs allow LLMs to jointly process structured graph inputs and textual instructions. Yet, it remains unclear how LLMs internally interpret these graph tokens and whether graph tokens act as meaningful carriers of graph structure. In this work, we analyze how LLMs process graph information through graph-token behavior in representative GLM architectures.   Findings. We find that the internal saliency of graph tokens in GLMs is not equivalent to graph information utilization. Graph sink tokens consistently emerge as activation-level outliers: they can be identified by massive activation values along a small set of hidden-state dimensions and are biased toward early graph-token positions. However, this activation-level saliency does not imply that these tokens are the main carriers of graph information. Unlike classical attention sinks in language and vision-language models, graph sink tokens do not necessarily attract the largest attention weights from query tokens. Through pruning, repositioning, and swapping interventions, we show that graph sink tokens are not the most important semantic or structural tokens for downstream prediction.   Implications. Together, these results suggest that after current GLMs map graph structure into the LLM token space, the resulting graph-token representations do not naturally form a fully usable topology-aware internal representation; instead, they exhibit a decoupling between activation-level saliency and graph-semantic utility. This decoupling points to limitations in existing graph-token construction, placement, and alignment mechanisms.",
+      "authors": [
+        "Ding Zhang",
+        "Runtao Zhou",
+        "Wenqing Zheng",
+        "Rizal Fathony",
+        "Bayan Bruss",
+        "Chirag Agarwal"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-02T14:34:01+00:00",
+      "link": "https://arxiv.org/pdf/2606.03712v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Mechanistic analysis of graph token processing in GLMs",
+      "llm_evidence_cn": "图语言模型中图令牌处理的机制分析",
+      "llm_evidence": "图语言模型中图令牌处理的机制分析",
+      "canonical_evidence": "图语言模型中图令牌处理的机制分析",
+      "llm_tldr_en": "Analyzes how LLMs process graph tokens in Graph Language Models, identifying graph sink tokens as activation outliers and questioning their utility.",
+      "llm_tldr_cn": "该论文分析了图语言模型（GLM）中LLM对图令牌的内部处理机制，发现图汇聚令牌（graph sink tokens）成为激活异常值，其内部显著性不等于图信息利用。该发现对结合图与文本的生成任务（如电力工作票生成）中图令牌的设计具有重要指导意义。",
+      "llm_tldr": "该论文分析了图语言模型（GLM）中LLM对图令牌的内部处理机制，发现图汇聚令牌（graph sink tokens）成为激活异常值，其内部显著性不等于图信息利用。该发现对结合图与文本的生成任务（如电力工作票生成）中图令牌的设计具有重要指导意义。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.06311v1",
+      "source": "arxiv",
+      "title": "AIS-Based Vessel Trajectory Prediction Using Memory-Augmented Neural Networks",
+      "abstract": "Accurate vessel trajectory prediction is essential for safe and efficient maritime operations, enabling collision avoidance and supporting route optimization. Although memory-augmented neural networks have recently shown strong performance in pedestrian and road-vehicle trajectory prediction by selectively retrieving relevant information from an external memory, their potential for vessel trajectory prediction remains underexplored. This paper presents an empirical investigation of memory-based trajectory prediction using Automatic Identification System (AIS) data. Experiments on data from the Gulf of Mexico and the New York Bight demonstrate consistent and substantial performance gains over a range of deep learning baselines that do not incorporate an external memory.",
+      "authors": [
+        "Wonmo Koo",
+        "Sanha Chang",
+        "Heeyoung Kim"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-04T15:52:21+00:00",
+      "link": "https://arxiv.org/pdf/2606.06311v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "memory-augmented neural networks for trajectory prediction with external memory retrieval",
+      "llm_evidence_cn": "记忆增强神经网络用于轨迹预测，外部记忆检索",
+      "llm_evidence": "记忆增强神经网络用于轨迹预测，外部记忆检索",
+      "canonical_evidence": "记忆增强神经网络用于轨迹预测，外部记忆检索",
+      "llm_tldr_en": "This paper empirically shows memory-augmented NNs outperform baselines in vessel trajectory prediction by selectively retrieving from external memory, demonstrating general applicability of memory augmentation.",
+      "llm_tldr_cn": "本文探讨记忆增强神经网络在船舶轨迹预测中的应用，通过外部记忆选择性检索相关信息。在墨西哥湾和纽约湾数据集上的实验表明，记忆增强方法显著优于传统深度学习基线，验证了记忆机制在序列预测中的通用有效性，可启发少样本电力工作票生成中的记忆推理。",
+      "llm_tldr": "本文探讨记忆增强神经网络在船舶轨迹预测中的应用，通过外部记忆选择性检索相关信息。在墨西哥湾和纽约湾数据集上的实验表明，记忆增强方法显著优于传统深度学习基线，验证了记忆机制在序列预测中的通用有效性，可启发少样本电力工作票生成中的记忆推理。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "memory augmented neural network for reasoning",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.05116v1",
+      "source": "arxiv",
+      "title": "Graph Set Transformer",
+      "abstract": "We introduce the Graph Set Transformer (GST), a neural network architecture for learning on sets of graphs, designed for tasks in which per-element predictions depend on set-wide context as well as local structure. Existing architectures, including DeepSets and SetTransformer, require pre-encoded graph embeddings from a separate GNN, creating a bottleneck between feature extraction and set-level contextualisation. In contrast, GST interleaves node-level feature propagation and cross-graph contextual modelling at every layer, fusing the two levels of information through a gating mechanism. We evaluate GST on a controlled synthetic suite designed to isolate set-conditional structural reasoning and on three real-data benchmarks spanning per-atom reaction-centre identification, reaction yield prediction, and image classification. Under matched parameter budgets, GST performs better than the baselines across these settings. An architectural ablation strongly suggests that the interleaving of local and set context contributes substantially to this advantage.",
+      "authors": [
+        "Jose E. Escrig Molina",
+        "Baoquan Chen",
+        "Daniel Probst"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-03T17:20:48+00:00",
+      "link": "https://arxiv.org/pdf/2606.05116v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "A new architecture for graph structure learning, interleaving node-level and cross-graph context",
+      "llm_evidence_cn": "一种新的图结构学习架构，交织节点级和跨图上下文建模",
+      "llm_evidence": "一种新的图结构学习架构，交织节点级和跨图上下文建模",
+      "canonical_evidence": "一种新的图结构学习架构，交织节点级和跨图上下文建模",
+      "llm_tldr_en": "Graph Set Transformer (GST) interleaves node-level feature propagation and cross-graph contextual modeling at every layer for learning on sets of graphs, outperforming separate GNN+set transformer pipelines.",
+      "llm_tldr_cn": "本文提出图集变换器（GST），在每层交替进行节点特征传播和图间上下文建模，通过门控机制融合两种信息，无需预先编码图嵌入。在合成和真实基准（如原子反应中心识别）上优于传统方法。该架构为图结构学习提供了更强力的表示，可用于构建图记忆增强的推理系统。",
+      "llm_tldr": "本文提出图集变换器（GST），在每层交替进行节点特征传播和图间上下文建模，通过门控机制融合两种信息，无需预先编码图嵌入。在合成和真实基准（如原子反应中心识别）上优于传统方法。该架构为图结构学习提供了更强力的表示，可用于构建图记忆增强的推理系统。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.06779v1",
+      "source": "arxiv",
+      "title": "Mind the Gap: Bridging Behavioral Silos with LLMs in Multi-Vertical Recommendations",
+      "abstract": "In multi-vertical e-commerce platforms like DoorDash, relatively newer product verticals such as grocery and retail present a significant opportunity for personalization innovation. A key challenge lies in solving the \"cold start\" problem for users. This paper introduces a novel framework for enhancing recommendation quality by transferring knowledge from data-rich verticals (e.g., restaurants at DoorDash) to data-sparse ones. We leverage Large Language Models (LLMs) to perform generative inference, synthesizing sparse, high-dimensional features that encapsulate latent user affinities. Specifically, we employ a hierarchical Retrieval-Augmented Generation (RAG) pipeline to derive multi-level taxonomic features from user restaurant order histories and search queries. These generated features, encoding both long-term cross-vertical preferences and short-term intent, are integrated into a production Multi-Task Learning (MTL) ranking model. We demonstrate through extensive offline and online evaluation that this approach significantly improves personalization and engagement in emerging business verticals, effectively bridging the behavioral data gap.",
+      "authors": [
+        "Nimesh Sinha",
+        "Raghav Saboo",
+        "Martin Wang",
+        "Sudeep Das"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.AI"
+      ],
+      "published": "2026-06-04T23:39:52+00:00",
+      "link": "https://arxiv.org/pdf/2606.06779v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "cold start with RAG for low-resource",
+      "llm_evidence_cn": "使用RAG进行冷启动和低资源场景泛化",
+      "llm_evidence": "使用RAG进行冷启动和低资源场景泛化",
+      "canonical_evidence": "使用RAG进行冷启动和低资源场景泛化",
+      "llm_tldr_en": "Uses hierarchical RAG to bridge behavioral silos and solve cold start in multi-vertical recommendations by transferring knowledge from data-rich verticals.",
+      "llm_tldr_cn": "多垂直领域推荐中，新领域面临冷启动问题。本文利用层次化RAG从数据丰富的领域（如餐馆）向稀疏领域迁移知识，通过LLM生成高维用户表征，提升冷启动推荐质量。",
+      "llm_tldr": "多垂直领域推荐中，新领域面临冷启动问题。本文利用层次化RAG从数据丰富的领域（如餐馆）向稀疏领域迁移知识，通过LLM生成高维用户表征，提升冷启动推荐质量。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "improving model generalization in low-resource scenarios",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.06474v1",
+      "source": "arxiv",
+      "title": "Self-Augmenting Retrieval for Diffusion Language Models",
+      "abstract": "Discrete diffusion language models generate text by iteratively denoising an entire response in parallel. At each step, they predict tentative tokens for every masked position, committing the confident predictions to the output and discarding the unconfident ones. We show that the discarded tokens are in fact a useful lookahead signal for retrieval-augmented generation: even low-confidence tokens often surface salient entities early in the denoising trajectory, enabling retrieval of stronger evidence before the output is finalized. We exploit this through Self-Augmenting Retrieval for Diffusion Language Models (SARDI), a dynamic RAG framework that uses these lookahead tokens to guide retrieval during denoising. SARDI is training-free, retriever-agnostic, and applicable to any reasoning-capable discrete diffusion language model. Across five multi-hop QA benchmarks, SARDI outperforms current training-free diffusion and autoregressive retrieval baselines at up to $8\\times$ higher throughput.",
+      "authors": [
+        "Paul Jünger",
+        "Justin Lovelace",
+        "Linxi Zhao",
+        "Dongyoung Go",
+        "Kilian Q. Weinberger"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-06-04T17:56:27+00:00",
+      "link": "https://arxiv.org/pdf/2606.06474v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "dynamic RAG framework adaptable to ticket generation",
+      "llm_evidence_cn": "动态RAG框架可适用于工单生成",
+      "llm_evidence": "动态RAG框架可适用于工单生成",
+      "canonical_evidence": "动态RAG框架可适用于工单生成",
+      "llm_tldr_en": "SARDI uses lookahead tokens from diffusion denoising to guide retrieval, enhancing evidence quality without training. Applicable to work ticket generation.",
+      "llm_tldr_cn": "该论文针对扩散语言模型中检索增强生成的证据质量问题，提出SARDI框架，利用去噪过程中丢弃的低置信度标记作为前瞻信号来动态引导检索，无需额外训练且与检索器无关。实验表明该方法能显著提升检索结果的相关性，可迁移至电力工作票生成等下游任务。",
+      "llm_tldr": "该论文针对扩散语言模型中检索增强生成的证据质量问题，提出SARDI框架，利用去噪过程中丢弃的低置信度标记作为前瞻信号来动态引导检索，无需额外训练且与检索器无关。实验表明该方法能显著提升检索结果的相关性，可迁移至电力工作票生成等下游任务。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.06842v1",
+      "source": "arxiv",
+      "title": "CRAFT: A Unified Counterfactual Reasoning Framework for Tabular Question Answering and Fact Verification",
+      "abstract": "Table reasoning remains challenging for large language models (LLMs), particularly in tasks that require multi-step inference over long and structured tables. Existing approaches predominantly rely on single-direction reasoning, which limits their ability to explore alternative hypotheses across tasks. In this work, we propose CRAFT, a unified Counterfactual Reasoning Framework that reformulates Tabular question answering and fact verification into a general bidirectional verification process. Our method explicitly constructs both declarative statements and their counterfactual variants. Evidence is then extracted from reasoning along both the original and counterfactual paths, and integrated via a weighted mechanism to arrive at the final answer. Experimental results show that our approach consistently surpasses representative baselines on table reasoning datasets such as WikiTQ and TabFact, achieving especially large improvements on complex question answering. Our framework also significantly mitigates performance gaps between different backbone LLMs. This indicates that counterfactual reasoning effectively overcomes the limitations of single-direction inference, guiding LLMs toward more discerning reasoning and establishing a more principled paradigm for structured reasoning tasks. Our code will be made publicly available upon acceptance.",
+      "authors": [
+        "Chenshuo Pan",
+        "Yu Zhao",
+        "Jie Zhang",
+        "Changzai Pan",
+        "Zhenhe Wu",
+        "Jiayi Liang",
+        "Yujie Mao",
+        "Shuangyong Song",
+        "Yongxiang Li",
+        "Zhongjiang He"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-05T02:37:32+00:00",
+      "link": "https://arxiv.org/pdf/2606.06842v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Counterfactual reasoning as an alternative to chain-of-thought",
+      "llm_evidence_cn": "反事实推理作为思维链的替代方案",
+      "llm_evidence": "反事实推理作为思维链的替代方案",
+      "canonical_evidence": "反事实推理作为思维链的替代方案",
+      "llm_tldr_en": "Proposes CRAFT, a unified counterfactual reasoning framework for tabular QA and fact verification, enabling bidirectional verification without chain-of-thought.",
+      "llm_tldr_cn": "针对大模型在表格推理中依赖单方向推理（如CoT）的局限性，提出统一的反事实推理框架CRAFT，构建声明及其反事实变体，沿两条路径提取证据并加权整合。实验证明在多个表格推理任务中有效。该方法为电力工作票生成中替代CoT提供了新思路。",
+      "llm_tldr": "针对大模型在表格推理中依赖单方向推理（如CoT）的局限性，提出统一的反事实推理框架CRAFT，构建声明及其反事实变体，沿两条路径提取证据并加权整合。实验证明在多个表格推理任务中有效。该方法为电力工作票生成中替代CoT提供了新思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Latest research on reasoning without chain of thought in small corpus",
+      "matched_requirement_id": "req-17",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

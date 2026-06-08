@@ -1,0 +1,874 @@
+Title: ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases
+
+URL Source: https://arxiv.org/pdf/2606.03151v1
+
+Published Time: Wed, 03 Jun 2026 00:43:08 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases 
+
+# Md Mizanur Rahaman Nayan 
+
+Georgia Institute of Technology mnayan6@gatech.edu 
+
+# Tianqi Zhang 
+
+University of California San Diego tiz014@ucsd.edu 
+
+# Flavio Ponzina 
+
+University of California San Diego fponzina@ucsd.edu 
+
+# Tajana Rosing 
+
+University of California San Diego tajana@ucsd.edu 
+
+# Azad J. Naeemi 
+
+Georgia Institute of Technology azad@gatech.edu 
+
+## Abstract 
+
+Vector database search with frequent updates is increasingly critical in applications such as retrieval augmented generation, recommen-dation systems, and large-scale embedding retrieval. Existing solu-tions, such as graph-based and partition-based approximate nearest neighbor search (ANNS), suffer from frequent index rebuilding due to data distribution–dependent indexing that impacts continuous deployment and causes long rebuilding latency. This paper proposes an algorithm-hardware co-designed platform, ACRONYM, that ad-dresses key problems with state of the art database search. Algorith-mically, it leverages efficient encoding independent of data distri-bution and Hamming-distance based search for efficient hardware acceleration. Architecturally, we propose CAM-based in-memory parallel distance computation followed by time multiplexed ap-proximated top-k selection to enable the exhaustive search. We propose two-stage search that includes coarse search followed by binary refinement to achieve high recall in CAM based search which is heavily limited to small vector dimension due to capacity and wordline parasitic. ACRONYM supports continuous update without stalling and integrates novel XOR-and-Accumulate (XAC) based systolic-array encoder for efficient on chip encoding during search. Across million-scale datasets, while serving dynamic data-base ACRONYM achieves > 90% recall at a throughput of ∼ 8 × 10 6
+
+queries per second, with a memory footprint of only 32 MB and an average energy consumption of 2.56 𝜇 J per query, speedup over HNSW (CPU) of about 400 × and FAISS-IVF (GPU) of about 80 ×.
+
+## 1 Introduction 
+
+In the era of Large Language Model (LLM)-powered Retrieval-Augmented Generation (RAG), recommendation systems, and data mining, the ability to efficiently search massive high-dimensional databases has become a cornerstone of modern computing [ 7 , 18 ,22 ]. As data volumes in both public and private repositories con-tinue to grow exponentially, the demand for high-throughput, low-latency similarity search has never been greater. Among existing approaches, graph-based and partition-based methods dominate due to their superior recall–latency trade-offs at scale[ 3, 16 , 18 ]. Graph-based approaches, such as HNSW and DiskANN [ 15 , 30 ], construct a navigable proximity graph offline, which enables efficient traversal of high-dimensional vector spaces during query time. These methods achieve strong recall while main-taining high query throughput. Partition-based approaches, on the other hand, divide the search space into clusters during an offline 
+
+> MICRO 2026, Athens, Greece
+> 2026. ACM ISBN 978-X-XXXX-XXXX-X/XX/XX https://doi.org/XXXXXXX.XXXXXXX
+
+phase and restrict the search to a subset of relevant regions at query time[ 16 , 18 , 21 ]. This reduces the effective search space and improves efficiency. However, both classes of methods rely on an initial estimate of the data distribution—either in the form of graph connectivity or clustering centroids—which enables fast navigation and accurate search. This same reliance becomes a limitation in dynamic envi-ronments where data is continuously inserted or deleted. As the underlying data distribution evolves, the precomputed graph struc-ture [ 29 , 41 , 48 ] or partitioning [ 31 ] becomes suboptimal, leading to poor performance. To mitigate this issue, prior work has explored incremental graph updates and adaptive partitioning strategies[ 31 , 53 ]. However, these approaches only partially alleviate the problem as they still de-pendent on data distribution and often involve graph/partition structural changes, and hence periodic full reconstruction of the index is still required to maintain optimal performance[ 25 ]. A simi-lar limitation exists in product quantization (PQ)-based methods, where vectors are compressed using codebooks trained on the ini-tial dataset[ 16 ]. When the data distribution shifts, retraining the codebooks becomes necessary, leading to performance degradation and system downtime[46]. Most recent works on hardware acceleration of ANNS focus primarily on improving throughput and energy efficiency, without addressing the challenges posed by dynamic vector databases e.g., degradation of recall over update cycle and unable to support base vector update while serving[ 14 , 21 , 27 , 39 , 45 , 52 ]. As a result, the recall degradation during serving dynamic DB and stall during update exists in the accelerated systems. Hashing-based approaches avoid dependence on initial data dis-tribution and are inherently more robust to dynamic updates. How-ever, they have two key limitations: 1 poor scalability on conven-tional CPU/GPU architectures due to expensive Hamming distance computation and random memory access, 2 reduced recall when using compact hash codes[ 44 ]. An ideal solution would combine efficient code generation for competent recall with hardware sup-port for massively parallel distance computation, achieving near-constant-time search complexity while minimizing data movement. This work introduces ACRONYM, a hardware–software co-designed platform for ANNS that enables robust performance under dynamic data updates while maintaining competitive recall–throughput trade-offs to overcome performance degradation of existing ap-proaches with data distribution dependency during dynamic up-date and hardware implementation challenges of data distribution agnostic hashing-based approach.    
+
+> 1
+> arXiv:2606.03151v1 [cs.AR] 2 Jun 2026 MICRO 2026, October 31–November 04, 2026, Athens, Greece Md Mizanur Rahaman Nayan, Tianqi Zhang, Flavio Ponzina, Tajana Rosing, and Azad J. Naeemi Latency
+> Recall
+> graph
+> based
+> partition
+> based
+> partition +
+> PQ based hashing
+> based
+> goal
+> * circle area memory
+> footprint
+
+a)  b) 
+
+Figure 1: Trade-off in different ANNS method. a) Recall vs Latency with memory size dictated by circle area. b) Recall vs Update cycle that dictates dynamic environment scenario where data distribution shift degrades performance. 
+
+Algorithmically, it leverages efficient encoding independent of data distribution and Hamming-distance based search for efficient hardware acceleration. Architecturally, to enable the exhaustive search, demanded by the algorithm, we propose CAM-based in-memory parallel distance computation followed by time multi-plexed approximated top-k selection. Top-k selection approach eliminates the requirement for expensive ADC and digtal module for top-k selection out of million scale dataset. To achieve high recall in CAM based search which is heavily limited to small vector dimension due to capacity and wordline(WL) parasitic, we propose two-stage search that includes coarse search followed by binary refinement. Additionally, we introduce XOR-and-Accumulate(XAC) based systolic-array encoder for efficient encoding during search. In this co-designed framework, data transfer is limited to a small set of refinement candidate codes between memory and the CAM unit. This significantly improves throughput compared to conven-tional CPU/GPU-based systems, which suffer from off-chip com-munication. We propose tightly coupled grouped data address en-coding and decoding to further reduce memory access overhead. Furthermore, we demonstrate that the two-stage search strategy not only achieves high recall but also alleviates the challenges of mapping large-scale vector datasets onto CAM arrays under device and circuit level constraints. In summary, ACRONYM enables consistent and continuous high-throughput performance for dynamic vector databases through the following key innovations: 
+
+• Algorithm. Hardware mapping aware two-stage search framework, combining projection-based encoding with coarse search and refinement to achieve high recall in dynamic data-base where data are often from out of order distribution. 
+
+• Architecture. Fully static coarse-search pipeline mapped onto CAM, eliminating data movement during the coarse phase and minimizing data transfers during refinement. 
+
+• Architecture. CAM-based fully in-memory distance compu-tation with approximate top-k selection avoiding expensive distance computation and sorting logic. 
+
+• Architecture. XAC unit based systolic-array encoder for efficient encoding during search that replaces multipliers and improves data reuse. 
+
+• Design Space Exploration. A comprehensive scalability analysis across CAM technologies, identifying optimal de-sign trade-offs under device and system constraints. HNSW    
+
+> (M=32, efConst=400)
+> FAISS-IVF FAISS-IVFPQ
+> (pq_m=32, pq_nbits=8)
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> Index Build Time (s)
+> nlist
+> =1264
+> nlist
+> =1264
+> nlist
+> =4000
+> nlist
+> =4000
+> nlist
+> =12648
+> nlist
+> =12648
+> 100K 1M 10M
+
+Figure 2: Index building time for different ANNS method. 
+
+## 2 Background and Motivation 
+
+ANNS aims to efficiently retrieve the top-k vectors closest to a query 𝑞 ∈ R𝑑 from a large-scale dataset of size 𝑁 , trading off exactness for substantially higher throughput. Search quality is typ-ically measured using recall@ 𝐾 , while performance is quantified in queries per second (QPS). For large-scale deployments and edge ap-plications, memory footprint is an additional critical consideration. An ideal ANNS system achieves high recall under strict latency constraints while maintaining low memory overhead. 
+
+## 2.1 Existing ANNS Methods and Trade-off 
+
+Fig.1(a) illustrates the trade-off in recall vs latency between different methods with memory footprint denoted by circle area. Graph based approach offers high recall vs latency but requires large memory to store graph and vectors. Partition based offers medium to high recall at moderate latency due to large number of distance computation involved. Product quantization based offers very small memory footprint due to compressed data storage but trade-offs with recall. The Hashing methods have small memory footprint but suffer from long latency at scale due to exhaustive distance computation and memory communication. 
+
+## 2.2 Challenges: ANNS in Dynamic Vector DB 
+
+Modern vector databases are inherently dynamic, with frequent insertions and deletions. This introduces several fundamental chal-lenges because most ANNS methods rely on an initial estimate of the data distribution[ 5]. With new data insertion from different distribution, precomputed graph structures or cluster centroids be-come suboptimal. Recent work has shown that such drift leads to degraded recall and search efficiency over time [ 29 , 41 ]. To high-light how performance drifts over updates, we performed basic update with 5% data random deletion and insertion at each cy-cle for all the approach. Fig.1(b) illustrate the recall of the ANNS methods at different update cycle and shows that they degrade quickly over update cycle, necessarily require graph re-builiding or re-partioning. To maintain performance in dynamic scenario, devel-oping policy regarding graph or centroids updates are under active research[ 2 , 5, 53 , 55 ]. However, graph-based and partition-based methods still require more extensive search which increase latency and impact throughput. Another solution is periodic rebuilding or retraining. These are computationally expensive and can introduce system downtime or significant background overhead [ 15 , 48 ]. To highlight the severity, Fig.2 illustrates the index building and repar-titioning time across ANNS methods in the system mentioned in the experiment section.                                              
+
+> 2ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases MICRO 2026, October 31–November 04, 2026, Athens, Greece CAM Cell
+> Stores 1 bit (Q)
+> S
+> W
+> SB
+> WB
+> WL
+> ....
+> ... 111001QueryHV
+> ... 011010WL1 ML1 HV1
+> ... 010011WL3 ML3 HV3
+> ... 110101WL4 ML4 HV4
+> ... 101110WLn MLn HVn
+> ... 101000WL2 ML2 HV2
+> SL
+> Sensing Module
+> QSY
+> 00low
+> 01high
+> 10high
+> 11low
+> ML Y
+
+Figure 3: Content addressable memory cell, functionality and mapping of similarity search. 
+
+## 2.3 Challenges of Hashing based technique 
+
+From Fig.1(b) note that naive hashing based method demonstrates superior immunity against update cycles due to data-distribution-agnostic nature. In principal, hashing-based techniques map high precision vectors into compact binary codes, enabling efficient Ham-ming distance computation and low memory footprint [ 10 , 37 , 44 ]. Data-distribution-agnostic hashing via random projections with binarization provides robustness to distribution drift and offers updates without retraining [ 1]. It also improves over naive hashing approach in search accuracy[ 36 ]. However, evaluating these codes at scale on conventional von-Neumann architectures is fundamen-tally memory-bound[ 21 , 36 ]. This scenario becomes worse with large hashing code which is crucial for high recall[ 36 ]. Because the number of distance computations scales linearly with dataset size, these workloads rapidly saturate on-chip buffers and cache hierarchies, resulting in severe off-chip memory-to-CPU communi-cation overhead[ 12 ]. This fundamental mismatch between hashing workload requirements and von-Neumann bottleneck motivates custom algorithm-hardware co-designed platform. By integrating compute-in-memory (CIM), exploiting bit-level parallelism, and ef-ficiently managing irregular access patterns, such architectures can enable scalable, high-throughput, dynamic vector database search. 
+
+Table 1: Comparison of CAM Technologies Metric CMOS FeFET ReRAM SOT-MRAM PCM                                
+
+> Reference [26] [23] [6] [32] [24] Cell type 10T 2 FeFET 2T-2R 3T-2MTJ 2T-2R Node (nm) 28 45 90 745 Cell area ( 𝜇 m2)2.66 0.15 0.41 0.08 0.41 Search energy (fJ/bit) 1.02 0.35 0.55 0.714 0.64 Endurance[11, 50] >10 16 10 910 510 12 10 7
+
+## 2.4 In Memory Computing with Content Addressable Memory and Challenges 
+
+To mitigate memory wall, In-Memory Computing (IMC) has emerged as a highly efficient paradigm[ 40 ]. By performing computations directly within the memory arrays where the data resides, IMC drastically reduces data movement, offering immense, highly paral-lelized throughput[ 27 , 40 ]. Performing search operation in memory requires distance computation between query vector and candidate vectors followed by finding the most similar candidate based on the computed distances. For Hamming distance computation in memory, content addressable memory has achieved great attention through promising results[ 32 , 35 , 42 ]. Fig. 3 illustrates a CAM cell and its mapping to a Hamming distance based similarity search within an array. In the setup each CAM cell operates as an XOR-like comparator: a mismatch between the stored bit (Q) and the search bit (S) activates a discharge path on the matchline (ML) by a voltage drop at the gate (Y) of driving transistor. Cells connected along a common ML collectively enable the measurement of the Hamming distance in the form of time to discharge[ 34 ] or current required to sustain the ML voltage[ 13 ] between the query vector applied at the S nodes and the stored base vector encoded across the memory cells. Since each row stores a different base vector, multiple base vectors can be compared with a query simultaneously. As a result, distance computation for all stored vectors can be performed in parallel on their respective MLs, achieving constant-time, O(1), distance computation in memory. The resulting ML signals, which encode the distances, are subsequently processed by a comparator block to identify the top similar stored vectors. Although CAM mainly developed for exact matching to be used in network IP finding, they are currently used for most similar item search[ 13 , 33 , 51 ]. However, the application comes with the following additional challenges: 
+
+Overhead for Top-k Selection. Finding most similar items re-quires expensive comparator block in terms of area, energy and delay[ 28 , 33 ]. Usually hierarchical tree like structures are used to find the most similar candidate and thus responsible for linear delay w.r.t number of stage[ 13 , 28 ]. Additionally, number of leaf blocks in the tree increases linearly and thus gets prohibitive at scale of million scale similarity search. Moreover, for finding top-k items needed by ANNS instead of most similar candidate, the tree like structure get even larger and thus alternative approach could be to use near-memory peripheral circuitry—such as multi-bit Analog-to-Digital Converters (ADCs). Subsequently, digital top-k sorting blocks must be implemented as peripherals to rank the outputs and return the nearest neighbors. This approach also demands large number of ADC causing large area, energy overhead or delay due to limited number of ADCs being shared across huge number of ML along with digital block overhead. To this end, ACRONYM offers time multiplexed approximate top-k selection approach which elim-inates the need of tree like structure through time based latching. 
+
+Mapping Challenges and Parasitic Impacts. Despite their the-oretical efficiency, mapping large dimensional vectors (e.g., 128 to 768 dimensions) onto physical CAM array presents severe reliability challenges. High-dimensional vectors require long ML. These long interconnects introduce significant wire parasitic (RC delays) and se-vere IR drops along the array resulting in search accuracy drop[ 32 ]. Additionally, these parasitic—coupled with the inherent device-to-device conductance variations of non volatile memory candidates distort the analog ML discharge rates. This distortion degrades the sensing margin between similar and dissimilar vectors[ 32 ]. This directly impacts the recall rate of the search engine. Addressing these physical limitations high value resistor assisted CAM design has been addressed recently[ 32 ]. However, the approach mitigates the problem to some extent and still dimension is expected to stay within 64-256 for best performance. Recent work [ 19 ] proposes dedicated popcounter block for each ML for higher accuracy for classfication applications where number of candidates are very lim-ited within 100. This approach is not scalable for ANNS workload due to large overhead as this scales with dataset size. Hence dis-charge rate based Hamming distance representation is preferred.  
+
+> 3MICRO 2026, October 31–November 04, 2026, Athens, Greece Md Mizanur Rahaman Nayan, Tianqi Zhang, Flavio Ponzina, Tajana Rosing, and Azad J. Naeemi
+
+Figure 4: ACRONYM algorithmic flow. In offline base vectors are encoded and partitioned into two code. One partition is stored in coarse CAM block for coarse search and another one in signature memory. During search, query vector is encoded using the same projection matrix used in offline to generate binary code for coarse search and then refinement. Refinement is performed on codes of extracted candidates only selected in coarse search from signature memory. 
+
+While large vector width is crucial for high recall, mapping them on hardware introduces inaccurate distance representation resulting in poor performance. To this end, ACRONYM introduces two stage search algorithm with limited vector width at each stage eventually function as twice size of vector width for final top-k selection. 
+
+CAMs with Emerging Non-Volatile Memories. While highly effective, traditional CMOS-based CAMs rely on bulky SRAM cells often requiring 10T transistors per cell for binary CAMs, which limits integration density for large scale applications like ANNS and suffers from high static leakage power. To overcome the area and power limitations of CMOS based CAM, non-volatile memory technologies has been explored for CAM implementation[ 35 ]. The emerging devices includes Resistive RAM (RRAM), Phase Change Memory (PCM), and Spin-Orbit Torque MRAM (SOT-MRAM). They offer zero standby leakage, back-end-of-line (BEOL) compatibil-ity, and superior cell density[ 11 , 40 ] compared to CMOS. Table 1 presents a comparison of existing emerging non-volatile memory (NVM) candidates. While each technology offers distinct advan-tages and trade-offs, applications like ANNS demands stringent device-level requirements. Specifically, because dynamic ANNS will often involve frequent state updates, the underlying memory device must exhibit high endurance to ensure long-term reliabil-ity. Additionally, CAM cell area is crucial for scaling ANNS where millions of vectors need to be stored. Furthermore, a low operating voltage is strictly required to facilitate seamless monolithic integra-tion with standard CMOS logic near the memory arrays. Finally, low search energy is critical for the ANNS applications. Given the necessity of data-distribution agnostic hashing based approach to address dynamic vector database search challenge and at the same time met the recall, latency and memory tradeoff. We need careful co-design of algorithm, architecture and circuits which is the goal of this work as referred at the end of introduction section. 
+
+## 3 ACRONYM: Algorithm 
+
+Fig.4 illustrates the ACRONYM algorithmic overview. The whole pipeline can be described in two distinct phases: 1 Offline setup and 2 Online search. 
+
+## 3.1 Offline Setup 
+
+1 Encoding. The foundation of ACRONYM relies on transform-ing high-precision, floating-point vector data into a dense binary code. The binary code elements are independent and identically distributed (i.i.d.) variable and offers bit-level parallelism enabling efficient hardware execution. For encoding, we use random pro-jection with sign-based binarization. In this method, a random projection matrix is generated and preserved for use during on-line search. The encoding of base vectors into binary code can be formulated as follows: 
+
+C = sign (H×B) (1) where H ∈ R𝐷 ×𝑑 is the random projection matrix, with 𝐷 rep-resenting the encoded dimension and 𝑑 denoting the native vec-tor dimension. The matrix B ∈ R𝑑 ×𝑁 represents the input batch of 𝑁 native vectors, and C ∈ { 0, 1}𝐷 ×𝑁 is the resulting encoded binary matrix. ACRONYM uses binary values 1 and -1 only in the projection matrix, H. The information encoding capacity of such approaches has been already demonstrated[ 1, 54 ]. This way, ACRONYM enables efficient hardware execution of encoding with-out affecting performance. 
+
+2 Partitioning. For a particular dataset, all base vectors are projected and binarized into the high-dimensional binary space. Then the binary codes of full base vectors are partitioned into two distinct, contiguous blocks: coarse block and refinement block. The width of codes to be used in coarse block is dictated by parameter p in Fig.4 and depends on the dataset size and the original vector width because they determine the information required for standard search performance[ 43 ]. The code corresponding to the coarse block is loaded directly into the coarse CAM unit. This coarse block data remain strictly stationary during all online search where queries are streaming continuously, removing the massive data movement costs that fails traditional hardware architectures to run such algorithm. Another partition of binary base vectors is loaded into the refinement memory block. This memory also remains static during online search. After encoding, the full base vectors in original format are discarded. This reduces the memory required for the search to only code storage. Following encoding and updating the CAM and refinement memory block, the system is ready for online search. 
+
+## 3.2 Online Search Pipeline 
+
+When search is issued against a query, the system follows a deter-ministic two-stage pipeline to extract the nearest neighbors: 
+
+1 Query Encoding. The incoming search query is projected and binarized using the exact same random projection encoding scheme that was generated during the offline setup phase. The    
+
+> 4ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases MICRO 2026, October 31–November 04, 2026, Athens, Greece Encoder
+> Coarse CAM  Unit
+> Refinement
+> CAM Unit
+> Index Buffer
+> Query
+> Buffer
+> Query
+> Buffer
+> Controller
+> Counter
+> Address
+> Gen.
+> Data Bus and External Interface
+> data flow (online) data flow (offline) control signal
+> Refinement Memory
+
+Figure 5: ACRONYM hardware architecture. 
+
+resulting binary code of the query is then split into two parts for coarse search and refinement, mirroring the base data. 
+
+2 Coarse Search. The code for coarse search of the query is loaded into the query register of the coarse search CAM unit. Be-cause the CAM unit computes distances in memory, it performs fully parallel distance computation against all base candidates’ code, simultaneously. Ideally, this process executes in constant time, ir-respective of the dataset size, and generates indices of the pool of coarse search candidates. Note that in our CAM implementation, this process does not move any data for computation and is thus fully in memory. 
+
+3 Refinement Code Collection. To avoid moving massive amounts of raw data and expensive distance computation to find fi-nal top-k candidates, ACRONYM reduces data movement by access-ing only the refinement code corresponding to the pool candidates selected in coarse search. To realize these bandwidth savings at the system level, we utilize a memory-mapped fetch mechanism for efficient data transfer between refinement memory and refinement CAM block. 
+
+4 Final Refinement. The refinement is performed against the refinement code of the query using the refinement CAM block. The distance computation is fully parallel and in memory like coarse search. This process generates the final pool of approximate top-k. Note that, ACRONYM uses information of 𝑝 bit for coarse and 𝐷 −𝑝 
+
+bit for refinement. This reduces requirement of single large wordline in CAM array. Thus meets the requirement of large hashing code and accurate CAM array operation for competent recall. 
+
+## 4 ACRONYM: Hardware Architecture 
+
+Fig.5 illustrates an architectural overview of ACRONYM. The hard-ware operates in a fully digital domain. Data bus and external inter-faces work as front end of the architecture which is used for offline configuration of the system and data loading into the memories (red arrows show the data flow direction). During search, queries are loaded into the query buffer and fed to encoder batch-wise for efficient processing that leverages matrix multiplication based formulation and uses novel XAC PE based systolic array. To ensure functionality in various clock domains in Encoder and Coarse CAM unit, a FIFO buffer is used to better pipeline the process. Coarse CAM Unit along with counter and address generator produce com-pact one-to-one memory mapped address of the pool candidates. To handle backpressure from the comparatively slow memory read, we use another FIFO buffer before the memory. Once the refinement PE  PE  PE  PE          
+
+> PE PE PE PE
+> PE PE PE PE
+> PE PE PE PE
+> encoded query buffer
+> projection weight buffer
+> query buffer
+> +
+> qi
+> hi
+> psum i
+> psum o
+> sign(.)
+
+Figure 6: Encoder based on systolic array with XAC PE. 
+
+codes of the candidates selected in coarse search is received and written into refinement CAM unit, it generates address of the top-k items in the form of multi hot encoding which are temporarily stored in index buffer before broadcasting to output bus. 
+
+## 4.1 Encoder 
+
+Fig. 6 illustrates the ACRONYM encoder designed for batch-wise query encoding. The encoding is formulated as a matrix multiplica-tion followed by a binarization step. To avoid the use of expensive multipliers, we replace conventional multiply–accumulate (MAC) units with lightweight XOR and accumulation operation. The pro-jection matrix weights are mapped from {1, −1} to {0, 1} respec-tively. If the weight is 1, XOR with 0 leaves the query bit unchanged. If the weight is −1, XOR with 1 produces the 1’s complement of the query input. The weight bit is also fed into the carry-in of the adder to generate the 2’s complement, effectively performing subtrac-tion. Note that to perform the sign operation we placed the block at the streaming output end, i.e. bottom row. Before partial sums are stored they are binarized using a very simple sign functional module. We use weight-stationary dataflow which is suitable for efficient execution of ACRONYM algorithm since the projection matrix re-mains stationary during the search process. The projection weights are preloaded into the systolic array in a [𝑑 × 𝐷 ] layout. During operation, the query batch is transposed and mirrored into a [𝑑 ×𝑏 ]
+
+format before being streamed through the systolic array. Queries are continuously fed during search and stored temporarily in the buffer, and during batch-wise encoding, queries are streamed into the encoder array. The encoded query vectors are produced row-wise in a staggered fashion and collected in the encoded query buffer, followed by the binarization stage. Thus, ACRONYM ensures encoded query vectors can be forwarded sequentially to the coarse search CAM unit. By eliminating multipliers and relying on XOR-based computation, the encoder becomes significantly faster and lightweight, enabling high-throughput encoding with high area and energy efficiency. 
+
+## 4.2 CAM Unit 
+
+Fig.7 shows the detailed organization. It supports efficient address generation of pool candidates and fast memory access. The mod-ule is split into Bank Unit (BU) of CAM Array Unit (AU). AU is  
+
+> 5MICRO 2026, October 31–November 04, 2026, Athens, Greece Md Mizanur Rahaman Nayan, Tianqi Zhang, Flavio Ponzina, Tajana Rosing, and Azad J. Naeemi
+
+clk_in 
+
+ld_en 
+
+rstn 
+
+din_b  
+
+> AU
+> AU
+> AU
+> AU
+> AU
+> AU
+> AU
+> AU
+> BU
+> BU
+> Address Wrapper
+> BU
+> BU
+> AU
+> AU
+> AU
+> AU
+> AU
+> AU
+> AU
+> AU
+> Address Wrapper SL
+> ML 0
+> ML 1
+> ML 2
+> ML 3
+> ML 4
+> ML n
+> Sparse Encoder
+
+CAM Unit 
+
+> valid_o
+> idx_b
+
+Figure 7: CAM unit’s hierarchical organization to support efficient address encoding and stall free search during write. During top-k selection, items are latched inside AU where sparse encoder generates index of the 1s. Address wrapper in AU and BU adds header to locate them in the module. 
+
+equipped with array followed by sparse encoder that generates 7 bit index of each 1 in input. Address wrapper in AU and BU add headers to represent location of the AU and BU in the module in a hierarchical order. CAM array of AU is primarily responsible for distance computation and ML outputs are used for top-k search. 
+
+4.2.1 Distance computation . To calculate the distance between query vector and a base vector which are binary we parallelize in bit level across CAM cell connected in single ML. Conventionally, each cell generates bit wise XOR output in form of high voltage drop at driver NMOS during mismatch and vice versa. Now similar to popcount we require count mechanism to sum the number of mismatches which is the Hamming distance between query and the base vector. Two primary sensing schemes are illustrated in Fig. 8. In Fig. 8(a), the ML is pre-charged prior to applying the search voltage to the search lines. For every mismatch bit, a discharge path is activated. As the number of mismatches increases, the discharge rate of the ML correspondingly increases. The time required for the ML voltage to drop below the switching threshold (clipping voltage) of the sensing inverter therefore depends on the Hamming distance. Once the threshold is crossed, the inverter generates a high signal at the ML_out node. This approach offers low energy consumption and minimal sensing overhead, as it requires only a single inverter per ML. Current-based sensing as illustrated in Fig. 8(b) offers finer precision but incurs higher area and energy due to voltage stabilizers and ADCs In the CAM array, distance computations are parallelized across all rows. To locate the rows storing the closest vectors to the query, ACRONYM uses the scheme illustrated in Fig.8(a). In this approach, each ML is initially pre-charged, after which the encoded query is applied across the search lines (SLs). The discharge rate of the ML depends on the number of matches between the stored data and the query. Consequently, the ML voltage drops more slowly Current 
+
+> Sensing
+
+## .... 
+
+> I_ML
+> cml_0
+> I0
+> cml_1
+> I1
+> cml_n
+> In
+> cml_2
+> I2
+> ML_out
+> ml_pre
+> Vdd
+
+## ....  cml_n cml_2 cml_1 cml_0 
+
+> V_ML
+
+a) 
+
+b) 
+
+Figure 8: Distance representation scheme in CAM. 
+
+for larger Hamming distances and faster for smaller ones. Each ML is connected to an inverter that acts as a sense amplifier. When the ML voltage falls below Vdd/2, the inverter output switches to high. As a result, the output is a digital signal that initially starts at zero and transitions to high at different times depending on the Hamming distance. Note that, this approach does not require any ADC as output is digital and also for sensing we require a simple inverter compared to an expensive and power consuming sense amp. Additionally, it is quite energy efficient due to ML discharge based technique compared to current and voltage-based approach where continuous power supply and large current are used. 
+
+4.2.2 Top-k Selection . ACRONYM algorithm finds a pool of can-didates in coarse search instead of top-1 item. In most efficient algorithms, Quickselect in this case, the time complexity is O(N) where N is the number of items against the search is taking place. This means linear delay with the increment of pool size. In hard-ware this is expensive too due to large number of comparator blocks and thus pose challenges to use in realistic ANNS with millions of items. The proposed CAM array based design generates multi hot encoded ML output where position of 1 represent item’s index. Fig.9 depicts the mechanism of distance representation where MLs with lower distance gets to 1 faster than the higher distance. Now the goal is extract the pool with most similar items of certain size. One approach is at every cycle, we perform a global population count to determine the number of 1s across the ML outputs. Once the target pool size is reached, the corresponding outputs are latched. This approach eliminates the need for expensive ADCs for top-k selection. However, it still needs an expensive popcount block with tree like reduction results in large area and power consumption. To 0 1 0 0 1 1 0                                          
+
+> 1010011
+> 1100111
+> 0000101
+> 1010000
+> 0100111
+> 1010010
+> 1100001
+> time (hdist)
+> ML0
+> ML1
+> ML2
+> ML3
+> ML4
+> ML5
+> ML6
+> ML7
+> 0
+> 0
+> 0
+> 0
+> 0
+> 0
+> 0
+> 0
+> 0
+> 0
+> 0
+> 1
+> 0
+> 0
+> 0
+> 0
+> 0
+> 1
+> 0
+> 1
+> 0
+> 0
+> 0
+> 0
+> 0
+> 1
+> 0
+> 1
+> 0
+> 0
+> 0
+> 0
+> query 0
+
+clk cycle  1 2 3 4 5 6Enc. Vectors in CAM       
+
+> 0101100
+> 1
+> 1
+> 0
+> 1
+> 0
+> 0
+> 1
+> 0
+> 0
+> 1
+> 0
+> 1
+> 0
+> 0
+> 1
+> 0
+> 1
+> 0
+> 1
+> 0
+> 1
+> 1
+> 1
+> 0
+
+Figure 9: Time multiplexed distance representation. MLs with lower distance gets to 1 earlier than the higher distance.          
+
+> 6ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases MICRO 2026, October 31–November 04, 2026, Athens, Greece Encoded query
+> Global controller
+> M[0,0] M[0,1] M[0,2] M[0,3]
+> M[1,0] M[1,1] M[1,2] M[1,3]
+> M[2,0] M[2,1] M[2,2] M[2,3]
+> Global merge
+> Top-K index
+
+Figure 10: ACRONYM scale out to support large scale dataset. 
+
+this end, we use time based latching where we latch the output of the CAM array after a pre-determined time based on offline calcu-lated distance and corresponding time from the characterization of CAM array. We can change the time to vary the number of candi-dates to be used in the pool at any time. This approach generates pool size of approximate value and not a very fixed one. However, coarse search pool doesn’t need to be of exact size in ANNS. In this implementation, we don’t need any counter and register for intermediate data storage. The latched outputs form a multi-hot encoded vector, where the index of each 1 corresponds to the index of a selected candidate. This information can then be directly used to retrieve the corresponding codes from the refinement memory for pool refinement. 
+
+## 4.3 Memory Mapping 
+
+ACRONYM algorithm stores different codes of identical items in coarse CAM and refinement memory. During coarse search, the CAM unit generates multi hot encoded signal from the array where the position of each bit 1 represents the index which needs to be accessed in the refinement memory for refinement code. Now the challenge is efficiently access the memory for refinement code of the pool items. To achieve this, ACRONYM introduces one to one mapping. The coarse CAM block is structured in hierarchical order enabling efficient address generation(Fig.7). The array unit (AU) is the underlying unit responsible for CAM array search of shape 128x128. Bank unit (BU) is array of the AUs (shape 16 × 16 ). Finally the coarse module is made of the BUs arranged in a square array of 
+
+8 × 8. This configuration alone can support 2M items with 32MB of memory size. We ensure identical shape of coarse CAM unit with memory unit. For address generation, we start with the index of the 1s (7 bit for each 1s location in AU) generated by sparse encoder and then the AU address (8 bit/AU) included as header of all 1s in the AU and finally the index of the BU (6 bit/BU) is included as header of the AUs with 1s. This hierarchical address generation offers fast and easy address management. Besides, it offers a simpler address decoder design for the memory where the decoder decodes in parallel starting with the BU index, then AU index and finally the actual index of the 1 in the array. 
+
+## 4.4 Dynamic Update Policy 
+
+To support frequent vector insertions and deletions in dynamic databases, ACRONYM employs a parallel, hardware-managed up-date policy that avoids global stalls and minimizes latency. 
+
+Batching and Parallel Bookkeeping. The central controller maintains a Data Insertion Queue to decouple updates from query ex-ecution. Updates are processed in batches to amortize non-volatile memory (NVM) write latency. Bookkeeping metadata are handled off the critical path, ensuring uninterrupted distance computation. 
+
+Bank-Interleaved Writes for Stall-Free Search. ACRONYM exploits the hierarchical CAM organization BUs and AUs to en-able fine-grained updates. During insertion, only a single AU is locked for writing, while remaining AUs continue serving queries. Due to uniform distribution from random projection encoding and large coarse search pool size, temporarily masking one AU intro-duces negligible recall degradation while preserving throughput and bounded tail latency. A priority-based allocation policy directs writes first to empty AUs, and otherwise to AUs with the highest number of deletions dictated by deletion queue. As deleted spots are filled up through insertions, the index is cleared from the queue. 
+
+Handling Write Hotspots. To prevent write hotspots and limit system reliability, the controller periodically remaps logical-to-physical AU assignments. This mechanism distributes write stress uniformly, ensuring long-term NVM reliability. 
+
+## 4.5 Multi-Module Architecture for Scaling 
+
+To scale ACRONYM beyond a single CAM module’s capacity lim-ited by single chip area constraint, we demonstrate scale out with CAM as modular unit that enables collectively indexing of large ap-plications with hundreds of millions of items. Fig.10 illustrates the scale out architecture where a global controller broadcasts query and a single latch time threshold simultaneously to all CAM mod-ules, which then execute coarse search and local refinement in fully parallel — with no inter-module communication for search. A single latch threshold suffices across all partitions because the scale out approach is simply intended for capacity scaling. Each module returns a local top-k candidate pool encoded as a multi-hot index vector. The global merge simply merges these local pools to produce the final result. 
+
+Table 2: Datasets used for ACRONYM evaluation Dataset Dimensions Size Distance 
+
+GloVe[38] 100 1,183,514 Inner Product DEEP[4] 96 9,990,000 Euclidean Yandex TTI[49] 200 9,990,000 Inner Product SIFT1M[17] 128 1,000,000 Euclidean SIFT10M[17] 128 10,000,000 Euclidean SIFT100M[17] 128 100,000,000 Euclidean 
+
+## 5 Experiments and Results 
+
+Datasets. Table 2 summarizes details on the datasets used for eval-uating and benchmarking ACRONYM’s algorithmic and hardware design choices. 
+
+Baseline Algorithms Implementations. We use graph based, partition based and quantization based algorithms as baseline. For graph based approach, HNSW and DiskANN implemented in python                   
+
+> 7MICRO 2026, October 31–November 04, 2026, Athens, Greece Md Mizanur Rahaman Nayan, Tianqi Zhang, Flavio Ponzina, Tajana Rosing, and Azad J. Naeemi 128 256 512 1024 2048
+> Vector Dimension
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Recall@1000
+> (a) Varying Vector Dimension
+> 64 128 256 512 1024
+> Code Width
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> (b) Varying Code Width
+> 2000 4000 6000 8000 10000
+> K_COARSE
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> (c) Varying K_COARSE
+> 1,1
+> 1,2
+> 2,1
+> 2,2
+> 3,1
+> 3,2
+> 4,1
+> 4,2
+> (n_coarse, n_refine)
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> (d) Varying Configuration
+> SIFT_1M SIFT_10M SIFT_100M YANDEX_TTI GLOVE DEEP
+
+Figure 11: a) Search using full vector at larger dimension has higher recall. But larger dimension require larger memory footprint and increased error due to parasitic of CAM array. b) ACRONYM two stage search depicts high recall at lower code width. c) Performance at varying pool size at fixed code width of 128. This increases recall by increasing pool size generated from coarse search. d) Parallel coarse search with smaller code width enables accurate hardware mapping with high recall. 
+
+have been used. For partition based we use standard FAISS-IVF and for partition with quantization approach we use FAISS-IVFPQ from FAISS library[ 9] implemented in python. For CPU and GPU execu-tion, we use a dual-socket Intel Xeon Gold 6548Y+ system with 64 physical cores (128 hardware threads) operating at up to 4.1 GHz. The system is equipped with 880 GB of main memory distributed across two NUMA nodes. For GPU-based baselines, we use two NVIDIA L40S GPUs, each with 46 GB of device memory, running CUDA 13.2. During profiling in GPU, we used warm up and multiple run to ensure accurate representation. For latency measurement, we use built in 𝑝𝑒𝑟 𝑓 _𝑐𝑜𝑢𝑛𝑡𝑒𝑟 .
+
+ACRONYM Algorithm Evaluation Methodology. For algorith-mic performance evaluation, we implemented the algorithm in python. We have used FAISS library for Hamming distance search that utilizes CPU supported popcount operations. The inefficiency of CPU and GPU execution of ACRONYM is presented in Fig.13. 
+
+ACRONYM Hardware Implementation. For functional valida-tion, we have designed encoder block, address generation block, memory decoder block and controller in RTL. We performed func-tional verification of each module individually. For latency, energy and area evaluations we performed synthesis in TSMC 65nm GP with 200MHz for the modules. We used Synopsys VCS for func-tional verification and Synopsys Design Compiler for synthesis. For refinement memory, we used HBM with bandwidth of 1280 𝐺𝐵 /𝑠 
+
+with write energy 4𝑝 𝐽 /𝑏 [20 ]. For CAM units, we used data from the array level characterization data of various CAM implementations available in recent literature and HSPICE simulations as presented in Table.1. Based on the synthesis results and CAM array charac-terization data, we have developed a model to estimate end-to-end latency, energy and area of the overall system. We have used CAM 0 10 20 30 40 50 
+
+> Update Cycles
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> Recall
+> HNSW (Graph)
+> FAISS IVF (Partition)
+> Hashing 1024b
+> ACRONYM
+> Goal
+
+Figure 12: ACRONYM Recall during frequent updates. 
+
+arrays of shape 128 × 128 . For encoder, we have used systolic array block of size 64 × 64 .
+
+## 5.1 Results: Algorithm Validation 
+
+To validate the effectiveness of information representation in binary form and the end to end ACRONYM algorithm, we performed experiments and demonstrate the correlation in Fig. 11. 
+
+5.1.1 Recall Vs Vector Width. To quantify the impact of binary encoded vector width on recall, we measured recall for different vector dimension. To ensure sustained performance across a vari-ety of datasets, we used four distinct datasets of different native dimensions and sizes. Fig.11(a) depicts the full vector search recall vs vector dimension, where we simply select top-k candidates based on the full encoded vector. For large dimensions recall increases as more information is encoded and this shows the information encod-ing capacity in the binary encoded vectors. However, a larger vector dimension introduces two challenges. 1 it requires large memory to store and pose challenges to scale for large datasets with millions to hundreds of millions of items 2 executing the search using in-memory schemes such as CAM based approaches gets inaccurate. This is because of the increase of the number of cells connected to a single ML which results in considerable leakage current passing through the mismatch cells and the excessive parasitic RC compo-nents. ACRONYM algorithm overcome the issue. Fig.11(b) shows ACRONYM algorithm’s recall at varying signature width. Note that the proposed algorithm improves over full vector search at the same signature width thanks to the two stage search even though ACRONYM uses a lower dimension vector. Thus, ACRONYM not only solves the memory mapping issue on CAM arrays at reduced storage, but improves over full vector search baseline. 
+
+5.1.2 Recall Sensitivity. ACRONYM uses time-multiplexed ap-proximate top-k selection to avoid any hardware overhead. This approach does not ensure exact top-k candidate selection; instead, it selects approximate top-k candidates. We conducted an experiment to measure the sensitivity of recall to the pool size i.e., 𝐾 _𝐶𝑂𝐴𝑅𝑆𝐸 .Fig.11(c) shows a larger pool size increases the recall but it satu-rates soon. Waiting for longer time for large candidate pool size improves the recall but at the cost of increased memory access time for refinement code of inflated pool. 
+
+> 8
+
+ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases MICRO 2026, October 31–November 04, 2026, Athens, Greece 
+
+5.1.3 ACRONYM Recall Boosting. To further improve recall, ACRONYM offers a few potential configurations. During coarse search, we can use multiple coarse blocks or refinement blocks. This approach will increase the memory overhead but still offers realistic mapping CAM arrays with 64 to 256 columns. This type of config-uration is particularly valuable for ANNS applications with large native vector dimensions or large search space where small code widths often suffer to achieve high recall. Fig.11(d) demonstrates recall at a fixed 𝐾 _𝐶𝑂𝐴𝑅𝑆𝐸 of 5000 for various configurations. Note that the coarse block increment has a higher impact on recall im-provement than refine block as coarse block is responsible for a more exhaustive and selective pool generation. 
+
+5.1.4 Recall Robustness in Dynamic DB . To highlight robust-ness during dynamic DB update, we used a 1M size dataset and at each cycle we delete 100K ( 10% ) and add 100K randomly gener-ated vectors. We also used newly generated queries from random distribution. We measured ground truth through an exact search at each update cycle and measured average recall on 1000 queries. Fig.12 illustrates recall vs update cycle where ACRONYM recall is not degrading and demonstrates robustness during update with out- of-order distribution. The initial degradation is due to data distribution shifts from initial SIFT vectors to random vectors and difference exists in different cycle’s data and query. 
+
+## 5.2 Profiling ACRONYM Algorithm 
+
+We profiled the ACRONYM algorithm on CPU and GPU archi-tectures to highlight their limitations in processing ACRONYM 64b - CPU      
+
+> 64b - GPU
+> 128b - CPU
+> 128b - GPU
+> 256b - CPU
+> 256b - GPU
+> 64b - CPU
+> 64b - GPU
+> 128b - CPU
+> 128b - GPU
+> 256b - CPU
+> 256b - GPU
+> 64b - CPU
+> 64b - GPU
+> 128b - CPU
+> 128b - GPU
+> 256b - CPU
+> 256b - GPU
+> 64b - CPU
+> 64b - GPU
+> 128b - CPU
+> 128b - GPU
+> 256b - CPU
+> 256b - GPU
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> 10 6
+> Latency (ms)
+> 100K Items 1M Items
+> 10M Items
+> 100M Items
+> Encoding Coarse(CPU) Dist(GPU) Top-K(GPU) Refine
+
+Figure 13: Profiling ACRONYM algorithm in CPU and GPU. Latency in logscale shows distance computation dominates the latency both in CPU and GPU. 0 16 32 48 64 80 96 112 128 
+
+> Hamming Distance
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> 10 6
+> 10 7
+> 10 8
+> 10 9
+> Cumulative Avg. Items
+> SIFT 1M
+> SIFT 10M
+> SIFT 100M
+> GLOVE
+> DEEP
+> Yandex TTI
+
+Figure 14: Average cumulative distribution of base item based on Hamming distances during search. This validates the ACRONYM’s top-k selection approach where latch at a fixed cycle will generates approximated pool size. HNSW 
+
+> FAISS-IVF
+> DiskANN
+> FAISS-IVFPQ
+> ACRONYM
+> 0
+> 200
+> 400
+> 600
+> 800
+> Memory (MB)
+> 1M
+> HNSW
+> FAISS-IVF
+> DiskANN
+> FAISS-IVFPQ
+> ACRONYM
+> 0
+> 2
+> 4
+> 6
+> 8
+> Memory (GB)
+> 10M
+> HNSW
+> FAISS-IVF
+> DiskANN
+> FAISS-IVFPQ
+> ACRONYM
+> 0
+> 20
+> 40
+> 60
+> 80
+> Memory (GB)
+> 100M
+> Raw Data
+> Graph
+> IVF Data
+> Centroids
+> PQ Data
+> IVFPQ Codes
+> Hash codes
+
+Figure 15: Memory footprint comparison with existing ap-proaches for different data size. 
+
+algorithm and to motivate the use of in-memory computing ap-proaches such as CAM. In CPU, for Hamming distance computation we use FAISS[ 9 ] IndexBinaryFlat . As distance computation and top-k search are both fused in the implementation we report them together. For GPU, we use PyTorch based implementation with batched queries and tiled database scans for distance computation and top-k search. We used 128 dimension base vectors of different scale e.g., 𝑁 ∈ { 10 5, . . . , 10 8 } and We sweep the binary code width 
+
+𝑊 ∈ { 64 , 128 , 256 } bits where each stage uses 𝑊 bits and packed in bytes for efficient fetching from memory. Fig13 illustrates the result which shows in CPU the coarse search cost scales with 𝑁 
+
+and dominates the overall computation time. GPU shows speedup over CPU at small size dataset as the GPU cache in lower hierarchy close to compute unit can accommodate the entire encoded base vectors thus saves the data movement cost. But it quickly gets out of available cache and requires multiple hop-on and hop-off for base vectors through GPU memory hierarchy for each query. This adds on top of the increased distance computation cost. At 10M scale, GPU lags behind CPU as memory transactions become very prevalent. Ultimately, at large 𝑁 , both CPU and GPU execution times are heavily dominated by distance-oriented, memory-bound kernels. Thus, to achieve realistic throughput from ACRONYM algorithm, we require specialized hardware that naturally offers superior distance computation with reduced data movement. Given the context, CAM offers static in-memory distance computation and eliminates the heavy data movement. 
+
+## 5.3 Results: Hardware Validation 
+
+5.3.1 Time Multiplexed Top-k Selection. ACRONYM proposed time-multiplexed top-k selection quality is dependent on distribu-tion of items across Hamming distances during the search operation. To show the effectiveness of the method, we measured and plot-ted the distribution in the form of cumulative distribution with Hamming distance because in the proposed time-based method, the top-k pool size directly depends on the time elapsed during the discharge phase because the Hamming distance determines the discharge time. Fig.14 shows the average cumulative distribution for various datasets measured from 1000 queries. The illustration shows that most of the candidates are distributed in lower Ham-ming distance region but shows gradual increase. This dictates items are distributed across Hamming distance in a window which is important for top-k selection. 
+
+9MICRO 2026, October 31–November 04, 2026, Athens, Greece Md Mizanur Rahaman Nayan, Tianqi Zhang, Flavio Ponzina, Tajana Rosing, and Azad J. Naeemi 
+
+5.3.2 Memory Footprint. ACRONYM does not require raw vec-tor storage like HNSW and FAISS-IVF. Instead, it generates binary codes of dimensions 8-32 Byte per vector and stores them in coarse CAM block and refinement memory. This allows ACRONYM to be memory efficient. Fig.15 illustrates the memory breakdown and compression ratio of various methods for various dataset sizes. HNSW requires the storage of the graph structure and raw data. Diskann stores quantized data with the associated graph. FAISS-IVF require the storage of centroids and raw data, while FAISS-IVFPQ stores quantized data with centroids and codebook. ACRONYM stores only binary codes partitioned in coarse memory and refine-ment memory. 
+
+5.3.3 Dynamic Update. Although ACRONYM supports dynamic updates without interrupting search, dynamic updates introduce power spikes due to random write operations in the memory cells. Fig.16(a) shows the power required to write data in the cells vs. insertion per second (IPS). The plot shows power increases lin-early with the increase of IPS. Apart from power, dynamic update support requires the AU blocks under write to be isolated from ongoing search and cause the active items inside those AUs not to be searched. Thus, if the number of AU blocks under write increases too much, it might blind the system and hence will causes recall drop due to reduced search space. To show the impact, we varied the percentage of blocks under write and then omit items belongs to the blocks during search and calculated the recall. Fig.16(b) illus-trates the impact for varying the fraction of the blocks that are busy from 0 to 20% . The results inspire continuous but small chunk size data insertion instead of bulk insertion which will reduce power and ensures high recall by not locking many active item blocks. 
+
+5.3.4 Throughput Vs Recall. To benchmark ACRONYM with CPU and GPU-powered baseline i.e., graph-based HNSW and partition-based FAISS-IVF, we performed queries per second (QPS) vs recall evaluation as illustrated in Fig.17. FAISS library provides support for execution on both CPU and GPU. Graph-based HNSW is CPU-friendly; hence, the plot shows only the CPU-based results. The 0 10K 20K 30K 40K 50K 60K 70K 80K 90K 100K                  
+
+> Insertion per second (IPS)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Power ( μW)
+> (a) 64 bits 128 bits 256 bits
+> 0246810 12 14 16 18 20
+> AU Under Write(%)
+> 0.7
+> 0.8
+> 0.9
+> 1.0
+> Recall
+> (b) Yandex TTI Deep SIFT-1M GloVe
+
+Figure 16: a) Memory cell write power during update, b) Re-call during ongoing updates where AU under write is ex-cluded from search. 
+
+illustration shows that ACRONYM offers higher throughput be-cause of reduced and efficient data movement. The main bottleneck of ACRONYM is data movement between memory unit and CAM refinement block. However, ACRONYM efficient one-to-one mem-ory mapping and usage of emerging memory with fast read can reduce the throughput. 
+
+## 5.4 Design Space Exploration: CAM 
+
+ACRONYM architecture and hardware implementation are orthog-onal to any CAM technology. This offers design space exploration opportunity to achieve the best tradeoff. Note that, in the proposed architecture, the overall system search energy and area is domi-nated by the Coarse CAM block. On the other hand, refinement CAM block has negligible energy and area footprint due to its small size. However, this block is very write-heavy and thus require high endurance for long term reliability. In this scenario, CAM device with low endurance are not suitable for long term reliability if used in refinement block. However, they can be used in coarse block since that does not demand high endurance as item vectors remain there and updates relatively less frequently. We have used SOTA CAM de-sign available for all the CAM technology as summarized in Table.1 and showed the energy, area and system endurance comparison for various design choices for a 1M size ANNS application as presented in Fig. 18. It depicts that FeFET and SOT-MRAM offer good tradeoff in terms of area and energy. However, pure FeFET-based imple-mentation suffers from low endurance and thus limits the overall life cycle of the system. On the other hand, SOT-MRAM based implementation offers better yet limited life cycle given the long operational period of ANNS system. The hybrid approach offers the best tradeoff where FeFET as coarse block and CMOS as refine block delivers lower energy and area at the highest endurance. This choice will be used to benchmark ACRONYM hardware afterwards. 
+
+## 5.5 Variation Analysis 
+
+ACRONYM introduces approximate top k selection which depends on the relationship between discharge time and Hamming distance. This is highly dependent on device characteristics, latch time sen-sitivity and process, voltage, time (PVT) variability. Device level Discharge time vs Hamming distance relationship is known and can be stabilized further with reference resistor and thus can be considered accordingly[ 32 ]. Second, latching time fluctuation is rare at 𝑛𝑠 range as digital clocks are accurate enough at this scale. Third point of vulnerability, PVT variation is inevitable and thus may distort known discharge time vs Hamming distance relation-ship. To model the PVT variation impact on recall, we considered the percentage of array impacted and then to quantify the impact of variability on distance misrepresentation we use distance noise that we varied across 0 to 5. Fig.19 shows the impact of PVT variation on recall. The illustration depicts performance degradation with the increase of the array under PVT variation with high distance impact. However, the gradient of performance drop is low that shows system robustness against PVT variability. 
+
+## 5.6 Overhead Analysis 
+
+5.6.1 ACRONYM Encoder. Functionally verified RTL design of the 64 × 64 shape array has been synthesized using TSMC 65nm PDK for the determination of the area, power and latency. We used 
+
+> 10
+
+ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases MICRO 2026, October 31–November 04, 2026, Athens, Greece 0.4 0.6 0.8 1.0 
+
+Recall 
+
+10 3
+
+10 5
+
+10 7
+
+> QPS
+
+SIFT1M 
+
+0.4 0.6 0.8 1.0 
+
+Recall 
+
+GLOVE 
+
+0.4 0.6 0.8 1.0 
+
+Recall 
+
+DEEP10M 
+
+0.4 0.6 0.8 1.0 
+
+Recall 
+
+Yandex TTI 10M 
+
+ACRONYM (Ours) FAISS-IVF(GPU) HNSWLIB FAISS-IVF(CPU) 
+
+Figure 17: Throughput vs performance tradeoff comparison. Table 3: Encoder Specifications 
+
+Process TSMC 65nm GP Frequency 200 MHz Precision (input) INT16 Array shape 64 × 64 
+
+Throughput 1.638 TOPS Supply 0.9–1.1 V Area 2.91 mm 2
+
+Power 132.53 mW 
+
+𝑖𝑛𝑡 16 for base vector dimension and partial sum output. The array supports weight stationary (WS) dataflow only as the projection matrix remains unchanged and hence WS offers best reuse at re-duced PE complexity. The characterization is summarized in Table 3. Note that the area of the 64 × 64 array made of XAC unit is 2.91 𝑚𝑚 2
+
+where a 16 × 16 array of MAC unit at the same technology node takes a 3.02 𝑚𝑚 2 of area as reported in DianNano[ 8 ]. This is because XAC avoids expensive multipliers and instead uses simple XOR units. We have limited the clock frequency at 200MHz to match the memory access throughput. 
+
+5.6.2 Memory overhead. In ACRONYM CAM is at the center of computing and acts as half of the storage. Although high den-sity emerging memory based CAM has been introduced, the CAM memory array dominates total area of the system. Additionally, this limits the capacity of scaling of the algorithm for billion scale. For refinement memory, high bandwidth and density are the key metrics. Additionally non-volatility helps to reduce overall system energy consumption. CMOS   
+
+> FeFET
+> ReRAM
+> SOT-MRAM
+> PCM
+> SOT-MRAM+CMOS
+> FeFET+SOT-MRAM
+> FeFET+CMOS
+> 0.00
+> 0.02
+> 0.04
+> 0.06
+> 0.08
+> 0.10
+> 0.12
+> 0.14
+> Energy ( J)
+> CMOS
+> FeFET
+> ReRAM
+> SOT-MRAM
+> PCM
+> SOT-MRAM+CMOS
+> FeFET+SOT-MRAM
+> FeFET+CMOS
+> 10 1
+> 10 2
+> 10 3Area (mm 2)
+> CMOS
+> FeFET
+> ReRAM
+> SOT-MRAM
+> PCM
+> SOT-MRAM+CMOS
+> FeFET+SOT-MRAM
+> FeFET+CMOS
+> 10 4
+> 10 6
+> 10 8
+> 10 10
+> 10 12
+> 10 14
+> 10 16
+> 10 18 Endurance
+
+Figure 18: Comparison of different CAM choices in terms of system perspective: energy per query, cell area, system endurance. Lower energy and cell area at higher endurance is better. 0 10 20 30 40 50                
+
+> PVT-impacted(%)
+> 012345
+> Drift amplitude
+> 0.40
+> 0.52
+> 0.64
+> 0.76
+> 0.88
+> 1.00
+> SIFT-1M
+> 010 20 30 40 50
+> PVT-impacted(%)
+> 012345
+> Drift amplitude
+> 0.40
+> 0.52
+> 0.64
+> 0.76
+> 0.88
+> 1.00
+> Recall
+> Deep
+
+Figure 19: Search performance under non-ideality due to impacts on proposed approximated top-k selection.                                       
+
+> System ANNA[21] SeIM[27] Proxima[47] FANNS[52] ACRONYM
+> Platform ASIC NMA 1NMA 1FPGA IMA 2
+> Distribution-agnostic 3✗✗✗✗✓(Fig.12)
+> Algorithm PQ+Partition PQ+Partition Graph Partition Hashing Search during DB update Stall Stall Stall Stall Regular
+> In Memory Distance ✗✗✗✗✓(CAM)
+> Separate Top-K Logic ✓✓✓✓✗(time-latch)
+> 1
+
+Near-Memory Acceleration 2In-Memory Acceleration 3Stable recall under update from dynamic distribution 
+
+Table 4: Comparison with prior ANNS accelerator 
+
+## 5.7 Prior ANNS Accelerators and ACRONYM 
+
+Recent hardware acceleration efforts for ANNS explore diverse architectures to mitigate memory bandwidth bottlenecks and re-dundant computations in high-dimensional retrieval. ASIC designs such as ANNA [ 21 ] reduce data movement by operating on com-pressed vectors with parallel lookup pipelines, while FPGA-based FANNS [ 52 ] eliminates redundant distance computations via sub-space partitioning. To address the large memory footprint of graph-based methods, recent work shifts toward near-memory accelera-tion: SeIM [ 27 ] offloads memory-bound operations to DRAM banks through a hierarchical design, and Proxima [ 47 ] integrates compute units near 3D NAND arrays. However, these accelerators primar-ily target static databases, as they are built on graph-based and partition-based algorithms; consequently, performance degrades when serving dynamic databases. Table 4 summarizes the compari-son between existing ANNS accelerators and ACRONYM, highlight-ing that ACRONYM supports dynamic updates, performs distance computations entirely in memory, employs a time-latch-based top-k selection mechanism, and enables updates during search. 
+
+## 6 Conclusion 
+
+Dynamic vector databases pose a fundamental challenge for ex-isting ANNS methods: graph-based and partition-based indices degrade rapidly under continuous insertions and deletions because their construction depends on an initial estimate of the data dis-tribution, necessitating costly periodic reconstruction. ACRONYM 
+
+11 MICRO 2026, October 31–November 04, 2026, Athens, Greece Md Mizanur Rahaman Nayan, Tianqi Zhang, Flavio Ponzina, Tajana Rosing, and Azad J. Naeemi 
+
+addresses this by combining data-distribution-agnostic random pro-jection encoding with a two-stage CAM-based in-memory search, eliminating index rebuilding entirely while achieving greater than 
+
+90% recall at 8 × 10 6 queries per second within a 32 𝑀𝐵 memory footprint and 2.56 𝜇 𝐽 per query — outperforming CPU and GPU baselines across million-scale datasets under dynamic update work-loads. The systolic-array XOR-and-Accumulate encoder avoids ex-pensive multipliers, the time-multiplexed top-k selection eliminates ADCs and digital sorting logic, and the bank-interleaved update policy enables simultaneous search and insertion with negligible recall degradation. Design space exploration across CMOS, FeFET, ReRAM, SOT-MRAM, and PCM technologies identifies a hybrid FeFET-coarse plus CMOS-refinement configuration as the optimal balance of energy, area, and long-term endurance, providing a prac-tical roadmap for deploying ACRONYM for real life applications. 
+
+## 7 Acknowledgment 
+
+This work was supported in part by CoCoSys and PRISM, two centers in JUMP 2.0, a Semiconductor Research Corporation (SRC) program sponsored by DARPA. 
+
+## References 
+
+[1] Dimitris Achlioptas. 2003. Database-friendly random projections: Johnson-Lindenstrauss with binary coins. Journal of computer and System Sciences 66, 4 (2003), 671–687. [2] Ishaq Aden-Ali, Hakan Ferhatosmanoglu, Alexander Greaves-Tunnell, Nina Mishra, and Tal Wagner. 2025. Quantization for Vector Search under Streaming Updates. arXiv preprint arXiv:2512.18335 (2025). [3] Martin Aumüller, Erik Bernhardsson, and Alexander Faithfull. 2020. ANN-Benchmarks: A benchmarking tool for approximate nearest neighbor algorithms. 
+
+Information Systems 87 (2020), 101374. [4] Artem Babenko and Victor Lempitsky. 2016. Efficient Indexing of Billion-Scale Datasets of Deep Descriptors. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR) . 2055–2063. [5] Dmitry Baranchuk, Matthijs Douze, Yash Upadhyay, and I Zeki Yalniz. 2023. Dedrift: Robust similarity search under content drift. In Proceedings of the IEEE/CVF International Conference on Computer Vision . 11026–11035. [6] Jiahao Cai, Hamza E. Barkam, Mohsen Imani, Kai Ni, Grace Li Zhang, Bing Li, Ulf Schlichtmann, Cheng Zhuo, and Xunzhao Yin. 2025. A Scalable 2T-1FeFET-Based Content Addressable Memory Design for Energy Efficient Data Search. IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems 44, 5 (2025), 1760–1773. https://doi.org/10.1109/TCAD.2024.3493000 [7] Rihan Chen, Bin Liu, Han Zhu, Yaoyu Wang, Qi Li, Butui Ma, Bo Zheng, et al .2022. Approximate Nearest Neighbor Search under Neural Similarity Metric for Large-Scale Recommendation. In Proceedings of the 28th ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD) . 3013–3022. [8] Tianshi Chen, Zidong Du, Ninghui Sun, Jia Wang, Chengyong Wu, Yunji Chen, and Olivier Temam. 2014. Diannao: A small-footprint high-throughput accel-erator for ubiquitous machine-learning. ACM SIGARCH Computer Architecture News 42, 1 (2014), 269–284. [9] Matthijs Douze, Alexandr Guzhva, Chengqi Deng, Jeff Johnson, Gergely Szilvasy, Pierre-Emmanuel Mazaré, Maria Lomeli, Lucas Hosseini, and Hervé Jégou. 2025. The faiss library. IEEE Transactions on Big Data (2025). [10] Aristides Gionis, Piotr Indyk, and Rajeev Motwani. 1999. Similarity search in high dimensions via hashing. In Vldb , Vol. 99. 518–529. [11] Wilfried Haensch, Anand Raghunathan, Kaushik Roy, Bhaswar Chakrabarti, Charudatta M Phatak, Cheng Wang, and Supratik Guha. 2023. Compute in-memory with non-volatile elements for neural networks: a review from a co-design perspective. Advanced Materials 35, 37 (2023), 2204944. [12] Mohamed Ibrahim, Youbin Kim, and Jan M Rabaey. 2024. Efficient design of a hyperdimensional processing unit for multi-layer cognition. In 2024 Design, Automation & Test in Europe Conference & Exhibition (DATE) . IEEE, 1–6. [13] Mohsen Imani, Abbas Rahimi, Deqian Kong, Tajana Rosing, and Jan M Rabaey. 2017. Exploring hyperdimensional associative memory. In 2017 IEEE international symposium on high performance computer architecture (HPCA) . IEEE, 445–456. [14] Je-Woo Jang, Junyong Oh, Youngbae Kong, Jae-Youn Hong, Sung-Hyuk Cho, Jeongyeol Lee, Hoeseok Yang, and Joon-Sung Yang. 2025. Accelerating Retrieval Augmented Language Model via PIM and PNM Integration. In Proceedings of the 58th IEEE/ACM International Symposium on Microarchitecture . 246–262. [15] Suhas Jayaram Subramanya, Fnu Devvrit, Harsha Vardhan Simhadri, Ravishankar Krishnawamy, and Rohan Kadekodi. 2019. Diskann: Fast accurate billion-point nearest neighbor search on a single node. Advances in neural information pro-cessing Systems 32 (2019). [16] Herve Jegou, Matthijs Douze, and Cordelia Schmid. 2010. Product quantization for nearest neighbor search. IEEE transactions on pattern analysis and machine intelligence 33, 1 (2010), 117–128. [17] Hervé Jégou, Romain Tavenard, Matthijs Douze, and Laurent Amsaleg. 2011. Searching in One Billion Vectors: Re-Rank with Source Coding. In Proceedings of the IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . 861–864. https://doi.org/10.1109/ICASSP.2011.5946540 [18] Jeff Johnson, Matthijs Douze, and Hervé Jégou. 2019. Billion-scale similarity search with GPUs. IEEE Transactions on Big Data 7, 3 (2019), 535–547. [19] Anirban Kar, Albi Mema, Thorgund Nemec, Stefan Dünkel, Halid Mulaosmanovic, Sven Beyer, Yogesh Singh Chauhan, and Hussam Amrouch. 2025. Ferroelectric Digital In-Memory Computing for Scalable, Reliable, and Efficient Similarity Computation. IEEE Transactions on Circuits and Systems I: Regular Papers (2025). [20] Jinhyung Lee, Kyungjun Cho, Chang Kwon Lee, Yeonho Lee, Jae-Hyung Park, Su-Hyun Oh, Yucheon Ju, Chunseok Jeong, Ho Sung Cho, Jaeseung Lee, Tae-Sik Yun, Jin Hee Cho, Sangmuk Oh, Junil Moon, Young-Jun Park, Hong-Seok Choi, In-Keun Kim, Seung Min Yang, Sun-Yeol Kim, Jaemin Jang, Jinwook Kim, Seong-Hee Lee, Younghyun Jeon, Juhyung Park, Tae-Kyun Kim, Dongyoon Ka, Sanghoon Oh, Jinse Kim, Junyeol Jeon, Seonhong Kim, Kyeong Tae Kim, Taeho Kim, Hyeonjin Yang, Dongju Yang, Minseop Lee, Heewoong Song, Dongwook Jang, Junghyun Shin, Hyunsik Kim, Changki Baek, Hajun Jeong, Jongchan Yoon, Seung-Kyun Lim, Kyo Yun Lee, Young Jun Koo, Myeong-Jae Park, Joohwan Cho, and Jonghwan Kim. 2024. 13.4 A 48GB 16-High 1280GB/s HBM3E DRAM with All-Around Power TSV and a 6-Phase RDQS Scheme for TSV Area Optimization. In 2024 IEEE International Solid-State Circuits Conference (ISSCC) , Vol. 67. 238–240. https://doi.org/10.1109/ISSCC49657.2024.10454440 [21] Yejin Lee, Hyunji Choi, Sunhong Min, Hyunseung Lee, Sangwon Beak, Dawoon Jeong, Jae W Lee, and Tae Jun Ham. 2022. Anna: Specialized architecture for approximate nearest neighbor search. In 2022 IEEE International Symposium on High-Performance Computer Architecture (HPCA) . IEEE, 169–183. [22] Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih, Tim Rocktäschel, et al . 2020. Retrieval-augmented generation for knowledge-intensive nlp tasks. 
+
+Advances in neural information processing systems 33 (2020), 9459–9474. [23] Chao Li, Franz Müller, Tarek Ali, Ricardo Olivo, Mohsen Imani, Shan Deng, Cheng Zhuo, Thomas Kämpfe, Xunzhao Yin, and Kai Ni. 2020. A Scalable Design of Multi-Bit Ferroelectric Content Addressable Memory for Data-Centric Computing. In 
+
+2020 IEEE International Electron Devices Meeting (IEDM) . 29.3.1–29.3.4. https: //doi.org/10.1109/IEDM13553.2020.9372119 [24] Jing Li, Robert K Montoye, Masatoshi Ishii, and Leland Chang. 2013. 1 mb 0.41 
+
+𝜇 m2 2t-2r cell nonvolatile tcam with two-bit encoding and clocked self-referenced sensing. IEEE Journal of Solid-State Circuits 49, 4 (2013), 896–907. [25] Zhonggen Li, Xiangyu Ke, Yifan Zhu, Bocheng Yu, Baihua Zheng, and Yunjun Gao. 2025. Scalable Graph Indexing using GPUs for Approximate Nearest Neighbor Search. Proceedings of the ACM on Management of Data 3, 6 (2025), 1–27. [26] Zhiting Lin, Zhiyong Zhu, Honglan Zhan, Chunyu Peng, Xiulong Wu, Yuan Yao, Jianchao Niu, and Junning Chen. 2021. Two-Direction In-Memory Computing Based on 10T SRAM With Horizontal and Vertical Decoupled Read Ports. IEEE Journal of Solid-State Circuits 56, 9 (2021), 2832–2844. https://doi.org/10.1109/ JSSC.2021.3061260 [27] Chaoqiang Liu, Dan Chen, Yu Huang, Wenjing Xiao, Haifeng Liu, Yi Zhang, Huize Li, Xiaofei Liao, and Hai Jin. 2025. SeIM: In-Memory Acceleration for Approximate Nearest Neighbor Search. In 2025 62nd ACM/IEEE Design Automation Conference (DAC) . IEEE, 1–7. [28] Che-Kai Liu, Haobang Chen, Mohsen Imani, Kai Ni, Arman Kazemi, Ann Franch-esca Laguna, Michael Niemier, Xiaobo Sharon Hu, Liang Zhao, Cheng Zhuo, et al . 2022. Cosime: Fefet based associative memory for in-memory cosine sim-ilarity search. In Proceedings of the 41st IEEE/ACM International Conference on Computer-Aided Design . 1–9. [29] Dawei Liu, Bolong Zheng, Ziyang Yue, Fuhao Ruan, Xiaofang Zhou, and Chris-tian S Jensen. 2025. Wolverine: Highly Efficient Monotonic Search Path Repair for Graph-Based ANN Index Updates. Proceedings of the VLDB Endowment 18, 7 (2025), 2268–2280. [30] Yu A Malkov and Dmitry A Yashunin. 2018. Efficient and robust approximate nearest neighbor search using hierarchical navigable small world graphs. IEEE transactions on pattern analysis and machine intelligence 42, 4 (2018), 824–836. [31] Jason Mohoney, Anil Pacaci, Shihabur Rahman Chowdhury, Umar Farooq Minhas, Jeffery Pound, Cedric Renggli, Nima Reyhani, Ihab F Ilyas, Theodoros Rekatsi-nas, and Shivaram Venkataraman. 2024. Incremental ivf index maintenance for streaming vector search. arXiv preprint arXiv:2411.00970 (2024). [32] Siri Narla, Ruixue Li, Piyush Kumar, Jeff J. P. M. Schulpen, Rebecca A. Dawley, Ageeth A. Bol, Steven J. Koester, and Azad Naeemi. 2026. Transition Metal Dichalcogenide Thin-Film Resistors for Content Addressable Memories With 12 ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases MICRO 2026, October 31–November 04, 2026, Athens, Greece 
+
+Improved Search Resolution. IEEE Electron Device Letters 47, 2 (2026), 387–390. https://doi.org/10.1109/LED.2025.3641028 [33] Md Mizanur Rahaman Nayan, Che-Kai Liu, Zishen Wan, Arijit Raychowdhury, and Azad J Naeemi. 2025. Hydra: Sot-cam based vector symbolic macro for hyperdimensional computing. In 2025 IEEE/ACM International Conference On Computer Aided Design (ICCAD) . IEEE, 1–9. [34] Chenyu Ni, Sijie Chen, Che-Kai Liu, Liu Liu, Mohsen Imani, Thomas Kämpfe, Kai Ni, Michael Niemier, Xiaobo Sharon Hu, Cheng Zhuo, et al . 2024. Tap-cam: A tunable approximate matching engine based on ferroelectric content addressable memory. In Proceedings of the 43rd IEEE/ACM International Conference on Computer-Aided Design . 1–9. [35] Kai Ni, Xunzhao Yin, Ann Franchesca Laguna, Siddharth Joshi, Stefan Dünkel, Martin Trentzsch, Johannes Müller, Sven Beyer, Michael Niemier, Xiaobo Sharon Hu, et al . 2019. Ferroelectric ternary content-addressable memory for one-shot learning. Nature Electronics 2, 11 (2019), 521–529. [36] Mohammad Norouzi, Ali Punjani, and David J Fleet. 2013. Fast exact search in hamming space with multi-index hashing. IEEE transactions on pattern analysis and machine intelligence 36, 6 (2013), 1107–1119. [37] Eng-Jon Ong and Miroslaw Bober. 2016. Improved hamming distance search using variable length substrings. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition . 2000–2008. [38] Jeffrey Pennington, Richard Socher, and Christopher D. Manning. 2014. GloVe: Global Vectors for Word Representation. In Proceedings of the Conference on Empirical Methods in Natural Language Processing (EMNLP) . 1532–1543. [39] Derrick Quinn, Mohammad Nouri, Neel Patel, John Salihu, Alireza Salemi, Sukhan Lee, Hamed Zamani, and Mohammad Alian. 2025. Accelerating retrieval-augmented generation. In Proceedings of the 30th ACM International Conference on Architectural Support for Programming Languages and Operating Systems, Volume 1. 15–32. [40] Kaushik Roy, Adarsh Kosta, Tanvi Sharma, Shubham Negi, Deepika Sharma, Utkarsh Saxena, Sourjya Roy, Anand Raghunathan, Zishen Wan, Samuel Spetal-nick, et al . 2025. Breaking the memory wall: next-generation artificial intelligence hardware. Frontiers in Science 3 (2025), 1611658. [41] Aditi Singh, Suhas Jayaram Subramanya, Ravishankar Krishnaswamy, and Har-sha Vardhan Simhadri. 2021. Freshdiskann: A fast and accurate graph-based ann index for streaming similarity search. arXiv preprint arXiv:2105.09613 (2021). [42] Zhong Sun, Shahar Kvatinsky, Xin Si, Adnan Mehonic, Yimao Cai, and Ru Huang. 2023. A full spectrum of computing-in-memory technologies. Nature Electronics 
+
+6, 11 (2023), 823–835. [43] Anthony Thomas, Sanjoy Dasgupta, and Tajana Rosing. 2021. A theoretical perspective on hyperdimensional computing. Journal of Artificial Intelligence Research 72 (2021), 215–249. [44] Jingdong Wang, Ting Zhang, Nicu Sebe, Heng Tao Shen, et al . 2017. A survey on learning to hash. IEEE transactions on pattern analysis and machine intelligence 
+
+40, 4 (2017), 769–790. [45] Yitu Wang, Shiyu Li, Qilin Zheng, Linghao Song, Zongwang Li, Andrew Chang, Yiran Chen, et al . 2024. NDSEARCH: Accelerating graph-traversal-based approx-imate nearest neighbor search through near data processing. In 2024 ACM/IEEE 51st Annual International Symposium on Computer Architecture (ISCA) . IEEE, 368–381. [46] Donna Xu, Ivor W Tsang, and Ying Zhang. 2018. Online product quantization. 
+
+IEEE Transactions on Knowledge and Data Engineering 30, 11 (2018), 2185–2198. [47] Weihong Xu, Junwei Chen, Po-kai Hsu, Jaeyoung Kang, Minxuan Zhou, Sumukh Pinge, Shimeng Yu, and Tajana Rosing. 2026. Proxima: Near-storage Acceleration for Graph-based Approximate Nearest Neighbor Search in 3D NAND. IEEE Trans. Comput. (2026), 1–13. https://doi.org/10.1109/TC.2026.3671718 [48] Tomohiro Yamashita, Daichi Amagata, and Yusuke Matsui. 2025. How Should We Evaluate Data Deletion in Graph-Based ANN Indexes? arXiv preprint arXiv:2512.06200 (2025). [49] Yandex Research. [n. d.]. Benchmarks for Billion-Scale Similarity Search. https: //research.yandex.com/datasets/biganns. Accessed: 2026. [50] Shimeng Yu. 2022. Semiconductor memory devices and circuits . CRC Press. [51] Tianyang Yu, Bi Wu, Ke Chen, Chenggang Yan, Gong Zhang, and Weiqiang Liu. 2025. HDANNS: In-Memory Hyperdimensional Computing for Billion-Scale Approximate Nearest Neighbour Search Acceleration. IEEE Transactions on Circuits and Systems for Artificial Intelligence (2025). [52] Wei Yuan and Xi Jin. 2025. FANNS: An FPGA-Based Approximate Nearest-Neighbor Search Accelerator. IEEE Transactions on Very Large Scale Integration (VLSI) Systems (2025). [53] Ziyu Zhang, Yuanhao Wei, Joshua Engels, and Julian Shun. 2025. CleANN: Efficient Full Dynamism in Graph-based Approximate Nearest Neighbor Search. 
+
+arXiv preprint arXiv:2507.19802 (2025). [54] Quanling Zhao, Yanru Chen, Runyang Tian, Sumukh Pinge, Weihong Xu, Au-gusto Vega, Steven Holmes, Saransh Gupta, and Tajana Rosing. 2025. HDDB: Efficient In-Storage SQL Database Search Using Hyperdimensional Computing on Ferroelectric NAND Flash. arXiv preprint arXiv:2511.18234 (2025). [55] Shurui Zhong, Dingheng Mo, and Siqiang Luo. 2025. Lsm-vec: A large-scale disk-based system for dynamic vector search. arXiv preprint arXiv:2505.17152 
+
+(2025). 13
