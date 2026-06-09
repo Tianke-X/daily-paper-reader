@@ -1,0 +1,1532 @@
+Title: Admittance Sensitivity-Informed Modular GP for Scalable Topology-Adaptive Power-Flow Learning
+
+URL Source: https://arxiv.org/pdf/2606.03717v1
+
+Published Time: Wed, 03 Jun 2026 01:18:11 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+> 1
+
+# Admittance Sensitivity-Informed Modular GP for Scalable Topology-Adaptive Power-Flow Learning 
+
+Henrique O. Caetano, Carlos Dias Maciel and Rahul K. Gupta 
+
+Abstract —Data-driven approaches for learning power flow models suffer from weak generalization across varying net-work topologies and limited computational scalability. Existing methods typically rely on training over a large set of grid topologies, which becomes impractical for large networks. This paper proposes a scalable and computationally efficient frame-work for topology-adaptive learning of power flow solutions. We propose a modular architecture consisting of bus-level Gaussian Process (GP) models, where each GP collects local features based on bus-level egonet definition. The localized bus-level feature includes first-order power and admittance sensitivities, nodal injections and node degree. In addition to the modular architecture, we propose using Random Fourier Features (RFF) for feature reduction, which further enhances the computational scalability. We evaluate the effectiveness of the proposed method by simulations across multiple benchmark networks under N-1, N-2, and N-3 contingencies. Results for the PEGASE 1354 bus system under N-3 contingencies demonstrate high predictive quality, with an R2 score of 0.983 and a voltage-magnitude RMSE of 0.0023 p.u. The framework maintains recall rates exceeding 98% for detecting voltage limit violations across all test cases. Furthermore, the approach exhibits scalability, completing training and testing for the PEGASE 1354 system in 116.47 seconds while outperforming existing benchmarks in zero-shot generalization without requiring additional training samples. 
+
+Index Terms —Gaussian processes, AC Power Flow, Network Topology, Contingency analysis, Topology-adaptive learning. 
+
+I. I NTRODUCTION 
+
+A. Motivation 
+
+Machine learning (ML) approaches, such as deep learning [1], [2], [3] and graph neural networks [4], [5], are increas-ingly utilized to AC power flow and optimal power flow (OPF) calculations, as they learn the non-linear mappings between nodal power injections and system states, and reduce reliance on computationally intensive conventional solvers. These schemes accelerate decision-making, which is necessary for real-time grid operation, particularly in modern power systems characterized by high penetrations of intermittent renewable energy sources [6]. However, to achieve operational reliability, these data-driven models must handle dynamic grid conditions, specifically topology changes and N-k line contingencies [7], [8], [9]. Most existing ML frameworks suffer from limited topology adaptiveness. A model trained on a specific grid topology typi-cally experiences performance degradation when applied to an altered topology [10]. Furthermore, current approaches face scalability bottlenecks for large-scale power grids. Training 
+
+Henrique O. Caetano and Carlos Dias Maciel are with the Department of Electrical and Computing Engineering, S˜ ao Carlos School of Engineering, University of S˜ ao Paulo, S˜ ao Carlos, SP, Brazil. Rahul K. Gupta is with the Institute of Electrical and Micro Engineering, ´Ecole Polytechnique F´ ed´ erale de Lausanne (EPFL), Switzerland. This work was partially fomented by S˜ ao Paulo Research Foundation (FAPESP), grants 2021/12220-1, 2023/07634-7 and 2024/08485-8. 
+
+a single, system-wide ML model to encompass all possible operational scenarios and topological states in a large-scale grid requires massive datasets and incurs higher computational training times [2]. To achieve topology-adaptiveness, algo-rithms must possess zero-shot generalizability capabilities ,defined as the ability to accurately predict system states on unseen network topologies without requiring new data samples for retraining or fine-tuning [4]. 
+
+B. Literature Review 
+
+Recent works have been dealing with the problem of topology-adaptive ML-based approaches for solving power flows. The work in [11] introduces a meta-learning approach for OPF that discovers optimal weight initialization points of-fline, allowing the model to adapt to new topologies with a few gradient steps. Similarly, stacked denoising auto-encoders are utilized in [3] to combine continuous injections with discrete line breaker statuses for probabilistic power flow. In [12], it proposes a convolutional neural networks (CNNs) which considers both the discrete network topology labels and load data. While these methods achieve generalized predictions, they require additional data samples from the new topology to fine-tune the network weights or update clustered labels, lacking true zero-shot adaptiveness. Other approaches include graph-based architectures, such as graph neural networks (GNN) and physics-informed models to embed the grid’s structural properties into the learning process. Physics-guided graph CNN [13] and topology-informed GNNs [9] integrate AC power flow equations and topology-dependent variables to improve adaptability. Other approaches embed branch features into GNNs [8], utilize continuous admit-tance spaces within DNNs [2], or employ stacked attention mechanisms with 2D CNNs processing admittance matrices [7]. Although these physics-informed and graph-based models generalize better to varying topologies, they also require fine-tuning for out-of-distribution topologies, achieving scalability and topology-adaptiveness only by retraining the model on new topologies. Probabilistic frameworks, particularly Gaussian Process (GP) regression, have been extensively used within power grid literature [14]. GP models have been developed to map node voltages to power injections [15] and construct topology transfer frameworks using historical OPF data [10]. Bayesian deep neural networks have also been applied to spatio-temporal probabilistic OPF to handle renewable uncertainties [6]. Furthermore, multi-task vertex degree kernels within GPR frameworks have been introduced to construct probabilistic voltage envelopes using nodal sub-kernels focused on neigh-borhood injections [16]. Despite providing predictive confi-dence intervals, these probabilistic models either assume fixed 
+
+> arXiv:2606.03717v1 [eess.SY] 2 Jun 2026 2
+
+network configurations, require new samples to train the target topology, or are validated on small distribution systems due to the lack of scalability. To address scalability in larger networks containing thou-sands of nodes, some works have proposed decentralized and partitioned learning architectures. For example, a multi-branch DNNs network partitioning into subnetworks is proposed in [17]. A dynamic programming combined with Galerkin pro-jection scheme is used in [18] that decomposes the global OPF into independent subproblems across multi-level networks. While these decentralized and partitioned models achieve high computational efficiency on large-scale systems, they assume fixed network configurations and do not account for dynamic topology changes or provide uncertainty quantification. 
+
+C. Key Gaps 
+
+Table I summarizes the capabilities of existing works across seven key attributes, highlighting three primary research gaps. 
+
+First , while several works successfully implement topo-logical generalizability [2], [7], [9], [8], [10], [11], [13], [16], they consistently require additional data samples from the new topology to update model parameters. No evaluated framework achieves zero-shot topology adaptiveness, which requires predicting system states on completely unobserved network configurations without retraining or fine-tuning. 
+
+Second , the literature indicates a trade-off between topology adaptiveness and computational scalability. Models in [17], [18], [19] achieve scalability by partitioning the grid into multiple zones, but they assume fixed network structures and do not account for topological changes. In [2], [6], [9], models achieve scalability while handling varying topologies, but this is accomplished by including multiple grid configurations within the training dataset rather than performing zero-shot generalizability on unseen N − k contingencies. 
+
+Finally , while some works explore modular, bus-level ML architectures that predict power flow variables individually for each bus [16], these approaches lack zero-shot topology adaptiveness. They still require new data samples to update the model on unseen network configurations and have not been integrated into a scalable framework capable of predicting full power flow solutions under unobserved N-k contingencies. 
+
+D. Contributions 
+
+To tackle the above-mentioned literature gaps, this work proposes a scalable and topology-adaptive power flow learning framework. The methodology achieves both generalizability and scalability by employing a modular GP architecture, where an independent predictive model is established for each individual bus. To enable prediction on unobserved grid topologies, the framework incorporates localized first-order voltage sensitivities (active power, reactive power, and admit-tance) as direct inputs, embedding the physical information of structural changes into the learning process. Furthermore, to overcome the computational intractability of standard GPs on large datasets, the approach approximates the covariance kernels using Random Fourier Features (RFF) and aggregates predictions through an ensemble of GP experts for efficient                                                                                                                                 
+
+> TABLE I: Comparative summary of recent works on Topology-adaptive Power-flow learning models
+> Ref ∗.A1 A2 A3 A4 A5 A6 A7
+> [2] ✓--✓✓✓-[3] --✓✓---[6] --✓✓✓✓-[7] ✓--✓✓--[8] ✓--✓✓--[9] ✓--✓✓✓-[10] ✓-✓✓✓--[11] ✓--✓✓--[12] --✓✓✓--[13] ✓--✓✓--[15] --✓✓---[16] ✓-✓✓--✓
+> [17] ---✓✓-✓
+> [18] ---✓✓✓✓
+> [19] ---✓✓✓✓
+> Proposed ✓✓✓✓✓✓✓
+> ∗A1 : Topological generalizability with reduced samples; A2 : Zero-shot Topology adaptiveness; A3 : Uncertainty quantification; A4 : Account for voltage phasor; A5 : Account for generator setpoints; A6 : Scalable for bigger systems ( >200 nodes); A7 : Multiple zone partition
+
+training and accurate prediction. The main contributions of this work are:  
+
+> •
+
+A modular bus-level GP architecture with localized fea-ture extraction methodology that embeds first-order active power, reactive power, and analytical admittance sensi-tivities. These localized sensitivities are utilized as direct inputs to the predictive model, informing the algorithm of the physical impacts of topology changes without requiring full-dimensional grid data.  
+
+> •
+
+An ensemble GP architecture approximated via RFFs. This approach reduces the computational complexity in-herent to standard GPs, enabling scalability while achiev-ing zero-shot generalizability on entirely unobserved grid topologies.  
+
+> •
+
+The application of the proposed framework to predict bus-level voltage magnitudes and phase angles under unobserved N-k contingencies. The uncertainty quantifi-cation of the GP ensemble is used to calculate confidence bounds, which are subsequently used to predict overvolt-age and undervoltage scenarios across the system. II. P ROPOSED MODULAR BUS -LEVEL 
+
+GAUSSIAN PROCESS MODEL 
+
+We consider the nonlinear AC power flow equations, which describe the active ( Pi) and reactive ( Qi) power injections at bus i as functions of the bus voltages ( |Vi|∠θi) and network admittance elements Yik = |Yik |∠ϕik :
+
+Pi = |Vi|
+
+> N
+
+X
+
+> k=1
+
+|Vk|| Yik | cos( θi − θk − ϕik ) (1a) 
+
+Qi = |Vi|
+
+> N
+
+X
+
+> k=1
+
+|Vk|| Yik | sin( θi − θk − ϕik ) (1b) where |Vi| and θi denote the voltage magnitude and phase angle at bus i, respectively, and N is the number of buses. Solving these equations requires computing the bus voltage states, typically via the Newton-Raphson method, which be-comes computationally demanding for large-scale systems. 3N-1      
+
+> contingencies
+> N-0
+> contingencies
+> Training Data
+> Prediction. For each bus i, do:
+> RFF for GP
+> M
+> RFF for GP 1
+> RFF for GP
+> M
+> ... ... ...
+> Trained GPs
+> Training. For each bus i, do:
+> RFF for GP 1
+> ... ... ... ...
+> Bus-level features: Active and reactive power;
+> power sensitivites; admitance sensitivites
+> Grid reconfiguration
+> N-3 contingencies
+> N-2 contingencies
+> N-1 contingencies
+> N-0 contingencies
+> Testing Data
+> Simulate n-k grid contingencies
+
+Fig. 1: Flowchart of the proposed framework, which extracts bus-level operational features and physical sensitivities (yellow) that is reduced with RFF (red) to train an ensemble of M Gaussian Process models per bus i (green). During the testing phase, the individual predictions from each expert (blue) are combined via weight aggregation to generate the final voltage magnitude and angle predictions (orange). 
+
+To address this limitation, we propose a fast, scalable, and topology-adaptive learning framework for predicting bus voltage magnitudes ( |Vi|) and angles ( θi) under unseen net-work topologies. Let V denote the set of buses with i ∈ V .The framework employs a modular Gaussian Process (GP) architecture in which an independent GP model is assigned to each bus. To compensate for the absence of explicit global network coupling, each GP is augmented with localized first-order voltage sensitivities with respect to active power, reactive power, and admittance. This feature design embeds structural information into the learning process and enables adaptability to topology variations. While prior work incorporates power flow sensitivities [20], [21], the proposed approach addition-ally integrates admittance sensitivities and introduces a mod-ular formulation that improves scalability and generalization across varying grid topologies. Figure 1 illustrates the overall architecture of the proposed framework, which is structured into five sequential compo-nents. First, localized operational features and physical sensi-tivities are extracted directly from the AC power-flow Jacobian (Section II-B). The feature input computational complexity is reduced using a Random Fourier Features (RFF) approxima-tion (Section II-C). The framework then employs an ensemble learning strategy to aggregate predictions from multiple GP experts based on their marginal likelihoods (Section II-D). Finally, these components are unified for power flow prediction (Section II-E). In the following, we describe each of these components in detail. 
+
+A. Overview of the Bus-Level Modular GP Architecture 
+
+For each bus i ∈ V in the network, we construct a modular architecture composed of independent, bus-level Gaussian Process (GP) models. Each bus-level model is trained to predict the local voltage magnitude |Vi| and voltage angle θi.To capture multi-scale behavior in the input–output mapping, we adopt the Ensemble GP (EGP) framework described in Section II-D at each bus. Specifically, each bus i is associated with an ensemble of M GP experts, where each expert is characterized by a distinct length scale. The total number of experts M , as well as their corresponding characteristic length scales {lm}Mm=1 , are fixed a priori . All bus-level EGP models are trained independently, enabling a fully modular and scalable learning architecture. For a given bus i and expert m with length scale lm, we define the target output vector as yi = |Vi|, θ i
+
+⊤ ∈ R2.
+
+Let Xi denote the input feature vector associated with bus 
+
+i, the construction of which is detailed in Section II-B. The observation model for expert m is given by 
+
+yi = fm
+
+ ϕlm (Xi) + ϵ, (2) where fm is an unknown latent function modeled as azero-mean Gaussian process, fm ∼ GP (0 , κ m), and ϵ ∼N (0 , σ 2 
+
+> ϵ
+
+I2) represents independent and identically distributed (i.i.d) Gaussian observation noise. The mapping ϕlm (·) de-notes the RFF transformation corresponding to the length scale 
+
+lm (see Section II-C). The covariance function κm(·, ·) mea-sures the similarity between input feature vectors. Consistent with prior work [22], [23], we employ the Squared Exponential (SE) kernel, defined as 
+
+κm(Xi, X ′ 
+
+> i
+
+) = σ2 
+
+> f
+
+exp 
+
+
+
+− ∥Xi − X′ 
+
+> i
+
+∥2
+
+2l2
+
+> m
+
+
+
+, (3) where σ2 
+
+> f
+
+denotes the signal variance and lm is the character-istic length scale specific to expert m.
+
+B. Localized Egonet Feature Extraction and Sensitivities for Bus-level GPs 
+
+The proposed bus-level modular GPs are trained using the localized operational and topological features extracted for each bus. We proposes a modified egonet [23] feature extraction for each bus within the grid, defined as follows. 
+
+1) Features definition: For each bus i ∈ V in the network, we define an egonet node set VE,i = Ni ∪ { i}, where Ni
+
+represent the set of buses directly connected to that bus i. We also define egonet branch sets LE,i as the subset of network branches incident to at least one node within VE,i . These sets are used to extract features, Xi, for GP for bus i, which is composed of the local active and reactive power injections, node degree, and power and admittance sensitivities, as de-scribed below. The first set of input features include the local active and reactive power demands ( Pi, Qi) and the aggregated active and reactive powers within its egonet ( P 
+
+> j∈N i
+
+Pj , P 
+
+> j∈N i
+
+Qj ). 4
+
+These features inform the GP model about behavior of the output predictors, i.e., the nodal voltage magnitudes and angles with respect to the local and neighboring loading scenarios. The second feature is on the node degree |N i|, proving the GP model information on number of neighboring connections. The third set of features explicitly captures the local ad-mittance parameters of the network. This includes the raw conductance ( g) and susceptance ( b) values for all branches within the egonet. Similar to other topological parameters, these values are collected into vectors over the egonet branch set LE,i , with disconnected elements branches set to 0: 
+
+Gi = [ gk]k∈L E,i , Bi = [ bk]k∈L E,i (4) The fourth set of features are on the voltage sensitivities to capture the nonlinear power-flow dynamics. Specifically, the model incorporates first-order sensitivities of the volt-age magnitude ( |V |) and voltage angle ( θ) with respect to both nodal power injections and branch admittances. Let  
+
+> ∂|Vi|
+> ∂g j,i
+
+, ∂|Vi| 
+
+> ∂b j,i
+
+, ∂θ i 
+
+> ∂g j,i
+
+, ∂θ i 
+
+> ∂b j,i
+
+be the voltage magnitude and angle sensitivities with respect to admittance parameters, i.e., con-ductance ( gj,i ) and suscepetance ( bj,i ) between buses i and 
+
+j. The magnitude and angle sensitivities corresponding to the admittance parameters 1 are localized by collecting their individual values over the egonet branch set LE,i into vectors. To maintain a constant input dimension for the GP, if a contingency occurs in an element, its corresponding sensitivity is set to zero (an example is shown later in Sec. II-B2): 
+
+νg,i =
+
+ ∂|Vi|
+
+∂g k
+
+
+
+> k∈L E,i
+
+, νb,i =
+
+ ∂|Vi|
+
+∂b k
+
+
+
+> k∈L E,i
+
+(5) 
+
+τg,i =
+
+ ∂θ i
+
+∂g k
+
+
+
+> k∈L E,i
+
+, τb,i =
+
+ ∂θ i
+
+∂b k
+
+
+
+> k∈L E,i
+
+(6) Similarly, let the voltage magnitude and angle sensi-tivities with respect to power injections are denoted by  
+
+> ∂|Vi|
+> ∂P j
+
+, ∂|Vi| 
+
+> ∂Q j
+
+, ∂θ i 
+
+> ∂P j
+
+, ∂θ i 
+
+> ∂Q j
+
+(extracted from the corresponding rows of the inverse Jacobian J−1). The localized features are similarly evaluated by collecting the individual sensitivities over the egonet node set VE,i into vectors, setting values to zero for elements disconnected due to a contingency: 
+
+νP,i =
+
+ ∂|Vi|
+
+∂P k
+
+
+
+> k∈V E,i
+
+, νQ,i =
+
+ ∂|Vi|
+
+∂Q k
+
+
+
+> k∈V E,i
+
+(7) 
+
+τP,i =
+
+ ∂θ i
+
+∂P k
+
+
+
+> k∈V E,i
+
+, τQ,i =
+
+ ∂θ i
+
+∂Q k
+
+
+
+> k∈V E,i
+
+(8) The complete localized feature vector Xi for bus i is formulated by concatenating the local demand features, the egonet topological degree, the raw branch admittances, and the localized physical sensitivity vectors. This vector serves as the input to the predictive models is given as: 
+
+Xi =
+
+
+
+Pi, Q i, X
+
+> j∈N i
+
+Pj , X
+
+> j∈N i
+
+Qj , |N i|,Gi, B i, ν P,i , ν Q,i , ν g,i , ν b,i , τ P,i , τ Q,i , τ g,i , τ b,i 
+
+⊤ (9)     
+
+> 1Detailed derivation of admittance sensitivities can be found in [24], [25].
+> (a) Original 5-bus test case.
+> (b) V2egonet under normal (left) and a contingency on line 2-3 (right).
+> (c) V4egonet under normal (left) and a contingency on line 2-3 (right).
+
+Fig. 2: Illustrative example of the modified egonet definition over a 5-bus system. The subfigures display (a) the original grid, (b) the egonet for target node V2, and (c) the egonet for target node V4. The target node is blue, one-hop neighbors are green, direct connecting lines are red, and lines connecting neighbors to external nodes are orange. The extracted features adapt to topological changes, as demonstrated by the transition from normal operation to an N −1 contingency on line 2-3. 
+
+It can be noted that the defined features can be easily updated with a change in the topology, for example, if there is a line contingency or network reconfiguration, the feature for the connected bus-level GPs needs to be updated and re-trained instead of re-training for the whole network. This is a major advantage of the proposed scheme, making it scalable and topology-adaptive. 
+
+2) 5-bus example network: In order to illustrate the mod-ular bus-level GP structure and associated modified egonet definition for input feature extraction, we show an example for a small 5-bus network. Figure 2a shows a 5-bus network, while Figure 2b illustrates the bus-level egonet definition for target bus V2 under normal operation (left) and under N −1
+
+contingency (right). Under normal operation, V2 connects to neighbors V1 and V3. The egonet node set is VE,2 = {1, 2, 3},resulting in a node degree of |N 2| = 2. The expanded egonet branch set incorporates the direct connections and the adjacent lines routed through the neighbors, yielding LE,2 =
+
+{(1 , 2) , (2 , 3) , (3 , 4) }. The aggregated power injections for the neighborhood are P1 + P3 and Q1 + Q3. The raw branch admittances and the localized voltage magnitude 2 sensitivity vectors for active power, reactive power, conductance, and susceptance are computed over these sets: 
+
+G2 = [ g1,2, g 2,3, g 3,4]⊤ , B2 = [ b1,2, b 2,3, b 3,4]⊤ (10a) 
+
+νP, 2 =
+
+ ∂|V2|
+
+∂P 1
+
+, ∂|V2|
+
+∂P 2
+
+, ∂|V2|
+
+∂P 3
+
+⊤
+
+νQ, 2 =
+
+ ∂|V2|
+
+∂Q 1
+
+, ∂|V2|
+
+∂Q 2
+
+, ∂|V2|
+
+∂Q 3
+
+⊤
+
+(10b) 
+
+νg, 2 =
+
+ ∂|V2|
+
+∂g 1,2
+
+, ∂|V2|
+
+∂g 2,3
+
+, ∂|V2|
+
+∂g 3,4
+
+⊤
+
+νb, 2 =
+
+ ∂|V2|
+
+∂b 1,2
+
+, ∂|V2|
+
+∂b 2,3
+
+, ∂|V2|
+
+∂b 3,4
+
+⊤
+
+(10c) 
+
+> 2The features of voltage angle sensitivites are not shown for brevity. 5
+
+The resulting baseline input feature vector for the Gaus-sian Process is defined as X2 = [P2, Q 2, P 1 + P3, Q 1 +
+
+Q3, 2, G 2, B 2, ν P, 2, ν Q, 2, ν g, 2, ν b, 2, τ P, 2, τ Q, 2, τ g, 2, τ b, 2]⊤.During an N −1 contingency on line (2 , 3) , the grid topology changes. Line (2 , 3) disconnects, and the neighborhood of V2
+
+updates to N ′ 
+
+> 2
+
+= {1}, modifying the node set to V′E,2 = {1, 2}
+
+and the node degree to |N ′
+
+> 2
+
+| = 1. The updated branch set reduces to L′E,2 = {(1 , 2) }. The operational features recalculate over these restricted sets, and to maintain constant input dimensions for the GP, the raw admittances and physical sensitivities for disconnected elements are set to zero: 
+
+G′ 
+
+> 2
+
+= [ g1,2, 0, 0] ⊤ , B′ 
+
+> 2
+
+= [ b1,2, 0, 0] ⊤ (11a) 
+
+ν′ 
+
+> P, 2
+
+=
+
+ ∂|V2|
+
+∂P 1
+
+, ∂|V2|
+
+∂P 2
+
+, 0
+
+⊤
+
+ν′ 
+
+> Q, 2
+
+=
+
+ ∂|V2|
+
+∂Q 1
+
+, ∂|V2|
+
+∂Q 2
+
+, 0
+
+⊤
+
+(11b) 
+
+ν′ 
+
+> g, 2
+
+=
+
+ ∂|V2|
+
+∂g 1,2
+
+, 0, 0
+
+⊤
+
+ν′ 
+
+> b, 2
+
+=
+
+ ∂|V2|
+
+∂b 1,2
+
+, 0, 0
+
+⊤
+
+(11c) The post-contingency feature vector updates to X′ 
+
+> 2
+
+=[P2, Q 2, P 1, Q 1, 1, G ′
+
+> 2
+
+, B ′
+
+> 2
+
+, ν ′
+
+> P, 2
+
+, ν ′
+
+> Q, 2
+
+, ν ′
+
+> g, 2
+
+, ν ′
+
+> b, 2
+
+, τ ′
+
+> P, 2
+
+, τ ′
+
+> Q, 2
+
+,τ ′
+
+> g, 2
+
+, τ ′
+
+> b, 2
+
+]⊤. Figure 2c illustrates the egonet for target bus V4. Under normal operation, the node set is VE,4 = {3, 4, 5} and the branch set is 
+
+LE,4 = {(2 , 3) , (3 , 4) , (4 , 5) }. Similar to bus 2, the baseline feature vector is defined as X4 = [ P4, Q 4, P 3 + P5, Q 3 +
+
+Q5, 2, G 4, B 4, ν P, 4, ν Q, 4, ν g, 4, ν b, 4, τ P, 4, τ Q, 4, τ g, 4, τ b, 4]⊤.Following the disconnection of line (2 , 3) , the struc-tural neighborhood of V4 remains physically unchanged (V3 and V5), maintaining the node set V′E,4 = {3, 4, 5}
+
+and consequently the power sensitivities (ν′ 
+
+> P, 4
+
+= νP, 4;
+
+ν′ 
+
+> Q, 4
+
+= νQ, 4, τ ′ 
+
+> P, 4
+
+= τP, 4, τ ′ 
+
+> Q, 4
+
+= τQ, 4). The branch set updates to L′E,4 = {(3 , 4) , (4 , 5) } due to the isola-tion of V3 from V2, and the admittance sensitivities ( ν′
+
+> b, 4
+
+,
+
+ν′
+
+> g, 4
+
+, τb, 4, τg, 4) are updated. The post-contingency fea-ture vector is defined as X′ 
+
+> 4
+
+= [P4, Q 4, P 3 + P5, Q 3 +
+
+Q5, 2, G ′
+
+> 4
+
+, B ′
+
+> 4
+
+, ν ′
+
+> P, 4
+
+, ν ′
+
+> Q, 4
+
+, ν ′
+
+> g, 4
+
+, ν ′
+
+> b, 4
+
+, τ ′
+
+> P, 4
+
+, τ ′
+
+> Q, 4
+
+, τ ′
+
+> g, 4
+
+, τ ′
+
+> b, 4
+
+]⊤.
+
+C. Random Fourier Features (RFF) Approximation 
+
+The application of GP regression to a large-scale power system presents two computational challenges: (i) scalability of offline training and (ii) online prediction speed. In the 
+
+training phase , the GP models are usually trained across a vast and diverse set of network configurations and load profiles [8], [9] to achieve true zero-shot topology as well as load adaptiveness. For large-scale grids, this requirement translates into massive training datasets containing thousands of samples, and standard GP training becomes computationally intractable in this regime due to the O(N 3) complexity required to invert the covariance matrix [14]. During the prediction phase ,real-time power system operations demand state predictions within milliseconds, and standard GP inference scales poorly with the number of training samples, restricting its real-time applicability. Although the proposed modular bus-level GP architecture in this work is highly scalable compared to existing non-modular GP learning models, we propose using Random Fourier Features (RFFs)-based GP Kernels approximation to further enhance the computational performance, which maps the training data into a lower-dimensional space. For the input feature vector Xi extracted for bus i (as defined in (9)) and a characteristic length scale parameter l,the RFF mapping projects the data into a lower-dimensional space R2D . A weight matrix Wl ∈ R13 ×D is sampled from a normal distribution N (0 , 1/l 2). The feature map ϕl(Xi),parameterized by the length scale l, is defined as: 
+
+ϕl(Xi) = 1
+
+√D
+
+cos( W ⊤ 
+
+> l
+
+Xi)⊤, sin( W ⊤ 
+
+> l
+
+Xi)⊤⊤ (12) Instead of utilizing features Xi directly, the predictive algo-rithms operate on this transformed space ϕl(Xi). Through this projection, the original O(N 3) training complexity is reduced to O(N D 2) [22]. The dimension D is a hyperparameter; typically, a configuration where D ≪ N provides sufficient approximation accuracy across the majority of tasks [23]. This complexity reduction allows the framework to achieve faster computational time on both training and prediction phases. 
+
+D. Ensemble Gaussian Process Model 
+
+The data-driven modeling of AC power flow is challenging due to large simultaneous variations in active and reactive power demands, as well as topological changes. Consequently, a single GP model may lack the capacity to generalize across this combined operational and structural complexity, often failing to achieve true topology adaptiveness [14], [16]. To overcome this limitation and to improve the model’s predictive capacity, this framework replaces the single-GP approach with an ensemble of M independent GPs [22], [23], called experts. Each expert m ∈ { 1, . . . , M } is parameterized by a unique characteristic length scale lm, thus having its own specific RFF projection space ϕlm (Xi) for the input features. Such a scheme has the advantage of aggregating the pre-dictions of multiple GPs, where the ensemble can adapt its behavior based on the specific combination of loading con-ditions and topological features presented in the input vector. This enhances the generalizability of the model, allowing it to achieve robust zero-shot adaptiveness across unobserved post-contingency configurations. During the training phase, learning is executed indepen-dently for each expert. The fitness of expert m to the training data is evaluated using the exact log marginal likelihood, Lm.This metric quantifies the probability of the observed data given the hyperparameters. The contribution of each expert to the final ensemble is determined by a probability weight wm,computed via a softmax function applied to the log marginal likelihoods: 
+
+wm = exp( Lm − max k Lk)
+
+PMj=1 exp( Lj − max k Lk) (13) During the prediction phase, the individual predictions gen-erated by all M experts are aggregated using these assigned probability weights. This weighted aggregation ensures that the framework dynamically shifts its reliance toward the specific GP expert whose length scale is best suited for the topological state currently being evaluated, yielding a highly accurate, unified power flow prediction. 6
+
+E. Training and Testing and Prediction Process 
+
+The modeling framework is divided into a training phase and a testing phase. During the training phase, the standardized dataset comprising N observations is denoted as ¯Xtrain ,i . In standard GP regression, the model learns by constructing an exact N ×N covariance matrix K. Each element of this matrix is computed by evaluating the SE kernel function over all possible pairs of training inputs, such that Kp,q = κm(Xp, X q )
+
+for any Xp, X q ∈ ¯Xtrain ,i .By utilizing the RFF projection detailed in Section II-C, the SE kernel between two inputs is approximated by the inner product of their mapped features, such that κm(Xi, X ′ 
+
+> i
+
+) ≈
+
+ϕlm (Xi)⊤ϕlm (X′ 
+
+> i
+
+). Consequently, projecting the entire train-ing dataset yields a transformed feature matrix Φlm ∈ RN ×2D ,where each row corresponds to a mapped input ϕlm (Xi)⊤. The covariance matrix is then approximated as K ≈ Φlm Φ⊤ 
+
+> lm
+
+and learned during training. With the target training matrix denoted as Ytrain ,i =[|Vtrain ,i | , θ train ,i ] ∈ RN ×2, the GP optimizes its hyperparame-ters through Maximum Likelihood Estimation (MLE) on the marginal likelihood of the training data. Simultaneously, the log marginal likelihood ( Lm) for each expert’s fit is used during the training phase to compute a unified probability weight wi,m for each bus i and expert m in the ensemble, as defined in (13). During the testing phase, the model assigns a predictive mean to a new, unobserved input state ¯xtest ,i . In standard GP regression, this expected value is calculated as μ(x∗) = 
+
+k⊤∗ (K + σ2 
+
+> ϵ
+
+I)−1Y , where k∗ is the covariance vector between the test input and the training set. By substituting the co-variance components with their respective RFF approxima-tions ( K ≈ Φlm Φ⊤ 
+
+> lm
+
+and k∗ ≈ Φlm ϕlm (¯ xtest ,i )), the two-dimensional predictive expected value [| ˆVm,i |, ˆθm,i ] for the 
+
+m-th GP expert is computed over the projected test input 
+
+ϕlm (¯ xtest ,i ) as: 
+
+[| ˆVm,i |, ˆθm,i ] = ϕlm (¯ xtest ,i )⊤  Φ⊤ 
+
+> lm
+
+Φlm + σ2 
+
+> ϵ
+
+I−1 Φ⊤ 
+
+> lm
+
+Ytrain ,i 
+
+(14) Finally, applying the ensemble aggregation strategy defined in Section II-D, the overall topology-adaptive predictions for bus i are calculated as the weighted sum of the individual predictive means from all M experts: 
+
+| ˆVi| =
+
+> M
+
+X
+
+> m=1
+
+wi,m | ˆVm,i | , ˆθi =
+
+> M
+
+X
+
+> m=1
+
+wi,m ˆθm,i (15) III. M AIN RESULTS 
+
+A. Simulation Setup 
+
+To simulate varying operating conditions, the active and reactive power loads at each bus were uniformly perturbed by ±50% from their nominal base values. The dataset was partitioned to evaluate model performance on both seen and unseen network topologies. The sampling and splitting criteria are defined as follows:  
+
+> •
+
+N-0 and N-1 topologies: 100 operating points were generated for the base topology and each individual single-line outage. This subset was split into 60% for training and 40% for testing.  
+
+> •
+
+N-2 topologies: 500 operating points were generated by randomly sampling simultaneous two-line outages. These samples were allocated exclusively to the testing set.  
+
+> •
+
+N-3 topologies: 1000 operating points were generated by randomly sampling simultaneous three-line outages, also allocated exclusively to the testing set.  
+
+> •
+
+Network Reconfiguration: To evaluate topology adap-tiveness beyond line outages, 20% of the transmission lines were considered switchable. For each operating point, two random lines are turned off but other two lines gets switched on, and active and reactive power loads were randomly perturbed. For this, 500 operating points were generated and allocated to the testing set. Any sampled topology that resulted in disconnected network components or non-converging AC power flow solutions dur-ing the training phase was discarded. The proposed methodol-ogy performance is evaluated on standard IEEE test cases (14-bus, 30-bus, 57-bus, 118-bus and 300-bus) and the PEGASE 1354 test case, which contains 1,354 buses, 260 generators, and 1,991 branches, representing a subset of the European high-voltage transmission network. We generated the AC power flow dataset using the 
+
+pandapower Python package. To implement the en-semble Gaussian Process methodology, we utilized the 
+
+scikit-learn Python library. Specifically, we performed the regression tasks via the BayesianRidge and MultiOutpu-tRegressor modules, integrating them with custom projections for RFF approximations. For all simulations, we extract D =50 components for RFF reduction and deploy an ensemble of 8 GPs with length scales [0 .2, 0.5, 0.8, 1.0, 1.5, 2.0, 3.0, 5.0] .All simulations, feature extraction routines, and model train-ing were executed sequentially on a CPU environment using Python on a Linux 6.1 operating system, utilizing a dedicated machine equipped with 16 GB of RAM (2200 MHz) and a 12-core Intel i7-1260P processor. To evaluate the performance of the proposed framework, its predictive accuracy is benchmarked against existing methods in the literature: PINN EVGNN [4], DeepOPF-FT 3 [2], MT-VDK [16], TTF Ensemble [10] and PG-GCNN [13]. Some of these baseline models were originally formulated for Optimal Power Flow (OPF). To ensure a fair and consistent com-parison with the proposed Power Flow (PF) framework, the output layers and loss functions of the OPF-based baselines were modified to isolate and evaluate exclusively the voltage magnitude and angle predictions. All models were evaluated using the identical training and testing data split detailed in Section III-A. Furthermore, for benchmark methodologies designed to achieve topology adaptiveness through the incor-poration of additional post-contingency training samples, the training procedures were restricted to enforce true zero-shot generalizability. No additional samples from unseen topologies were provided to the models during training, ensuring a fair comparison aligned with the topology-adaptiveness of the proposed work. 
+
+> 3Code available at https://github.com/Mzhou-cityu/DeepOPF-FT
+
+7
+
+B. Voltage Predictions under N − k Contingencies 
+
+Table II presents the Root Mean Square Error (RMSE) for the voltage magnitude ( |V |) and angle ( θ) predictions over normal operation (N-0) as well as N-1, N-2 and N-3 contingencies. The voltage magnitude RMSE remains below 0.005 p.u. across all evaluated test systems and contingency levels. Voltage angle errors exhibit a similar scaling trend with both contingency severity and system size, reaching a maximum RMSE of 4.87 degrees for the 300-bus network under N −3 conditions. 
+
+TABLE II: Proposed framework RMSE for Voltage Magnitude and Angle Predictions over N-0, N-1, N-2 and N-3 contingencies across different Test Systems.                                             
+
+> |V|RMSE (p.u.) θRMSE (deg.) System N-0 N-1 N-2 N-3 N-0 N-1 N-2 N-3
+> IEEE 57 0.0005 0.0010 0.0024 0.0050 0.5493 0.7758 1.3091 1.7417 IEEE 118 0.0001 0.0002 0.0003 0.0005 0.5718 0.7448 1.0228 1.3794 IEEE 300 0.0007 0.0009 0.0012 0.0015 3.3901 3.7682 4.5604 4.8753 PEGASE 1354 0.0002 0.0002 0.0003 0.0003 0.7881 1.1158 1.2182 1.2801
+
+Figure 3 details the probability distribution of the absolute prediction errors for voltage magnitudes and angles. The distributions are right-skewed and heavily concentrated near zero across the four test systems. The nodal voltage predictions don’t deviate from the true AC power flow solutions, with errors of less than 2 × 10 −3 for magnitude and 5 degrees for voltage angle. 0 2
+
+×10 3
+
+0.0 
+
+0.1 
+
+0.2 
+
+0.3 
+
+> IEEE 57
+
+0 2
+
+×10 4
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 IEEE 118 
+
+0 1
+
+×10 3
+
+0.0 
+
+0.2 
+
+0.4 
+
+> IEEE 300
+
+0 2 4
+
+×10 4
+
+0.0 
+
+0.2 
+
+0.4 
+
+0.6 PEGASE 1354 
+
+> Absolute Error (p.u.)
+> Probability
+
+(a) Voltage magnitude RMSE distribution 0 1 2    
+
+> 0.0
+> 0.1
+> 0.2
+> IEEE 57
+> 012
+> 0.0
+> 0.1
+> 0.2
+> IEEE 118
+> 05
+> 0.0
+> 0.05
+> 0.10
+> 0.15
+> IEEE 300
+> 02
+> 0.0
+> 0.05
+> 0.10
+> 0.15
+> PEGASE 1354
+> Absolute Error (degrees)
+> Probability
+
+(b) Voltage angle RMSE distribution 
+
+Fig. 3: Voltage magnitude (a) and angle (b) prediction errors distri-bution for the proposed framework over multiple test cases. Results are evaluated under unobserved N −1, N −2, and N −3 contingencies. 
+
+Figure 4 compares the proposed work against the state-of-the-art in terms of voltage magnitude and angle RMSE across N-0 (normal operation) as well as N-1, N-2, and N-3 contingencies for the IEEE 118 test case. The proposed work achieves the lowest RMSE for voltage magnitude, with the difference increasing with the contingency, achieving 0.0005 compared to 0.0027 for the top 2 over N − 3 contingencies. Additionally, it ranks in the top 2 for voltage angle up to N −2
+
+contingencies, but goes up to top 1 for N −3 (1.3794 ◦ against 
+
+1.4690 ◦ from the top 2). To assess the methodologies on a larger scale, the IEEE 300-bus test case was also investigated. Only the state-of-the-art approaches capable of scaling (DeepOPF-FT and TTF-Ensemble) were evaluated alongside the proposed framework. The results are shown in Table III. The proposed work achieves the best predictive performance across all normal and contin-gency scenarios. The performance gap becomes particularly pronounced during N-3 contingencies, where the proposed framework reduces the prediction error by 90 .06% (from 0.0161 p.u. to 0.0016 p.u) for voltage magnitude and 72 .33% 
+
+(from 17 .60 ◦ to 4.87 ◦) for voltage angle when compared to the second-best approach. Proposed 
+
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN
+> 0.00
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> RMSE (p.u.)
+> 0.0001
+> 0.0015
+> 0.0018
+> 0.0014
+> N-0
+> Proposed
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN
+> 0.0002
+> 0.0014
+> 0.0022
+> 0.0019
+> N-1
+> Proposed
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN
+> 0.0003
+> 0.0017
+> 0.0026
+> 0.0022
+> N-2
+> Proposed
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN
+> 0.0005
+> 0.0027
+> 0.0032
+> 0.0028
+> N-3
+
+(a) Voltage magnitude ( |V |)Proposed 
+
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN 0
+> 5
+> 10
+> 15
+> 20
+> RMSE (degrees)
+> 0.5718
+> 3.6772
+> 0.4699
+> 3.6618
+> 2.9007
+> N-0
+> Proposed
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN
+> 0.7448
+> 3.9227
+> 0.5451
+> 3.9201
+> 2.9945
+> 4.4111
+> N-1
+> Proposed
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN
+> 1.0228
+> 3.8769
+> 0.8647
+> 3.8602
+> 2.9896
+> 4.4677
+> N-2
+> Proposed
+> PINN-EVGNN
+> DeepOPF-FT
+> MT-VDK
+> TTF-Ensemble
+> PG-GCNN
+> 1.3794
+> 4.2735
+> 1.4690
+> 4.2767
+> 3.5129
+> 4.8229
+> N-3
+
+(b) Voltage angle ( θ)
+
+Fig. 4: Voltage magnitude (a) and angle (b) prediction RMSE across N-1, N-2, and N-3 contingencies for IEEE 118 test case. TABLE III: Prediction RMSE for Voltage Magnitude and Angle on the IEEE 300-Bus Test Case 
+
+Metric Approach Topologies N-0 N-1 N-2 N-3 
+
+|V | RMSE (p.u.) Proposed 0.0005 0.0008 0.0011 0.0016 
+
+DeepOPF-FT 0.0101 0.0136 0.0158 0.0161 TTF-Ensemble 0.0150 0.0173 0.0187 0.0178 
+
+θ RMSE (deg.) Proposed 3.3901 3.7681 4.5603 4.8753 
+
+DeepOPF-FT 8.9782 13.5885 15.1938 17.6078 TTF-Ensemble 22.797 29.7926 30.6417 29.6091 
+
+Prediction quality was further analyzed by comparing the proposed approach against the DeepOPF-FT model [2], which exchibited the best performance from the literature. Figure 5 shows the comparison for voltage magnitude ( |V |). The DeepOPF-FT model demonstrates competitive performance on smaller systems (IEEE 57 and 118), but on the larger IEEE 300 system, performance degrades as the contingency severity increases. While its predictions are good under normal (N −0)conditions, the scatter plots for N −1, N −2, and especially N−3 contingencies show wider dispersion. Specially for the IEEE 300-bus system, where the R2 score drops to 0.888 under N −3 events, compared with 0.998 from the proposed work. Figure 6 shows the prediction quality for voltage angles (θ). The baseline DeepOPF-FT model demonstrates strong predictive performance on the smaller IEEE 57- and 118-test cases. For the larger IEEE 300 system, the DeepOPF-FT decreases in performance, with R2 scores dropping from 0.868 under normal operation to 0.670 under N-3 contingencies. On 80.80 
+
+> 1.00
+> Pred Vm (p.u.)
+> R2=1.000
+> Proposed
+> IEEE 57
+> R2=0.999
+> DeepOPF-FT
+> 0.95
+> 1.00
+> 1.05
+> Pred Vm (p.u.)
+> R2=1.000
+> IEEE 118
+> R2=0.994
+> 0.90
+> 1.00
+> True Vm (p.u.)
+> 0.90
+> 1.00
+> Pred Vm (p.u.)
+> R2=1.000
+> IEEE 300
+> 0.90
+> 1.00
+> True Vm (p.u.)
+> R2=0.948
+
+(a) N-0 (normal operation) 0.60  
+
+> 0.80
+> 1.00
+> Pred Vm (p.u.)
+> R2=0.999
+> Proposed
+> IEEE 57
+> R2=0.998
+> DeepOPF-FT
+> 0.95
+> 1.00
+> 1.05
+> Pred Vm (p.u.)
+> R2=1.000
+> IEEE 118
+> R2=0.995
+> 0.80
+> 1.00
+> True Vm (p.u.)
+> 0.80
+> 1.00
+> Pred Vm (p.u.)
+> R2=0.999
+> IEEE 300
+> 0.80
+> 1.00
+> True Vm (p.u.)
+> R2=0.915
+
+(b) N-1 contingencies 0.60  
+
+> 0.80
+> 1.00
+> Pred Vm (p.u.)
+> R2=0.998
+> Proposed
+> IEEE 57
+> R2=0.986
+> DeepOPF-FT
+> 0.95
+> 1.00
+> 1.05
+> Pred Vm (p.u.)
+> R2=1.000
+> IEEE 118
+> R2=0.993
+> 0.80
+> 1.00
+> True Vm (p.u.)
+> 0.80
+> 1.00
+> Pred Vm (p.u.)
+> R2=0.999
+> IEEE 300
+> 0.80
+> 1.00
+> True Vm (p.u.)
+> R2=0.885
+
+(c) N-2 contingencies 0.50  
+
+> 0.75
+> 1.00
+> Pred Vm (p.u.)
+> R2=0.993
+> Proposed
+> IEEE 57
+> R2=0.984
+> DeepOPF-FT
+> 0.95
+> 1.00
+> 1.05
+> Pred Vm (p.u.)
+> R2=0.999
+> IEEE 118
+> R2=0.982
+> 0.60
+> 0.80
+> 1.00
+> True Vm (p.u.)
+> 0.60
+> 0.80
+> 1.00
+> Pred Vm (p.u.)
+> R2=0.998
+> IEEE 300
+> 0.60
+> 0.80
+> 1.00
+> True Vm (p.u.)
+> R2=0.888
+
+(d) N-3 contingencies 
+
+Fig. 5: True vs. Predicted voltage magnitude ( |V |, in p.u.) comparison between the Proposed and DeepOPF-FT methodologies under unseen N-0, N-1, N-2 and N-3 contingencies. 
+
+the other hand, the proposed work maintains good predictive performance on larger networks, outperforming DeepOPF-FT on the 300-bus network and achieving an R2 of 0.972 even under N-3 contingencies, compared to the baseline’s 0.670. The proposed model exhibits slightly lower performance, with wider dispersion, in predicting voltage angles compared to voltage magnitudes. This behavior reflects a limitation of local models versus global models, as localized learning does not fully capture system-wide angular references and patterns. Nevertheless, as shown in Table III, the proposed framework still outperforms existing methods by achieving consistently lower RMSE. Furthermore, this localized approach provides a significant advantage by enabling much greater scalability and speed in large power systems, as shown later in Table V. 
+
+C. Detection of Contingency Scenarios 
+
+The ability of the framework to identify contingent grid states is evaluated through the recall rate for voltage limit vi-olations. Recall is calculated as the ratio of correctly predicted violations to the total number of actual violations present in the AC power flow reference: Recall = T P T P + F N 
+
+where T P (True Positives) represents the number of voltage violations correctly identified by the model, and F N (False Negatives) represents the number of actual violations that the model failed to detect. Two distinct event categories are defined based on the nodal voltage magnitude |V |: Under-voltage scenarios ( |V | < 0.9 p.u.) and Over-voltage scenarios (|V | > 1.1 p.u). Figure 7 shows the recall rates across the IEEE 57, 118, and 300-bus systems for N −1, N −2, and N −3 contingencies. We compare the proposed approach with DeepOPF-FT [2]. The proposed work (green) maintains a recall rate of 98% for both under-voltage and over-voltage detection, even on N-3
+
+contingencies. In contrast, the baseline (red) recall reduces as system complexity and contingency severity increase. 
+
+D. Voltage Prediction under Network Reconfiguration 
+
+We also assess the prediction performance under network reconfiguration. Figure 8 shows the prediction performance of the proposed methodology and the DeepOPF-FT baseline under network reconfiguration scenarios for the IEEE 300-bus system. The proposed work achieves high prediction performance, outperforming the baseline in both voltage mag-nitude and angle predictions. Regarding RMSE evaluation, for voltage magnitude the proposed approach achieves an RMSE of 0.00185 p.u, against 0.01456 from DeepOPF-FT, a 87 .29% 
+
+reduction. For voltage angle, the proposed model yields an RMSE of 6.63 degrees, compared to 17.70 degrees from the baseline, a 62 .5% reduction. 
+
+E. Ablation Study 
+
+An ablation study is conducted on the IEEE 300-bus system to evaluate the contributions of three components of the proposed work to prediction performance: the localized admittance sensitivities, the Random Fourier Features (RFF) approximation, and the ensemble of Gaussian Processes. Table IV reports performance metrics for all combinations of the three components, demonstrating that the proposed methodology with all three components improves prediction accuracy across all contingencies. 
+
+F. Scalability under larger systems 
+
+Figure 9 presents the scatter plots of true versus predicted voltage magnitudes ( |V |) and voltage angles ( θ) across N-0, N-1, N-2 and N-3 contingencies. The proposed approach has a 
+
+R2 equal to or exceeding 0.929 across all contingencies levels, in both voltage magnitude and angle. 9-20 
+
+> 0
+> Pred  (degree)
+
+R2=0.989 
+
+> Proposed
+
+IEEE 57 
+
+R2=0.996 
+
+> DeepOPF-FT
+> 0
+> 20
+> 40
+> Pred  (degree)
+
+R2=0.991 
+
+IEEE 118 
+
+R2=0.997  
+
+> 0
+> 50
+> True (degree)
+> 0
+> 50
+> Pred  (degree)
+
+R2=0.973 
+
+IEEE 300  
+
+> 0
+> 50
+> True (degree)
+
+R2=0.868 
+
+(a) N-0 (normal operation) -20 
+
+> 0
+> Pred  (degree)
+
+R2=0.971 
+
+> Proposed
+
+IEEE 57 
+
+R2=0.995 
+
+> DeepOPF-FT
+> 0
+> 20
+> 40
+> Pred  (degree)
+
+R2=0.986 
+
+IEEE 118 
+
+R2=0.995  
+
+> -100
+> 0
+> 100
+> True (degree)
+> -100
+> 0
+> 100
+> Pred  (degree)
+
+R2=0.984 
+
+IEEE 300  
+
+> -100
+> 0
+> 100
+> True (degree)
+
+R2=0.795 (b) N-1 contingencies -20 
+
+> 0
+> Pred  (degree)
+
+R2=0.950 
+
+> Proposed
+
+IEEE 57 
+
+R2=0.970 
+
+> DeepOPF-FT
+> 0
+> 20
+> 40
+> Pred  (degree)
+
+R2=0.981 
+
+IEEE 118 
+
+R2=0.989  
+
+> -100
+> 0
+> 100
+> True (degree)
+> -100
+> 0
+> 100
+> Pred  (degree)
+
+R2=0.972 
+
+IEEE 300  
+
+> -100
+> 0
+> 100
+> True (degree)
+
+R2=0.743 (c) N-2 contingencies -40 
+
+> -20
+> 0
+> Pred  (degree)
+
+R2=0.923 
+
+> Proposed
+
+IEEE 57 
+
+R2=0.950 
+
+> DeepOPF-FT
+> 0
+> 25
+> 50
+> Pred  (degree)
+
+R2=0.972 
+
+IEEE 118 
+
+R2=0.970  
+
+> -100
+> 0
+> 100
+> True (degree)
+> -100
+> 0
+> 100
+> Pred  (degree)
+
+R2=0.972 
+
+IEEE 300  
+
+> -100
+> 0
+> 100
+> True (degree)
+
+R2=0.670 (d) N-3 contingencies 
+
+Fig. 6: True vs. Predicted voltage angle ( θ, in degrees) comparison between the Proposed and DeepOPF-FT methodologies under unseen N-0, N-1, N-2 and N-3 contingencies. 0  
+
+> 50
+> 100
+> Recall (%)
+> 100
+> 99.9
+> 99.8
+> 100
+> 99.6
+> 99.6
+> Under-voltage
+> N-1 N-2 N-3
+> 0
+> 50
+> 100
+> Recall (%)
+> 99.0
+> 99.0
+> 97.6
+> 97.0
+> 94.6
+> 93.3
+> Over-voltage
+
+(a) IEEE 57 0   
+
+> 50
+> 100
+> Recall (%)
+> 99.1
+> 98.5
+> 98.1
+> 96.4
+> 93.6
+> 88.3
+> Under-voltage
+> N-1 N-2 N-3
+> 0
+> 50
+> 100
+> Recall (%)
+> 99.5
+> 99.4
+> 99.5
+> 98.6
+> 98.3
+> 95.7
+> Over-voltage
+
+(b) IEEE 118 0   
+
+> 50
+> 100
+> Recall (%)
+> 99.2
+> 98.9
+> 98.8
+> 88.5
+> 86.2
+> 85.9
+> Under-voltage
+> N-1 N-2 N-3
+> 0
+> 50
+> 100
+> Recall (%)
+> 99.8
+> 99.7
+> 99.7
+> 93.0
+> 91.8
+> 92.2
+> Over-voltage
+
+(c) IEEE 300 
+
+Fig. 7: Recall rates for detecting voltage violations. The proposed work (green) is compared against the DeepOPF-FT baseline (red) under unobserved N-1, N-2, and N-3 contingencies. 0.80 0.90 1.00 1.10 
+
+True |V| (p.u.) 
+
+> 0.80
+> 0.90
+> 1.00
+> 1.10
+> Pred  |V| (p.u.)
+
+R2=0.998 
+
+Proposed    
+
+> 0.80 0.90 1.00 1.10
+
+True |V| (p.u.) 
+
+R2=0.890 
+
+DeepOPF-FT 
+
+(a) Voltage magnitude -100 0 100 
+
+True (deg.) 
+
+> -100
+> 0
+> 100
+> Pred  (deg.)
+
+R2=0.962 
+
+Proposed   
+
+> -100 0100
+
+True (deg.) 
+
+R2=0.727 
+
+DeepOPF-FT (b) Voltage angle 
+
+Fig. 8: Voltage magnitude (a) and angle (b) prediction performance across network reconfigurations for the IEEE 300 test case. TABLE IV: Impact of Model Components on Accuracy for the IEEE 300 System. The evaluated components include localized admittance sensitivities (Sens.), Random Fourier Features approximation (RFF), and the ensemble of Gaussian Process experts (Ens.). 
+
+Components RMSE |V | (p.u.) RMSE θ (deg.) Model Sens. RFF Ens. N-1 N-2 N-3 N-1 N-2 N-3 
+
+M0 × × × 0.0085 0.0122 0.0152 3.2366 3.7731 4.5430 
+
+M1 × × ✓ 0.0085 0.0122 0.0152 3.2366 3.7731 4.5430 
+
+M2 × ✓ × 0.0121 0.0172 0.0226 3.3085 3.9209 4.7870 
+
+M3 × ✓ ✓ 0.0074 0.0113 0.0139 3.0539 3.6406 4.3567 
+
+M4 ✓ × × 0.0078 0.0112 0.0142 3.0812 3.6773 4.4933 
+
+M5 ✓ × ✓ 0.0078 0.0112 0.0142 3.0812 3.6773 4.4933 
+
+M6 ✓ ✓ × 0.0128 0.0183 0.0239 3.3100 4.0125 4.8566 
+
+M7 ✓ ✓ ✓ 0.0009 0.0012 0.0015 2.3932 2.5339 2.5739 True |V| (p.u.)           
+
+> 1.00
+> 1.05
+> 1.10
+> Pred  |V| (p.u.)
+> R2=1.000
+> N-0
+> True (deg.)
+> -50
+> -25
+> 0
+> Pred  (deg.)
+> R2=0.996
+> True |V|(p.u.)
+> 0.75
+> 0.90
+> 1.05
+> R2=1.000
+> N-1
+> True (deg.)
+> -120
+> -60
+> 0
+> 60
+> R2=0.989
+> True |V|(p.u.)
+> 0.88
+> 0.96
+> 1.04
+> 1.12
+> R2=0.999
+> N-2
+> True (deg.)
+> -80
+> -40
+> 0
+> 40
+> R2=0.988
+> True |V|(p.u.)
+> 0.75
+> 0.90
+> 1.05
+> 1.20
+> R2=0.999
+> N-3
+> True (deg.)
+> -80
+> -40
+> 0
+> 40
+> R2=0.986
+
+Fig. 9: True versus predicted voltage magnitudes ( |V |) and angles (θ) for the PEGASE 1354 system across N-0, N-1, N-2 and N-3 contingencies. 
+
+G. Computational Performance 
+
+Table V details the computational times for the proposed framework 4. The application of the RFF technique reduces the 
+
+training computational complexity of the proposed framework to O(N D 2), where D is the constant dimension of the randomized feature space and N is the number of training samples. Since D remains constant, the overall computational complexity of the framework reduces to O(N ). The testing 
+
+computational complexity depends on both the total number of buses and the individual input dimension at each bus, which varies according to local branch connectivity. Table V also compares the computational time of the proposed framework with state-of-the-art approaches, focusing on methodologies capable of evaluating the IEEE 300 test case. DeepOPF-FT [2] exhibits high training times due to its global system approach. The TTF Ensemble [10] demon-strates competitive training times. However, its testing time is higher because the model requires online learning with new topologies. While the existing literature has run models on 
+
+4All experiments were executed using Python on a Windows operating system, utilizing a personal computer with 16 GB of RAM (2200 MHz) and a 12-core Intel i7-1260P processor. 10 
+
+systems with more than 1000 nodes, these studies typically use smaller datasets that exclude N − k contingencies. Applying these existing methods to larger systems (i.e. PEGASE 1354) resulted in out-of-memory errors. 
+
+TABLE V: Computational time of the Proposed Framework and state-of-the-art approaches across IEEE test cases. OOM denotes Out-of-Memory error.                            
+
+> System Approach Train Time (s) Test Time [per sample] (ms)
+> IEEE 30 Proposed 4.90 0.300 IEEE 57 Proposed 233.20 4.528 IEEE 118 Proposed 701.11 8.886
+> DeepOPF-FT [2] 7113.81 110 TTF Ensemble [10] 2706.49 17.871 IEEE 300 Proposed 690.81 8.251
+> DeepOPF-FT [2] 15717.43 154 TTF Ensemble [10] 5263.35 63.595 PEGASE 1354 Proposed 5929.79 75.130
+> DeepOPF-FT [2] OOM OOM TTF Ensemble [10] OOM OOM
+
+IV. C ONCLUSION 
+
+This paper presented a scalable, fast, topology-adaptive Gaussian Process framework for learning power flow solutions under unobserved grid contingencies and topologies. We pro-posed a modular Gaussian Process architecture, utilizing local-ized first-order admittance and power injection sensitivities to embed the physical impacts of structural changes directly into the predictive models. To overcome the computational limi-tations of standard Gaussian Processes on large datasets, the framework employs Random Fourier Features approximations and aggregates predictions through an ensemble of experts. Simulation results across the IEEE 30, 57, 118, 300-bus and PEGASE 1354 systems demonstrated that the proposed model predicts system states under unobserved N-1, N-2, and N-3 contingencies without requiring additional training samples. The framework achieved lower prediction errors compared to existing benchmark methodologies, exhibiting robustness under severe N-3 contingencies where baseline models ex-perienced performance degradation. Furthermore, the model maintained high recall rates, exceeding 98% in all scenarios, for identifying under-voltage and over-voltage violations. The ablation study confirmed that the integration of localized physical sensitivities, RFF, and the ensemble strategy balances computational efficiency with prediction accuracy. Addition-ally, the framework demonstrates linear computational scaling with respect to system size, having a per-scenario testing time of 73ms for the PEGASE 1354 test system. Future research will explore the framework’s extension to solve the optimal power flow (OPF) problem and optimize generator active and reactive power setpoints. Furthermore, different spatial granularities will be investigated by transition-ing from bus-level models to zone-based GPs. By partitioning the network into distinct regions, inter-zone dependencies can be captured by exchanging predicted boundary states and sensitivities between adjacent models. REFERENCES [1] D. Tiwari, M. J. Zideh, V. Talreja, V. Verma, S. K. Solanki, and J. Solanki, “Power flow analysis using deep neural networks in three-phase unbalanced smart distribution grids,” IEEE Access , vol. 12, pp. 29 959–29 970, 2024. [2] M. Zhou, M. Chen, and S. H. Low, “Deepopf-ft: One deep neural network for multiple ac-opf problems with flexible topology,” IEEE Transactions on Power Systems , vol. 38, no. 1, pp. 964–967, 2022. [3] M. Xiang, J. Yu, Z. Yang, Y. Yang, H. Yu, and H. He, “Probabilistic power flow with topology changes based on deep neural network,” 
+
+International Journal of Electrical Power & Energy Systems , vol. 117, p. 105650, 2020. [4] A. M. Nakiganda and S. Chatzivasileiadis, “Graph neural networks for fast contingency analysis of power systems,” arXiv e-prints , pp. arXiv– 2310, 2023. [5] D. Owerko, F. Gama, and A. Ribeiro, “Optimal power flow using graph neural networks,” in 2020 ICASSP . IEEE, 2020, pp. 5930–5934. [6] F. Gao, Z. Xu, and L. Yin, “Bayesian deep neural networks for spatio-temporal probabilistic optimal power flow with multi-source renewable energy,” Applied Energy , vol. 353, p. 122106, 2024. [7] K. Xu, L. Qiu, X. Dai, Y. Ding, C. Ye, and Y. Fang, “Optimal power flow under varying topologies via physics-guided neural network with stack-learning,” IJEPES , vol. 173, p. 111391, 2025. [8] M. Yang, G. Qiu, J. Liu, Y. Liu, T. Liu, Z. Tang, L. Ding, Y. Shui, and K. Liu, “Topology-transferable physics-guided graph neural network for real-time optimal power flow,” IEEE Transactions on Industrial Informatics , vol. 20, no. 9, pp. 10 857–10 872, 2024. [9] S. Liu, C. Wu, and H. Zhu, “Topology-aware graph neural networks for learning feasible and adaptive ac-opf solutions,” IEEE Transactions on Power Systems , vol. 38, no. 6, pp. 5660–5670, 2022. [10] Y. Jia, X. Wu, Z. Yang, and Y. Wang, “A two-stage approach for topology change-aware data-driven opf,” IEEE Transactions on Power Systems ,vol. 40, no. 2, pp. 1854–1867, 2024. [11] Y. Chen, S. Lakshminarayana, C. Maple, and H. V. Poor, “A meta-learning approach to the optimal power flow problem under topology reconfigurations,” IEEE Open Access Journal of Power and Energy ,vol. 9, pp. 109–120, 2022. [12] Y. Jia, X. Bai, L. Zheng, Z. Weng, and Y. Li, “Convopf-dop: A data-driven method for solving ac-opf based on cnn considering different operation patterns,” IEEE Transactions on Power Systems , vol. 38, no. 1, pp. 853–860, 2022. [13] M. Gao, J. Yu, Z. Yang, and J. Zhao, “A physics-guided graph convo-lution neural network for optimal power flow,” IEEE Transactions on Power Systems , vol. 39, no. 1, pp. 380–390, 2023. [14] B. Tan et al. , “Gaussian processes in power systems: Techniques, applications, and future works,” Applied Energy , vol. 402, p. 126995, 2026. [15] P. Pareek and H. D. Nguyen, “A framework for analytical power flow solution using gaussian process learning,” IEEE Transactions on Sustainable Energy , vol. 13, no. 1, pp. 452–463, 2021. [16] P. Pareek, S. Misra, and D. Deka, “Data-efficient strategies for prob-abilistic voltage envelopes under network contingencies,” Sustainable Energy, Grids and Networks , p. 101811, 2025. [17] W. Huang, K. Gong, Z. Jiang, X. Zhang, and L. Zheng, “A decentralized unsupervised learning approach for ac-opf based on multi-branch deep neural network,” IEEE Access , vol. 13, pp. 206 932–206 947, 2025. [18] J. Chen, J. Zhu, H. Ye, Z. Wang, K. Zeng, H. Liu, and M. Liu, “An improved dynamic programming-based decentralized algorithm for ac-opf of radially connected multi-level networks,” IEEE Transactions on Power Systems , vol. 38, no. 2, pp. 1460–1473, 2022. [19] T. W. Mak, M. Chatzos, M. Tanneau, and P. Van Hentenryck, “Learning regionally decentralized ac optimal power flows with admm,” IEEE Transactions on Smart Grid , vol. 14, no. 6, pp. 4863–4876, 2023. [20] M. K. Singh, V. Kekatos, and G. B. Giannakis, “Learning to solve the ac-opf using sensitivity-informed deep neural networks,” IEEE Transactions on Power Systems , vol. 37, no. 4, pp. 2833–2846, 2021. [21] M. Jalali, M. K. Singh, V. Kekatos, G. B. Giannakis, and C.-C. Liu, “Fast inverter control by learning the opf mapping using sensitivity-informed gaussian processes,” IEEE Transactions on Smart Grid , vol. 14, no. 3, pp. 2432–2445, 2022. [22] K. D. Polyzos, Q. Lu, and G. B. Giannakis, “Ensemble gaussian processes for online learning over graphs with adaptivity and scalability,” 
+
+IEEE Transactions on Signal Processing , vol. 70, pp. 17–30, 2021. [23] ——, “Online graph-guided inference using ensemble gaussian pro-cesses of egonet features,” in 2021 55th Asilomar Conference on Signals, Systems, and Computers . IEEE, 2021, pp. 182–186. [24] S. Talkington, D. Turizo, S. A. Dorado-Rojas, R. K. Gupta, and D. K. Molzahn, “Differentiating through power flow solutions for admittance and topology control,” arXiv preprint arXiv:2510.17071 , 2025. [25] R. K. Gupta, “Ac-informed dc optimal transmission switching via admittance sensitivity-augmented constraints and repair costs,” 2026. [Online]. Available: https://arxiv.org/abs/2603.01249

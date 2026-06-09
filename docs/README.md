@@ -6,64 +6,60 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-08
-- 运行时间：2026-06-08 20:55:03 UTC
+- 最新运行日期：2026-06-09
+- 运行时间：2026-06-09 20:48:01 UTC
 - 运行状态：成功
-- 本次总论文数：14
-- 精读区：2
-- 速读区：12
+- 本次总论文数：12
+- 精读区：4
+- 速读区：8
 
 ### 今日简报（AI）
-今日精读两篇高分论文：电商生成检索的类别引导意图推理与多跳RAG的键值分离超图证据组织。  
-最值得关注：在生成式检索中引入潜在意图推理可突破匹配局限，多跳RAG通过超图结构显著提升证据组织效率。  
-建议后续跟踪RAG成本感知证据选择与图基础模型的空间传播方法，平衡性能与计算开销。
-- 详情：[/202606/08/README](/202606/08/README)
+今日共读12篇论文，精读4篇，聚焦大语言模型无训练推理仲裁与归一化流潜在推理两大方向。
+
+最值得关注《TrustMargin》提出的无训练信任仲裁机制（9.0分）及《Latent Reasoning with Normalizing Flows》的隐式推理新范式（8.0分）。
+
+建议优先精读以上两篇高分论文，并留意《When Knowledge Is Not Free》中关于检索增强生成成本感知证据选择的方法，为实际部署省钱省算力。
+- 详情：[/202606/09/README](/202606/09/README)
 
 ### 精读区论文标签
-1. [Beyond Matching: Category-Guided Latent Intent Reasoning for Generative Retrieval in E-Commerce](/202606/08/2606.07075v1-beyond-matching-category-guided-latent-intent-reasoning-for-generative-retrieval-in-e-commerce)  
-   标签：评分：9.0/10、query:pwt
-   evidence：CaLIR用潜在意图推理替代显式思维链，可用于冷启动工单生成的替代方案
-2. [HKVM-RAG: Key-Value-Separated Hypergraph Evidence Organization for Multi-Hop RAG](/202606/08/2606.07218v1-hkvm-rag-key-value-separated-hypergraph-evidence-organization-for-multi-hop-rag)  
+1. [TrustMargin: Training-Free Arbitration between Parametric Memory and Retrieved Evidence in Large Language Models](/202606/09/2606.08397v1-trustmargin-training-free-arbitration-between-parametric-memory-and-retrieved-evidence-in-large-language-models)  
+   标签：评分：9.0/10、query:power-ticket
+   evidence：LLM中参数记忆与检索证据的无训练仲裁，直接适用于工作票的检索增强生成
+2. [Latent Reasoning with Normalizing Flows](/202606/09/2606.06447v1-latent-reasoning-with-normalizing-flows)  
+   标签：评分：8.0/10、query:pwt
+   evidence：潜推理替代链式思维提升推理能力
+3. [Constrained Dominant Sets for Multimodal Document Question Answering](/202606/09/2606.07252v2-constrained-dominant-sets-for-multimodal-document-question-answering)  
    标签：评分：8.0/10、query:power-ticket
-   evidence：基于超图的证据组织用于多跳RAG，直接对应基于图的检索增强生成
+   evidence：在查询增强的亲和图上使用约束主导集进行RAG证据选择
+4. [What Makes a Desired Graph for Relational Deep Learning?](/202606/09/2606.08491v1-what-makes-a-desired-graph-for-relational-deep-learning)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：研究关系深度学习中理想图的构成，涉及图结构适应
 
 ### 速读区论文标签
-1. [When Knowledge Is Not Free: Cost-Aware Evidence Selection in Retrieval-Augmented Generation](/202606/08/2606.02245v1-when-knowledge-is-not-free-cost-aware-evidence-selection-in-retrieval-augmented-generation)  
+1. [When Knowledge Is Not Free: Cost-Aware Evidence Selection in Retrieval-Augmented Generation](/202606/09/2606.02245v1-when-knowledge-is-not-free-cost-aware-evidence-selection-in-retrieval-augmented-generation)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：RAG中具有成本意识的证据选择
-2. [A Graph Foundation Model with Spectral Parsing and Prototype-Guided Spatial Propagation](/202606/08/2606.03315v1-a-graph-foundation-model-with-spectral-parsing-and-prototype-guided-spatial-propagation)  
+   evidence：成本感知的检索增强生成证据选择
+2. [Admittance Sensitivity-Informed Modular GP for Scalable Topology-Adaptive Power-Flow Learning](/202606/09/2606.03717v1-admittance-sensitivity-informed-modular-gp-for-scalable-topology-adaptive-power-flow-learning)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：基于光谱解析和空间传播的图基础模型实现跨图迁移
-3. [eMEM: A Hybrid Spatio-Temporal Memory System For Embodied Agents](/202606/08/2606.03374v1-emem-a-hybrid-spatio-temporal-memory-system-for-embodied-agents)  
-   标签：评分：7.0/10、query:pwt
-   evidence：基于混合图记忆系统的图记忆增强推理
-4. [When Graph Tokens Sink: A Mechanistic Analysis of Graph Language Models](/202606/08/2606.03712v1-when-graph-tokens-sink-a-mechanistic-analysis-of-graph-language-models)  
+   evidence：基于节点ego网络模块化高斯过程的拓扑自适应潮流学习
+3. [Constrained Dominant Sets for Multimodal Document Question Answering](/202606/09/2606.07252v1-constrained-dominant-sets-for-multimodal-document-question-answering)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：图语言模型中图令牌处理的机制分析
-5. [Graph Set Transformer](/202606/08/2606.05116v1-graph-set-transformer)  
+   evidence：图结构学习方法用于RAG中的证据选择
+4. [EviProp: Seeded Relevance Diffusion on Chunk-Page Graphs for Long Multimodal Document Retrieval](/202606/09/2606.08979v1-eviprop-seeded-relevance-diffusion-on-chunk-page-graphs-for-long-multimodal-document-retrieval)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：一种新的图结构学习架构，交织节点级和跨图上下文建模
-6. [Self-Augmenting Retrieval for Diffusion Language Models](/202606/08/2606.06474v1-self-augmenting-retrieval-for-diffusion-language-models)  
+   evidence：将文档建模为块页图，使用种子相关性扩散进行检索
+5. [AbstRAG: Learning to Abstract for Retrieval Problems](/202606/09/2606.09459v1-abstrag-learning-to-abstract-for-retrieval-problems)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：动态RAG框架可适用于工单生成
-7. [DiscourseFlip: An Oblique Discourse-Level Opinion Manipulation Attack against Black-box Retrieval-Augmented Generation](/202606/08/2606.01212v2-discourseflip-an-oblique-discourse-level-opinion-manipulation-attack-against-black-box-retrieval-augmented-generation)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：基于图的检索增强生成系统攻击
-8. [ACRONYM: Accelerated Approximate Nearest Neighbor Search in Memory for Dynamic Vector Databases](/202606/08/2606.03151v1-acronym-accelerated-approximate-nearest-neighbor-search-in-memory-for-dynamic-vector-databases)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：面向RAG的加速向量数据库搜索
-9. [Re-Ranking Through an Attribution Lens for Citation Quality in Legal QA](/202606/08/2606.03728v1-re-ranking-through-an-attribution-lens-for-citation-quality-in-legal-qa)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：通过归因重排序提升检索增强生成质量
-10. [AIS-Based Vessel Trajectory Prediction Using Memory-Augmented Neural Networks](/202606/08/2606.06311v1-ais-based-vessel-trajectory-prediction-using-memory-augmented-neural-networks)  
+   evidence：面向抽象鸿沟的检索增强生成
+6. [GOTabPFN: From Feature Ordering to Compact Tokenization for Tabular Foundation Models on High-Dimensional Data](/202606/09/2606.05441v1-gotabpfn-from-feature-ordering-to-compact-tokenization-for-tabular-foundation-models-on-high-dimensional-data)  
    标签：评分：6.0/10、query:pwt
-   evidence：记忆增强神经网络用于轨迹预测，外部记忆检索
-11. [Mind the Gap: Bridging Behavioral Silos with LLMs in Multi-Vertical Recommendations](/202606/08/2606.06779v1-mind-the-gap-bridging-behavioral-silos-with-llms-in-multi-vertical-recommendations)  
+   evidence：面向低资源表格预测的图引导排序与少样本学习
+7. [Q-Delta: Beyond Key-Value Associative State Evolution](/202606/09/2606.08804v1-q-delta-beyond-key-value-associative-state-evolution)  
    标签：评分：6.0/10、query:pwt
-   evidence：使用RAG进行冷启动和低资源场景泛化
-12. [CRAFT: A Unified Counterfactual Reasoning Framework for Tabular Question Answering and Fact Verification](/202606/08/2606.06842v1-craft-a-unified-counterfactual-reasoning-framework-for-tabular-question-answering-and-fact-verification)  
+   evidence：查询感知的delta规则用于记忆增强状态演化
+8. [Inference-Time Conformal Reasoning with Valid Factuality Control for Large Language Models](/202606/09/2606.08831v1-inference-time-conformal-reasoning-with-valid-factuality-control-for-large-language-models)  
    标签：评分：6.0/10、query:pwt
-   evidence：反事实推理作为思维链的替代方案
+   evidence：将保形预测融入推理图进行事实性控制，与无CoT推理相关
 
 
 <div class="dpr-home-promo-card">

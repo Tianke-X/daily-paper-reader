@@ -1,0 +1,501 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-09T20:39:01.950467+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 4,
+    "deep_cap": 7,
+    "deep_selected": 4,
+    "quick_candidates": 8,
+    "quick_skim_target": 12,
+    "quick_selected": 8
+  },
+  "deep_dive": [
+    {
+      "id": "2606.08397v1",
+      "source": "arxiv",
+      "title": "TrustMargin: Training-Free Arbitration between Parametric Memory and Retrieved Evidence in Large Language Models",
+      "abstract": "Large language models answer knowledge-intensive questions using both parametric memory and retrieved evidence, but neither source is uniformly reliable. Retrieval can fill knowledge gaps, yet distracting passages may override correct closed-book answers. We study this post-generation conflict as answer-level source arbitration: given Direct and RAG answers from the same frozen model, decide which source to trust. We propose TRUSTMARGIN, a training-free, plug-and-play arbitration layer that scores the two existing candidates with the model's own likelihoods. It combines a parametric-prior margin, which tests whether memory accepts the retrieved answer, with an evidence-binding margin, which discounts passage-only salience and measures question-specific support. TRUSTMARGIN selects between Direct and RAG without fine-tuning, external judges, or additional generation. Across 2WIKIMQA and CWQA with three LLaMA scales, TRUSTMARGIN consistently improves over Direct generation and BM25-RAG, recovers part of the Direct/RAG oracle gap, and generalizes to multiple training-free RAG pipelines.",
+      "authors": [
+        "Jingyan Xu",
+        "Hong Shi",
+        "Yi Shan",
+        "Penghui Liu",
+        "Yunhao Bai",
+        "Ningyuan Li",
+        "Xueyang Liu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.IR"
+      ],
+      "published": "2026-06-07T01:25:09+00:00",
+      "link": "https://arxiv.org/pdf/2606.08397v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "training-free arbitration between parametric memory and retrieved evidence in LLMs, directly relevant to RAG for work tickets",
+      "llm_evidence_cn": "LLM中参数记忆与检索证据的无训练仲裁，直接适用于工作票的检索增强生成",
+      "llm_evidence": "LLM中参数记忆与检索证据的无训练仲裁，直接适用于工作票的检索增强生成",
+      "canonical_evidence": "LLM中参数记忆与检索证据的无训练仲裁，直接适用于工作票的检索增强生成",
+      "llm_tldr_en": "Proposes TrustMargin, a training-free arbitration layer for LLMs to choose between direct answer and RAG answer by scoring likelihood margins, improving answer reliability.",
+      "llm_tldr_cn": "针对大语言模型在知识密集型问答中记忆与检索证据冲突的问题，提出无训练仲裁层TrustMargin，通过参数先验边界和证据绑定边界评分来信任更可靠的答案源，无需额外训练即可提升RAG系统的整体准确性，可应用于电力工作票的检索增强生成场景。",
+      "llm_tldr": "针对大语言模型在知识密集型问答中记忆与检索证据冲突的问题，提出无训练仲裁层TrustMargin，通过参数先验边界和证据绑定边界评分来信任更可靠的答案源，无需额外训练即可提升RAG系统的整体准确性，可应用于电力工作票的检索增强生成场景。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07252v2",
+      "source": "arxiv",
+      "title": "Constrained Dominant Sets for Multimodal Document Question Answering",
+      "abstract": "Long multimodal document question answering is limited by which evidence reaches the reader, rather than by the quantity retrieved. In lengthy documents, findings often recur across figures, captions, and introductory sentences, causing similarity based retrievers in modern multimodal retrieval-augmented generation (RAG) systems to allocate resources to near-duplicates while overlooking complementary evidence. This work introduces a retriever that selects evidence as a Constrained Dominant Set (CDS) on a query-augmented affinity graph, offering three advantages that similarity ranking does not. First, the query is encoded as a hard structural constraint, ensuring that every selected element is directly connected to the question through the cluster anchor. Second, the relevance-redundancy balance is determined automatically by a spectral bound, eliminating the need for manually tuned trade offs required by diversity-aware selectors. Third, the selection process achieves a global equilibrium via replicator dynamics, thereby avoiding the distortions introduced by greedy heuristics. The method is inherently graph-based and does not require training. Using a Qwen3-VL-32B reader, CDS establishes a new state of the art on VisDoMBench ($66.99$ average) and improves over the no-retrieval baseline by $37.1$ points on VisDoMBench and $4.8$ on MMLongBench-Doc.",
+      "authors": [
+        "Ambuj Mehrish",
+        "Sebastiano Vascon"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-05T13:24:46+00:00",
+      "link": "https://arxiv.org/pdf/2606.07252v2",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uses constrained dominant sets on query-augmented affinity graph for evidence selection in RAG",
+      "llm_evidence_cn": "在查询增强的亲和图上使用约束主导集进行RAG证据选择",
+      "llm_evidence": "在查询增强的亲和图上使用约束主导集进行RAG证据选择",
+      "canonical_evidence": "在查询增强的亲和图上使用约束主导集进行RAG证据选择",
+      "llm_tldr_en": "Proposes a retriever that selects evidence as constrained dominant sets on a query-augmented affinity graph, improving over similarity ranking in multimodal RAG.",
+      "llm_tldr_cn": "在多模态文档问答中，现有检索器因相似度排序导致证据重复且遗漏互补信息。本文提出基于约束主导集的检索器，在查询增强的亲和图上选择证据，确保每个选中元素与问题直接连接。该方法在多种文档问答任务上优于传统相似度排序和聚类方法，为图结构在检索增强生成中的应用提供了新思路。",
+      "llm_tldr": "在多模态文档问答中，现有检索器因相似度排序导致证据重复且遗漏互补信息。本文提出基于约束主导集的检索器，在查询增强的亲和图上选择证据，确保每个选中元素与问题直接连接。该方法在多种文档问答任务上优于传统相似度排序和聚类方法，为图结构在检索增强生成中的应用提供了新思路。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.06447v1",
+      "source": "arxiv",
+      "title": "Latent Reasoning with Normalizing Flows",
+      "abstract": "Large language models often improve reasoning by generating explicit chain-of-thought (CoT), demonstrating the importance of intermediate computation. However, textual CoT forces this computation through a discrete, serial, and communication-oriented token stream: each reasoning step must be verbalized before the model can proceed, even when the underlying update is semantic, uncertain, or only partially formed. Latent reasoning offers a higher-bandwidth alternative by performing intermediate computation in compact continuous states before committing to text. Yet existing latent-reasoning methods often sacrifice key advantages that make CoT effective in autoregressive language models, including native left-to-right generation, probabilistic sampling, compatibility with KV-cache decoding, and tractable likelihood estimation. We propose NF-CoT, a latent reasoning framework that preserves these advantages by modeling continuous thoughts with normalizing flows. NF-CoT instantiates a TARFlow-style normalizing flow inside the LLM backbone, defining a tractable probability model over compact continuous thoughts distilled from explicit CoT. Continuous-thought positions are generated by an NF head, while text positions are generated by the standard LM head within the same causal stream. This design provides exact likelihoods for latent thoughts, enables probabilistic left-to-right decoding with the original KV cache, and supports direct policy-gradient optimization in the latent reasoning space. On code-generation benchmarks, NF-CoT improves pass rates over explicit-CoT and prior latent-reasoning baselines while substantially reducing intermediate-reasoning cost.",
+      "authors": [
+        "Guancheng Tu",
+        "Xiangjun Fu",
+        "Suhao Yu",
+        "Yao Tang",
+        "Haoqiang Kang",
+        "Lianhui Qin",
+        "Yizhe Zhang",
+        "Jiatao Gu"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-06-04T17:44:17+00:00",
+      "link": "https://arxiv.org/pdf/2606.06447v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "latent reasoning as alternative to chain-of-thought",
+      "llm_evidence_cn": "潜推理替代链式思维提升推理能力",
+      "llm_evidence": "潜推理替代链式思维提升推理能力",
+      "canonical_evidence": "潜推理替代链式思维提升推理能力",
+      "llm_tldr_en": "Proposes latent reasoning with normalizing flows, offering a higher-bandwidth alternative to chain-of-thought.",
+      "llm_tldr_cn": "显式链式思维（CoT）将推理过程强制通过序列化文本，限制了计算带宽。本文提出潜推理方法，利用归一化流在连续空间中执行中间计算，再生成文本，保留了自回归模型的左到右生成、概率采样等优势。实验表明该方法在需要复杂推理的任务上超越CoT，为替代CoT提供了新方向。",
+      "llm_tldr": "显式链式思维（CoT）将推理过程强制通过序列化文本，限制了计算带宽。本文提出潜推理方法，利用归一化流在连续空间中执行中间计算，再生成文本，保留了自回归模型的左到右生成、概率采样等优势。实验表明该方法在需要复杂推理的任务上超越CoT，为替代CoT提供了新方向。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "Alternatives to chain of thought reasoning for cold start in power work ticket generation",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.08491v1",
+      "source": "arxiv",
+      "title": "What Makes a Desired Graph for Relational Deep Learning?",
+      "abstract": "Relational deep learning (RDL) converts relational databases (RDBs) into heterogeneous graphs, but graphs derived directly from database schemas are often not well suited for how graph neural networks (GNNs) perform relational reasoning. We study what makes a relational graph suitable for deep learning and show that schema-derived graphs suffer from two systematic failures: information overload and semantic fragmentation. Our empirical analysis reveals that the desired graph is not the raw schema, but a result of controlled structural adaptation. Performance depends on balancing two operations: mitigating information overload via filtering, and repairing semantic fragmentation via injection. Specifically, filtering serves as a bias-variance knob with non-monotonic effects, while injection improves performance only when it explicitly restores the relational dependencies missing from the original schema. Based on these findings, we develop an end-to-end structural optimizer that applies both operations to adapt relational graphs automatically. Across 26 tasks spanning classification, regression, and recommendation, the optimized graphs consistently improve accuracy while often reducing inference cost.",
+      "authors": [
+        "Yao Cheng",
+        "Siqiang Luo"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-07T07:30:34+00:00",
+      "link": "https://arxiv.org/pdf/2606.08491v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "studies what makes a desired heterogeneous graph for relational deep learning, involves graph structure adaptation",
+      "llm_evidence_cn": "研究关系深度学习中理想图的构成，涉及图结构适应",
+      "llm_evidence": "研究关系深度学习中理想图的构成，涉及图结构适应",
+      "canonical_evidence": "研究关系深度学习中理想图的构成，涉及图结构适应",
+      "llm_tldr_en": "Investigates the desired graph structure for relational deep learning, showing that schema-derived graphs suffer from information overload and semantic fragmentation, and proposing controlled structural adaptation.",
+      "llm_tldr_cn": "针对关系深度学习中直接使用数据库模式图效果不佳的问题，系统分析了模式图存在的两类系统失效：信息过载和语义碎片化，并提出通过过滤和信息注入进行可控结构适应，平衡偏差-方差，实验证明该方法能显著提升图神经网络在关系推理上的性能。",
+      "llm_tldr": "针对关系深度学习中直接使用数据库模式图效果不佳的问题，系统分析了模式图存在的两类系统失效：信息过载和语义碎片化，并提出通过过滤和信息注入进行可控结构适应，平衡偏差-方差，实验证明该方法能显著提升图神经网络在关系推理上的性能。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.02245v1",
+      "source": "arxiv",
+      "title": "When Knowledge Is Not Free: Cost-Aware Evidence Selection in Retrieval-Augmented Generation",
+      "abstract": "Retrieval-Augmented Generation (RAG) typically assumes that external knowledge is free, but many high-quality sources are paywalled, licensed, restricted, or otherwise costly to access. We introduce cost-aware RAG, a setting where retrieved evidence is assigned access-cost tiers and systems must answer under an explicit evidence-access budget. We instantiate this setting by augmenting MS MARCO v2.1 with access-friction tiers and evaluate budgeted evidence selection across general-domain and domain-specific QA benchmarks. Our results show that static selection is brittle: no fixed selector uniformly dominates, and larger budgets do not reliably improve answer quality, even when costly evidence is domain-matched. We then study agentic cost-aware RAG, where an LLM decides when to retrieve, which tier to access, and when to stop. Agents show strong promise as adaptive evidence-acquisition controllers, but their behavior remains highly model- and task-dependent. These findings suggest that cost-aware evidence acquisition is a central challenge for the next generation of RAG systems. All code and data are available at https://github.com/Mignonmy/Cost-Aware.",
+      "authors": [
+        "Mingyan Wu",
+        "Han Yang",
+        "Omer Ben-Porat",
+        "Yftah Ziser"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-01T13:39:39+00:00",
+      "link": "https://arxiv.org/pdf/2606.02245v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "cost-aware RAG for evidence selection",
+      "llm_evidence_cn": "成本感知的检索增强生成证据选择",
+      "llm_evidence": "成本感知的检索增强生成证据选择",
+      "canonical_evidence": "成本感知的检索增强生成证据选择",
+      "llm_tldr_en": "Introduces cost-aware RAG, where retrieved evidence has access-cost tiers, and studies budgeted evidence selection.",
+      "llm_tldr_cn": "现有RAG假设外部知识免费，但实际知识源可能需付费。本文提出成本感知RAG，为检索证据分配成本等级，并在预算下选择证据。在通用和领域特定QA基准上实验发现，静态选择不可靠，更大的预算不一定提升答案质量，为RAG系统设计提供了新视角。",
+      "llm_tldr": "现有RAG假设外部知识免费，但实际知识源可能需付费。本文提出成本感知RAG，为检索证据分配成本等级，并在预算下选择证据。在通用和领域特定QA基准上实验发现，静态选择不可靠，更大的预算不一定提升答案质量，为RAG系统设计提供了新视角。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.05441v1",
+      "source": "arxiv",
+      "title": "GOTabPFN: From Feature Ordering to Compact Tokenization for Tabular Foundation Models on High-Dimensional Data",
+      "abstract": "We investigate how to make small tabular foundation models effective for High-Dimensional, Low-Sample Size (HDLSS) tabular prediction without retraining large backbones. We introduce Graph-guided Ordering with Local Refinement (GO-LR), show its equivalence to weighted Minimum Linear Arrangement, and interpret the practical solver as a TSP-path-style surrogate. We propose GOTabPFN,which builds on GO-LR, and a Neuro-Inspired Subunit Compression (NSC) unit to pool locally adjacent ordered features into meta-features, yielding a compact representation that makes TabPFN-style prediction practical in HDLSS regimes. Across tabular benchmarks, GOTabPFN improves stability and accuracy under tight token budgets.",
+      "authors": [
+        "Al Zadid Sultan Bin Habib",
+        "Md Younus Ahamed",
+        "Prashnna Kumar Gyawali",
+        "Gianfranco Doretto",
+        "Donald A. Adjeroh"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI",
+        "stat.ML"
+      ],
+      "published": "2026-06-03T21:03:33+00:00",
+      "link": "https://arxiv.org/pdf/2606.05441v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "few-shot learning for low-resource tabular prediction with graph-guided ordering",
+      "llm_evidence_cn": "面向低资源表格预测的图引导排序与少样本学习",
+      "llm_evidence": "面向低资源表格预测的图引导排序与少样本学习",
+      "canonical_evidence": "面向低资源表格预测的图引导排序与少样本学习",
+      "llm_tldr_en": "Introduces GOTabPFN, using graph-guided ordering and compact tokenization to enable tabular foundation models on high-dimensional low-sample data.",
+      "llm_tldr_cn": "该论文针对高维低样本（HDLSS）表格预测任务，提出图引导排序（GO-LR）和神经拟亚单位压缩（NSC）方法，将特征排序建模为加权最小线性排列，并压缩为紧凑表示。实验表明GOTabPFN在严格token预算下提升了稳定性和准确率，为低资源场景下的图结构化推理提供了可迁移思路。",
+      "llm_tldr": "该论文针对高维低样本（HDLSS）表格预测任务，提出图引导排序（GO-LR）和神经拟亚单位压缩（NSC）方法，将特征排序建模为加权最小线性排列，并压缩为紧凑表示。实验表明GOTabPFN在严格token预算下提升了稳定性和准确率，为低资源场景下的图结构化推理提供了可迁移思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "few-shot learning for power work ticket generation",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.03717v1",
+      "source": "arxiv",
+      "title": "Admittance Sensitivity-Informed Modular GP for Scalable Topology-Adaptive Power-Flow Learning",
+      "abstract": "Data-driven approaches for learning power flow models suffer from weak generalization across varying network topologies and limited computational scalability. Existing methods typically rely on training over a large set of grid topologies, which becomes impractical for large networks. This paper proposes a scalable and computationally efficient framework for topology-adaptive learning of power flow solutions. We propose a modular architecture consisting of bus-level Gaussian Process (GP) models, where each GP collects local features based on bus-level \\textit{egonet} definition. The localized bus-level feature includes first-order power and admittance sensitivities, nodal injections and node degree. In addition to the modular architecture, we propose using Random Fourier Features (RFF) for feature reduction, which further enhances the computational scalability. We evaluate the effectiveness of the proposed method by simulations across multiple benchmark networks under N-1, N-2, and N-3 contingencies. Results for the PEGASE 1354 bus system under N-3 contingencies demonstrate high predictive quality, with an $R^2$ score of 0.983 and a voltage-magnitude RMSE of 0.0023 p.u. The framework maintains recall rates exceeding 98\\% for detecting voltage limit violations across all test cases. Furthermore, the approach exhibits scalability, completing training and testing for the PEGASE 1354 system in 116.47 seconds while outperforming existing benchmarks in zero-shot generalization without requiring additional training samples.",
+      "authors": [
+        "Henrique O. Caetano",
+        "Carlos Dias Maciel",
+        "Rahul K. Gupta"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY"
+      ],
+      "published": "2026-06-02T14:39:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.03717v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "modular GP with egonet for topology-adaptive power flow learning",
+      "llm_evidence_cn": "基于节点ego网络模块化高斯过程的拓扑自适应潮流学习",
+      "llm_evidence": "基于节点ego网络模块化高斯过程的拓扑自适应潮流学习",
+      "canonical_evidence": "基于节点ego网络模块化高斯过程的拓扑自适应潮流学习",
+      "llm_tldr_en": "Proposes a modular GP framework for scalable topology-adaptive power flow learning using bus-level egonet features.",
+      "llm_tldr_cn": "本文针对电力系统潮流学习在拓扑变化时泛化能力弱和计算扩展性差的问题，提出一种模块化高斯过程框架，每个模块基于节点ego网络定义局部特征，包括一阶功率和导纳灵敏度等，实现了对拓扑变化的自适应学习，在大型网络上提升了可扩展性。",
+      "llm_tldr": "本文针对电力系统潮流学习在拓扑变化时泛化能力弱和计算扩展性差的问题，提出一种模块化高斯过程框架，每个模块基于节点ego网络定义局部特征，包括一阶功率和导纳灵敏度等，实现了对拓扑变化的自适应学习，在大型网络上提升了可扩展性。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.08804v1",
+      "source": "arxiv",
+      "title": "Q-Delta: Beyond Key-Value Associative State Evolution",
+      "abstract": "Linear attention reformulates sequence modeling as recurrent state evolution, enabling efficient linear-time inference. Under the key-value associative paradigm, existing approaches restrict the role of the query to the readout operation, decoupling it from state evolution. We show that query-conditioned state readout induces a structured value prediction over accumulated memory that complements key-based retrieval. Based on this insight, we propose Q-Delta, a query-aware delta rule that integrates mixed key-query prediction errors into state evolution, enabling jointly corrective dynamics while preserving delta-rule efficiency. We establish stability guarantees for the resulting dynamics and derive a hardware-efficient chunkwise-parallel formulation with a custom Triton implementation. Empirical results demonstrate stable optimization, competitive throughput, and consistent improvements over strong baselines on language modeling and long-context retrieval tasks.",
+      "authors": [
+        "Sumin Park",
+        "Seojin Kim",
+        "Noseong Park"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-06-07T19:49:01+00:00",
+      "link": "https://arxiv.org/pdf/2606.08804v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "query-aware delta rule for memory-augmented state evolution",
+      "llm_evidence_cn": "查询感知的delta规则用于记忆增强状态演化",
+      "llm_evidence": "查询感知的delta规则用于记忆增强状态演化",
+      "canonical_evidence": "查询感知的delta规则用于记忆增强状态演化",
+      "llm_tldr_en": "Proposes Q-Delta, a query-aware delta rule that integrates prediction errors into state evolution for linear attention, enhancing memory usage.",
+      "llm_tldr_cn": "本文针对线性注意力中查询仅用于读取而脱离状态演化的问题，提出Q-Delta，一种查询感知的delta规则，将混合键-查询预测误差融入状态演化，实现联合修正动力学，同时保持delta规则的效率，并建立了稳定性保证。",
+      "llm_tldr": "本文针对线性注意力中查询仅用于读取而脱离状态演化的问题，提出Q-Delta，一种查询感知的delta规则，将混合键-查询预测误差融入状态演化，实现联合修正动力学，同时保持delta规则的效率，并建立了稳定性保证。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "memory augmented neural network for reasoning",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.07252v1",
+      "source": "arxiv",
+      "title": "Constrained Dominant Sets for Multimodal Document Question Answering",
+      "abstract": "Long multimodal document question answering is limited by which evidence reaches the reader, rather than by the quantity retrieved. In lengthy documents, findings often recur across figures, captions, and introductory sentences, causing similarity based retrievers in modern multimodal retrieval-augmented generation (RAG) systems to allocate resources to near-duplicates while overlooking complementary evidence. This work introduces a retriever that selects evidence as a Constrained Dominant Set (CDS) on a query-augmented affinity graph, offering three advantages that similarity ranking does not. First, the query is encoded as a hard structural constraint, ensuring that every selected element is directly connected to the question through the cluster anchor. Second, the relevance-redundancy balance is determined automatically by a spectral bound, eliminating the need for manually tuned trade offs required by diversity-aware selectors. Third, the selection process achieves a global equilibrium via replicator dynamics, thereby avoiding the distortions introduced by greedy heuristics. The method is inherently graph-based and does not require training. Using a Qwen3-VL-32B reader, CDS establishes a new state of the art on VisDoMBench ($66.99$ average) and improves over the no-retrieval baseline by $37.1$ points on VisDoMBench and $4.8$ on MMLongBench-Doc.",
+      "authors": [
+        "Ambuj Mehrish",
+        "Sebatiano Vascon"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-05T13:24:46+00:00",
+      "link": "https://arxiv.org/pdf/2606.07252v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "graph structure learning for evidence selection in RAG",
+      "llm_evidence_cn": "图结构学习方法用于RAG中的证据选择",
+      "llm_evidence": "图结构学习方法用于RAG中的证据选择",
+      "canonical_evidence": "图结构学习方法用于RAG中的证据选择",
+      "llm_tldr_en": "Constrained Dominant Sets on query-augmented affinity graphs select diverse, complementary evidence for multimodal document QA, outperforming similarity-based retrievers.",
+      "llm_tldr_cn": "多模态文档QA中，相似性检索易选出重复证据而忽略互补信息。本文提出基于查询增强亲和图的约束主导集（CDS）作为检索器，确保所选证据与查询直接相关且彼此互补。实验显示CDS显著提升了长文档问答的准确率，为图结构学习在RAG中的应用提供了新思路。",
+      "llm_tldr": "多模态文档QA中，相似性检索易选出重复证据而忽略互补信息。本文提出基于查询增强亲和图的约束主导集（CDS）作为检索器，确保所选证据与查询直接相关且彼此互补。实验显示CDS显著提升了长文档问答的准确率，为图结构学习在RAG中的应用提供了新思路。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.08831v1",
+      "source": "arxiv",
+      "title": "Inference-Time Conformal Reasoning with Valid Factuality Control for Large Language Models",
+      "abstract": "Large language models (LLMs) increasingly perform multi-step reasoning, where intermediate claims form implicit directed acyclic graphs whose node correctness is structurally conditioned on their ancestors. This makes factuality uncertainty structural, rather than a trivial accumulation of node-wise errors, and necessitates inference-time uncertainty quantification over the reasoning structure. While conformal prediction (CP) offers flexible user-specified factuality control, existing work remains post-hoc and cannot intervene during generation. To fill the gap between CP's flexibility and its post-hoc limitation, we propose an \\emph{Inference-Time Conformal Reasoning (ITCR)} framework that integrates CP directly into reasoning graph generation. ITCR learns a structure-level factuality uncertainty function that aggregates claim-level factuality signals over reasoning graphs without complex modeling assumptions. We then design the non-conformity score based on graph-level factuality uncertainty and calibrate the conformal threshold to decide when to stop generation. We theoretically show such generation is nested, yielding valid coverage guarantees for factuality control. Experiments over multiple datasets and coverage objectives demonstrate empirically valid coverage. In downstream reasoning tasks, inference-time calibrated graphs yield more accurate generation than post-hoc pruned graphs.",
+      "authors": [
+        "Ting Wang",
+        "Yuanjie Shi",
+        "Yan Yan",
+        "Huan Zhang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-07T20:52:10+00:00",
+      "link": "https://arxiv.org/pdf/2606.08831v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "integrates conformal prediction into reasoning graphs for factuality control, relating to reasoning without CoT",
+      "llm_evidence_cn": "将保形预测融入推理图进行事实性控制，与无CoT推理相关",
+      "llm_evidence": "将保形预测融入推理图进行事实性控制，与无CoT推理相关",
+      "canonical_evidence": "将保形预测融入推理图进行事实性控制，与无CoT推理相关",
+      "llm_tldr_en": "Proposes ITCR framework integrating conformal prediction into reasoning graphs to control factuality during generation, providing an alternative to CoT-based reasoning.",
+      "llm_tldr_cn": "本文关注LLM多步推理中的事实不确定性，提出推理时保形推理（ITCR）框架，将保形预测直接集成到推理图中，在生成过程中进行事实性干预。这与用户寻找替代CoT推理方法的需求（需求15、17、19）一致，提供了一种不依赖链式思维而保证推理可靠性的新思路。",
+      "llm_tldr": "本文关注LLM多步推理中的事实不确定性，提出推理时保形推理（ITCR）框架，将保形预测直接集成到推理图中，在生成过程中进行事实性干预。这与用户寻找替代CoT推理方法的需求（需求15、17、19）一致，提供了一种不依赖链式思维而保证推理可靠性的新思路。",
+      "llm_tags": [
+        "query:pwt:composite"
+      ],
+      "matched_query_tag": "query:pwt:composite",
+      "matched_query_text": "Papers central to 我的电力工作票语料库中存在一些仅通过检索不能解决的问题，像是一个特殊的工作任务工作票，整个语料库中只有一张，找不到类似的票来参考导致模型生成工作内容性能不佳，我目前使用了cot思维链是为了解决模型推理能力不足来提高泛化性能和冷启动性能。我想找一个更好更新的方法来代替cot，提升模型的推理能力，比如memory等，可以和图相关。, especially work that connects or combines: few-shot learning for power work ticket generation; graph memory augmented reasoning; retrieval augmented generation for ticket generation; knowledge graph reasoning for work tickets; memory augmented neural network for reasoning; improving model generalization in low-resource scenarios; How to improve model reasoning with graph memory for few shot ticket generation; Alternatives to chain of thought reasoning for cold start in power work ticket generation; Methods combining graph neural networks and memory for sparse data reasoning; Latest research on reasoning without chain of thought in small corpus.",
+      "matched_requirement_id": "req-composite-pwt",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.08979v1",
+      "source": "arxiv",
+      "title": "EviProp: Seeded Relevance Diffusion on Chunk-Page Graphs for Long Multimodal Document Retrieval",
+      "abstract": "Retrieving evidence pages from visually rich long documents is a key challenge in document question answering. Existing page-level visual retrievers operate under an independent matching paradigm: each page is scored in isolation based on query-page similarity. This paradigm can under-rank evidence pages whose signals are localized in fine-grained chunks or depend on document-internal associations. We propose EviProp, a retrieval method that recovers such pages via seeded relevance diffusion. EviProp models each document as a multimodal Chunk-Page graph with hierarchical, sequential, and similarity links. Given a query, it combines dense visual page priors with sparse chunk seeds, then runs Personalized PageRank to diffuse relevance over the graph. Experiments on MMLongBench-Doc and LongDocURL show consistent gains in evidence-page retrieval over independent visual retrieval and text-visual fusion baselines. Downstream QA results further show that improved retrieval translates into better answer accuracy, with negligible online retrieval overhead. Our code is released at https://github.com/Flyecnu/EviProp.",
+      "authors": [
+        "Hongwei Zhang",
+        "Xiaoman Wang",
+        "Zehui Ling",
+        "Ruicheng Zhu",
+        "Yue Zhang",
+        "Pinlong Cai",
+        "Fuke Shen",
+        "Botian Shi",
+        "Tongquan Wei",
+        "Guohang Yan"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-08T03:25:20+00:00",
+      "link": "https://arxiv.org/pdf/2606.08979v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "models document as chunk-page graph and uses seeded relevance diffusion for retrieval",
+      "llm_evidence_cn": "将文档建模为块页图，使用种子相关性扩散进行检索",
+      "llm_evidence": "将文档建模为块页图，使用种子相关性扩散进行检索",
+      "canonical_evidence": "将文档建模为块页图，使用种子相关性扩散进行检索",
+      "llm_tldr_en": "Proposes EviProp which models documents as chunk-page graphs and diffuses relevance from sparse seeds via Personalized PageRank for improved retrieval.",
+      "llm_tldr_cn": "针对长文档检索中独立打分范式忽略页面间关联的问题，本文提出EviProp，将文档建模为多模态块页图（包含层次、序列和相似性链接），结合密集视觉页面先验与稀疏块种子，通过个性化PageRank扩散相关性。实验表明该方法能有效恢复被低估的证据页面，提升检索性能。该方法可直接应用于图增强的检索增强生成系统。",
+      "llm_tldr": "针对长文档检索中独立打分范式忽略页面间关联的问题，本文提出EviProp，将文档建模为多模态块页图（包含层次、序列和相似性链接），结合密集视觉页面先验与稀疏块种子，通过个性化PageRank扩散相关性。实验表明该方法能有效恢复被低估的证据页面，提升检索性能。该方法可直接应用于图增强的检索增强生成系统。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.09459v1",
+      "source": "arxiv",
+      "title": "AbstRAG: Learning to Abstract for Retrieval Problems",
+      "abstract": "Retrieval-augmented generation often fails when the query, the document evidence, and the user's intent are expressed at different levels of abstraction. A query may ask about a class, a relation, or an event, while the document only states specific instances, indirect framings, or scoped formulations. We define this mismatch as an abstraction gap: the minimal set of typed assumptions required to align query intent with the available evidence. To close this gap, we introduce AbstRAG, which treats abstraction as an explicit retrieval object. AbstRAG decomposes the query--evidence gap into expression, conceptual, intent--evidence, and event-type components, and scores relevance by combining match quality, a query-independent utility prior, and the cost of the required bridges. Its central mechanism is reflective refinement: a critic diagnoses retrieval failures, localizes the failed abstraction operator, proposes a minimal stage-specific patch, and accepts the patch only under sufficiency and compression controls. Across three within-document retrieval benchmarks against seven baselines, AbstRAG outperforms on nDCG@10 in 18 of 21 paired-bootstrap contrasts and improves generation accuracy by 1.9%, 5.2%, and 4.0% across the three benchmarks; ablations confirm that reflective refinement drives most of the retrieval gain and the compression control alone reduces over-expansion false positives from 73.7% to 0% on a stress slice.",
+      "authors": [
+        "Lei Xu",
+        "Xin Quan",
+        "Daniel Pedronette",
+        "André Freitas"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-08T13:14:01+00:00",
+      "link": "https://arxiv.org/pdf/2606.09459v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "retrieval augmented generation for abstraction gaps",
+      "llm_evidence_cn": "面向抽象鸿沟的检索增强生成",
+      "llm_evidence": "面向抽象鸿沟的检索增强生成",
+      "canonical_evidence": "面向抽象鸿沟的检索增强生成",
+      "llm_tldr_en": "AbstRAG treats abstraction as a retrieval object, decomposing query-evidence gaps and scoring relevance to close the abstraction gap in RAG.",
+      "llm_tldr_cn": "该论文针对检索增强生成中查询、文档和用户意图抽象层次不匹配的问题，提出AbstRAG方法。将抽象差距分解为表达式、概念、意图-证据和事件类型四个组分，通过匹配质量、独立效用先验和桥接成本三者组合打分，将抽象本身作为检索对象显式处理。该方法直接改进RAG在抽象不匹配场景下的表现，可应用于电力工作票检索生成中处理不同抽象层次的查询与文档匹配。",
+      "llm_tldr": "该论文针对检索增强生成中查询、文档和用户意图抽象层次不匹配的问题，提出AbstRAG方法。将抽象差距分解为表达式、概念、意图-证据和事件类型四个组分，通过匹配质量、独立效用先验和桥接成本三者组合打分，将抽象本身作为检索对象显式处理。该方法直接改进RAG在抽象不匹配场景下的表现，可应用于电力工作票检索生成中处理不同抽象层次的查询与文档匹配。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    }
+  ]
+}
