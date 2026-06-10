@@ -1,0 +1,296 @@
+Title: Gryphon: A Unified Architecture for Semantic-ID Generation and Item-Level Scoring in Industrial Recommendations
+
+URL Source: https://arxiv.org/pdf/2606.08604v1
+
+Published Time: Tue, 09 Jun 2026 01:12:50 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+# Gryphon: A Unified Architecture for Semantic-ID Generation and Item-Level Scoring in Industrial Recommendations 
+
+## Daria Tikhonovich 
+
+Yandex Moscow, Russia daria.m.tikhonovich@gmail.com 
+
+## Oleg Sorokin 
+
+Yandex Moscow, Russia olegsorokin.ai@gmail.com 
+
+## Vladislav Dodonov 
+
+Yandex Moscow, Russia golafotino@gmail.com 
+
+## Mariia Ulianova 
+
+Yandex Moscow, Russia devchatay@gmail.com 
+
+## Ilya Murzin 
+
+Yandex Moscow, Russia ilyamurzin@yandex-team.ru 
+
+## Abstract 
+
+Generative retrieval (GR) has become a scalable approach to candi-date generation: each item is assigned a short hierarchical token sequence called a Semantic ID (SID), and the next item’s SID is de-coded autoregressively. A practical limitation is that the decoder’s beam search optimizes the likelihood of token sequences, not the relevance of the underlying items. These objectives diverge when sequence likelihood is poorly calibrated due to beam search error accumulation, and when several items collapse onto a single SID and receive identical scores. We introduce Gryphon, an encoder-decoder generative recommendation architecture that adds a jointly trained item-level scoring component alongside SID generation, reusing the encoder’s user representation computed in a single forward pass. Instead of ranking SIDs by accumulated token likeli-hood, Gryphon resolves each generated SID to its concrete items and re-scores those items directly, which sidesteps miscalibrated sequence scores and separates items that collide on the same identi-fier. On an industrial music service, with item-level scoring trained under a next-item-prediction objective, Gryphon attains the high-est item-level Recall@1000, above the strongest baselines (+3.7% over vanilla GR and +2.5% over collision-resolved GR) at compa-rable parameter count and latency. Gryphon’s item-level ranking also surpasses its beam-likelihood ranking of the same candidates (+4.2% gain), demonstrating the benefit of item-level scoring in GR. Deployed as the sole candidate source in a 7-day A/B test, Gryphon produced no statistically significant change in total listening time (+0.25%) while replacing a pipeline of more than 15 candidate gen-erators and a separate preranking stage, substantially simplifying the candidate-generation system. 
+
+## CCS Concepts 
+
+• Information systems → Recommender systems . 
+
+> Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> CIKM ’26, Rome, Italy
+> ©2026 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-1-4503-XXXX-X/2018/06 https://doi.org/XXXXXXX.XXXXXXX
+
+## Keywords 
+
+Generative Retrieval, Recommender Systems, Generative Recom-mendation 
+
+ACM Reference Format: 
+
+Daria Tikhonovich, Oleg Sorokin, Vladislav Dodonov, Mariia Ulianova, and Ilya Murzin. 2026. Gryphon: A Unified Architecture for Semantic-ID Generation and Item-Level Scoring in Industrial Recommendations. In Pro-ceedings of the 35th International ACM Conference on Knowledge and Infor-mation Management (CIKM ’26), November 7–11, 2026, Rome, Italy. ACM, New York, NY, USA, 5 pages. https://doi.org/XXXXXXX.XXXXXXX 
+
+## 1 Introduction 
+
+Semantic-ID-based Generative Retrieval (GR) reformulates next-item recommendation as autoregressive generation over a short discrete token sequence—a Semantic ID (SID)—assigned to each item via a hierarchical quantizer such as RQ-VAE [ 11 ]. Given a user’s interaction history encoded by a Transformer encoder, a decoder autoregressively generates the SID of the next item the user is likely to engage with. By casting retrieval as sequence generation over compact semantic identifiers, GR enables end-to-end training and scalable candidate generation in large item corpora, while also leveraging semantic factorization across items [11]. Industrial recommendation, however, is ultimately evaluated at the item level, whereas standard GR ranks candidates by accumu-lated SID-level beam likelihood. This creates a structural mismatch that manifests through two failure modes: 
+
+Sequence likelihood miscalibration. Since beam search conditions on model-generated prefixes rather than ground-truth ones, early token errors accumulate and leave relevant items with poorly cali-brated SID likelihoods [1, 4, 12]. 
+
+Semantic ID collisions. When multiple items share the same SID [ 3, 6 ], beam likelihood assigns them identical scores and cannot express relevance differences among them. Both failure modes reflect the same underlying gap: beam search scores semantic ids , while recommendation quality depends on scoring items . Recent work has improved SID assignment and high-lighted limitations of SID-level decoding and collisions [ 3, 4, 6], but these approaches still leave open the question of how to rank 
+
+resolved items rather than SID sequences within a unified generative retrieval architecture.  
+
+> arXiv:2606.08604v1 [cs.IR] 7 Jun 2026 CIKM ’26, November 7–11, 2026, Rome, Italy Tikhonovich
+
+We address this gap with Gryphon 1, a unified architecture that augments encoder–decoder GR with a jointly trained Item-Level Scoring Module (ILSM). Gryphon performs a single forward pass through a shared encoder; the resulting user states are reused by both an autoregressive decoder for SID generation and the ILSM, which scores the concrete items resolved from the generated SIDs. By re-ordering items with item-level scores rather than beam like-lihood, Gryphon reduces dependence on potentially miscalibrated sequence-level scores and distinguishes among items sharing the same SID. 
+
+Contributions. 
+
+• We identify a structural mismatch in SID-based generative retrieval — beam search ranks SID sequences, not items — and characterize two resulting failure modes: sequence likelihood miscalibration and Semantic ID collisions. 
+
+• We propose Gryphon, a shared-encoder architecture jointly training SID generation and item-level scoring under roughly matched parameter count and inference budget, decoupling final item selection from beam likelihood. 
+
+• We validate Gryphon on a large-scale industrial music plat-form. Offline, it achieves the highest item-level Recall@1000 of all evaluated baselines under roughly matched parameter count and inference budget, and we show that item-level re-scoring exceeds the SID-level beam ceiling — isolating beam-likelihood miscalibration, not candidate recall, as the limiting factor. In a 7-day online A/B test, as the sole candi-date source it produced no statistically significant change in total listening time while passing 66.7% fewer candidates to the final ranker and removing the preranking stage entirely. 
+
+## 2 Background and Motivation 2.1 SID-Based Generative Retrieval 
+
+Semantic-ID-based generative retrieval represents each item 𝑥 ∈X by a short sequence of discrete tokens and trains an encoder– decoder model to generate the identifier of the next item from the user history [ 3 , 6 , 7 , 11 ]. Formally, a quantizer maps each item to a 
+
+𝑑 -token Semantic Identifier (SID), 
+
+Φ : X → 
+
+> 𝐿
+
+Ö
+
+> 𝑏 =1
+
+{1, . . . , 𝑀 𝑏 }, Φ(𝑥 ) = (𝑠 1, . . . , 𝑠 𝐿 ).
+
+Given user history 𝑢 , GR autoregressively predicts candidate SIDs. For a candidate SID 𝜎 = (𝑠 1, . . . , 𝑠 𝐿 ), beam search ranks candidates by the accumulated code-level likelihood [11, 14] 
+
+ℓ𝜃 (𝜎 | 𝑢 ) =
+
+> 𝐿
+
+∑︁ 
+
+> 𝑏 =1
+
+log 𝑝 𝜃 (𝑠 𝑏 | 𝑢, 𝑠 <𝑏 ).
+
+This score is natural for decoding identifiers, but it is defined over token sequences, whereas recommendation quality is evaluated over concrete items [2, 10]. 
+
+## 2.2 Semantic-ID Collisions 
+
+Semantic-ID collisions make the scoring gap strict when multiple items share the same generated identifier [ 3 , 6 , 7]. Let C𝜎 = Φ−1 (𝜎 )
+
+> 1Gryphon is a project name, not an acronym.
+
+Figure 1: Gryphon inference: beam search generates can-didate SIDs, which are resolved to all matching items and re-scored with ILSM, while beam likelihood is discarded from ranking 
+
+be the collision group for SID 𝜎 , i.e., the set of concrete items sharing 
+
+𝜎 . For any two items 𝑥 𝑖 , 𝑥 𝑗 ∈ C 𝜎 ,
+
+ℓ𝜃 (Φ(𝑥 𝑖 ) | 𝑢 ) = ℓ𝜃 (Φ(𝑥 𝑗 ) | 𝑢 ),
+
+because both items map to the same SID. Beam likelihood therefore assigns identical scores to all items in the collision group and cannot express relevance differences among them through the SID score alone. Collisions expose a structural limitation of pure SID-level scoring: the generator scores identifiers, while the recommender must rank concrete items. Previous work [ 11 ] removes collisions by appending an extra token to the ordered semantic codes to make them unique. We argue this is better suited to static offline settings: a unique terminal token per colliding item ties the resolution vo-cabulary to the catalog, so under dynamic catalogs with a continual influx of new items the resolving layer must grow and be re-fit indefinitely—a serious obstacle to deployment. 
+
+## 2.3 From SID Likelihood to Item-Level Relevance 
+
+Autoregressive generation is trained with teacher forcing, yet infer-ence conditions on the model’s own prefixes [ 1 , 12 ]; in hierarchical SID decoding, an early prefix error can move the beam into a differ-ent subtree, leaving relevant items on lower-scored SID paths [ 4, 17 ]. Beam search is thus a strong candidate-generation mechanism, but beam likelihood alone is not a complete item-level relevance sig-nal. This motivates Gryphon’s jointly-trained Item-Level Scoring Module, introduced in Section 3. 
+
+## 3 Methodology 
+
+Gryphon augments a vanilla encoder–decoder generative retriever with an Item-Level Scoring Module (ILSM). For each user request, the user behavior sequence is encoded once into encoder states 𝐸 𝑢 .These states are shared by both components: the autoregressive Gryphon CIKM ’26, November 7–11, 2026, Rome, Italy 
+
+decoder uses 𝐸 𝑢 to generate SID candidates, while the ILSM reuses the same 𝐸 𝑢 to score items associated with the generated SIDs. As a result, final item scores are not tied to potentially miscali-brated sequence likelihoods, and Gryphon can distinguish among items within the same SID collision group. 
+
+## 3.1 Generative Retrieval 
+
+The decoder autoregressively predicts the SID of the next item given encoded user history. For an observed next item 𝑖 + with SID 
+
+Φ(𝑖 +) = (𝑠 + 
+
+> 1
+
+, . . . , 𝑠 + 
+
+> 𝐿
+
+), the generation loss is 
+
+Lgen = −
+
+> 𝐿
+
+∑︁ 
+
+> 𝑡 =1
+
+log 𝑝 𝜃 (𝑠 + 
+
+> 𝑡
+
+| 𝑠 + 
+
+> <𝑡
+
+, 𝐸 𝑢 ).
+
+## 3.2 Item-level Scoring Module 
+
+To alleviate the inconsistency between SID generation and item-level recommendation, we introduce an item-level scorer for gener-ative recommendation. Each candidate item 𝑖 is represented by an item-query embedding produced by an item tower [2, 13, 16]: 
+
+𝑒 𝑖 = Titem (Φ(𝑖 ), ℎ 𝑖 ),
+
+where ℎ𝑖 denotes native item-level features, such as item-ID hashes, metadata and content features. The scorer then conditions this item query on the shared user encoder states 𝐸 𝑢 :
+
+𝑟 𝜙 (𝑢, 𝑖 ) = 𝑓 𝜙 (𝐸 𝑢 , 𝑒 𝑖 ).
+
+In practice, 𝑓 𝜙 is a lightweight item-to-user cross-attention block followed by an MLP head that outputs a scalar relevance score. The ILSM directly addresses SID collisions [ 3 , 6 , 7], since items with the same SID can still receive different relevance estimates through their item-level features. The ILSM also mitigates, but does not eliminate, error accumulation in autoregressive decoding. Beam search still determines which SIDs enter the candidate pool. However, once a SID has been generated, the final item selection no longer depends on the product of SID-token likelihoods. This reduces the effect of poorly calibrated sequence likelihoods among items reachable through the generated SID set. 
+
+## 3.3 Training Objective 
+
+The ILSM is not architecturally tied to a particular supervision signal. It can be trained with a variety of item-level objectives, including multi-objective engagement prediction, ranker distilla-tion, or long-term value optimization. In this work, we instantiate the ILSM with a next-item prediction objective optimized using sampled softmax, and leave richer item-level objectives to future work. Thus, the ILSM is trained to maximize the probability of item 
+
+𝑝 𝜙 (𝑖 𝑡 +1 = 𝑖 | 𝐸 𝑢 ) ∝ exp 
+
+ 𝑟 𝜙 (𝑢,𝑖 )
+
+> 𝜏
+
+
+
+, conditioning on the user history. Given a user 𝑢 , the observed next item 𝑖 +, and a set of in-batch sampled negative items B− , we define LNIP :
+
+− log exp 
+
+ 𝑟 𝜙 (𝑢,𝑖 + ) 
+
+> 𝜏
+
+− log 𝑄 𝑖 +
+
+
+
+exp 
+
+ 𝑟 𝜙 (𝑢,𝑖 + ) 
+
+> 𝜏
+
+− log 𝑄 𝑖 +
+
+
+
++ Í𝑖 − ∈ B − exp 
+
+ 𝑟 𝜙 (𝑢,𝑖 − ) 
+
+> 𝜏
+
+− log 𝑄 𝑖 −
+
+ ,
+
+where 𝜏 is a temperature parameter and 𝑄 𝑖 is the sampling proba-bility of item 𝑖 . The sampling correction term reduces popularity-induced bias [15]. The full Gryphon objective jointly trains SID generation and item-level scoring: L = Lgen +𝜆 LNIP , where 𝜆 controls the contribu-tion of the item-level loss. Both losses share the same encoder states 
+
+𝐸 𝑢 , encouraging the user representation to support both SID-level candidate generation and item-level relevance estimation. 
+
+## 3.4 Inference 
+
+At serving time, Gryphon performs a single encoder forward pass to compute 𝐸 𝑢 . The decoder then uses beam search to generate a top-𝐾 set of SID candidates, denoted by B𝑢 . Beam likelihoods are used only to determine membership in B𝑢 , they are not used as final item scores. This choice intentionally decouples item selection from potentially miscalibrated SID-token products, while still using the decoder to propose a compact SID set. Each generated SID is expanded to its collision group, and Gryphon then scores the resulting items with the ILSM: 
+
+TopN (𝑢 ) = TopN 𝑖 ∈ I 𝑢 𝑟 𝜙 (𝑢, 𝑖 ), I𝑢 = {𝑖 | ∃ 𝜎 ∈ B 𝑢 s.t. 𝑖 ∈ C 𝜎 } .
+
+The resulting Gryphon candidate pool can be passed to a down-stream ranker for final action prediction. 
+
+## 4 Experiments 
+
+Our experiments aim to address the following research questions: 
+
+RQ1 . How does Gryphon compare to Transformer-based produc-tion baselines and SID-based GR baselines on item-level next-item prediction? 
+
+RQ2 . Can Gryphon replace the deployed production candidate-generation stack without degrading online engagement? 
+
+## 4.1 Offline Evaluation 
+
+4.1.1 Dataset. We collect interactions from one week of real user logs from a large-scale music recommendation platform with tens of millions of active users and items. 
+
+4.1.2 Baselines. We compare Gryphon against: 
+
+ARGUS. ARGUS [ 9 ] is a deployed autoregressive two-tower Transformer candidate generator trained with sampled softmax for sequential next-item prediction [ 5 , 8]. Being among the largest recommendation models currently in service, ARGUS serves as a strong production baseline. 
+
+Vanilla Generative Retrieval. This baseline represents target items as SID sequences and generates them autoregressively. Since multiple items may share the same generated sequence, we resolve collisions by expanding generated identifiers in beam order and accumulating associated items until the candidate budget is reached. Since collisions may pessimize item-level recall, we also implement a Resolved variant for vanilla GR where we append an extra token at the end of SID sequence, following [ 11 ]. We present the Resolved GR baseline for offline comparison only, since the resolving layer can grow unbounded under production catalog changes and we find this model impractical for our deployment setting. 
+
+4.1.3 Implementation Details. For SID-based models we quantize all items into SIDs using residual 𝐾 -Means. We independently tune CIKM ’26, November 7–11, 2026, Rome, Italy Tikhonovich 
+
+the number of codebooks from 1 to 4, codebook sizes from 1,024 to 32,000, and the encoder-decoder layers ratio for each model. For ARGUS we use 10 transformer encoder blocks. For Vanilla GR, we use 7 encoder blocks, 3 decoder blocks, and 3 codebooks with a size of 32,000. Compared to vanilla GR, for Gryphon, we use the same codebook setup and replace one decoder block with a single-layer ILSM, resulting in less than 1% difference in parameter count and inference time. In the ILSM we use only the item-id feature, so that Gryphon has no item-feature advantage over the GR baselines. We set 𝜆 to 1. For vanilla GR Resolved, we use 9 encoder blocks, 1
+
+decoder block, and 2 codebooks with a size of 1024, as we found that larger codebooks greatly degrade the performance of this baseline. We use a beam size of 𝐾 = 2048 , user sequence length of 512 , and hidden size of 1024 for all models. We use in-batch sampling with cross-device gathering as a source of negatives for LogQ-corrected Sampled Softmax for ARGUS and ILSM. All models are trained using Adam with linear warmup followed by linear learning-rate decay and use identical features for encoder inputs. 
+
+4.1.4 Metrics. Recall@ 𝑘 measures the fraction of ground-truth items associated with a user impression that appear among the top-
+
+𝑘 returned items. Because the retrieved candidates are subsequently processed by a production ranker, Recall@1000 is the primary of-fline metric for measuring candidate-generator quality. Due to the high computational cost of repeated experiments, we do not per-form formal statistical significance testing across multiple random seeds. As a practical estimate of stochastic variability, we conducted a limited set of preliminary experiments with different random ini-tializations and observed that Recall@10 and Recall@1000 varied by approximately ±0.003. We therefore interpret differences of this magnitude or smaller with caution. 
+
+4.1.5 Results. Experimental results are reported in Table 1. Gryphon achieves the highest item-level Recall@ 𝑘 at both evaluated cutoffs. Gryphon substantially outperforms the production ARGUS baseline. Compared with Vanilla GR, Gryphon improves Recall@1000 from 0.8245 to 0.8552. Compared with Vanilla GR Resolved, Gryphon im-proves Recall@1000 from 0.8343 to 0.8552. These gains exceed our empirical initialization-variance estimate of approximately ±0.003 ,although we do not perform formal multi-seed significance testing. To isolate the source of Gryphon’s gain, we score an identical (𝐾 =2048 ) beam-generated SID pool three ways (Table 2). Under beam-likelihood ranking, item-level Recall@1000 ( 0.8209 ) falls be-low the model’s SID-level Recall@1000 ( 0.8404 ), quantifying the cost of collision resolution: beam likelihood cannot distinguish items sharing a SID. ILSM re-scoring of the same pool raises item-level Recall@1000 to 0.8552 , above the SID-level beam ceiling. Since item-level recall can exceed this ceiling only by promoting items from SIDs the beam ranked beyond its top 1000 , the crossing shows that beam likelihood miscalibrates reachable candidates and that item-level scoring corrects it. 
+
+## 4.2 Online A/B Test Results 
+
+We evaluated Gryphon in a 7-day online A/B experiment against the production candidate generation stack in a music recommen-dation application. Users were randomly assigned to control and 
+
+Table 1: Offline item-level next-item prediction results. Method SIDs Recall@10 Recall@1000 
+
+ARGUS - 0.0996 0.6582 Vanilla GR 3x32000 0.1961 0.8245 Vanilla GR Resolved 2x1024 0.2077 0.8343 Gryphon (ours) 3x32000 0.2178 0.8552 Table 2: ILSM ablation on a shared candidate pool ( 𝐾 =2048 ). 
+
+Variant Scoring Recall@1000 Gryphon w/o ILSM SID-level (beam scores) 0.8404 Gryphon w/o ILSM item-level (beam scores) 0.8209 Gryphon item-level (ILSM) 0.8552 Table 3: Online A/B test results. Production stack Gryphon 
+
+Candidate generators 15+ 1Initial candidates 10,000 1,000 Preranking stage Yes No Candidates passed to ranker 3,000 1,000 Total listening time – +0.25% 
+
+Active users ratio – +0.43% ∗
+
+Unfinished tracks – −1.3% ∗     
+
+> Changes relative to control. ∗Significant at 𝑝 <0.001 .
+
+treatment buckets, with 4% of eligible users allocated to the treat-ment. The control arm used the existing production candidate-generation pipeline, consisting of more than 15 heterogeneous can-didate generators. These generators produced 10,000 candidates per request, which were filtered by a production preranker before 3,000 candidates were passed to the final ranker. In the treatment arm, this candidate-generation and preranking stack was replaced by Gryphon. Gryphon served as the sole candidate source and directly supplied 1,000 candidates to the same final ranker. Table 3 summarizes the configuration and results. The primary engagement metric in the service is total listening time (TLT). Gryphon changed TLT by +0.25% relative to the production control, and the difference was not statistically significant within our ex-perimental design. On secondary quality metrics, Gryphon showed statistically significant favorable movement: a higher active-user ra-tio (+0.43%), and fewer unfinished tracks (-1.3%). We interpret these results as evidence that Gryphon can serve as the sole candidate source without a statistically significant change in primary engage-ment while substantially simplifying the candidate-generation and preranking pipeline. 
+
+## 5 Conclusion and Future Work 
+
+We presented Gryphon, a unified architecture for combining Gen-erative Retrieval with item-level scoring in generative recommen-dations. Gryphon treats beam search as SID-level candidate gen-eration, resolves generated SIDs into concrete items, and applies Gryphon CIKM ’26, November 7–11, 2026, Rome, Italy 
+
+an Item-Level Scoring Module to re-rank the resolved candidates. By separating SID-sequence likelihood from item-level relevance across GR and ILSM, Gryphon reduces dependence on potentially miscalibrated sequence-level scores, distinguishes between items within SID collisions and utilizes item-level features for final scor-ing. Offline experiments show that Gryphon with a next-item predic-tion training objective improves retrieval quality over a production-compatible vanilla GR baseline under roughly matched parameter count and inference budget. In a 7-day online A/B test, replacing a full production candidate-generation and preranking stack with Gryphon as the sole candidate source produced no statistically sig-nificant change in total listening time, while reducing the number of candidates passed to the final ranker from 3,000 to 1,000. Although Gryphon substantially simplifies the candidate-generation stack, it does not eliminate the need for a production ranker under the tested next-item prediction objective. Future work includes extending the Item-Level Scoring Module to richer training objec-tives, such as multi-objective engagement modeling, distillation from production rankers, and long-term user-value optimization. 
+
+## GenAI Usage Disclosure 
+
+Generative AI tools were used to support manuscript revision, in-cluding English-language editing, clarity improvements, and high-level feedback on the presentation before submission. The authors manually reviewed and edited all AI-assisted suggestions and take full responsibility for the final manuscript. 
+
+## References 
+
+[1] Samy Bengio, Oriol Vinyals, Navdeep Jaitly, and Noam Shazeer. 2015. Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks. In Advances in Neural Information Processing Systems , Vol. 28. https://arxiv.org/abs/1506.03099 [2] Paul Covington, Jay Adams, and Emre Sargin. 2016. Deep Neural Networks for YouTube Recommendations. In Proceedings of the 10th ACM Conference on Recommender Systems . 191–198. doi:10.1145/2959100.2959190 [3] Dengzhao Fang, Jingtong Gao, Chengcheng Zhu, Yu Li, Xiangyu Zhao, and Yi Chang. 2025. HiD-VAE: Interpretable Generative Recommendation via Hierar-chical and Disentangled Semantic IDs. arXiv preprint arXiv:2508.04618 (2025). https://arxiv.org/abs/2508.04618 [4] Chengcheng Guo, Kuo Cai, Yu Zhou, Qiang Luo, Ruiming Tang, Han Li, Kun Gai, and Guorui Zhou. 2026. PROMISE: Process Reward Models Unlock Test-Time Scaling Laws in Generative Recommendations. arXiv preprint arXiv:2601.04674 
+
+(2026). doi:10.48550/arXiv.2601.04674 [5] Balazs Hidasi, Alexandros Karatzoglou, Linas Baltrunas, and Domonkos Tikk. 2016. Session-Based Recommendations with Recurrent Neural Networks. In 
+
+International Conference on Learning Representations .[6] Zheng Hu, Yuxin Chen, Yongsen Pan, Xu Yuan, Yuting Yin, Daoyuan Wang, Boyang Xia, Zefei Luo, Hongyang Wang, Songhao Ni, Dongxu Liang, Jun Wang, Shimin Cai, Tao Zhou, Fuji Ren, and Wenwu Ou. 2026. Stop Treating Collisions Equally: Qualification-Aware Semantic ID Learning for Recommendation at Industrial Scale. arXiv preprint arXiv:2603.00632 (2026). https://arxiv.org/abs/ 2603.00632 [7] Clark Mingxuan Ju, Tong Zhao, Leonardo Neves, Liam Collins, Bhuvesh Kumar, Jiwen Ren, Lili Zhang, Wenfeng Zhuo, Vincent Zhang, Xiao Bai, et al . 2026. Seman-tic IDs for Recommender Systems at Snapchat: Use Cases, Technical Challenges, and Design Choices. arXiv preprint arXiv:2604.03949 (2026). [8] Wang-Cheng Kang and Julian McAuley. 2018. Self-Attentive Sequential Rec-ommendation. In Proceedings of the 2018 IEEE International Conference on Data Mining . 197–206. doi:10.1109/ICDM.2018.00035 [9] Kirill Khrylchenko, Artem Matveev, Sergei Makeev, and Vladimir Baikalov. 2025. Scaling Recommender Transformers to One Billion Parameters. arXiv preprint arXiv:2507.15994 (2025). [10] Weiwen Liu, Yunjia Xi, Jiarui Qin, Fei Sun, Bo Chen, Weinan Zhang, Rui Zhang, and Ruiming Tang. 2022. Neural Re-ranking in Multi-stage Recommender Sys-tems: A Review. In Proceedings of the Thirty-First International Joint Conference on Artificial Intelligence .[11] Shashank Rajput, Nikhil Mehta, Anima Singh, Raghunandan Hulikal Keshavan, Trung Vu, Lukasz Heldt, Lichan Hong, Yi Tay, Vinh Q. Tran, Jonah Samost, Maciej Kula, Ed H. Chi, and Maheswaran Sathiamoorthy. 2023. Recommender Systems with Generative Retrieval. In Advances in Neural Information Processing Systems ,Vol. 36. [12] Marc’Aurelio Ranzato, Sumit Chopra, Michael Auli, and Wojciech Zaremba. 2016. Sequence Level Training with Recurrent Neural Networks. In International Con-ference on Learning Representations (ICLR) . https://arxiv.org/abs/1511.06732 [13] Anima Singh, Trung Vu, Nikhil Mehta, Raghunandan Keshavan, Maheswaran Sathiamoorthy, Yilin Zheng, Lichan Hong, Lukasz Heldt, Li Wei, Devansh Tandon, et al . 2024. Better generalization with semantic ids: A case study in ranking for recommendations. In Proceedings of the 18th ACM Conference on Recommender Systems . 1039–1044. [14] Yonghui Wu, Mike Schuster, Zhifeng Chen, Quoc V. Le, Mohammad Norouzi, Wolfgang Macherey, Maxim Krikun, Yuan Cao, Qin Gao, Klaus Macherey, Jeff Klingner, Apurva Shah, Melvin Johnson, Xiaobing Liu, Lukasz Kaiser, Stephan Gouws, Yoshikiyo Kato, Taku Kudo, Hideto Kazawa, Keith Stevens, George Kurian, Nishant Patil, Wei Wang, Cliff Young, Jason Smith, Jason Riesa, Alex Rudnick, Oriol Vinyals, Greg Corrado, Macduff Hughes, and Jeffrey Dean. 2016. Google’s Neural Machine Translation System: Bridging the Gap between Human and Machine Translation. arXiv preprint arXiv:1609.08144 (2016). [15] Xinyang Yi, Yang Ji, Lichan Hong, Derek Zhiyuan Cheng, Lukasz Heldt, Aditee Kumthekar, Zhe Zhao, Li Wei, and Ed H. Chi. 2019. Sampling-Bias-Corrected Neural Modeling for Large Corpus Item Recommendations. In Proceedings of the 13th ACM Conference on Recommender Systems . 269–277. doi:10.1145/3298689. 3346996 [16] Xiangyu Zhao, Maolin Wang, Xinjian Zhao, Jiansheng Li, Shucheng Zhou, Dawei Yin, Qing Li, Jiliang Tang, and Ruocheng Guo. 2023. Embedding in recommender systems: A survey. arXiv preprint arXiv:2310.18608 (2023). [17] Yao Zhao, Misha Khalman, Rishabh Joshi, Shashi Narayan, Mohammad Saleh, and Peter J. Liu. 2023. Calibrating Sequence Likelihood Improves Conditional Language Generation. In International Conference on Learning Representations .

@@ -1,0 +1,722 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-10T22:49:06.368174+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 5,
+    "deep_cap": 7,
+    "deep_selected": 5,
+    "quick_candidates": 15,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2606.03965v1",
+      "source": "arxiv",
+      "title": "Agentic Chain-of-Thought Steering for Efficient and Controllable LLM Reasoning",
+      "abstract": "Large language models improve final-answer accuracy through extended chain-of-thought reasoning, but often spend tokens inefficiently and offer little inference-time control. Existing efficient reasoning methods control thinking length by shortening, early-stopping, or compressing traces, leaving how the model thinks implicit. In this paper, we propose Agentic Chain-of-Thought Steering (ACTS), which formulates reasoning steering as a Markov decision process where a controller agent adaptively steers a frozen reasoner during inference. At each step, the controller observes the reasoning trace and remaining thinking budget, then issues a steering action consisting of a reasoning strategy and a steering phrase that initiates the next reasoner step. This enables budget-aware strategy control for efficient reasoning while preserving the reasoner's generation continuity. We initialize the controller agent from our constructed synthetic steering trajectories with multi-budget augmentation, and further optimize it via reinforcement learning with budget-conditioned reward shaping. Experiments across multiple benchmarks show that ACTS matches full-thinking performance with substantial token savings, and enables controllable accuracy-efficiency trade-offs across different reasoners and tasks. The code is available at https://github.com/Andree-9/ACTS.",
+      "authors": [
+        "Yu Xia",
+        "Zhouhang Xie",
+        "Xin Xu",
+        "Byungkyu Kang",
+        "Prarit Lamba",
+        "Xiang Gao",
+        "Julian McAuley"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-02T17:51:30+00:00",
+      "link": "https://arxiv.org/pdf/2606.03965v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "alternative to chain of thought reasoning",
+      "llm_evidence_cn": "替代思维链推理",
+      "llm_evidence": "替代思维链推理",
+      "canonical_evidence": "替代思维链推理",
+      "llm_tldr_en": "ACTS formulates reasoning steering as a Markov decision process, where a controller agent adaptively steers a frozen reasoner using strategies and steering phrases, improving efficiency and controllability.",
+      "llm_tldr_cn": "长思维链推理虽然准确但效率低且不可控。ACTS将推理引导建模为马尔可夫决策过程，引入控制器智能体根据当前推理轨迹和预算自适应地选择推理策略和引导短语，从而在不依赖模型训练的情况下控制推理过程。实验表明ACTS在保持答案质量的同时显著减少推理步骤和token开销，提供了一种灵活替代传统CoT的高效推理方案。",
+      "llm_tldr": "长思维链推理虽然准确但效率低且不可控。ACTS将推理引导建模为马尔可夫决策过程，引入控制器智能体根据当前推理轨迹和预算自适应地选择推理策略和引导短语，从而在不依赖模型训练的情况下控制推理过程。实验表明ACTS在保持答案质量的同时显著减少推理步骤和token开销，提供了一种灵活替代传统CoT的高效推理方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.05761v2",
+      "source": "arxiv",
+      "title": "SubtleMemory: A Benchmark for Fine-Grained Relational Memory Discrimination in Long-Horizon AI Agents",
+      "abstract": "Persistent AI assistants, such as OpenClaw, accumulate large collections of related memories over long-term interactions. As these memories grow, they may reinforce one another, diverge across contexts, or directly conflict, making correct assistance depend on memory relations rather than isolated recall. Existing long-term memory benchmarks rarely probe how agents preserve and utilize such relations during downstream tasks. To address this gap, we introduce SubtleMemory, a benchmark for fine-grained relational memory discrimination in long-running AI agents. SubtleMemory constructs relation-controlled latent semantic artifacts whose variants instantiate complementary, nuanced, or contradictory relations, and embeds them into realistic user-agent histories, requiring agents to recover distributed relational structures during later queries and instructions. The benchmark contains 1,522 evaluation instances over 10 long histories, grounded in 1,090 relation-controlled memory-variant sets and spanning user-related and non-user-related queries. Evaluating six standalone memory systems, two Claw-style agents with native memory modules, and three Claw-style agents with plugin memory modules, we find that current systems remain weak on fine-grained relational memory discrimination. We further introduce diagnostic protocols that reveal distinct capability profiles across memory preservation, retrieval, and downstream reasoning stages.",
+      "authors": [
+        "Wenxuan Wang",
+        "Haoyu Sun",
+        "Fukuan Hou",
+        "Mingyang Song",
+        "Weinan Zhang",
+        "Yu Cheng",
+        "Yang Yang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-06-04T06:43:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.05761v2",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "benchmark for relational memory discrimination in AI agents",
+      "llm_evidence_cn": "智能体关系记忆辨别基准",
+      "llm_evidence": "智能体关系记忆辨别基准",
+      "canonical_evidence": "智能体关系记忆辨别基准",
+      "llm_tldr_en": "Introduces SubtleMemory, a benchmark to evaluate how AI agents preserve and utilize fine-grained relational memories over long-term interactions.",
+      "llm_tldr_cn": "针对长期AI助手在大量相关记忆中精确区分关系的问题，提出SubtleMemory基准，通过构造语义伪影来评估智能体在复杂关系下的记忆保留和利用能力，填补了现有长期记忆基准的空白，为改进智能体记忆推理提供了评估工具。",
+      "llm_tldr": "针对长期AI助手在大量相关记忆中精确区分关系的问题，提出SubtleMemory基准，通过构造语义伪影来评估智能体在复杂关系下的记忆保留和利用能力，填补了现有长期记忆基准的空白，为改进智能体记忆推理提供了评估工具。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.06090v1",
+      "source": "arxiv",
+      "title": "Beyond Semantic Organization: Memory as Execution State Management for Long-Horizon Agents",
+      "abstract": "LLM-based agents increasingly tackle long-horizon tasks with interdependent decisions, where each action reshapes future constraints and intermediate errors can cascade. Existing RAG and agent memory systems organize histories by semantic similarity, retrieving content-relevant entries at decision time. We argue that this design mismatches execution-state dependencies: it fragments decision trajectories and mixes valid and erroneous traces, hindering coherent state reconstruction and error isolation. We propose MAGE (Memory as Agent-Guided Exploration), an active execution-state manager that stores interactions in a hierarchical state tree. The agent derives its state from the active root-to-current path, combining subgoal summaries, recent traces, and hints from prior branches. Four coupled operations maintain the tree: Grow records new traces, Compress summarizes completed subgoals, Maintain validates summaries, and Revise restores a target boundary and resumes on a new branch. This design bounds context growth while preserving state integrity and isolating flawed segments from the active path. Experiments on MemoryArena show that MAGE improves the average task success rate by 7.8--20.4 pp over baselines, while reducing token consumption by 55.1%.",
+      "authors": [
+        "Yaoqi Chen",
+        "Haibin Lai",
+        "Yuru Feng",
+        "Chuyu Han",
+        "Qianxi Zhang",
+        "Baotong Lu",
+        "Menghao Li",
+        "Xinjiang Wang",
+        "Zhirui Wang",
+        "Shusen Xu",
+        "Zengzhong Li",
+        "Zewen Jin",
+        "Hao Wu",
+        "Cheng Li",
+        "Qi Chen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-04T12:26:42+00:00",
+      "link": "https://arxiv.org/pdf/2606.06090v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "memory as execution state management for long-horizon agents",
+      "llm_evidence_cn": "将记忆作为执行状态管理用于长周期智能体",
+      "llm_evidence": "将记忆作为执行状态管理用于长周期智能体",
+      "canonical_evidence": "将记忆作为执行状态管理用于长周期智能体",
+      "llm_tldr_en": "MAGE proposes an active execution-state manager that stores interactions in a hierarchical state tree, decoupling memory from semantic similarity.",
+      "llm_tldr_cn": "针对现有RAG和智能体记忆系统按语义相似性组织历史、导致执行状态碎片化的问题，MAGE提出将交互存储在层次状态树中，智能体从活跃的根到当前路径推导状态，结合子目标摘要，无需额外训练即可实现长周期任务的错误隔离与状态重建。",
+      "llm_tldr": "针对现有RAG和智能体记忆系统按语义相似性组织历史、导致执行状态碎片化的问题，MAGE提出将交互存储在层次状态树中，智能体从活跃的根到当前路径推导状态，结合子目标摘要，无需额外训练即可实现长周期任务的错误隔离与状态重建。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.10532v1",
+      "source": "arxiv",
+      "title": "ActiveMem: Distributed Active Memory for Long-Horizon LLM Reasoning",
+      "abstract": "Memory is essential for enabling large language model (LLM) agents to handle long-horizon reasoning tasks. Existing memory mechanisms are largely centralized, typically organizing retrieved information and interaction history within a single model context. This design imposes a fundamental trade-off: scaling reasoning trajectories risks context overload, whereas aggressive content pruning may result in irreversible information loss. Seeking a better trade-off, we draw inspiration from human cognitive systems, especially the functional complementarity between the prefrontal cortex (executive control) and the hippocampus (memory management), suggesting that such a trade-off need not be inherent, but may instead stem from centralized memory organization. To this end, we propose ActiveMem, a heterogeneous framework that decouples agent memory from the core reasoning process. Specifically, a high-level Planner utilizes distilled semantic gists to execute reasoning, while a lightweight, distributed memory system operates in parallel to actively accumulate and consolidate these gists throughout the task. Experiments on BrowseComp-Plus and GAIA show that ActiveMem achieves state-of-the-art accuracy with significantly reduced overhead, demonstrating the effectiveness of distributed active memory for long-horizon reasoning.",
+      "authors": [
+        "Yunhan Jiang",
+        "Wenbin Duan",
+        "Shasha Guo",
+        "Liang Pang",
+        "Xiaoqian Sun",
+        "Huawei Shen"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-09T08:03:38+00:00",
+      "link": "https://arxiv.org/pdf/2606.10532v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "agent memory for reasoning improvement",
+      "llm_evidence_cn": "智能体记忆增强推理",
+      "llm_evidence": "智能体记忆增强推理",
+      "canonical_evidence": "智能体记忆增强推理",
+      "llm_tldr_en": "ActiveMem proposes a distributed active memory architecture for LLM agents, separating executive control from memory management to overcome context overload in long-horizon reasoning.",
+      "llm_tldr_cn": "现有LLM智能体记忆机制集中化，导致长程推理时上下文过载与信息丢失的矛盾。ActiveMem受人类认知启发，将执行控制与记忆管理分离，设计分布式主动记忆架构，使智能体能在长时间推理任务中动态存取关键信息。在多个长程推理基准上，ActiveMem显著优于集中式基线，平衡了记忆容量与检索效率，为agent记忆增强推理提供了新范式。",
+      "llm_tldr": "现有LLM智能体记忆机制集中化，导致长程推理时上下文过载与信息丢失的矛盾。ActiveMem受人类认知启发，将执行控制与记忆管理分离，设计分布式主动记忆架构，使智能体能在长时间推理任务中动态存取关键信息。在多个长程推理基准上，ActiveMem显著优于集中式基线，平衡了记忆容量与检索效率，为agent记忆增强推理提供了新范式。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07909v1",
+      "source": "arxiv",
+      "title": "MemToolAgent overview with a simple restaurant booking scenario where the agent retrieves similar memories, receives feedback on an invalid time format, and generates a reflection to update its memory",
+      "abstract": "Modern large language model (LLM) agents can use external tools to help users solve complex tasks. However, for problems that require learning from long-term historical events or from previous agent-environment interactions, LLM agents are required to use memory mechanisms to store and retrieve experiences. While sophisticated memory systems exist for dialogue agents, few studies have empirically examined how to improve agents' tool-using capabilities through past user-agent conversations. We propose MemToolAgent, a framework that improves tool use through memory management. Our approach contains a memory extraction module that processes past experiences into structured memory entries, and a retrieval module that dynamically selects a subset of the stored memory entries. This enables more personalized and accurate responses aligned with user preferences and feedback without requiring LLM fine-tuning. In summary, this work has three main contributions: (1) a unified memory entry format that improves both general-purpose and personalized tool use without LLM fine-tuning, (2) a reflection-based memory extraction that uses environment and user feedback to distill wrong executions into critiques to store, and (3) a retrieval module that chooses how many past experiences to use based on the memory similarity distribution. MemToolAgent achieves 29%, 80%, and 17% relative improvements compared to strong baselines on the WorkBench, NESTFUL, and PEToolBench benchmarks, respectively.",
+      "authors": [
+        "Suleyman Armagan Er",
+        "Danilo Ribeiro",
+        "Yogesh Virkar",
+        "Surafel Lakew",
+        "Adi Kalyanpur",
+        "James Gung",
+        "Thomas Delteil",
+        "Arshit Gupta"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-06-06T00:15:00+00:00",
+      "link": "https://arxiv.org/pdf/2606.07909v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "agent memory for tool use improvement",
+      "llm_evidence_cn": "智能体记忆用于工具使用改进",
+      "llm_evidence": "智能体记忆用于工具使用改进",
+      "canonical_evidence": "智能体记忆用于工具使用改进",
+      "llm_tldr_en": "MemToolAgent uses memory management to improve tool-using capabilities of LLM agents by storing and retrieving past experiences, enhancing reasoning without training.",
+      "llm_tldr_cn": "大型语言模型智能体在解决复杂任务时需借助外部工具，但长期历史经验的学习依赖记忆机制。现有对话智能体记忆系统多针对对话场景，缺乏对工具使用能力的提升研究。本文提出MemToolAgent框架，通过记忆提取模块和反思机制存储利用历史交互经验，提升智能体的工具使用能力。实验表明该框架能有效改善智能体在冷启动和新场景下的表现，为无训练推理增强提供新思路。",
+      "llm_tldr": "大型语言模型智能体在解决复杂任务时需借助外部工具，但长期历史经验的学习依赖记忆机制。现有对话智能体记忆系统多针对对话场景，缺乏对工具使用能力的提升研究。本文提出MemToolAgent框架，通过记忆提取模块和反思机制存储利用历史交互经验，提升智能体的工具使用能力。实验表明该框架能有效改善智能体在冷启动和新场景下的表现，为无训练推理增强提供新思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.03239v1",
+      "source": "arxiv",
+      "title": "ARBOR: Online Process Rewards via a Reusable Rubric Buffer for Search Agents",
+      "abstract": "LLM-based search agents are trained predominantly with outcome-only reward, leaving the search process itself unsupervised. This signal degenerates on outcome-homogeneous groups where all sampled trajectories share the same correctness, yielding zero within-group advantage and no gradient. Existing process supervision either trains a costly verifier or generates per-query rubrics that are inconsistent across queries and discarded after one use. We propose ARBOR (Adaptive Rubric Buffer for Online Reward), a reusable process-reward framework that maintains a rubric memory shared across queries. Query-local drafts induced from contrastive trajectories are admitted, consolidated into cross-query common rubrics, and retired as the policy evolves. A small active subset of common rubrics scores trajectories via sparse pairwise judging, and the resulting scores are added to the base reward, providing process-level gradient even when outcome reward is uniform. ARBOR consistently outperforms GRPO and DAPO baselines on four multi-hop QA benchmarks, raising average LLM-judge accuracy by up to 4.2 points and converting up to 42% of otherwise-zero-gradient training groups into informative ones.",
+      "authors": [
+        "Zheng Liu",
+        "Longxiang Zhang",
+        "Xintong Wang",
+        "Zhiang Xu",
+        "Shaoxiong Zhan",
+        "Xin Shan",
+        "Wen Huang",
+        "Tao Dai",
+        "Shu-Tao Xia",
+        "Chengfu Huo",
+        "Liang Ding"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-02T06:58:54+00:00",
+      "link": "https://arxiv.org/pdf/2606.03239v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "reusable rubric memory for search agents, enabling process reward via shared memory",
+      "llm_evidence_cn": "为搜索代理提供可复用的评分缓冲记忆，通过共享内存实现过程奖励",
+      "llm_evidence": "为搜索代理提供可复用的评分缓冲记忆，通过共享内存实现过程奖励",
+      "canonical_evidence": "为搜索代理提供可复用的评分缓冲记忆，通过共享内存实现过程奖励",
+      "llm_tldr_en": "ARBOR: a reusable rubric buffer that maintains a shared memory for online process rewards in LLM search agents.",
+      "llm_tldr_cn": "LLM搜索代理通常仅使用结果奖励，忽略过程监督。ARBOR提出一个可复用的评分缓冲（rubric memory），跨查询共享过程奖励信号。该方法在多个搜索任务上提高了训练效率和最终性能，展示了记忆增强在代理推理中的潜力。虽然主要关注奖励，但其记忆机制可借鉴到推理改进中。",
+      "llm_tldr": "LLM搜索代理通常仅使用结果奖励，忽略过程监督。ARBOR提出一个可复用的评分缓冲（rubric memory），跨查询共享过程奖励信号。该方法在多个搜索任务上提高了训练效率和最终性能，展示了记忆增强在代理推理中的潜力。虽然主要关注奖励，但其记忆机制可借鉴到推理改进中。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.04603v1",
+      "source": "arxiv",
+      "title": "Distributional Approximate Nearest Neighbour Search for Uncertainty-Aware Retrieval",
+      "abstract": "Approximate Nearest Neighbour search indices form the backbone of real-world recommender systems, enabling real-time candidate retrieval over million-item catalogues. Typically, a single point estimate embedding is learnt for every user and every item. At serving time, the user embedding queries the index for relevant items. Since these representations are learnt from sparse interaction data, they are noisy and might fail to capture all the nuances that contribute to ``relevance'' -- ignoring the fundamental uncertainty that is inherent to them. The result is a retrieval pipeline that is systematically biased toward the small minority of popular head items with well-estimated embeddings, at the expense of the long-tail majority of niche, diverse, and serendipitous content.   We propose DINOSAUR (Distributional Approximate Nearest Neighbour Search for Uncertainty-Aware Retrieval): a simple and infrastructure-compatible framework to incorporate embedding uncertainty into candidate generation. Rather than indexing point estimates, DINOSAUR samples $S_i$ embeddings per item and constructs an index on this augmented set. Analogously, at query time, a user embedding is sampled. This two-sided stochastic retrieval process implicitly marginalises over embedding uncertainty, without requiring changes to model architecture or ANN index infrastructure.   On the analytical side, we show that DINOSAUR recovers standard point-estimate retrieval as uncertainty vanishes, and we characterise how increased embedding variance expands the regions of latent space in which uncertain items are retrievable. Reproducible empirical observations align with these expectations, showing large coverage gains with small losses in offline recall.",
+      "authors": [
+        "Olivier Jeunen"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.LG",
+        "stat.ML"
+      ],
+      "published": "2026-06-03T08:41:27+00:00",
+      "link": "https://arxiv.org/pdf/2606.04603v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "distributional approximate nearest neighbor search for uncertainty-aware retrieval, improves retrieval quality",
+      "llm_evidence_cn": "分布近似最近邻搜索实现不确定性感知检索，提升检索质量",
+      "llm_evidence": "分布近似最近邻搜索实现不确定性感知检索，提升检索质量",
+      "canonical_evidence": "分布近似最近邻搜索实现不确定性感知检索，提升检索质量",
+      "llm_tldr_en": "Proposes distributional approximate nearest neighbor search that captures embedding uncertainty for better long-tail retrieval.",
+      "llm_tldr_cn": "传统检索使用点估计嵌入，忽略噪声和不确定性，导致长尾项目被低估。本文提出分布近似最近邻搜索，为每个项学习分布化嵌入，在检索时考虑不确定性。在推荐和检索数据集上，该方法显著提升了长尾项目的召回率，为RAG系统提供了更鲁棒的检索基础。",
+      "llm_tldr": "传统检索使用点估计嵌入，忽略噪声和不确定性，导致长尾项目被低估。本文提出分布近似最近邻搜索，为每个项学习分布化嵌入，在检索时考虑不确定性。在推荐和检索数据集上，该方法显著提升了长尾项目的召回率，为RAG系统提供了更鲁棒的检索基础。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.04557v1",
+      "source": "arxiv",
+      "title": "Cartridges at Scale: Training Modular KV Caches over Large Document Collections",
+      "abstract": "Large Language Models can reason over long contexts, yet prefilling millions of tokens is wasteful as much of the content remains static across queries. Cartridges address this by distilling document collections into reusable key-value (KV) caches that eliminate prefilling while preserving accuracy. A critical limitation of this approach is that cartridges are monolithic and non-compositional: encoding an entire collection into a single KV block does not scale, and naively mixing cartridges trained in isolation collapses performance to near chance. We introduce Cartridges at Scale (CAS), a training framework for scalable multi-cartridge learning with dynamic distractor mixing and a memory-efficient budget manager that rotates hundreds of per-document cartridges between GPU and persistent storage. Our approach scales to collections exceeding a million tokens, improving over a monolithic cartridge by 10-31 points at comparable token budgets. Oracle cartridge accuracy falls within 2-6 points of full in-context learning even at high compression. When paired with retrieval for cartridge selection, CAS matches or exceeds conventional RAG accuracy while consuming 3-4x fewer prompt tokens.",
+      "authors": [
+        "Momchil Hardalov",
+        "Gonzalo Iglesias",
+        "Adrià de Gispert"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "published": "2026-06-03T07:42:55+00:00",
+      "link": "https://arxiv.org/pdf/2606.04557v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "modular KV cache for efficient RAG",
+      "llm_evidence_cn": "模块化KV缓存以实现高效检索增强生成",
+      "llm_evidence": "模块化KV缓存以实现高效检索增强生成",
+      "canonical_evidence": "模块化KV缓存以实现高效检索增强生成",
+      "llm_tldr_en": "Cartridges at Scale trains reusable, modular KV caches for large document collections, enabling efficient multi-cartridge composition without prefilling.",
+      "llm_tldr_cn": "大规模文档RAG中，预填充KV缓存浪费计算且难以复用。本文提出CAS框架，通过动态干扰项混合和内存预算管理，训练模块化、可组合的KV缓存。实验表明，该方法在保持准确率的同时，显著减少预填充开销，支持数百个文档的混合推理。该技术可迁移至电力工作票等文档检索场景。",
+      "llm_tldr": "大规模文档RAG中，预填充KV缓存浪费计算且难以复用。本文提出CAS框架，通过动态干扰项混合和内存预算管理，训练模块化、可组合的KV缓存。实验表明，该方法在保持准确率的同时，显著减少预填充开销，支持数百个文档的混合推理。该技术可迁移至电力工作票等文档检索场景。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.06840v1",
+      "source": "arxiv",
+      "title": "Characterize Then Distill: Mechanistic Reasoning in Large Output Spaces",
+      "abstract": "Modern reasoning models offer surprisingly strong zero-shot performance on challenging multi-label tasks that require selecting a small set of relevant options from hundreds of thousands to millions of candidate labels. We investigate how they achieve this mechanistically. We characterize reasoning as a two-phase process: A broad \"shortlisting\" of candidates followed by fine-grained reasoning over the resulting set. We provide evidence across a range of datasets that these steps can be isolated and are complementary. Using this characterization, we develop a mechanistic distillation strategy that consistently outperforms standard distillation.",
+      "authors": [
+        "Debjyoti Saha Roy",
+        "Byron C. Wallace",
+        "Javed A. Aslam"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-06-05T02:32:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.06840v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "alternative reasoning framework to chain-of-thought",
+      "llm_evidence_cn": "思维链之外的推理框架",
+      "llm_evidence": "思维链之外的推理框架",
+      "canonical_evidence": "思维链之外的推理框架",
+      "llm_tldr_en": "Proposes a two-phase reasoning process (shortlisting then fine-grained reasoning) and a mechanistic distillation strategy, offering an alternative to standard chain-of-thought.",
+      "llm_tldr_cn": "该论文研究大型推理模型在多标签分类任务中的零样本能力，提出一种两阶段推理机制：先宽泛候选再精细推理，并基于此开发了机理蒸馏策略。该方法可以作为思维链推理的替代方案，且不需要模型训练，直接提升推理效果。",
+      "llm_tldr": "该论文研究大型推理模型在多标签分类任务中的零样本能力，提出一种两阶段推理机制：先宽泛候选再精细推理，并基于此开发了机理蒸馏策略。该方法可以作为思维链推理的替代方案，且不需要模型训练，直接提升推理效果。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.05030v1",
+      "source": "arxiv",
+      "title": "Imbuing Large Language Models with Bidirectional Logic for Robust Chain Repair",
+      "abstract": "Autoregressive chain-of-thought (CoT) reasoning in large language models (LLMs) is fundamentally forward-directed: each step conditions only on prior tokens. This unidirectional inductive bias renders even capable models susceptible to error snowballing, wherein a single logical or arithmetic mistake in an early step irreversibly corrupts the entire reasoning chain. We introduce Teleological Reasoning Infilling (\\TRI{}), a training framework that endows decoder-only transformers with a native \\emph{goal-conditioned bridging} capability. The key insight is to reframe erroneous reasoning segments as fill-in-the-middle (FIM) tasks: given a verified prefix premise $P$, a verified downstream milestone $S$, and the original query $Q$, the model must synthesise the logical bridge $M$ that connects $P$ to $S$ rigorously and completely. To achieve this with standard causal architectures, we introduce a Prefix-Suffix-Middle (PSM) sequence rearrangement with three non-overlapping sentinel tokens, enabling $M$ to attend to both $P$ and $S$ without any structural modification to the self-attention mechanism. Training proceeds in two stages: (i) Supervised Fine-Tuning (SFT) on symbolically verified $(P, S, M)$ triples extracted from formal mathematics corpora, and (ii) Direct Preference Optimisation (DPO) with a deterministic symbolic verifier (Lean 4 / Python) as the sole reward oracle, eliminating LLM-judge sycophancy. At inference, TRI operates as a surgical repair module within a dual-system loop: a causal draft model generates an initial trace, the verifier pinpoints failures, and TRI infills only the damaged segment, leaving verified sections intact. Comprehensive experiments on three benchmarks demonstrate that TRI achieves state-of-the-art performance across all tasks, while reducing per-problem token expenditure by 31.2%.",
+      "authors": [
+        "Zehua Cheng",
+        "Wei Dai",
+        "Jiahao Sun",
+        "Thomas Lukasiewicz"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.SC"
+      ],
+      "published": "2026-06-03T15:58:48+00:00",
+      "link": "https://arxiv.org/pdf/2606.05030v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "alternative to chain-of-thought reasoning via bidirectional logic",
+      "llm_evidence_cn": "通过双向逻辑推理替代思维链",
+      "llm_evidence": "通过双向逻辑推理替代思维链",
+      "canonical_evidence": "通过双向逻辑推理替代思维链",
+      "llm_tldr_en": "Teleological Reasoning Infilling (TRI) trains LLMs to repair erroneous reasoning chains by reframing them as fill-in-the-middle tasks, reducing error snowballing.",
+      "llm_tldr_cn": "针对自回归思维链中错误累积的问题，TRI将错误推理段重构为填空任务，赋予解码器纯变换器目标条件桥接能力，通过双向逻辑推理修复错误链，提升推理鲁棒性。",
+      "llm_tldr": "针对自回归思维链中错误累积的问题，TRI将错误推理段重构为填空任务，赋予解码器纯变换器目标条件桥接能力，通过双向逻辑推理修复错误链，提升推理鲁棒性。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.07783v1",
+      "source": "arxiv",
+      "title": "Evaluating RAG Reliability under Clean, Misleading, and Mixed Retrieval",
+      "abstract": "Retrieval-Augmented Generation (RAG) is widely used to improve the factual reliability of large language models (LLMs) by grounding answers in retrieved evidence. In misinformation-rich environments, however, retrieved content may include plausible but incorrect information, raising concerns about the reliability of RAG-based information access systems. In this work, we propose an evaluation protocol to systematically test how the RAG system handles conflicts between parametric knowledge and evidence retrieved from context with varying amounts of misleading information. We target correct answers to factoid questions that the model responds to correctly, even when there is no retrieval, and use this to test the system with clean, poisoned, and mixed evidence. The proposed analytical framework combines parametric override and confidence metrics to assess when and how misleading information affects the generation process of LLMs. This study aims to provide insights into the robustness of RAG systems in information disorder scenarios.",
+      "authors": [
+        "Sevgi Yigit-Sert"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-05T18:54:23+00:00",
+      "link": "https://arxiv.org/pdf/2606.07783v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Evaluates RAG reliability under misleading retrieval, relevant to robust work ticket retrieval",
+      "llm_evidence_cn": "评估RAG在误导检索下的可靠性，与工作票鲁棒检索相关",
+      "llm_evidence": "评估RAG在误导检索下的可靠性，与工作票鲁棒检索相关",
+      "canonical_evidence": "评估RAG在误导检索下的可靠性，与工作票鲁棒检索相关",
+      "llm_tldr_en": "Proposes an evaluation protocol for RAG under clean, misleading, and mixed retrieval to measure factuality robustness.",
+      "llm_tldr_cn": "本文提出一种系统性评估协议，测试RAG系统在检索内容包含误导信息时的可靠性。通过构造干净、有毒和混合三种检索场景，衡量模型在冲突信息下的事实性保持能力。实验发现，现有RAG系统在对抗性误导下依然容易出错。该研究对电力工作票等安全关键领域的RAG部署具有重要参考价值。",
+      "llm_tldr": "本文提出一种系统性评估协议，测试RAG系统在检索内容包含误导信息时的可靠性。通过构造干净、有毒和混合三种检索场景，衡量模型在冲突信息下的事实性保持能力。实验发现，现有RAG系统在对抗性误导下依然容易出错。该研究对电力工作票等安全关键领域的RAG部署具有重要参考价值。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.05761v1",
+      "source": "arxiv",
+      "title": "SubtleMemory: A Benchmark for Fine-Grained Relational Memory Discrimination in Long-Horizon AI Agents",
+      "abstract": "Persistent AI assistants, such as OpenClaw, accumulate large collections of related memories over long-term interactions. As these memories grow, they may reinforce one another, diverge across contexts, or directly conflict, making correct assistance depend on memory relations rather than isolated recall. Existing long-term memory benchmarks rarely probe how agents preserve and utilize such relations during downstream tasks. To address this gap, we introduce SubtleMemory, a benchmark for fine-grained relational memory discrimination in long-running AI agents. SubtleMemory constructs relation-controlled latent semantic artifacts whose variants instantiate complementary, nuanced, or contradictory relations, and embeds them into realistic user-agent histories, requiring agents to recover distributed relational structures during later queries and instructions. The benchmark contains 1,522 evaluation instances over 10 long histories, grounded in 1,090 relation-controlled memory-variant sets and spanning user-related and non-user-related queries. Evaluating six standalone memory systems, two Claw-style agents with native memory modules, and three Claw-style agents with plugin memory modules, we find that current systems remain weak on fine-grained relational memory discrimination. We further introduce diagnostic protocols that reveal distinct capability profiles across memory preservation, retrieval, and downstream reasoning stages.",
+      "authors": [
+        "Wenxuan Wang",
+        "Haoyu Sun",
+        "Fukuan Hou",
+        "Mingyang Song",
+        "Weinan Zhang",
+        "Yu Cheng",
+        "Yang Yang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-06-04T06:43:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.05761v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "benchmark for agent memory relations",
+      "llm_evidence_cn": "智能体记忆关系基准",
+      "llm_evidence": "智能体记忆关系基准",
+      "canonical_evidence": "智能体记忆关系基准",
+      "llm_tldr_en": "SubtleMemory benchmark tests AI agents' ability to discriminate fine-grained relational memories, crucial for long-horizon reasoning without retraining.",
+      "llm_tldr_cn": "长期运行的AI助手积累大量相互关联的记忆，现有基准无法评估代理对记忆关系的利用。本文提出SubtleMemory基准，构建关系控制的语义变体来测试代理的精细关系记忆辨别能力。实验表明，当前代理在处理细微或矛盾记忆关系时存在显著不足，该基准为开发更强记忆推理能力提供了标准化评估工具。",
+      "llm_tldr": "长期运行的AI助手积累大量相互关联的记忆，现有基准无法评估代理对记忆关系的利用。本文提出SubtleMemory基准，构建关系控制的语义变体来测试代理的精细关系记忆辨别能力。实验表明，当前代理在处理细微或矛盾记忆关系时存在显著不足，该基准为开发更强记忆推理能力提供了标准化评估工具。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.08035v1",
+      "source": "arxiv",
+      "title": "DyCo-RL: Dynamic Cross-Modal Coordination for Visual Reasoning",
+      "abstract": "Reinforcement Learning with Verifiable Rewards (RLVR) has emerged as a leading paradigm for enhancing visual reasoning in Multimodal Large Language Models (MLLMs). However, existing RLVR methods optimize primarily for the reasoning outcome, fundamentally overlooking the fine-grained cross-modal coordination required during the generation process. Through token-level analyses and controlled interventions, we reveal that during Chain-of-Thought (CoT) reasoning, MLLMs frequently fail to dynamically alternate between extracting visual evidence and synthesizing textual context-a coordination breakdown that is causally linked to reasoning failures. Motivated by these findings, we propose DyCo-RL, which integrates dynamic cross-modal coordination into RLVR optimization. Specifically, DyCo-RL uses the Fisher-Rao geodesic distance to measure within-modality attention shifts, assigning tokens to either visually-oriented or text-oriented functional roles. It then evaluates the alignment between a token's actual attention allocation and its assigned role, leveraging this score for alignment-guided advantage reweighting during policy optimization. Extensive experiments demonstrate that the algorithm-agnostic DyCo-RL, when applied to Qwen2.5-VL-3B/7B, consistently improves four representative RLVR algorithms across seven benchmarks spanning visual-centric and mathematical reasoning.",
+      "authors": [
+        "Hangui Lin",
+        "Yan Shu",
+        "Zhengyang Liang",
+        "Chi Liu",
+        "Xiangrui Liu",
+        "Minghao Qin",
+        "Teng Long",
+        "Zheng Liu",
+        "Nicu Sebe"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-06T07:56:25+00:00",
+      "link": "https://arxiv.org/pdf/2606.08035v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "improves chain-of-thought reasoning by dynamic coordination",
+      "llm_evidence_cn": "通过动态协调改进思维链推理",
+      "llm_evidence": "通过动态协调改进思维链推理",
+      "canonical_evidence": "通过动态协调改进思维链推理",
+      "llm_tldr_en": "DyCo-RL enhances visual reasoning in MLLMs by dynamically coordinating cross-modal information, addressing chain-of-thought breakdowns.",
+      "llm_tldr_cn": "多模态大语言模型在视觉推理中常因跨模态协调失败导致推理错误。本文通过token级分析揭示思维链推理中视觉证据提取与文本综合的动态交替失败。提出DyCo-RL方法，将动态跨模态协调融入强化学习优化，无需修改模型结构即可提升推理准确性。",
+      "llm_tldr": "多模态大语言模型在视觉推理中常因跨模态协调失败导致推理错误。本文通过token级分析揭示思维链推理中视觉证据提取与文本综合的动态交替失败。提出DyCo-RL方法，将动态跨模态协调融入强化学习优化，无需修改模型结构即可提升推理准确性。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.06054v1",
+      "source": "arxiv",
+      "title": "Beyond Similarity: Trustworthy Memory Search for Personal AI Agents",
+      "abstract": "Personal AI agents increasingly rely on long-term memory to provide persistent personalization across sessions. However, existing memory pipelines are largely driven by semantic similarity: memory data close to the current query is retrieved and injected into the model context. This creates a critical trustworthiness gap, since a semantically related memory may still be contextually inappropriate, leading to threats such as cross-domain leakage, sycophancy, tool-call drift, or memory-induced jailbreaks.   In this paper, we study memory search as a trust boundary in personal AI agents. We evaluate representative agentic memory frameworks, including A-Mem, Mem0, and MemOS, together with OpenClaw, a real-world personal-agent environment with persistent state and tool-use capability. Our results show that long-term memory is not merely a utility layer, but a durable control channel that can reshape how agents interpret tasks and execute actions, leaving them highly susceptible to the aforementioned threats. To mitigate these vulnerabilities, we propose MemGate, a lightweight and deployable memory plug-in for trustworthy memory search, with only 9M parameters and a 35.1MB footprint. MemGate is inserted between the vector memory store and the backbone LLM, requiring no LLM modification, memory-database rewriting, or inference-time LLM judge. It applies a query-conditioned neural gate to candidate memory representations, turning raw similarity search into task-conditioned memory admission. Across multiple mainstream memory frameworks, real-world agent settings, and diverse LLM backbones, MemGate reduces memory-induced threats while preserving long-term memory utility.",
+      "authors": [
+        "Jiawen Zhang",
+        "Kejia Chen",
+        "Jiachen Ma",
+        "Yangfan Hu",
+        "Lipeng He",
+        "Yechao Zhang",
+        "Jian Liu",
+        "Xiaohu Yang",
+        "Tianwei Zhang",
+        "Ruoxi Jia"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-04T11:54:29+00:00",
+      "link": "https://arxiv.org/pdf/2606.06054v1",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "memory search for personal AI agents improves cold-start reasoning",
+      "llm_evidence_cn": "智能体记忆搜索改进冷启动推理",
+      "llm_evidence": "智能体记忆搜索改进冷启动推理",
+      "canonical_evidence": "智能体记忆搜索改进冷启动推理",
+      "llm_tldr_en": "Examines memory search as a trust boundary in personal AI agents, revealing that similarity-based retrieval can cause contextually inappropriate outputs; proposes evaluation framework to improve memory-enabled reasoning.",
+      "llm_tldr_cn": "个人AI智能体依赖长期记忆实现个性化，但现有基于语义相似度的记忆检索可能产生上下文不当的输出，威胁可信度。本文系统研究了智能体记忆搜索中的信任边界，评估了A-Mem、Mem0等框架，并提出OpenClaw真实环境。为冷启动场景下利用记忆增强推理提供了分析和评估基础，有助于改进无需训练的冷启动生成。",
+      "llm_tldr": "个人AI智能体依赖长期记忆实现个性化，但现有基于语义相似度的记忆检索可能产生上下文不当的输出，威胁可信度。本文系统研究了智能体记忆搜索中的信任边界，评估了A-Mem、Mem0等框架，并提出OpenClaw真实环境。为冷启动场景下利用记忆增强推理提供了分析和评估基础，有助于改进无需训练的冷启动生成。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "improve cold start generation with memory enhanced models",
+      "matched_requirement_id": "req-15",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.08604v1",
+      "source": "arxiv",
+      "title": "Gryphon: A Unified Architecture for Semantic-ID Generation and Item-Level Scoring in Industrial Recommendations",
+      "abstract": "Generative retrieval (GR) has become a scalable approach to candidate generation: each item is assigned a short hierarchical token sequence called a Semantic ID (SID), and the next item's SID is decoded autoregressively. A practical limitation is that the decoder's beam search optimizes the likelihood of token sequences, not the relevance of the underlying items. These objectives diverge when sequence likelihood is poorly calibrated due to beam search error accumulation, and when several items collapse onto a single SID and receive identical scores. We introduce Gryphon, an encoder-decoder generative recommendation architecture that adds a jointly trained item-level scoring component alongside SID generation, reusing the encoder's user representation computed in a single forward pass. Instead of ranking SIDs by accumulated token likelihood, Gryphon resolves each generated SID to its concrete items and re-scores those items directly, which sidesteps miscalibrated sequence scores and separates items that collide on the same identifier. On an industrial music service, with item-level scoring trained under a next-item-prediction objective, Gryphon attains the highest item-level Recall@1000, above the strongest baselines (+3.7% over vanilla GR and +2.5% over collision-resolved GR) at comparable parameter count and latency. Gryphon's item-level ranking also surpasses its beam-likelihood ranking of the same candidates (+4.2% gain), demonstrating the benefit of item-level scoring in GR. Deployed as the sole candidate source in a 7-day A/B test, Gryphon produced no statistically significant change in total listening time (+0.25%) while replacing a pipeline of more than 15 candidate generators and a separate preranking stage, substantially simplifying the candidate-generation system.",
+      "authors": [
+        "Daria Tikhonovich",
+        "Oleg Sorokin",
+        "Vladislav Dodonov",
+        "Mariia Ulianova",
+        "Ilya Murzin"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-07T12:31:26+00:00",
+      "link": "https://arxiv.org/pdf/2606.08604v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "generative retrieval for item scoring with similarity to retrieval-augmented generation",
+      "llm_evidence_cn": "通过语义ID生成和项目级评分实现检索增强生成",
+      "llm_evidence": "通过语义ID生成和项目级评分实现检索增强生成",
+      "canonical_evidence": "通过语义ID生成和项目级评分实现检索增强生成",
+      "llm_tldr_en": "Gryphon improves generative retrieval by jointly training item-level scoring with Semantic ID generation, addressing calibration issues in candidates.",
+      "llm_tldr_cn": "生成式检索将每个项目编码为语义ID序列，但解码器优化序列似然而非项目相关性，导致评分不准。本文提出Gryphon架构，在语义ID生成同时联合训练项目级评分组件，修正似然偏差。在推荐系统上验证方法可提升候选人检索质量。",
+      "llm_tldr": "生成式检索将每个项目编码为语义ID序列，但解码器优化序列似然而非项目相关性，导致评分不准。本文提出Gryphon架构，在语义ID生成同时联合训练项目级评分组件，修正似然偏差。在推荐系统上验证方法可提升候选人检索质量。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.08300v1",
+      "source": "arxiv",
+      "title": "QueryWeaver: Reliable Multi-Tool Query Execution Planning via LLM-Based Graph Generation",
+      "abstract": "Many real-world queries over personal data span multiple applications and require structured planning, as individual tools expose only partial information. While LLMs show strong reasoning and tool use, reliably executing multi-step, cross-tool queries remains challenging. We introduce a system that converts natural language queries into structured graphs and executes them via a deterministic planner. Our approach uses depth-first search to resolve dependencies and combine results across tools, improving reliability and enabling queries beyond traditional keyword-based search. We demonstrate high accuracy even with smaller or locally hosted LLMs.",
+      "authors": [
+        "Aishwarya Chakravarthy",
+        "Vidhi Kulkarni",
+        "Duen Horng Chau"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-06T18:54:43+00:00",
+      "link": "https://arxiv.org/pdf/2606.08300v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "LLM-based graph generation for query execution planning",
+      "llm_evidence_cn": "基于LLM的图生成用于查询执行规划",
+      "llm_evidence": "基于LLM的图生成用于查询执行规划",
+      "canonical_evidence": "基于LLM的图生成用于查询执行规划",
+      "llm_tldr_en": "QueryWeaver converts natural language queries into structured graphs and uses a deterministic planner to execute multi-tool queries, improving reliability.",
+      "llm_tldr_cn": "针对跨应用多工具查询执行可靠性问题，提出QueryWeaver系统，利用LLM将自然语言查询转换为结构化图表示，并通过深度优先搜索的确定性规划器执行，在小型或本地LLM上仍保持高精度，显著提升多步跨工具查询的可靠性。",
+      "llm_tldr": "针对跨应用多工具查询执行可靠性问题，提出QueryWeaver系统，利用LLM将自然语言查询转换为结构化图表示，并通过深度优先搜索的确定性规划器执行，在小型或本地LLM上仍保持高精度，显著提升多步跨工具查询的可靠性。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.08831v1",
+      "source": "arxiv",
+      "title": "Inference-Time Conformal Reasoning with Valid Factuality Control for Large Language Models",
+      "abstract": "Large language models (LLMs) increasingly perform multi-step reasoning, where intermediate claims form implicit directed acyclic graphs whose node correctness is structurally conditioned on their ancestors. This makes factuality uncertainty structural, rather than a trivial accumulation of node-wise errors, and necessitates inference-time uncertainty quantification over the reasoning structure. While conformal prediction (CP) offers flexible user-specified factuality control, existing work remains post-hoc and cannot intervene during generation. To fill the gap between CP's flexibility and its post-hoc limitation, we propose an \\emph{Inference-Time Conformal Reasoning (ITCR)} framework that integrates CP directly into reasoning graph generation. ITCR learns a structure-level factuality uncertainty function that aggregates claim-level factuality signals over reasoning graphs without complex modeling assumptions. We then design the non-conformity score based on graph-level factuality uncertainty and calibrate the conformal threshold to decide when to stop generation. We theoretically show such generation is nested, yielding valid coverage guarantees for factuality control. Experiments over multiple datasets and coverage objectives demonstrate empirically valid coverage. In downstream reasoning tasks, inference-time calibrated graphs yield more accurate generation than post-hoc pruned graphs.",
+      "authors": [
+        "Ting Wang",
+        "Yuanjie Shi",
+        "Yan Yan",
+        "Huan Zhang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-07T20:52:10+00:00",
+      "link": "https://arxiv.org/pdf/2606.08831v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "inference-time reasoning with uncertainty quantification, alternative to chain-of-thought",
+      "llm_evidence_cn": "推理时不确定性量化的推理方法，是思维链的替代",
+      "llm_evidence": "推理时不确定性量化的推理方法，是思维链的替代",
+      "canonical_evidence": "推理时不确定性量化的推理方法，是思维链的替代",
+      "llm_tldr_en": "Integrates conformal prediction into reasoning graphs for inference-time factuality control, offering a principled alternative to chain-of-thought.",
+      "llm_tldr_cn": "多步推理中事实性不确定性是结构性的。该论文提出推理时一致性推理（ITCR）框架，将共形预测直接集成到推理图中，可在生成过程中干预事实性控制。这是一种有别于传统思维链的推理方法，无需训练即可提供统计保证的事实性。",
+      "llm_tldr": "多步推理中事实性不确定性是结构性的。该论文提出推理时一致性推理（ITCR）框架，将共形预测直接集成到推理图中，可在生成过程中干预事实性控制。这是一种有别于传统思维链的推理方法，无需训练即可提供统计保证的事实性。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
