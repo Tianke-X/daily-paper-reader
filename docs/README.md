@@ -6,60 +6,99 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-09
-- 运行时间：2026-06-09 20:48:01 UTC
+- 最新运行日期：2026-05-12 ~ 2026-06-10
+- 运行时间：2026-06-10 08:32:39 UTC
 - 运行状态：成功
-- 本次总论文数：12
-- 精读区：4
-- 速读区：8
+- 本次总论文数：26
+- 精读区：0
+- 速读区：26
 
 ### 今日简报（AI）
-今日共读12篇论文，精读4篇，聚焦大语言模型无训练推理仲裁与归一化流潜在推理两大方向。
-
-最值得关注《TrustMargin》提出的无训练信任仲裁机制（9.0分）及《Latent Reasoning with Normalizing Flows》的隐式推理新范式（8.0分）。
-
-建议优先精读以上两篇高分论文，并留意《When Knowledge Is Not Free》中关于检索增强生成成本感知证据选择的方法，为实际部署省钱省算力。
-- 详情：[/202606/09/README](/202606/09/README)
+本月26篇论文综述聚焦智能体记忆、检索推理与推理链压缩三大方向。《H-Mem》与《Retrieval as Reasoning》分别提出混合记忆结构与自进化检索机制，大幅提升智能体长期记忆与检索能力；《Selective Latent Thinking》则实现推理链的自适应压缩。建议优先阅读这三篇高分论文，深入掌握智能体系统的前沿设计。
+- 详情：[/20260512-20260610/README](/20260512-20260610/README)
 
 ### 精读区论文标签
-1. [TrustMargin: Training-Free Arbitration between Parametric Memory and Retrieved Evidence in Large Language Models](/202606/09/2606.08397v1-trustmargin-training-free-arbitration-between-parametric-memory-and-retrieved-evidence-in-large-language-models)  
-   标签：评分：9.0/10、query:power-ticket
-   evidence：LLM中参数记忆与检索证据的无训练仲裁，直接适用于工作票的检索增强生成
-2. [Latent Reasoning with Normalizing Flows](/202606/09/2606.06447v1-latent-reasoning-with-normalizing-flows)  
-   标签：评分：8.0/10、query:pwt
-   evidence：潜推理替代链式思维提升推理能力
-3. [Constrained Dominant Sets for Multimodal Document Question Answering](/202606/09/2606.07252v2-constrained-dominant-sets-for-multimodal-document-question-answering)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：在查询增强的亲和图上使用约束主导集进行RAG证据选择
-4. [What Makes a Desired Graph for Relational Deep Learning?](/202606/09/2606.08491v1-what-makes-a-desired-graph-for-relational-deep-learning)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：研究关系深度学习中理想图的构成，涉及图结构适应
+- 本次无精读推荐。
 
 ### 速读区论文标签
-1. [When Knowledge Is Not Free: Cost-Aware Evidence Selection in Retrieval-Augmented Generation](/202606/09/2606.02245v1-when-knowledge-is-not-free-cost-aware-evidence-selection-in-retrieval-augmented-generation)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：成本感知的检索增强生成证据选择
-2. [Admittance Sensitivity-Informed Modular GP for Scalable Topology-Adaptive Power-Flow Learning](/202606/09/2606.03717v1-admittance-sensitivity-informed-modular-gp-for-scalable-topology-adaptive-power-flow-learning)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：基于节点ego网络模块化高斯过程的拓扑自适应潮流学习
-3. [Constrained Dominant Sets for Multimodal Document Question Answering](/202606/09/2606.07252v1-constrained-dominant-sets-for-multimodal-document-question-answering)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：图结构学习方法用于RAG中的证据选择
-4. [EviProp: Seeded Relevance Diffusion on Chunk-Page Graphs for Long Multimodal Document Retrieval](/202606/09/2606.08979v1-eviprop-seeded-relevance-diffusion-on-chunk-page-graphs-for-long-multimodal-document-retrieval)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：将文档建模为块页图，使用种子相关性扩散进行检索
-5. [AbstRAG: Learning to Abstract for Retrieval Problems](/202606/09/2606.09459v1-abstrag-learning-to-abstract-for-retrieval-problems)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：面向抽象鸿沟的检索增强生成
-6. [GOTabPFN: From Feature Ordering to Compact Tokenization for Tabular Foundation Models on High-Dimensional Data](/202606/09/2606.05441v1-gotabpfn-from-feature-ordering-to-compact-tokenization-for-tabular-foundation-models-on-high-dimensional-data)  
-   标签：评分：6.0/10、query:pwt
-   evidence：面向低资源表格预测的图引导排序与少样本学习
-7. [Q-Delta: Beyond Key-Value Associative State Evolution](/202606/09/2606.08804v1-q-delta-beyond-key-value-associative-state-evolution)  
-   标签：评分：6.0/10、query:pwt
-   evidence：查询感知的delta规则用于记忆增强状态演化
-8. [Inference-Time Conformal Reasoning with Valid Factuality Control for Large Language Models](/202606/09/2606.08831v1-inference-time-conformal-reasoning-with-valid-factuality-control-for-large-language-models)  
-   标签：评分：6.0/10、query:pwt
-   evidence：将保形预测融入推理图进行事实性控制，与无CoT推理相关
+1. [H-Mem: A Novel Memory Mechanism for Evolving and Retrieving Agent Memory via a Hybrid Structure](/20260512-20260610/2605.15701v1-h-mem-a-novel-memory-mechanism-for-evolving-and-retrieving-agent-memory-via-a-hybrid-structure)  
+   标签：评分：9.0/10、query:pwt
+   evidence：面向LLM智能体的新型记忆机制
+2. [Retrieval as Reasoning: Self-Evolving Agent-Native Retrieval via LLM-Wiki](/20260512-20260610/2605.25480v2-retrieval-as-reasoning-self-evolving-agent-native-retrieval-via-llm-wiki)  
+   标签：评分：9.0/10、query:power-ticket
+   evidence：基于图结构的检索增强生成，类似Wiki页面
+3. [Selective Latent Thinking: Adaptive Compression of LLM Reasoning Chains](/20260512-20260610/2605.25745v1-selective-latent-thinking-adaptive-compression-of-llm-reasoning-chains)  
+   标签：评分：9.0/10、query:pwt
+   evidence：通过选择性压缩实现思维链推理的替代方案
+4. [Is Agent Memory a Database? Rethinking Data Foundations for Long-Term AI Agent Memory](/20260512-20260610/2605.26252v1-is-agent-memory-a-database-rethinking-data-foundations-for-long-term-ai-agent-memory)  
+   标签：评分：9.0/10、query:pwt
+   evidence：重新思考智能体记忆的数据基础以支持长期推理
+5. [Unlocking the Working Memory of Large Language Models for Latent Reasoning](/20260512-20260610/2605.30343v1-unlocking-the-working-memory-of-large-language-models-for-latent-reasoning)  
+   标签：评分：9.0/10、query:pwt
+   evidence：使用记忆块替代思维链的潜在推理
+6. [MoG: Mixture of Experts for Graph-based Retrieval-Augmented Generation](/20260512-20260610/2605.31010v1-mog-mixture-of-experts-for-graph-based-retrieval-augmented-generation)  
+   标签：评分：9.0/10、query:power-ticket
+   evidence：基于图的检索增强生成的专家混合模型
+7. [Goal-Oriented Reasoning for RAG-based Memory in Conversational Agentic LLM Systems](/20260512-20260610/2605.12213v1-goal-oriented-reasoning-for-rag-based-memory-in-conversational-agentic-llm-systems)  
+   标签：评分：8.0/10、query:pwt
+   evidence：对话智能体中基于检索增强记忆的目标导向推理
+8. [PRISM: Pareto-Efficient Retrieval over Intent-Aware Structured Memory for Long-Horizon Agents](/20260512-20260610/2605.12260v1-prism-pareto-efficient-retrieval-over-intent-aware-structured-memory-for-long-horizon-agents)  
+   标签：评分：8.0/10、query:pwt
+   evidence：使用图结构记忆和检索增强语言模型推理能力
+9. [$δ$-mem: Efficient Online Memory for Large Language Models](/20260512-20260610/2605.12357v1--mem-efficient-online-memory-for-large-language-models)  
+   标签：评分：8.0/10、query:pwt
+   evidence：轻量级在线联想记忆增强LLM推理
+10. [NeuSymMS: A Hybrid Neuro-Symbolic Memory System for Persistent, Self-Curating LLM Agents](/20260512-20260610/2605.17596v1-neusymms-a-hybrid-neuro-symbolic-memory-system-for-persistent-self-curating-llm-agents)  
+   标签：评分：8.0/10、query:pwt
+   evidence：为大语言模型代理设计的混合神经符号记忆系统，旨在提升推理连贯性
+11. [SeedER: Seed-and-Expand Retrieval from Knowledge Graphs](/20260512-20260610/2605.23753v1-seeder-seed-and-expand-retrieval-from-knowledge-graphs)  
+   标签：评分：8.0/10、query:pwt
+   evidence：知识图谱检索框架
+12. [Advancing Graph Few-Shot Learning via In-Context Learning](/20260512-20260610/2605.24410v1-advancing-graph-few-shot-learning-via-in-context-learning)  
+   标签：评分：8.0/10、query:pwt
+   evidence：提出基于上下文学习的图少样本学习方法，可直接应用于少样本生成任务
+13. [MemCog: From Memory-as-Tool to Memory-as-Cognition in Conversational Agents](/20260512-20260610/2605.28046v1-memcog-from-memory-as-tool-to-memory-as-cognition-in-conversational-agents)  
+   标签：评分：8.0/10、query:pwt
+   evidence：将智能体记忆集成到推理过程中，使用关联图
+14. [Adaptive Latent Agentic Reasoning](/20260512-20260610/2606.02871v1-adaptive-latent-agentic-reasoning)  
+   标签：评分：8.0/10、query:pwt
+   evidence：通过潜在推理替代思维链
+15. [InfoMem: Training Long-Context Memory Agents with Answer-Conditioned Information Gain](/20260512-20260610/2606.03329v1-infomem-training-long-context-memory-agents-with-answer-conditioned-information-gain)  
+   标签：评分：8.0/10、query:pwt
+   evidence：用于提升推理的智能体记忆
+16. [Stepwise Reasoning Enhancement for LLMs via External Subgraph Generation](/20260512-20260610/2606.04454v1-stepwise-reasoning-enhancement-for-llms-via-external-subgraph-generation)  
+   标签：评分：8.0/10、query:pwt
+   evidence：外部子图生成引导LLM逐步推理，可作为思维链替代方案
+17. [Temporal Order Matters for Agentic Memory: Segment Trees for Long-Horizon Agents](/20260512-20260610/2606.04555v1-temporal-order-matters-for-agentic-memory-segment-trees-for-long-horizon-agents)  
+   标签：评分：8.0/10、query:pwt
+   evidence：基于时序段树的智能体记忆架构
+18. [MARDoc: A Memory-Aware Refinement Agent Framework for Multimodal Long Document QA](/20260512-20260610/2606.05749v1-mardoc-a-memory-aware-refinement-agent-framework-for-multimodal-long-document-qa)  
+   标签：评分：8.0/10、query:pwt
+   evidence：用于检索推理的智能体记忆框架
+19. [TARPO: Token-Wise Latent-Explicit Reasoning via Action-Routing Policy Optimization](/20260512-20260610/2606.05859v1-tarpo-token-wise-latent-explicit-reasoning-via-action-routing-policy-optimization)  
+   标签：评分：8.0/10、query:pwt
+   evidence：用潜在推理替代思维链推理
+20. [Beyond Vector Similarity: A Structural Analysis of Graph-Augmented Retrieval for Industrial Knowledge Graphs](/20260512-20260610/2606.06003v1-beyond-vector-similarity-a-structural-analysis-of-graph-augmented-retrieval-for-industrial-knowledge-graphs)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：面向工业知识图谱的图增强检索结构分析
+21. [Beyond Semantic Organization: Memory as Execution State Management for Long-Horizon Agents](/20260512-20260610/2606.06090v1-beyond-semantic-organization-memory-as-execution-state-management-for-long-horizon-agents)  
+   标签：评分：8.0/10、query:pwt
+   evidence：提出将智能体记忆作为执行状态管理器，用于长期任务推理
+22. [Latent Reasoning with Normalizing Flows](/20260512-20260610/2606.06447v1-latent-reasoning-with-normalizing-flows)  
+   标签：评分：8.0/10、query:pwt
+   evidence：潜在推理作为思维链的替代方案
+23. [AdMem: Advanced Memory for Task-solving Agents](/20260512-20260610/2606.06787v1-admem-advanced-memory-for-task-solving-agents)  
+   标签：评分：8.0/10、query:pwt
+   evidence：统一的智能体记忆框架，提升任务求解能力
+24. [DyCo-RL: Dynamic Cross-Modal Coordination for Visual Reasoning](/20260512-20260610/2606.08035v1-dyco-rl-dynamic-cross-modal-coordination-for-visual-reasoning)  
+   标签：评分：8.0/10、query:pwt
+   evidence：提出DyCo-RL作为链式思维推理的替代方案以改善视觉推理
+25. [Experience Makes Skillful: Enabling Generalizable Medical Agent Reasoning via Self-Evolving Skill Memory](/20260512-20260610/2606.09365v1-experience-makes-skillful-enabling-generalizable-medical-agent-reasoning-via-self-evolving-skill-memory)  
+   标签：评分：8.0/10、query:pwt
+   evidence：通过技能记忆增强代理推理
+26. [BioRAG-DRAG: A Multimodal Biological Retrieval Layer for Local-First Biomedical Agents](/20260512-20260610/biorxiv-10-64898-2026-05-19-726174-v1-biorag-drag-a-multimodal-biological-retrieval-layer-for-local-first-biomedical-agents)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：检索增强生成中的图证据打包
 
 
 <div class="dpr-home-promo-card">

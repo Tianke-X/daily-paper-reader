@@ -1,0 +1,690 @@
+Title: InfoMem: Training Long-Context Memory Agents with Answer-Conditioned Information Gain
+
+URL Source: https://arxiv.org/pdf/2606.03329v1
+
+Published Time: Wed, 03 Jun 2026 01:00:34 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+# InfoMem: Training Long-Context Memory Agents with Answer-Conditioned Information Gain 
+
+Tiancheng Han 1,2 , Yong Li 1, Wuzhou Yu 1, Qiaosheng Zhang 2,3,† , Wenqi Shao 2,3,† 
+
+> 1
+
+Tongji University 2Shanghai Innovation Institute 3Shanghai AI Laboratory 
+
+zhangqiaosheng@pjlab.org.cn weqish@link.cuhk.edu.hk 
+
+Abstract 
+
+Long-context tasks require LLMs to identify and preserve answer-relevant information from large contexts. Chunk-wise memory agents address this issue by sequentially reading doc-ument chunks, updating a compact memory, and generating the final answer from the accu-mulated memory. However, existing RL-based chunk-wise agents either rely on sparse final-answer rewards or use lexical intermediate re-wards for memory and retrieval actions. These signals supervise task success or local over-lap, but do not directly evaluate whether the final memory supports the ground-truth answer. We propose InfoMem, a reward mechanism for training chunk-wise memory agents that evaluates final-memory utility using answer-conditioned information. InfoMem measures how much the final memory increases the model’s per-token log-likelihood of the ground-truth answer. To stabilize RL optimization, InfoMem applies this signal only to success-ful trajectories and normalizes it before reward composition. Under the same GRPO frame-work and training budget, InfoMem improves long-context memory-agent performance over comparable memory-agent RL baselines. Anal-yses show that effective final-memory rewards should operate on successful trajectories, be normalized before reward composition, and be conditioned on the answer rather than the query. Our code is available at https:// github.com/GenSouKa1/InfoMem .
+
+1 Introduction 
+
+Long-context understanding has become a central capability for large language models (LLMs), with applications ranging from long-document ques-tion answering to corpus-level evidence aggre-gation (OpenAI, 2025; Wu et al.; Hsieh et al.; Lu et al., 2026). Prior work has improved long-context processing through extended context win-dows (Shen et al., 2025), attention or positional 
+
+> †Corresponding authors.
+
+modifications (Munkhdalai et al., 2024; Press et al.), retrieval augmentation (Zhao et al., 2024), and memory-based or agentic pipelines (Packer et al., 2024; Zhou et al., 2025). However, effec-tively using long inputs remains challenging when relevant evidence is sparse, distributed across dis-tant segments, or must be preserved throughout a long reading process. Among these approaches, chunk-wise memory agents provide a simple and effective paradigm for long-context reasoning. Instead of process-ing the entire document at once, the model se-quentially reads shorter chunks, updates a compact memory state, and generates the final answer from the accumulated memory. This paradigm appears in training-free reading agents (Lee et al., 2024), recurrent or memory-augmented model architec-tures (Dai et al., 2019), and post-training meth-ods (Yu et al., 2025; Shi et al., 2026). Crucially, their explicit memory state makes memory quality an observable optimization target. Despite their effectiveness, existing chunk-wise long-context systems still lack a scalable way to supervise memory formation. Training-free meth-ods often rely on human-designed memory-update prompts, summarization heuristics, or fixed traver-sal workflows (Lee et al., 2024). Architecture-level methods may improve long-context capability more fundamentally (Dai et al., 2019), but typ-ically require costly pretraining. Reinforcement learning (RL)-based memory agents can also im-prove long-context behavior through task feedback, but existing methods mainly rely on sparse answer rewards (Yu et al., 2025) or lexical intermediate re-wards for memory and retrieval actions (Shi et al., 2026). These rewards supervise task success or local word overlap, without directly evaluating whether the final memory semantically supports the ground-truth answer. This limitation is especially pronounced within successful trajectories: sparse outcome rewards 1
+
+> arXiv:2606.03329v1 [cs.AI] 2 Jun 2026
+
+cannot distinguish whether the final memory con-tains focused answer-supporting evidence or redun-dant distracting information, while lexical rewards may not capture semantic support for the final an-swer. This motivates a memory-specific reward signal for chunk-wise long-context reinforcement learning. We propose InfoMem, a reward-shaping method for chunk-wise long-context memory agents based on answer-conditioned information gain. The core intuition is that a useful final memory should increase the model’s support for the ground-truth answer. Instead of estimating distribution-level mutual information, InfoMem uses a point-wise information-gain surrogate by comparing the model’s per-token log-likelihood of the ground-truth answer with and without the final memory. InfoMem further improves training stability by ap-plying this signal only to successful trajectories and normalizing it before reward composition. Experiments show that InfoMem consistently improves long-context memory-agent performance over outcome-only GRPO and a comparable memory-agent RL baseline ReMemR1 (Shi et al., 2026). Further analyses show that effective final-memory rewards should operate on successful tra-jectories, be normalized before reward composi-tion, and be conditioned on the ground-truth an-swer rather than on the query alone. These findings suggest that answer-conditioned information gain provides a principled framework for final-memory supervision in chunk-wise long-context RL. Our contributions are threefold: (1) We formu-late final-memory utility through an information-theoretic perspective, where useful memories should reduce the model’s uncertainty about the ground-truth answer. (2) We introduce InfoMem, an answer-conditioned information-gain reward for direct final-memory shaping over successful tra-jectories. (3) We show that InfoMem consistently improves chunk-wise long-context memory agents over comparable memory-agent RL baselines, and further identify three key properties of effective final-memory rewards: success-side supervision, pre-composition normalization, and answer condi-tioning. 
+
+2 Related Work 
+
+2.1 Long-context LLMs and Chunk-wise Memory Agents 
+
+Long-context LLM research has improved long-input processing through context extension (Shen et al., 2025), attention or positional modifica-tions (Munkhdalai et al., 2024; Press et al.), and retrieval augmentation (Zhao et al., 2024). Complementary to these approaches, chunk-wise memory agents maintain an explicit mem-ory state during sequential long-document process-ing. This paradigm includes training-free reading workflows (Lee et al., 2024), segment-level recur-rent architectures (Dai et al., 2019; Hutchins et al., 2022; Ding et al., 2021), and post-training mem-ory agents (Yu et al., 2025; Shi et al., 2026). Ex-isting methods rely on manually designed work-flows, costly recurrent architectures, or RL objec-tives based on sparse final-answer rewards and in-termediate memory heuristics. As a result, direct supervision of answer-conditioned final-memory utility remains relatively underexplored. 
+
+2.2 RL for Long-context QA 
+
+DeepSeek-R1 (Guo et al., 2025) demonstrates that reinforcement learning can substantially enhance LLM capabilities in specialized domains. Recent work further shows that RL can improve long-context question answering and reasoning. Early methods mainly optimize verifiable end-task out-comes, such as final-answer correctness or verifier-based response quality (Shen et al., 2025; Yu et al., 2025). More recent studies have introduced denser supervision signals for grounding, evidence extrac-tion, and contextual reasoning (Chen et al.; Guan et al., 2026; Ping et al., 2026; Shi et al., 2026). Together, these results suggest that reward-based optimization is a promising direction for improving long-context reasoning. Despite these advances, existing rewards mainly supervise grounding quality, evidence selection, reading utility, or intermediate memory-update be-havior. ReMemR1 (Shi et al., 2026) introduces information-style rewards for memory and call-back actions, but these signals are based on word-level recall rather than answer-conditioned final-memory utility. Direct supervision of the final memory representation itself remains relatively un-derexplored. In particular, existing methods rarely evaluate whether the resulting final memory di-rectly supports the ground-truth answer, which is 2the focus of our work. 
+
+3 Problem Setup and Motivation 
+
+3.1 Chunk-wise Long-context Memory Agent 
+
+We focus on chunk-wise memory agents as a prac-tical paradigm for reinforcement learning in long-context settings. Formally, let x denote the query, 
+
+D the long document, and y∗ the ground-truth an-swer. Given a pre-defined chunk size C, the docu-ment is divided into K chunks: 
+
+D = {c1, c 2, . . . , c K }, (1) Conditioned on the query, the model sequentially reads the chunks and maintains a memory state: 
+
+Mt = πθ(Mt−1, c t, x ), t = 1 , . . . , K. (2) After processing all chunks, the model obtains the final memory MK and generates the final answer based on the query and this memory: 
+
+ˆy = πθ(x, M K ). (3) 
+
+3.2 Why Outcome Reward Is Insufficient for Memory Learning 
+
+The outcome reward directly supervises final an-swer correctness, but provides only sparse and indi-rect supervision for memory utility. In chunk-wise memory agents, the final prediction is generated based on the final memory MK , which is expected to retain the information necessary for supporting the correct answer. However, the binary outcome reward evaluates only whether the generated an-swer matches y∗, without directly distinguishing the quality of different final memories. This limitation is particularly evident among suc-cessful trajectories. Multiple rollouts may generate the same correct answer and therefore receive iden-tical outcome rewards, while their final memories can differ substantially in utility. Some memories may retain only the critical supporting evidence, whereas others may preserve the same evidence together with substantial redundant or distracting information while still yielding the correct predic-tion. Consequently, outcome reward alone cannot differentiate memory utility within successful tra-jectories, motivating the need for a direct reward signal for final-memory utility in chunk-wise long-context reinforcement learning. 
+
+3.3 From Mutual Information to Model-induced Pointwise Surrogate 
+
+Long-context question answering can be viewed as extracting answer-relevant information from a large context. Under the chunk-wise memory-agent for-mulation, the final memory should therefore reduce the uncertainty of the answer conditioned on the query. Ideally, this utility can be characterized by the conditional mutual information I(M ; Y | X),which measures how much additional information the memory M provides about the answer Y given the query X.However, distribution-level mutual information depends on the full joint distribution over queries, memories, and answers, and is difficult to estimate reliably in the high-dimensional semantic space of LLMs (Qian et al., 2025). This motivates the InfoMem reward introduced in Section 4, where we instantiate the mutual-information objective with a single-sample pointwise surrogate. This surrogate measures whether the final memory increases the model’s support for the ground-truth answer on the current instance. 
+
+4 Method: InfoMem 
+
+4.1 Reward Definition 
+
+We train the chunk-wise memory agent with Group Relative Policy Optimization (GRPO) (Shao et al., 2024). For each prompt, GRPO samples a group of n rollouts, 
+
+G = {1, 2, . . . , n }. (4) Each rollout i ∈ G produces a final memory Mi
+
+and a final answer ˆyi. The base outcome reward is defined as 
+
+Routcome ,i = 1[ˆ yi = y∗], (5) where answer correctness is evaluated by normal-ized string matching in our main experiments. Given a query x, a final memory M , and the ground-truth answer y∗, we define the answer-conditioned information-gain reward rgain as              
+
+> rgain (x, M, y ∗) = 1
+> |y∗|log Pθ(y∗|x, M )−1
+> |y∗|log Pθ(y∗|x, ∅),
+
+(6) where ∅ denotes null memory. The sequence like-lihood of LLM on ground-truth tokens Pθ is com-puted under teacher forcing: 
+
+log Pθ(y∗ | x, M ) = 
+
+> |y∗|
+
+X
+
+> j=1
+
+log pθ(y∗ 
+
+> j
+
+| y∗ 
+
+> <j
+
+, x, M ),
+
+(7) 3Chunk -wise Long -context Agent               
+
+> Query 𝒙 :What is the main conclusion of the paper?
+> Chunk 1
+> 𝑐 !
+> Chunk 2
+> 𝑐 "
+> Chunk 3
+> 𝑐 #
+> Chunk 𝐾
+> 𝑐 $
+> Document Chunks
+
+LLM 
+
+𝑃 $
+
+LLM 
+
+𝑃 $
+
+LLM 
+
+𝑃 $
+
+LLM 
+
+𝑃 $                  
+
+> …
+> …
+> Updated Memory
+> 𝑴 𝟏
+> Updated Memory
+> 𝑴 𝟐
+> Updated Memory
+> 𝑴 𝟑
+> Final Memory
+> 𝑴 𝑲
+> …
+> 𝑃 %Query 𝑥 ,chunk 𝑐 &,previous memory 𝑀 '()→updated memory 𝑀 &
+> At each step 𝑡 :
+
+Answer -conditioned Info -gain    
+
+> Ground -truth Answer tokens 𝑦 ∗
+
+𝑦 ! 
+
+> ∗
+
+𝑦 # 
+
+> ∗
+
+𝑦 $ 
+
+> ∗
+
+𝑦 % 
+
+> ∗
+
+…… 𝑦 |'∗|                          
+
+> ∗
+> Compared answer likelihood with &w/o final memory
+> With Final Memory 𝑴 𝑲 With Null Memory ∅
+> Query 𝑥
+> +Final Memory 𝑀 $
+> +Ground -truth 𝑦 ∗
+> Query 𝑥
+> +Null Memory ∅
+> +Ground -truth 𝑦 ∗
+
+LLM 𝑃 ! (teacher -forcing)                 
+
+> log 𝑃 %(𝑦 ∗|𝑥 ,𝑀 +)log 𝑃 %(𝑦 ∗|𝑥 ,∅)
+> —
+> 𝑟 !"#$ =1
+> 𝑦 ∗log 𝑃 &𝑦 ∗𝑥 ,𝑀 '−1
+> 𝑦 ∗log 𝑃 &(𝑦 ∗|𝑥 ,∅)
+> (per -token average log -prob gain)
+
+Success -side Standardization                                            
+
+> Rollout Group
+> Trajectory 1Trajectory 2Trajectory 3
+> ………
+> Outcome
+> Reward
+> 𝑅 ,-'.,/0
+> ())=0𝑅 ,-'.,/0
+> (3)=1𝑅 ,-'.,/0
+> (4)=1
+> Success -side
+> Information gain 𝑟 5678 =1
+> 𝑦 ∗log 𝑃 %𝑦 ∗𝑥 ,𝑀 +−1
+> 𝑦 ∗log 𝑃 %(𝑦 ∗|𝑥 ,∅)
+> 𝑟 5678
+> (3)𝑟 5678
+> (4)
+> Standardization
+> for successful
+> rollouts )𝑟 6789 =𝑟 6789 −𝜇
+> 𝜎 +𝜖
+> (pass)
+> (pass) ̃𝑟 5678
+> (3)̃𝑟 5678
+> (4)
+> Final Reward
+> (before GRPO normalization)
+
+𝑅 ()) = 𝑅 +,-.+/0  
+
+> ())
+
++ 𝛽 ⋅ '𝑟 1234        
+
+> ())
+> Outcome reward only Outcome +Info gain reward
+
+Figure 1: Overview of InfoMem for chunk-wise long-context RL. InfoMem measures final-memory utility using answer-conditioned information gain by comparing the teacher-forced per-token average log-likelihood of the ground-truth answer y∗ with and without the final memory. During GRPO training, information-gain supervision is applied only to successful trajectories, normalized across successful rollouts, and combined with the sparse outcome reward for policy optimization. 
+
+which corresponds to the summed log-probability of the ground-truth tokens. The first term in Eq. (6) measures the likelihood assigned to the ground-truth answer when conditioned on the final memory, while the second term measures the corresponding likelihood without memory conditioning. Conse-quently, higher values of rgain indicate that the final memory increases the likelihood assigned to the correct answer. 
+
+4.2 Using Successful Trajectories as Positive Memory Signals 
+
+Given the rollout group G and the outcome rewards defined above, we define the set of successful roll-outs as 
+
+S = {i ∈ G : Routcome ,i = 1 }. (8) InfoMem applies the information-gain reward only to rollouts in S. Specifically, successful trajec-tories are further differentiated by rgain (x, M i, y ∗),whereas failed trajectories are supervised with 
+
+Routcome only. This design restricts information-gain optimiza-tion to trajectories whose final answers are already validated by the outcome reward. Within this sub-set, differences in rgain more directly reflect the ex-tent to which the final memory supports the ground-truth answer y∗, thereby providing a more stable signal for memory shaping. By contrast, failed trajectories may entangle memory quality with incorrect evidence selection or answer generation, making rgain less reliable as a memory-utility signal. We empirically analyze this issue through wrong-only and both-side super-vision variants in Section 6. 
+
+4.3 Memory Reward Normalization 
+
+The scale of raw information-gain rewards can vary substantially across prompts due to differences in answer uncertainty. For relatively easy questions, the model may already assign high likelihood to the ground-truth answer without memory conditioning, resulting in limited likelihood improvement from the final memory. For more difficult questions, an informative final memory can produce a sub-stantially larger increase in ground-truth likelihood. Consequently, directly combining raw rgain with the binary outcome reward may introduce severe reward-scale imbalance, causing the information-gain term to dominate the sparse outcome signal for some prompts while remaining negligible for others. Following the reward-decoupled normalization setting in GDPO (Liu et al., 2026), InfoMem con-trols this scale before reward composition by nor-malizing information-gain values within the suc-cessful trajectories of the same rollout group. Let 4Supporting Context                              
+
+> ... Columbus reached America
+> in 1492 after crossing the
+> Atlantic Ocean …
+> ... Columbus reached Oceania
+> in 1492 after crossing the
+> Atlantic Ocean …
+> Hallucinated Context
+> LLM -generated
+> Factually correct Semantically similar
+> but factually incorrect
+> Question: Who discovered America? Answer: Columbus
+
+Figure 2: Example of synthetic hallucinated evidence. 
+
+ri = rgain (x, M i, y ∗) for i ∈ S . We compute 
+
+˜ri = ri − μS
+
+σS + ϵ , i ∈ S , (9) where μS and σS denote the mean and standard deviation of {ri : i ∈ S} , and ϵ is a small con-stant for numerical stability. When |S| = 0 , no information-gain reward is applied. When |S| = 1 ,the original value is retained as a fallback strategy. The final reward for rollout i is defined as 
+
+Ri =
+
+(
+
+Routcome ,i + β˜ri, i ∈ S ,Routcome ,i , i / ∈ S , (10) where β controls the strength of the normalized information-gain term. This normalization differs from the group-relative normalization in GRPO. InfoMem normal-izes rgain before reward composition, controlling the relative scale between the information-gain and outcome rewards. Although InfoMem is computed from the final memory and final answer, the resulting trajectory-level advantage is propagated to all generated to-kens, including both memory-update and final-answer tokens. The complete reward-construction procedure is summarized in Appendix A.2. 
+
+5 Experiments 
+
+5.1 Synthetic Context Discrimination with Hallucinated Evidence 
+
+We first evaluate whether answer-conditioned in-formation gain can distinguish genuinely answer-supporting evidence from surface-similar but factu-ally misleading contexts. We construct a synthetic diagnostic using the SQuAD dataset (Rajpurkar et al., 2016). Each example contains a question, a supporting context, and a ground-truth answer. For each retained QA pair, we generate two hallucinated contexts using Gemini 3 Flash pre-view (Google, 2026). The hallucinated contexts                
+
+> Score MRR Z-score SNR
+> Embedding (BGE-M3) 0.719 0.316 Embedding (E5) 0.714 0.320 Embedding (Qwen3-0.6B) 0.727 0.371 ATTN -M ASS 0.588 -0.081 ATTN -T OP 10.792 0.577
+> rgain (ours) 0.977 2.960
+
+Table 1: Synthetic context discrimination results. The rgain score corresponds to the answer-conditioned information-gain score in Eq. (6). 
+
+preserve the overall structure and semantic style of the original passage while replacing answer-critical facts so that they no longer support the ground-truth answer, as illustrated in Figure 2. We compare three categories of evidence scores: (1) Information gain. We compute the 
+
+rgain score using the same Qwen2.5-1.5B-Instruct model (Qwen et al., 2025) as in training, com-paring the per-token average log-likelihood of the ground-truth answer with and without the candi-date context. (2) Embedding similarity. We com-pute cosine similarity between the embedding of candidate-context and question-answer template, using mainstream open-source embedding mod-els (Zhang et al., 2025; Chen et al., 2024; Wang et al., 2024). (3) Attention-based scores. Using the same Qwen2.5-1.5B-Instruct model, we evalu-ate two attention metrics. A TTN -M ASS averages the total attention mass assigned from answer to-kens to context tokens, while A TTN -T OP 1 averages the maximum attention score assigned to any con-text token for each answer token. We evaluate each score from two complemen-tary perspectives. First, we compute the mean re-ciprocal rank (MRR) of the true supporting context among the three candidates. Second, we report a Z-score signal-to-noise ratio (SNR) to assess the stability of this discrimination signal. A higher SNR indicates that the score not only separates true contexts from hallucinated ones, but also does so with lower relative variation across samples, mak-ing it more suitable as a training reward. Table 1 shows that rgain achieves the highest MRR and Z-score SNR among all compared scores. The high MRR indicates strong discrimination be-tween true and hallucinated contexts, while the sub-stantially larger SNR suggests that the resulting sig-nal is also more stable across samples. Embedding-based similarities achieve moderate ranking perfor-mance but exhibit much weaker SNR. Attention-based scores, especially A TTN -T OP 1, improve 5Model CorpusQA LongMemEval MRCR-8needle RULER synthetic QA                 
+
+> Qwen2.5-1.5B-Instruct 14.590 5.600 0.260 13.308 with Outcome-only GRPO 16.413 10.000 0.063 34.735 with InfoMem 19.453 12.800 0.279 36.848
+> with ReMemR1 (Shi et al., 2026) 1.520 6.200 0.092 28.919
+> Table 2: Main evaluation results on long-context benchmarks. All scores are reported as percentages. The best score for each benchmark is shown in bold.
+
+ranking quality but remain substantially below 
+
+rgain in signal stability. These results suggest that answer-conditioned likelihood gain provides both stronger evidence discrimination and a cleaner re-ward signal for training. Details of the discrimina-tion experiment are provided in Appendix B. 
+
+5.2 Training Setup 
+
+We train on the RULER-HotpotQA dataset (Yu et al., 2025), which applies the RULER long-context construction paradigm (Hsieh et al.) to HotpotQA (Yang et al., 2018) by mixing answer-relevant documents with distractors. Each example contains 200 documents. The original training split has 32,768 examples and the validation split has 128 examples; for controlled experimentation, we downsample the training split to 512 examples and keep the validation split unchanged. All experiments use Qwen2.5-1.5B-Instruct as the base model and GRPO as the algorithm. For each prompt, we sample n = 8 rollouts and train for 120 steps with learning rate 1 × 10 −6. The chunk size is 5000 tokens, the maximum memory length is 1024 tokens, and the InfoMem coefficient is β = 0 .2. For controlled comparison, all methods use the same data, model, rollout number, decod-ing configuration, and training budget. Our primary baseline is Outcome-only GRPO (Yu et al., 2025), which removes the information-gain term while keeping the same training pipeline. We also report the initial model before RL optimization where ap-propriate. Since ReMemR1 (Shi et al., 2026) aug-ments the chunk-wise memory-agent framework with callback retrieval, we align all shared training parameters with our setting for fair reproduction, while keeping ReMemR1-specific parameters con-sistent with the original paper. Details are provided in Appendix A. 
+
+5.3 Evaluation 5.3.1 Benchmarks 
+
+Under the same chunk-wise memory framework, we evaluate the trained models on a set of out-of-distribution long-context benchmarks covering complementary forms of evidence use: (1) MRCR-8needle (OpenAI, 2025) evaluates multi-needle re-trieval; (2) RULER synthetic QA (Yu et al., 2025) evaluates sparse retrieval-style question answering, using a different corpus source from the training data; (3) CorpusQA (Lu et al., 2026) evaluates corpus-level evidence aggregation across document collections; and (4) LongMemEval (Wu et al.) evaluates long-horizon dialogue memory and con-versational information tracking. Across benchmarks, we use the metric specified by each benchmark and apply the same evaluation protocol to all compared methods, except that Re-MemR1 is evaluated under its original chunk-wise framework with callback retrieval for train-test con-sistency. CorpusQA and LongMemEval are evalu-ated with LLM-as-judge using Kimi-K2.6 (Moon-shot AI, 2026) 1, MRCR-8needle with sequence match, and RULER synthetic QA with F1 score. For evaluation efficiency, we downsample the origi-nal 800 MRCR-8needle examples to 100 examples, use the 128K-token subset of CorpusQA, and use the 115K-token LongMemEval-S subset. Details for evaluation are provided in Appendix C. 
+
+5.3.2 Main Results 
+
+Table 2 shows that InfoMem achieves the best over-all performance across all four long-context bench-marks, outperforming both Outcome-only GRPO and ReMemR1. Compared with the initial model, InfoMem consistently improves both retrieval-oriented tasks and more memory-intensive settings. These results suggest that answer-conditioned in-formation gain provides an effective supervision signal for final-memory formation beyond sparse final-answer correctness. In contrast, Outcome-only GRPO produces less consistent improvements. Although it im-proves over the initial model on CorpusQA, Long-MemEval, and RULER synthetic QA, it substan-
+
+> 1Manual verification shows high similarity to human judg-ments: 99.5% on CorpusQA and 96.8% on LongMemEval.
+
+6tially degrades performance on MRCR-8needle, falling below the initial model. This result sug-gests that optimizing only sparse outcome rewards may lead to degraded long-context retrieval behav-ior. InfoMem avoids this degradation and achieves the best overall performance, supporting the need for a memory-specific reward signal in chunk-wise long-context RL. ReMemR1 also fails to match InfoMem under our sample-aligned evaluation. One possible ex-planation is that its intermediate reward design is primarily based on word-level recall against the ground-truth answer, which may encourage lexical overlap rather than preserving semantically sup-porting evidence. 
+
+6 Analysis and Ablation 
+
+We next analyze the key design choices underlying InfoMem. Specifically, we study which trajecto-ries should receive information-gain supervision, why information-gain rewards must be normalized before reward composition, and why the reward should be conditioned on the ground-truth answer rather than on the query. 
+
+6.1 Which Side Should Receive Information-gain Supervision? 
+
+We analyze which trajectories should receive information-gain supervision. Specifically, we compare three supervision-side variants: Success 
+
+(the default InfoMem setting); Wrong , which ap-plies rgain only to failed trajectories; and Both ,which applies it to both. All variants use the same training setup, differing only in the supervision. 
+
+6.1.1 Main Setting with Outcome Reward 
+
+We retain the outcome reward and vary only the supervision side of the information-gain term. As shown in the top panel of Figure 3, success-only supervision produces the most stable validation. This behavior supports the role of successful tra-jectories as positive memory examples: their final memories are already associated with correct final answers, and rgain can further distinguish which successful memories provide stronger support for the ground-truth answer. By contrast, wrong-side and both-side supervi-sion exhibit unstable training dynamics. Both vari-ants initially improve but collapse during mid-stage training, with the both-side variant remaining near zero afterward. This suggests that failed trajecto-ries may provide weak useful signals early in train-0 20 40 60 80 100 120        
+
+> 0.0
+> 0.2
+> Accuracy
+> Accuracy on validation set
+> 010 20 30 40 50
+> Training step
+> 0.0
+> 0.1
+> Accuracy
+> Accuracy on training set (no Outcome)
+> Success Wrong Both
+> Figure 3: Effect of information-gain supervision side. Top: with outcome reward, validation accuracy mea-sures generalization. Bottom: without explicit outcome reward, training accuracy diagnoses whether each su-pervision side provides a usable learning signal. Thick lines show sliding-window smoothing with window size 5, and light lines show raw values.
+
+ing, but their associated memories become increas-ingly noisy as optimization proceeds. Mixing suc-cessful and failed memories within the same reward objective further weakens the positive memory-shaping effect of success-only supervision. 
+
+6.1.2 No-outcome Diagnostic 
+
+We further conduct a diagnostic experiment with-out explicit outcome reward. Rather than serving as the main training objective, this experiment tests whether rgain alone can provide a usable learning signal under different supervision sides. Specifi-cally, we remove Routcome and optimize using only the information-gain reward under success-only, wrong-only, and both-side supervision. The bottom panel of Figure 3 shows that only success-only supervision produces sustained im-provement in training accuracy, whereas wrong-only and both-side supervision fail to produce sta-ble learning behavior. This result suggests that success-side information gain can provide mean-ingful memory shaping even without explicit out-come reward, while wrong-side supervision does not provide a reliable optimization signal. Over-all, these findings support using information-gain reward as positive memory shaping over success-ful trajectories rather than as uniform supervision across all trajectories. 7Model CorpusQA LongMemEval MRCR-8needle RULER synthetic QA               
+
+> InfoMem 19.453 12.800 0.279 36.848
+> InfoMem w/o rgain normalization 16.109 11.600 0.029 35.371 InfoMem with QueryPMI 18.237 8.000 0.117 26.163
+
+Table 3: Ablation results on long-context benchmarks. All scores are reported as percentages. The best score for each benchmark is shown in bold. 0 20 40 60 80 100 120 
+
+> step
+> 0
+> 20
+> 40
+> 60
+> Repetition rate / %
+> Query Repetition in Memory
+> queryPMI
+> InfoMem
+
+Figure 4: Fraction of rollouts whose final memory re-peats the query during training. 
+
+6.2 Why Is Normalization Necessary Before Reward Composition? 
+
+We evaluate the role of pre-composition normaliza-tion by removing the normalization of rgain before reward composition while keeping all other settings unchanged. As shown in Table 3, removing this normalization consistently degrades performance across all evaluated benchmarks. The degradation is especially pronounced on retrieval-oriented tasks, suggesting that raw likelihood-gain rewards are not directly comparable across rollout groups. These results support the need for normaliza-tion before reward composition. Since raw rgain 
+
+magnitudes can vary substantially across prompts, directly combining them with sparse outcome re-wards may introduce unstable reward scaling. Nor-malizing rgain within successful trajectories con-verts it into a relative memory-quality signal be-fore reward composition, producing a more stable reward-shaping signal during training. 
+
+6.3 Why Must the Reward Be Answer-conditioned Rather Than Query-conditioned? 
+
+We next examine whether query relevance alone is sufficient for final-memory reward design. To this end, we construct a query-conditioned vari-ant, QueryPMI, which replaces the ground-truth answer in rgain with the query itself. Specifically, given a final memory M and the query x, we use the template “Based on the previous memory {M}, we can answer the query {x}.” and compute the corresponding per-token log-likelihood gain on query. This formulation is intuitively appealing because useful memories are often related to the query. However, query relevance is not equivalent to answer support: a memory can increase query likelihood simply by copying or paraphrasing the query without preserving answer-supporting evi-dence. Table 3 shows that QueryPMI performs consis-tently worse than InfoMem across all evaluated benchmarks, indicating that query-conditioned like-lihood gain is a substantially weaker final-memory reward than answer-conditioned information gain. Figure 4 further explains this degradation. Dur-ing training, QueryPMI rapidly increases the pro-portion of rollouts whose final memories repeat the query, whereas InfoMem keeps this proportion close to zero. This behavior suggests that the model exploits the query-conditioned objective by making the query easier to predict from memory rather than learning to preserve answer-supporting evidence. These results highlight the importance of condition-ing the reward on the ground-truth answer rather than on the query alone. Additional training and validation curves are provided in Appendix E. 
+
+7 Conclusion 
+
+We studied final-memory reward design for chunk-wise long-context memory agents. While outcome-only GRPO supervises memory formation only indirectly through final-answer correctness, In-foMem introduces answer-conditioned information gain as a direct reward signal for final-memory utility. Experiments show that InfoMem consis-tently improves long-context memory-agent perfor-mance over outcome-only GRPO and a comparable memory-agent RL baseline, ReMemR1. Further analyses reveal three key properties of effective final-memory rewards: they should op-erate as positive memory shaping over successful trajectories, be normalized before reward composi-tion, and be conditioned on the ground-truth answer 8rather than on the query alone. Overall, our results suggest that answer-conditioned information gain provides a more direct and effective supervision signal for learning useful final memories in chunk-wise long-context RL. 
+
+Limitations 
+
+Despite these promising results, our current study still has several limitations. First, our experiments use a limited training sub-set and a relatively small base model. This design reflects both the high computational cost of long-context reinforcement learning and our focus on controlled evaluation of the proposed reward de-sign rather than large-scale benchmark optimiza-tion. Scaling InfoMem to larger models and sub-stantially larger training corpora remains an impor-tant direction for future study. Second, this work focuses specifically on chunk-wise long-context memory agents. The proposed reward is designed for settings in which the model sequentially processes context chunks, maintains an explicit memory state, and generates the final answer from the resulting final memory. Its appli-cability to other long-context paradigms, such as retrieval-only systems or full-context single-pass models, remains unexplored. Third, the current reward is defined only at the fi-nal step. Although GRPO propagates the resulting trajectory-level advantage to all generated tokens, the reward itself evaluates only the final memory and final answer. Extending answer-conditioned in-formation gain toward intermediate memory states and step-wise process supervision remains future work. Potential risks should also be considered. Since InfoMem encourages final memories that increase support for a target answer, erroneous answers or biased source documents may lead the model to preserve and amplify misleading evidence. The answer-conditioned reward may also be over-optimized toward memories that are highly asso-ciated with the expected answer while omitting important qualifications from the original context. These risks are especially relevant in high-stakes long-document applications, such as legal, medical, or financial analysis, where compressed memory states should not replace source-document verifica-tion or human review. 
+
+References 
+
+Guanzheng Chen, Michael Qizhe Shieh, and Lidong Bing. Longrlvr: Long-context reinforcement learn-ing requires verifiable context rewards. In The Four-teenth International Conference on Learning Repre-sentations .Jianlyu Chen, Shitao Xiao, Peitian Zhang, Kun Luo, Defu Lian, and Zheng Liu. 2024. M3-embedding: Multi-linguality, multi-functionality, multi-granularity text embeddings through self-knowledge distillation. In Findings of the Asso-ciation for Computational Linguistics: ACL 2024 ,pages 2318–2335, Bangkok, Thailand. Association for Computational Linguistics. Zihang Dai, Zhilin Yang, Yiming Yang, Jaime Car-bonell, Quoc Le, and Ruslan Salakhutdinov. 2019. Transformer-XL: Attentive language models beyond a fixed-length context. In Proceedings of the 57th Annual Meeting of the Association for Computational Linguistics , pages 2978–2988, Florence, Italy. Asso-ciation for Computational Linguistics. Siyu Ding, Junyuan Shang, Shuohuan Wang, Yu Sun, Hao Tian, Hua Wu, and Haifeng Wang. 2021. Ernie-doc: A retrospective long-document modeling trans-former. In Proceedings of the 59th Annual Meet-ing of the Association for Computational Linguistics and the 11th International Joint Conference on Natu-ral Language Processing (Volume 1: Long Papers) ,pages 2914–2927. Leo Gao, Jonathan Tow, Baber Abbasi, Stella Bider-man, Sid Black, Anthony DiPofi, Charles Foster, Laurence Golding, Jeffrey Hsu, Alain Le Noac’h, Haonan Li, Kyle McDonell, Niklas Muennighoff, Chris Ociepa, Jason Phang, Laria Reynolds, Hailey Schoelkopf, Aviya Skowron, Lintang Sutawika, and 5 others. 2024. The language model evaluation har-ness. Google. 2026. Gemini 3 flash preview. 
+
+https://ai.google.dev/gemini-api/docs/ models/gemini-3-flash-preview . Google AI for Developers. Last updated 2026-04-28 UTC. Accessed: 2026-05-19. Xin Guan, Zijian Li, Shen Huang, Pengjun Xie, Jingren Zhou, and Jiuxin Cao. 2026. Evidence-augmented policy optimization with reward co-evolution for long-context reasoning. Preprint , arXiv:2601.10306. Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Peiyi Wang, Qihao Zhu, Runxin Xu, Ruoyu Zhang, Shirong Ma, Xiao Bi, and 1 others. 2025. Deepseek-r1 incentivizes reasoning in llms through reinforce-ment learning. Nature , 645(8081):633–638. Cheng-Ping Hsieh, Simeng Sun, Samuel Kriman, Shan-tanu Acharya, Dima Rekesh, Fei Jia, and Boris Gins-burg. Ruler: What’s the real context size of your long-context language models? In First Conference on Language Modeling .
+
+9DeLesley Hutchins, Imanol Schlag, Yuhuai Wu, Ethan Dyer, and Behnam Neyshabur. 2022. Block-recurrent transformers. In Advances in Neural Information Processing Systems , volume 35, pages 33248–33261. Curran Associates, Inc. Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph Gonza-lez, Hao Zhang, and Ion Stoica. 2023. Efficient mem-ory management for large language model serving with pagedattention. In Proceedings of the 29th Sym-posium on Operating Systems Principles, SOSP 2023, Koblenz, Germany, October 23-26, 2023 , pages 611– 626. ACM. Kuang-Huei Lee, Xinyun Chen, Hiroki Furuta, John Canny, and Ian Fischer. 2024. A human-inspired reading agent with gist memory of very long contexts. In International Conference on Machine Learning ,pages 26396–26415. PMLR. Shih-Yang Liu, Xin Dong, Ximing Lu, Shizhe Diao, Peter Belcak, Mingjie Liu, Min-Hung Chen, Hongxu Yin, Yu-Chiang Frank Wang, Kwang-Ting Cheng, Yejin Choi, Jan Kautz, and Pavlo Molchanov. 2026. Gdpo: Group reward-decoupled normalization pol-icy optimization for multi-reward rl optimization. 
+
+Preprint , arXiv:2601.05242. Zhiyuan Lu, Chenliang Li, Yingcheng Shi, Weizhou Shen, Ming Yan, and Fei Huang. 2026. Corpusqa: A 10 million token benchmark for corpus-level analysis and reasoning. Preprint , arXiv:2601.14952. Moonshot AI. 2026. Kimi k2.6: Advancing open-source coding. Kimi Tech Blog. Accessed: 2026-05-19. Tsendsuren Munkhdalai, Manaal Faruqui, and Sid-dharth Gopal. 2024. Leave no context behind: Efficient infinite context transformers with infini-attention. Preprint , arXiv:2404.07143. OpenAI. 2025. Openai mrcr: Long context multi-ple needle in a haystack benchmark. https:// huggingface.co/datasets/openai/mrcr . Hug-ging Face dataset repository. Accessed: 2026-05-19. Charles Packer, Sarah Wooders, Kevin Lin, Vivian Fang, Shishir G. Patil, Ion Stoica, and Joseph E. Gonzalez. 2024. Memgpt: Towards llms as operating systems. 
+
+Preprint , arXiv:2310.08560. Bowen Ping, Zijun Chen, Yiyao Yu, Tingfeng Hui, Junchi Yan, and Baobao Chang. 2026. Longr: Unleashing long-context reasoning via reinforce-ment learning with dense utility rewards. Preprint ,arXiv:2602.05758. Ofir Press, Noah Smith, and Mike Lewis. Train short, test long: Attention with linear biases enables input length extrapolation. In International Conference on Learning Representations .Chen Qian, Dongrui Liu, Haochen Wen, Zhen Bai, Yong Liu, and Jing Shao. 2025. Demystifying reasoning dynamics with mutual information: Thinking tokens are information peaks in llm reasoning. Preprint ,arXiv:2506.02867. Qwen, :, An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chengyuan Li, Dayiheng Liu, Fei Huang, Haoran Wei, Huan Lin, Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin Yang, Jiaxi Yang, Jingren Zhou, and 25 oth-ers. 2025. Qwen2.5 technical report. Preprint ,arXiv:2412.15115. Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Percy Liang. 2016. SQuAD: 100,000+ questions for machine comprehension of text. In Proceedings of the 2016 Conference on Empirical Methods in Natu-ral Language Processing , pages 2383–2392, Austin, Texas. Association for Computational Linguistics. Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Zhang, Y. K. Li, Y. Wu, and Daya Guo. 2024. Deepseekmath: Pushing the limits of mathemati-cal reasoning in open language models. Preprint ,arXiv:2402.03300. Weizhou Shen, Ziyi Yang, Chenliang Li, Zhiyuan Lu, Miao Peng, Huashan Sun, Yingcheng Shi, Shengyi Liao, Shaopeng Lai, Bo Zhang, Dayiheng Liu, Fei Huang, Jingren Zhou, and Ming Yan. 2025. Qwenlong-l1.5: Post-training recipe for long-context reasoning and memory management. Preprint ,arXiv:2512.12967. Guangming Sheng, Chi Zhang, Zilingfeng Ye, Xibin Wu, Wang Zhang, Ru Zhang, Yanghua Peng, Haibin Lin, and Chuan Wu. 2025. Hybridflow: A flexible and efficient rlhf framework. In Proceedings of the Twentieth European Conference on Computer Sys-tems , pages 1279–1297. Yaorui Shi, Yuxin Chen, Siyuan Wang, Sihang Li, Hengxing Cai, Qi Gu, Xiang Wang, and An Zhang. 2026. Look back to reason forward: Revisitable memory for long-context llm agents. Preprint ,arXiv:2509.23040. Liang Wang, Nan Yang, Xiaolong Huang, Linjun Yang, Rangan Majumder, and Furu Wei. 2024. Multilingual e5 text embeddings: A technical report. Technical Report MSR-TR-2024-45, Microsoft. Di Wu, Hongwei Wang, Wenhao Yu, Yuwei Zhang, Kai-Wei Chang, and Dong Yu. Longmemeval: Bench-marking chat assistants on long-term interactive mem-ory. In The Thirteenth International Conference on Learning Representations .Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Bengio, William Cohen, Ruslan Salakhutdinov, and Christo-pher D. Manning. 2018. HotpotQA: A dataset for diverse, explainable multi-hop question answering. In Proceedings of the 2018 Conference on Empiri-cal Methods in Natural Language Processing , pages 
+
+10 2369–2380, Brussels, Belgium. Association for Com-putational Linguistics. Hongli Yu, Tinghong Chen, Jiangtao Feng, Jiangjie Chen, Weinan Dai, Qiying Yu, Ya-Qin Zhang, Wei-Ying Ma, Jingjing Liu, Mingxuan Wang, and Hao Zhou. 2025. Memagent: Reshaping long-context llm with multi-conv rl-based memory agent. Preprint ,arXiv:2507.02259. Yanzhao Zhang, Mingxin Li, Dingkun Long, Xin Zhang, Huan Lin, Baosong Yang, Pengjun Xie, An Yang, Dayiheng Liu, Junyang Lin, Fei Huang, and Jingren Zhou. 2025. Qwen3 embedding: Advancing text embedding and reranking through foundation models. 
+
+Preprint , arXiv:2506.05176. Qingfei Zhao, Ruobing Wang, Yukuo Cen, Daren Zha, Shicheng Tan, Yuxiao Dong, and Jie Tang. 2024. LongRAG: A dual-perspective retrieval-augmented generation paradigm for long-context question an-swering. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing ,pages 22600–22632, Miami, Florida, USA. Associa-tion for Computational Linguistics. Zijian Zhou, Ao Qu, Zhaoxuan Wu, Sunghwan Kim, Alok Prakash, Daniela Rus, Jinhua Zhao, Bryan Kian Hsiang Low, and Paul Pu Liang. 2025. Mem1: Learning to synergize memory and rea-soning for efficient long-horizon agents. Preprint ,arXiv:2506.15841. 
+
+A Implementation Details 
+
+A.1 Model, Training Data, and Compute 
+
+All training runs use Qwen2.5-1.5B-Instruct (Qwen et al., 2025) as the base model and the correspond-ing Qwen2.5 tokenizer. All compared methods are initialized from the same base checkpoint and are trained under the same chunk-wise memory-agent framework. We implement RL fine-tuning with the veRL framework (Sheng et al., 2025). We train on RULER-HotpotQA (Yu et al., 2025), a long-document QA dataset constructed by ap-plying the RULER (Hsieh et al.) long-context generation paradigm to HotpotQA (Yang et al., 2018). Each example contains a query, a ground-truth answer, and a long context consisting of 200 documents. The original training split contains 32,768 examples, totaling approximately 973M to-kens, and the validation split contains 128 exam-ples, totaling approximately 4.1M tokens. To focus on controlled reward-design evaluation rather than large-scale benchmark optimization, we downsam-ple the training split to 512 examples, correspond-ing to approximately 15.2M tokens, while keeping the validation split unchanged.                             
+
+> Hyperparameter Value
+> Base model Qwen2.5-1.5B-Instruct Tokenizer Qwen2.5 tokenizer Training dataset RULER-HotpotQA Training examples 512 Validation examples 128 Training tokens about 15.2M Validation tokens about 4.1M Documents per example 200 Algorithm GRPO Rollouts per prompt 8Rollout temperature 1Rollout top-p1Training batch size 256 PPO mini-batch size 64 PPO epochs 1Clip epsilon 0.2 Learning rate 1×10 −6
+> Warmup steps 2KL loss weight 0.001 Training steps 120 Chunk size 5000 tokens Maximum memory length 1024 tokens InfoMem coefficient β0.2 GPU-hours per run about 440
+
+Table 4: Training configuration used for the main com-parison experiments. Decoding, maximum input/output length, and KL-related settings are kept fixed across compared methods.      
+
+> Parameter Value
+> Advantage mixing coefficient α0.8 Action reweighting false Maximum prompt length 2048 tokens
+
+Table 5: ReMemR1-specific reward and advantage pa-rameters. 
+
+Table 4 summarizes the main training configura-tion. All main comparison methods use the same data, base model, rollout number, optimization bud-get, decoding configuration, and compute budget. Each training run requires approximately 440 GPU-hours on 16 NVIDIA H20 GPUs. ReMemR1 additionally uses method-specific advantage-composition parameters. Since Re-MemR1 retrieves previous memories and inserts them back into the recurrent prompt, we set its maximum prompt length to 2048 tokens. These ReMemR1-specific settings are kept consistent with the original ReMemR1 setting and are sum-marized in Table 5. 
+
+A.2 GRPO and Reward Implementation 
+
+Algorithm 1 summarizes the reward-construction procedure used to interface InfoMem with GRPO. The procedure only changes the scalar reward as-11 Algorithm 1 InfoMem Reward Construction                                                                                              
+
+> Input: Query x, long context D, ground-truth answer y∗,rollout group size n
+> Output: Rollout rewards {Ri}ni=1 for GRPO 1: {(Mi,ˆyi)}ni=1 ←ROLLOUT (πθ, x, D, n )
+> 2: for i= 1 , . . . , n do
+> 3: Routcome ,i ←1[Norm(ˆ yi) = Norm( y∗)]
+> 4: Ri←Routcome ,i
+> 5: end for
+> 6: S ← { i:Routcome ,i = 1 }
+> 7: if |S| >0then
+> 8: for i∈ S do
+> 9: ri←rgain (x, M i, y ∗)▷teacher-forced scoring 10: end for
+> 11: if |S| = 1 then
+> 12: ˜ri←rifor the only i∈ S
+> 13: else
+> 14: μS←mean( {ri:i∈ S} )
+> 15: σS←std( {ri:i∈ S} )
+> 16: for i∈ S do
+> 17: ˜ri←(ri−μS)/(σS+ϵ)
+> 18: end for
+> 19: end if
+> 20: for i∈ S do
+> 21: Ri←Ri+β˜ri
+> 22: end for
+> 23: end if
+> 24: return {Ri}ni=1
+
+signed to each rollout; the GRPO optimizer itself is unchanged. The reward computation is detached from the policy-gradient path. After reward composition, the resulting trajectory-level advantage is assigned to all generated tokens in the rollout, including both memory-update tokens and final-answer tokens. The normalized matching rule used to compute 
+
+Routcome in Algorithm 1 is used only for training-time rewards; benchmark evaluation uses the task-specific metrics in Section 5.3.1. 
+
+A.3 Training-time Outcome Reward 
+
+During training, the sparse outcome reward is computed by normalized boxed-answer match-ing following the default settings in veRL frame-work (Sheng et al., 2025). For each rollout, we first keep the last 300 characters of the generated solution and convert them to lowercase. We then extract the answer from the last occurrence of ei-ther \boxed{...} or \boxed in this suffix, as the training prompts explicitly require the model to place the final answer inside a \boxed{} expres-sion. If no boxed answer is found, the rollout is assigned zero outcome reward. The extracted answer is compared against a list of ground-truth answers. A rollout is marked suc-cessful if the extracted answer matches any ground-truth answer after normalization: 
+
+Routcome = 1 [∃y ∈ Y ∗ : Norm(ˆ y) = Norm( y)] ,
+
+where Y∗ denotes the set of acceptable ground-truth answers. The normalization follows the string normalization used in the Hendrycks MATH evaluation script from EleutherAI’s lm-evaluation-harness (Gao et al., 2024). It removes line breaks, inverse spaces, dollar signs, percentage symbols, 
+
+\left /\right , degree markers, and whitespace; normalizes tfrac /dfrac to frac ; normalizes es-caped backslashes; and canonicalizes decimal forms such as .5 to 0.5 . The normalized strings are then compared by exact matching. 
+
+B Synthetic Hallucinated-Evidence Diagnostic 
+
+B.1 Dataset Construction 
+
+We construct the hallucinated-evidence diagnos-tic from SQuAD (Rajpurkar et al., 2016). Each original example contains a question, a support-ing context, and a ground-truth answer. To reduce the influence of parametric knowledge, we retain only examples for which the scoring model fails to answer correctly without context but succeeds when conditioned on the original supporting con-text. This filtering makes the diagnostic focus on context-dependent evidence use rather than memo-rized answer recall. For each retained QA pair, we build a three-context candidate set consisting of the original sup-porting context and two synthetic hallucinated con-texts. The hallucinated contexts are generated with Gemini 3 Flash preview (Google, 2026). They are required to preserve the topic, discourse structure, and surface style of the original passage while re-placing answer-critical facts so that the resulting text no longer supports the ground-truth answer. This creates a controlled setting in which lexical and topical similarity alone is insufficient for iden-tifying the truly answer-supporting context. After construction, each diagnostic instance contains one positive context and two hallucinated negative con-texts, and each evidence score is evaluated by rank-ing these three candidates for the same question-answer pair. 
+
+B.2 Hallucinated Context Generation Prompt 
+
+We use Gemini 3 Flash preview to generate two hallucinated contexts for each retained QA pair. The prompt provides the question, the ground-truth 12 answer, and the original supporting context. The generation is constrained to keep the passage topi-cally and stylistically similar to the original context while corrupting answer-critical facts, so that the generated contexts remain plausible distractors but no longer support the ground-truth answer. The prompt template is shown below. 
+
+> You are given a QA sample. Generate two hallucinated contexts. Requirements: 1. Keep each context relevant to the question. 2. Preserve the topic, style, and structure of the reference context as much as possible. 3. Modify key supporting facts so that the context does not support the gold answer. 4. Do not change the question. 5. Do not remove all relevant information. 6. Do not reveal the gold answer directly. 7. Do not add meta text, warnings, or labels indicating that the context is false. Question: {question} Gold answer: {gold_answer} Reference context: {context} Return format: {"hallucinated_context_1": "...", "hallucinated_context_2": "..." }
+
+We conduct manual spot checks to verify the quality of the generated hallucinated contexts, en-suring that they remain fluent and plausible while no longer supporting the ground-truth answer. 
+
+B.3 Evidence Score Computation B.3.1 Information-gain Score 
+
+For each candidate context c, we compute the answer-conditioned information-gain score with the same Qwen2.5-1.5B-Instruct model used in training: 
+
+rgain (x, c, y ∗) = 1
+
+|y∗| log Pθ(y∗ | x, c )
+
+− 1
+
+|y∗| log Pθ(y∗ | x, ∅).
+
+(11) The two likelihood terms are computed under teacher forcing over the ground-truth answer to-kens. The null-context term uses the same query x
+
+but replaces the candidate context with an empty context. No answer sampling or decoding is used for this score. 
+
+B.3.2 Embedding Similarity 
+
+For embedding-based scores, we compare each candidate context against a question-answer query representation. Specifically, we encode the can-didate context c and the template “Question: 
+
+{QUESTION} Answer: {ANSWER} ” with the same embedding model, then compute cosine similarity between the two embeddings. We evaluate this procedure with three open-source embedding mod-els: Qwen3-Embedding-0.6B (Zhang et al., 2025), BGE-M3 (Chen et al., 2024), and multilingual-E5-large-instruct (Wang et al., 2024). Scores are com-puted independently for each embedding model. 
+
+B.3.3 Attention-based Scores 
+
+For attention-based scores, we use the same Qwen2.5-1.5B-Instruct model and feed the can-didate context, question, and ground-truth answer into the model. We extract attention from the final attention layer. Since the layer contains multiple attention heads, we first average attention weights across heads. Let Au,v denote the resulting head-averaged final-layer attention from token u to token 
+
+v, Y denote the answer-token positions, and C de-note the candidate-context token positions. ATTN -M ASS measures the average total atten-tion assigned from answer tokens to candidate-context tokens: 
+
+smass = 1
+
+|Y| 
+
+X
+
+> u∈Y
+
+X
+
+> v∈C
+
+Au,v . (12) ATTN -T OP 1 measures the average strongest context-token attention for each answer token: 
+
+stop1 = 1
+
+|Y| 
+
+X
+
+> u∈Y
+
+max  
+
+> v∈C
+
+Au,v . (13) Both attention scores are higher-is-better and are computed without using the generated answer. 
+
+B.4 Metrics: MRR and Z-score SNR 
+
+For each question, the candidate set contains one true supporting context and two hallucinated con-texts. Since all scores are higher-is-better, we sort the three candidates in descending score or-der and record the rank of the true supporting con-text. Given N diagnostic examples, mean recipro-cal rank is computed as 
+
+MRR = 1
+
+N
+
+> N
+
+X
+
+> q=1
+
+1rank supporting context 
+
+. (14) 13 MRR measures whether a score ranks the true sup-porting context ahead of hallucinated contexts. We also compute a Z-score signal-to-noise ratio (SNR) to measure the stability of the true-versus-hallucinated separation. For each question q, let s+
+
+> q
+
+denote the score of the true context and s−
+
+> q, 1
+
+, s −
+
+> q, 2
+
+denote the two hallucinated-context scores. We first standardize the three scores within the same question: 
+
+zq,j = sq,j − μq
+
+σq + ϵ , j ∈ { +, 1, 2}, (15) where μq and σq are computed over the three candi-date scores for question q, and ϵ is used for numer-ical stability. We then compute two standardized margins for each question: 
+
+∆q,k = z+ 
+
+> q
+
+− z−
+
+> q,k
+
+, k ∈ { 1, 2}. (16) Pooling all 2N margins into ∆, the reported SNR is 
+
+SNR = mean(∆) std(∆) . (17) A higher SNR indicates that the true context is separated from hallucinated contexts with a larger and more stable standardized margin, making the score more suitable as a reward signal. 
+
+C Evaluation Protocols 
+
+C.1 Benchmark Summary 
+
+Table 6 summarizes the evaluation benchmarks used in Section 5.3. InfoMem and the outcome-only GRPO baseline are evaluated under the same chunk-wise memory-agent framework, with the same memory budget, decoding configuration, benchmark subset, and metric for each benchmark. ReMemR1 is evaluated under its original callback-retrieval framework, described in Appendix C.2, to preserve train-test consistency. MRCR-8needle (OpenAI, 2025) is particularly challenging in the chunk-wise memory-agent set-ting because the model cannot directly attend over the full context. Instead, it must preserve multi-ple sparse targets through compressed sequential memory updates. This setting is difficult for a 1.5B model under an 8-needle retrieval task, so abso-lute sequence-match scores are low across meth-ods. The comparison remains controlled because all methods use the same model scale, memory length, downsampled subset, and evaluation proto-col. For RULER synthetic QA (Yu et al., 2025), we use the 262,144-token evaluation setting and report F1. CorpusQA (Lu et al., 2026) is evaluated on the 128K-token subset, and LongMemEval (Wu et al.) is evaluated on the 115K-token LongMemEval-S subset. For CorpusQA and LongMemEval, we use LLM-as-judge evaluation with Kimi-K2.6; the judging protocol is described in Appendix C.3. For MRCR-8needle, we use the same fixed 100-example subset for all methods to reduce evaluation cost. All model generations during benchmark eval-uation are served with vLLM (Kwon et al., 2023). Each evaluation is run once. Following the original ReMemR1 paper and code, ReMemR1 is evaluated with temperature sampling at t = 0 .7, whereas all other evaluations use greedy sampling. The evalua-tion datasets are released under permissive MIT or Apache-2.0 licenses and can be used for academic research. 
+
+C.2 ReMemR1 Callback-Retrieval Framework 
+
+ReMemR1 augments the standard chunk-wise memory-agent framework with callback retrieval over previously generated memories. At each chunk, the model maintains a current memory and a callback query. The callback query is used to retrieve a relevant historical memory from the memories generated in earlier steps, and the re-trieved memory is inserted into the next recurrent prompt together with the current memory, the cur-rent chunk, and the original question. The model then generates an updated memory and a new call-back query for the next step. At the final step, ReMemR1 similarly uses the accumulated memory state and callback-retrieved historical memory to produce the answer. Because this callback mechanism changes the inference framework rather than only the reward function, we do not force ReMemR1 into the pure chunk-wise setting used by InfoMem. Instead, we keep the shared settings aligned where applicable, including the base model, training data, chunk size, rollout decoding configuration, and benchmark evaluation protocol, while preserving ReMemR1-specific callback and advantage settings. 
+
+C.3 LLM-as-Judge Protocol 
+
+CorpusQA and LongMemEval are evaluated with the same binary answer-equivalence judging pro-tocol. For each example, the judge receives the query, the ground-truth answer candidates, and the 14 Benchmark Task Type Samples Sample Context Metric Judge Subset                        
+
+> MRCR-8needle NIAH,8 needles 100 4K ∼1M tokens Seq. match N/A 100 / 800 RULER synthetic QA Sparse QA 128 262K tokens F1 score N/A 262K subsets CorpusQA Corpus QA 329 128K tokens LLM judge Kimi-K2.6 128K subset LongMemEval Dialogue QA 500 115K tokens LLM judge Kimi-K2.6 LongMemEval-S
+
+Table 6: Summary of evaluation benchmarks and metrics. 
+
+model answer. It does not receive the method name or any training configuration. The judge returns a binary label, where 1 denotes a correct answer and 0 denotes an incorrect answer. The reported score is the percentage of examples labeled correct. We use Kimi-K2.6 as the judge model and apply the following prompt: 
+
+> SYSTEM_PROMPT = """You are a strict answer-equivalence judge. Return 1 only when the model answer fully contains one ground-truth candidate with exactly the same meaning: nothing meaningful is missing and nothing meaningful is added. Ignore only semantically empty surface differences, such as articles like "the", punctuation, spaces, line breaks, case, LaTeX, or boxing / markup symbols. If the answer is missing any part of the ground truth, adds any meaningful content, or you are unsure, return 0. First write a brief reason. Then write the final binary judgment inside <answer></answer>. The <answer> tag must contain exactly one character: 0 or 1.""" USER_TEMPLATE = """Query: {query} Ground truth candidates: {ground_truth_candidates} Model answer: {answer} Does the model answer fully contain any ground-truth candidate with exactly the same meaning, allowing only semantically empty surface characters such as "the", punctuation, spaces, case differences, or boxing / markup symbols? Output format: Reason: <brief reason> <answer>0 or 1</answer>"""
+
+The final decision is parsed from the binary value inside the <answer> tag. This protocol treats para-phrases and minor formatting differences as cor-rect only when the predicted answer preserves the complete meaning of one ground-truth candidate. Answers are marked incorrect if they omit essen-tial information, contradict the ground truth, add meaningful unsupported content, or cannot be con-fidently judged as equivalent. 
+
+C.4 Human Calibration of LLM-as-Judge 
+
+We further conduct human calibration to assess the reliability of the LLM judge. We hired an un-dergraduate annotator and presented each example with the query, the ground-truth answer candidates, and the model answer. The annotator assigned the same binary correctness label as the LLM-as-judge protocol, and we compared the human labels with the LLM-judge outputs. We explicitly informed the annotator that the annotations would be used for anonymized academic research. The annotator was paid at an hourly rate ten times the local minimum wage. For calibration, we inspect three CorpusQA re-sult files, corresponding to the initial instruct model, the Outcome-only GRPO baseline, and InfoMem, as well as one LongMemEval result file from the Outcome-only GRPO baseline. This verification shows high agreement with human judgments, with 99.5% agreement on CorpusQA and 96.8% agree-ment on LongMemEval. 
+
+C.5 Checkpoint Selection Protocol 
+
+For the main comparison experiments, all RL meth-ods are trained for 120 optimization steps under the same training budget. During training, we evalu-ate checkpoints every 2 optimization steps on the validation split described in Appendix A.1. The final checkpoint reported for each method is se-lected according to the highest validation accuracy under this fixed validation protocol. If multiple checkpoints obtain the same validation accuracy, we select the earlier checkpoint to favor better gen-eralization. This selection rule is fixed before benchmark comparison and is applied consistently to all train-ing methods. It prevents selecting checkpoints based on test-set performance, while still account-ing for the instability of long-context RL fine-tuning. Diagnostic variants are evaluated with 15 the same validation-based selection principle when benchmark scores are reported. 
+
+D Prompt Templates 
+
+The memory-update and final-answer templates follow the MemAgent setting (Yu et al., 2025). We use the following template for chunk-wise memory updates: 
+
+TEMPLATE = """ You are presented with a problem, a section of an article that may contain the answer to the problem, and a previous memory. Please read the provided section carefully and update the memory with the new information that helps to answer the problem. Be sure to retain all relevant details from the previous memory while adding any new, useful information. <problem> {prompt} </problem> <memory> {memory} </memory> <section> {chunk} </section> Updated memory: """ 
+
+The final answer is generated with the following template: 
+
+TEMPLATE_FINAL_BOXED = """ You are presented with a problem and a previous memory. Please answer the problem based on the previous memory and put the answer in \\boxed{{}}. <problem> {prompt} </problem> <memory> {memory} </memory> Your answer: """ 
+
+The information-gain reward rgain uses the same final-answer template: the ground-truth answer is appended after Your answer: and scored by teacher-forced per-token log-likelihood, with either the final memory or an empty memory field. QueryPMI instead uses the following query-conditioned template: 
+
+TEMPLATE_QUERY_PMI = """ Based on the previous memory, <memory> {memory} </memory> we can answer the Query: """ 
+
+E Additional Training Curves and Diagnostics 
+
+E.1 Main Training Curves 0 25 50 75 100 125 150 175 
+
+> Training step
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> Training accuracy
+> Accuracy on training set
+> Baseline
+> InfoMem
+> InfoMem w/o PMI Standardization
+> InfoMem w query PMI
+
+Figure 5: Training curves for the main comparison runs and diagnostic variants. 0 25 50 75 100 125 150 175 
+
+> Training step
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> Validation accuracy
+> Accuracy on validation set
+> Baseline
+> InfoMem
+> InfoMem w/o PMI Standardization
+> InfoMem w query PMI
+
+Figure 6: Validation curves for the main comparison runs and diagnostic variants. 
+
+Figures 5 and 6 report the training and validation curves for the main comparison runs and diagnos-tic variants. All main comparison methods are trained for 120 optimization steps under the same data, model, rollout number, and validation proto-col. Checkpoints are evaluated every 2 optimiza-tion steps, and the reported benchmark checkpoint is selected according to the validation protocol de-scribed in Appendix C.5. The no-standardization ablation was addition-ally continued beyond 120 steps, because its curve was still increasing near the end of the original 16 0 20 40 60 80 100 120 140 
+
+> Training step
+> 0.0
+> 0.1
+> 0.2
+> 0.3
+> 0.4
+> 0.5
+> 0.6
+> 0.7
+> Training accuracy
+
+Accuracy on training set 
+
+> ReMemR1
+
+(a) Training accuracy. 0 20 40 60 80 100 120 140 
+
+> Training step
+> 0.05
+> 0.10
+> 0.15
+> 0.20
+> 0.25
+> 0.30
+> Validation accuracy
+
+Accuracy on validation set  
+
+> ReMemR1
+
+(b) Validation accuracy. 
+
+Figure 7: ReMemR1 training dynamics under its callback-retrieval chunk-wise framework. Both curves are smoothed with a sliding window of 5. 
+
+training budget. After continuing the run, the best checkpoint was still step 118, which lies within the original 120-step budget. Therefore, the re-ported benchmark result for this ablation remains comparable to the other methods under the fixed checkpoint-selection protocol. ReMemR1 uses a callback-retrieval chunk-wise framework rather than the pure chunk-wise frame-work used by InfoMem and the outcome-only GRPO baseline. We therefore report its training dy-namics separately in Figure 7, instead of overlaying them with the main comparison curves. Because of this framework difference, ReMemR1 is also trained for more than 120 optimization steps. 17
