@@ -1,0 +1,1632 @@
+Title: From Uniform to Learned Graph Priors: Diffusion for Structure Discovery
+
+URL Source: https://arxiv.org/pdf/2606.11831v1
+
+Published Time: Thu, 11 Jun 2026 00:55:40 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# From Uniform to Learned Graph Priors: Diffusion for Structure Discovery 
+
+# Qi Shao ∗
+
+shaoqi@seu.edu.cn School of Mathematics, Southeast University Nanjing, Jiangsu, China 
+
+# Hao Guo ∗
+
+213232865@seu.edu.cn School of Mathematics, Southeast University Nanjing, Jiangsu, China 
+
+# Jiawen Chen 
+
+jiawenchen@seu.edu.cn School of Mathematics, Southeast University Nanjing, Jiangsu, China 
+
+# Duxin Chen †
+
+chendx@seu.edu.cn School of Mathematics, Southeast University Nanjing, Jiangsu, China 
+
+# Wenwu Yu †
+
+wwyu@seu.edu.cn School of Mathematics, Southeast University Nanjing, Jiangsu, China 
+
+## Abstract 
+
+Neural relational inference (NRI) methods discover interaction graphs from trajectories through variational reasoning on discrete potential edges. However, these methods typically rely on over-simplified, factorized graph priors. Such priors, typically nearing uniform distributions, treat edges as independent entities. This sys-temic misalignment does not match the real-world systems and yields diffuse and indecisive edge posteriors limiting the reliabil-ity of structural discovery. To address this, we propose Diff-prior ,a diffusion-parameterized adaptive prior used to calibrate latent graph distribution rather than generate graphs. Our core insight is to reframe prior integration as a learnable denoising-style cali-bration that organizes scattered, uncertain edge posteriors into a more reliable overall structure which can be trained by the diffusion model. Diff-prior learns an adaptive structure prior that performs structured calibration on the edge posteriors during inference, guid-ing it towards a distribution closer to the underlying structure. The diff-prior operates before structural sampling and acts as a de-noising calibrator directly on the encoder edge distribution, which provides a generic training paradigm over structured variables. Ex-periments on standard benchmarks validated our framework, and the results indicate that Diff-prior improves the performance of structure inference and generates more decisive edge posteriors across multiple NRI-family architectures. The code is available on https://github.com/Hardy158118/Diffprior. 
+
+## CCS Concepts 
+
+• Computing methodologies → Machine learning ; Latent vari-able models . 
+
+> ∗Qi Shao and Hao Guo contributed equally to this work.
+> †Correspondence to Duxin Chen and Wenwu Yu.
+> This work is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License.
+> KDD ’26, Jeju Island, Republic of Korea
+> ©2026 Copyright held by the owner/author(s). ACM ISBN 979-8-4007-2259-2/2026/08 https://doi.org/10.1145/3770855.3817940
+
+## Keywords 
+
+Neural Relational Inference, Structural Prior, Diffusion Model 
+
+ACM Reference Format: 
+
+Qi Shao, Hao Guo, Jiawen Chen, Duxin Chen, and Wenwu Yu. 2026. From Uniform to Learned Graph Priors: Diffusion for Structure Discovery . In 
+
+Proceedings of the 32nd ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.2 (KDD ’26), August 09–13, 2026, Jeju Island, Republic of Korea. 
+
+ACM, New York, NY, USA, 15 pages. https://doi.org/10.1145/3770855.3817940 
+
+## 1 Introduction 
+
+In the observation of complex systems, dynamic information is usu-ally obtained with the trajectories of system state, such as particle coordinates, multi-agent movements, and multivariate physiologi-cal signals. However, the underlying interaction graph structure of the system is often implicit [ 1 ]. Neural Relational Inference aims to extract the "who influences whom" question from observational data, thereby constructing models that are not only predictive but also mechanistically interpretable [ 2 , 3 ]. Traditional NRI employs the classic path of "encoder inferring discrete edges, graph decoder reconstructing dynamics". However, this inference process is highly susceptible to the trap of uncertainty: Figure 1 shows the posterior edge probability distribution often exhibits excessive dispersion, leading to highly unstable reconstructed topology. This instability directly weakens the scientific persuasiveness of the model [ 4, 5 ]. The uncertainty of the prior distribution in graph structure in-ference cannot be entirely attributed to the optimization of discrete latent variables of the structure [ 6, 7 ], but rather points to deeper structural constraints in the regularization of graph uncertainty. To improve the scalability of structural distributions, NRI family methods typically employ factorized edge priors, which are usually instantiated as uniform categorical distributions. This assumption effectively deprives the model of its ability to understand graph-theoretic features such as sparsity, modularity and or motifs [ 2, 8]. When dynamic evidence cannot uniquely define the graph, this prior mismatch has low bias towards consistent configurations, leading to scattered and poorly calibrated posterior edge beliefs, ultimately reducing the robustness of the discovery, as quantified by expected calibration error (ECE) [ 9 ] in Sec. 6.4. This motivates us to learn a non-factorized structural prior that provides consistent     
+
+> arXiv:2606.11831v1 [cs.LG] 10 Jun 2026 KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Trovato et al. (a) Uniform prior
+> (b) Diff-prior
+> Trajectories Uniform prior Ambiguous Graph
+> Calibrated Graph
+> H
+> ECE
+> Edge posterior
+> Trajectories
+> Diff-prior
+> H
+> ECE
+> Edge posterior
+> denoise
+> Encoder
+> Encoder
+
+Figure 1: Diff-prior calibrates NRI graph inference. (a) A fac-torized prior can yield diffuse edge posteriors and an am-biguous graph. (b) Diff-prior denoises and calibrates encoder logits before discretization, producing sharper edge posteri-ors and a more decisive graph. 
+
+structural bias while remaining end-to-end trainable. Unlike the independent priors commonly used in NRI-family models, our prior is defined over the full edge-logit configuration rather than as a set of independent edge-wise regularization terms. Existing approaches to Neural Relational Inference primarily focus on dynamic modeling or integrating domain-specific con-straints [ 8 ]. For instance, incorporating physical simulators or dif-ferentiable constraints can enhance predictive consistency [ 10 ]. However, these methods predominantly optimize the decoder’s likelihood, prioritizing trajectory fitting over the acquisition of explicit, correlated priors at the graph structure level. Another line of research explores the complex posterior inference mecha-nisms or designs dedicated time-series encoders (such as feature extractors based on Selective State-Space Models [ 11 ]) to capture long-range dependencies or transient interaction patterns [ 8, 12 ]. Despite progress on specific tasks, these methods tend to be domain-dependent and lack a general, transferable mechanism to calibrate edge posterior beliefs and improve the stability of structure dis-covery. These limitations raise a critical question: can we learn a general structural prior that makes graph inference decisive? 
+
+To address this gap, we propose Diff-prior, a differentiable frame-work that parameterizes a non-factorized structural prior via a gen-erative diffusion process. Departing from the conventional reliance on independent edge regularization, which inherently overlooks cross-edge dependencies, our approach pivots toward learning a prior capable of enforcing global graph consistency. Instead of ex-plicitly formulating an intractable distribution 𝑝 (𝐺 ) over discrete graphs, we view the missing ingredient as a learnable calibration transformation defined on the full edge-logit tensor. Concretely, given the encoder’s edge-type logits ℓ, we seek a function 𝑇 𝜙 that maps an approximately independent logit configuration into a more coherent one, ℓ 𝑇 𝜙 
+
+−−→ ˜ℓ. The calibration target is the latent graph configuration as a whole, even though the denoising network can be implemented with a lightweight parameterization for scalability. Hand-crafted regularizers (e.g., sparsity or degree penalties) that fail to encapsulate higher-order data-driven regularities, so 𝑇 𝜙 lever-ages the generative power of diffusion models to autonomously recover the latent topology of the underlying system. We reformulate the acquisition of 𝑇 𝜙 as a denoising-style prob-lem: the framework takes perturbed or structurally ambiguous representations as input and yields refined counterparts that align with learned topological motifs. Leveraging the generative capacity of diffusion models, 𝑇 𝜙 internalizes complex statistical dependen-cies among edges via iterative perturbation and recovery, it by-passes the need for manually engineered constraints. Importantly, our approach diverges from using diffusion as a standalone graph generator; instead, we deploy the learned denoising score as a prior-driven calibrator during inference. We then inject this prior before discretization. Diff-prior operates directly on the encoder’s edge-type logits as a stochastic calibrator, which nudges inference toward plausible configurations while preserving end-to-end trainability. This logit-level interface avoids the information loss and brittleness of post-hoc corrections applied to sampled discrete graphs, and makes the module plug-and-play across NRI-style backbones. Our contributions can be summarized as follows: 
+
+• Method. We introduce Diff-prior , a diffusion-parameterized, non-factorized structural prior defined over the full edge-logit configuration. It is injected at the encoder logit level as a stochastic calibrator, enabling plug-and-play integration and joint end-to-end training with NRI-style dynamics models. 
+
+• Mechanism. We provide a diagnostic view of graph infer-ence that links prior mismatch to diffuse and miscalibrated edge posteriors, and show that Diff-prior consistently pro-duces sharper and better-calibrated edge beliefs, quantified by entropy and ECE. 
+
+• Experiments. Diff-prior demonstrates performance improve-ments across multiple benchmark tests using NRI-family methods, and ablation experiments confirm that these im-provements stem from prior modeling rather than the num-ber of parameters or training heuristics. 
+
+## 2 Related Work 
+
+Latent graph inference from trajectories. Inferring latent interactions together with dynamics from observed trajectories is central to modeling complex systems. Early works such as Interaction Net-works model object–object interactions via message passing for dynamical prediction in physical domains [ 1]. Building on this par-adigm, NRI formulates structure discovery as variational inference, where an encoder predicts discrete edge types from trajectories and a graph-conditioned decoder explains the dynamics under the latent graph [ 2 ]. This encoder–decoder template has become a stan-dard backbone for relational reasoning in physical and multi-agent systems [ 13 ]. Our work stays within this NRI-style inference setting, and focuses on improving how structural uncertainty is regularized through learned, correlated priors. 
+
+Improving dynamics and injecting physical knowledge. A large body of work enhances relational inference by strengthening the dy-namics model or incorporating domain knowledge to improve pre-diction accuracy and physical consistency. Graph Network-based Simulators improve generalization across system scales via particle-based message passing [ 14 ], and physics-guided learning combines Diff-prior KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+first-principles structure with data-driven components to improve interpretability and robustness [ 15 ]. To better generalize across diverse physical substances, Graph-based Physics Engine embeds material parameters as physical priors to model multiple substances across scenarios [ 16 ]. Related efforts explore model construction for out-of-instance recovery [ 17 ] and connections between learned simulators and particle-based simulation [ 18 ]. While effective for dynamics prediction, these methods primarily act on the decoder or likelihood, and typically do not learn an explicit non-factorized prior over graph patterns, which is the motivation of our work. 
+
+Richer inference and temporal encoders for structure discovery. 
+
+Beyond dynamics modeling, recent advances improve structure inference by developing richer posterior approximations or special-ized temporal representations. For example, selective state-space models with input-dependent transitions can handle irregular sam-pling, and the resulting temporal features can be combined with Graphical Flow Networks to approximate a posterior over struc-tures [ 12 ]. Dynamic NRI further extends the NRI framework to non-stationary settings by modeling time-varying relations and introducing a sequential relation prior over edges conditioned on history [ 19 ]. Semi-implicit Neural ODE variants improve numerical stability and efficiency for partitioned dynamics [ 20 ], and multiscale modeling has been explored via diffusion autoencoders coupled with Graph Neural ODEs to capture cross-scale co-evolution [ 21 ]. Benchmarking studies further highlight that fair comparison is chal-lenging due to domain-specific designs, and that robustness varies significantly across regimes and graph families [ 8 ]. Many of these methods still adopt factorized structural assumptions for scalability, while others focus on specialized temporal regimes; in contrast, we aim for a transferable, plug-and-play mechanism that learns a correlated structural bias to calibrate edge beliefs in NRI-style inference. 
+
+Diffusion models on discrete structures and graphs. Denoising diffusion models have become a powerful tool for learning com-plex distributions [ 22 – 24 ]. For discrete variables, discrete diffusion formulations such as D3PM provide a principled framework for Markovian corruption and denoising beyond uniform transition kernels [ 25 ]. In the graph domain, discrete graph diffusion models such as DiGress learn to denoise node and edge attributes under a discrete noising process [ 26 ], and hybrid designs such as PARD com-bine autoregressive decomposition with diffusion-based denoising to improve efficiency while preserving permutation invariance [ 27 ]. Transformer-based denoisers further strengthen conditional control in graph diffusion [ 28 ]. Most of these works study graph generation or conditional generation. In contrast, our goal is structural infer-ence in NRI-style models and we use diffusion to parameterize an adaptive structural prior and inject it at the encoder-logit interface to calibrate edge posteriors, enabling plug-and-play improvements across NRI-family backbones. 
+
+## 3 Preliminaries 
+
+Notations. We observe trajectories of 𝑁 entities over 𝑇 discrete time steps, X = {𝑥 𝑖 (𝑡 ) ∈ R𝑑 | 𝑖 = 1, . . . , 𝑁 ; 𝑡 = 1, . . . ,𝑇 }, where 𝑑 
+
+is the state dimension. Let 𝑋 𝑖 = [𝑥 𝑖 (1), . . . , 𝑥 𝑖 (𝑇 )] and denote the collection by X (e.g., as a tensor in R𝑁 ×𝑇 ×𝑑 ). We assume a latent directed interaction graph with 𝐾 discrete edge types. For each ordered pair (𝑖, 𝑗 ) ∈ E , we define a latent variable indicating the edge type from 𝑖 to 𝑗 . In our implementation, we use the fully connected directed set E = {( 𝑖, 𝑗 ) | 𝑖, 𝑗 ∈ [ 𝑁 ]} ,which includes self-loops; hence |E| = 𝑀 = 𝑁 2.An encoder 𝑓 enc parameterized by 𝜃 enc maps X to edge-type logits ℓ𝑖 𝑗 = 𝑓 enc (X)𝑖 𝑗 ∈ R𝐾 for all (𝑖, 𝑗 ) ∈ E . The decoder 𝑓 dec 
+
+parameterized by 𝜃 dec models the dynamics of X conditioned on sampled edge E.
+
+Problem definition. Given trajectories X, our goal is to infer the latent directed interaction graph by estimating the posterior of structure over edge types 
+
+𝑞 𝜃 (𝑍 | X), 𝑍 = {ℓ𝑖 𝑗 ∈ R𝐾 | ( 𝑖, 𝑗 ) ∈ E} . (1) Here the corresponding categorical distribution is parameterized by 
+
+softmax (ℓ𝑖 𝑗 ), and NRI-family methods learn an encoder–decoder model by maximizing an ELBO with a graph prior 𝑝 (𝑍 ):
+
+log 𝑝 𝜃 (X) ≥ E𝑞 𝜃 (𝑍 |X)
+
+ log 𝑝 𝜃 dec (X | 𝑍 ) − KL (𝑞 𝜃 (𝑍 | X) ∥ 𝑝 (𝑍 )) ,
+
+(2) where log 𝑝 𝜃 (X) is the maximum likelihood of trajectory data X,
+
+KL is the KL-divergence and 𝑝 (𝑍 ) is often used a uniform prior, which can leave many edges in a medium-confidence regime. We therefore seek a plug-and-play adaptive prior that improves both structure inference and posterior reliability without changing the backbone encoder/decoder. 
+
+## 4 Diffusion Prior for Neural Relational Inference 4.1 Encoder: From data space to latent space 
+
+At a high level, given the trajectories x = (x1, . . . , x𝑇 ), the encoder infers an approximate posterior distribution over latent interaction edge types logits ℓ𝑖 𝑗 . Since the ground-truth interaction graph is unknown, we operate on a fully connected graph and use a graph neural network (GNN) to predict the latent edge types [2]: 
+
+ℓ = 𝑓 𝜃 𝑒𝑛𝑐 (x), (3) where ℓ𝑖 𝑗 ∈ R𝐾 are the logits over 𝐾 interaction types for edge 
+
+(𝑖, 𝑗 ), obtained by an edge-to-node-to-edge message passing GNN encoder 𝑓 𝜃 𝑒𝑛𝑐 followed by a final linear layer. 
+
+## 4.2 Diffusion in latent space 
+
+4.2.1 Initial latent state and forward process for diffusion. Let {ℓ𝑖 𝑗 ∈
+
+R𝐾 }(𝑖,𝑗 ) denote the edge logits produced by the encoder . To obtain a continuous latent graph representation suitable for diffusion, we define a Gaussianized variational posterior over the concatenated logit tensor 
+
+𝑞 𝜃 𝑒𝑛𝑐 (𝑍 0 | x) = N 𝑍 0; ℓ, 𝜎 2enc 𝐼 , ℓ = 𝑓 𝜃 𝑒𝑛𝑐 (x). (4) where ℓ is the vector form of ℓ𝑖 𝑗 and 𝜎 enc is a fixed, sufficiently small constant and 𝐼 is the identity matrix. We employ the standard reparameterization trick, 
+
+𝑍 0 = ℓ + 𝜎 enc 𝜖, 𝜖 ∼ N ( 0, 𝐼 ). (5) so that gradients can flow through sampling. Based on continuous latent logits 𝑍 0 , we define a discrete-time forward diffusion process over 𝑆 steps. Let {𝛽 𝑠 }𝑆 𝑠 =1 be a variance KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Trovato et al. Noise Estimation 
+
+Network 
+
+Observed Dynamics Encoder 𝐀 𝐀 
+
+## 𝐀 𝐀 (𝐀 0|𝐀 )
+
+Diff-prior Decoder 𝐀 𝐀 Predicted Dynamics 
+
+Edge Posterior 
+
+## Diff-prior ... 
+
+... 
+
+... 
+
+... 
+
+## 𝐀 0 𝐀 1 𝐀 𝐀 𝐀 𝐀 𝐀 𝐀 
+
+## 𝐀 𝐀 𝐀 𝐀 𝐀 𝐀 𝐀 1𝐀 0 𝐀 𝐀 𝐀 𝐀 𝐀 𝐀 𝐀 𝐀 
+
+## 𝐀 1 𝐀 𝐀 𝐀 𝐀 𝐀 𝐀 
+
+Forward D iffusion 
+
+Reverse Denoising 
+
+## 𝐀 𝐀 (𝐀 𝐀 , 𝐀 )
+
+## Loss Objective 
+
+E𝐀 [log 𝐀 𝐀 (𝐀 |𝐀 0)] 
+
+Reconstruct Loss 
+
+## Overview 
+
+Diffusion Loss 
+
+E𝐀 0,𝐀 ,𝐀 [𝐀 𝐀 𝐀 − 𝐀 𝐀 2
+
+> 2
+
+]
+
+## 𝐀 
+
+... 
+
+... 
+
+Training Forward Inference Forward Optimization              
+
+> 𝐀 𝐀 =𝐀 𝐀 𝐀 0+1−𝐀 𝐀 𝐀
+> 𝐀 0(𝐀 𝐀 ,𝐀 ) = 𝐀 𝐀 −1−𝐀 𝐀 𝐀 𝐀 (𝐀 𝐀 ,𝐀 )
+> 𝐀 𝐀
+
+Figure 2: Diff-prior overview and training objective. We learn a diffusion-parameterized, non-factorized prior over encoder logits 𝑍 0 and inject it before discretization to calibrate NRI edge posteriors, then decode dynamics from the sampled graph. Training minimizes a reconstruction loss together with a diffusion denoising loss using a noise-estimation network. 
+
+schedule, and denote 𝛼 𝑠 := 1 − 𝛽 𝑠 and ¯𝛼 𝑠 := Î𝑠 𝑟 =1 𝛼 𝑟 . The forward noising process is a Markov chain                        
+
+> 𝑞 (𝑍 1: 𝑆 |𝑍 0)=
+> 𝑆 Ö
+> 𝑠 =1
+> 𝑞 (𝑍 𝑠 |𝑍 𝑠 −1), 𝑞 (𝑍 𝑠 |𝑍 𝑠 −1)=N 𝑍 𝑠 ;√𝛼 𝑠 𝑍 𝑠 −1, 𝛽 𝑠 𝐼 .
+> (6)
+
+By construction, the corresponding marginal admits a closed form 
+
+𝑞 (𝑍 𝑠 | 𝑍 0) = N 𝑍 𝑠 ; √ ¯𝛼 𝑠 𝑍 0, (1 − ¯𝛼 𝑠 )𝐼 , (7) which yields the reparameterized sampling rule 
+
+𝑍 𝑠 = √ ¯𝛼 𝑠 𝑍 0 + √1 − ¯𝛼 𝑠 𝜖, 𝜖 ∼ N ( 0, 𝐼 ). (8) Eq. (8) enables efficient construction of noisy latents at an arbitrary diffusion step 𝑠 without unrolling the full chain, which we leverage throughout training and inference.[22] 
+
+4.2.2 Backward denoise process of the diffusion. We instantiate dif-fusion prior by a time-conditional denoiser 𝜖 𝜃 (𝑍 𝑠 , 𝑠 ) that predicts Gaussian noise injected at the diffusion step 𝑠 . In our implementa-tion, we parameterize the denoiser with a lightweight shared MLP for efficiency. The non-factorized effect comes from defining and optimizing the diffusion prior over the full edge-logit tensor before sampling, not from explicitly modeling all pairwise edge interac-tions inside the denoiser. This keeps the module scalable while moving the posterior beyond independent edge-wise regulariza-tion toward a jointly calibrated structural state. We also provide a Transformer-based denoiser with explicit non-factorized modeling in Appendix D. Given 𝜖 𝜃 , one may equivalently form an estimate of the clean latent logits via 
+
+b𝑍 0 (𝑍 𝑠 , 𝑠 ) = 𝑍 𝑠 − √1 − ¯𝛼 𝑠 𝜖 𝜃 𝑑𝑖 𝑓 𝑓 (𝑍 𝑠 , 𝑠 )√ ¯𝛼 𝑠 
+
+. (9) Finally, we output refined logits through a residual update 
+
+𝑍 ref 0 = 𝑍 0 + 𝛾  b𝑍 0 − 𝑍 0
+
+, 𝛾 ∈ ( 0, 1], (10) where 𝛾 controls the refinement strength. We feed 𝑍 ref 0 (rather than 
+
+𝑍 0) into the decoder, which preserves an inexpensive and stable decoding interface. 
+
+## 4.3 Decoder: From latent space to data space 
+
+After the encoder and the latent diffusion process, we obtain refined edge-type logits ˜ℓ𝑖 𝑗 , stacked as ˜Z0. We convert them into edge-type probabilities via 𝝅 𝑖 𝑗 = softmax (˜ℓ𝑖 𝑗 ), and draw a discrete interaction graph G using the Gumbel–Softmax estimator with temperature 𝜏 ,which enables end-to-end training through discrete edge samples. Conditioned on G, the decoder models one-step dynamics with a graph neural network and learns 
+
+𝑝 𝜃 dec 
+
+ x𝑡 +1 | x𝑡 , G . (11) We follow the NRI decoder design and employ an Interaction-Network-style message-passing architecture, using edge-type-specific message functions to capture heterogeneous interaction mecha-nisms. We use an isotropic Gaussian observation model with fixed variance, thereby turning likelihood maximization into a differen-tiable reconstruction term Lrec . The next subsection combines Lrec 
+
+with the regularization induced by the latent diffusion prior and derives the overall training objective. 
+
+## 4.4 Loss Function 
+
+Our optimization couples the sequence model and the diffusion prior to the latent logits 𝑍 0 through their shared dependency. First, to learn the diffusion prior, we sample a timestep 𝑠 ∼ Unif {1, 2, . . . , 𝑆 }
+
+and noise 𝜖 ∼ N ( 0, 𝐼 ), construct 𝑍 𝑠 via Eq. (8) . Second, for decoder-facing reconstruction, we compute refined logits 𝑍 ref 0 using the Diff-prior KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+single-step refinement in Eq. (10) and feed 𝑍 ref 0 into the edge sam-pler and downstream decoder. This design preserves a stable and inexpensive decoding interface by avoiding an explicit reverse dif-fusion chain during training and evaluation. The overall objective is a weighted sum of the reconstruction term and the diffusion regularizer: 
+
+L = Lrec + L diff (12) 
+
+= 12𝜎 2 E𝑞 𝜃 enc (𝑍 0 |X)
+
+"
+
+E𝑞 (z|𝑍 0 ) 
+
+> 𝑇 −1
+
+∑︁ 
+
+> 𝑡 =1
+> 𝑁
+
+∑︁ 
+
+> 𝑗 =1
+
+x𝑡 +1 
+
+> 𝑗
+
+− 𝝁 𝑡 +1
+
+> 𝑗
+> 22
+
+#
+
+(13) 
+
++ E𝑍 0∼𝑞 𝜃 enc (𝑍 0 |X) E𝑠 ∼Unif ( { 1,...,𝑆 } ) , 𝜖 ∼N ( 0,I)
+
+h
+
+𝑤 𝑠 𝜖 − 𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) 22
+
+i
+
+.
+
+(14) The concrete derivation and proof are provided in Sec.5 and Ap-pendix B 
+
+## 5 Optimization Objective 5.1 Overview 
+
+Given the generative model specified in Sec. 4, we introduce a continuous latent variable 𝑍 0 formed by concatenating the edge-type logits inferred from the observed trajectories X. Our model factorizes as 
+
+𝑝 (X, 𝑍 0) = 𝑝 𝜃 dec (X | 𝑍 0) 𝑝 𝜃 diff (𝑍 0), (15) where 𝑝 𝜃 diff (𝑍 0) is an implicit prior induced by a latent-space dif-fusion process. The marginal likelihood log 𝑝 (X) = log ∫ 𝑝 𝜃 dec (X |
+
+𝑍 0) 𝑝 𝜃 diff (𝑍 0) 𝑑𝑍 0 is intractable in general. We therefore resort to variational inference with an encoder 𝑞 𝜃 enc (𝑍 0 | X) and maximize the evidence lower bound (ELBO): 
+
+log 𝑝 (X) ≥ E𝑞 𝜃 enc (𝑍 0 |X)
+
+ log 𝑝 𝜃 dec (X | 𝑍 0)
+
+− KL  𝑞 𝜃 enc (𝑍 0 | X) ∥ 𝑝 𝜃 diff (𝑍 0) . (16) Unlike the conventional NRI prior that decomposes over edges, 
+
+𝑝 𝜃 diff (𝑍 0) is defined on the concatenated latent graph representation 
+
+𝑍 0. The resulting KL term regularizes the inferred structure at the level of the latent graph configuration, rather than penalizing each edge posterior independently. Equivalently, we minimize the negative ELBO: 
+
+LELBO (X) = Lrec (X) + L marg diff (X), (17) where Lrec (X) := − E𝑞 𝜃 enc (𝑍 0 |X) [log 𝑝 𝜃 dec (X | 𝑍 0)] is the recon-struction term and Lmarg diff (X) := KL  𝑞 𝜃 enc (𝑍 0 | X) ∥ 𝑝 𝜃 diff (𝑍 0) reg-ularizes the inferred interaction structure. A common approach motivates diffusion priors via ESM–DSM equivalences and drops terms treated as constants [ 24 ]. In a learned latent space, however, the marginal 
+
+𝑞 (𝑍 𝑠 ) =
+
+∫
+
+𝑞 (𝑍 𝑠 | 𝑍 0) 𝑞 𝜃 𝑑𝑖 𝑓 𝑓 (𝑍 0) 𝑑𝑍 0 (18) depends on the encoder and a learnable prior, so these terms are not constant under joint optimization. The resulting intractability of the required marginal-score terms is discussed in Appendix A. We therefore avoid this simplification and instead optimize a joint-KL upper bound (Thm. 5.1), which leads to a tractable diffusion decomposition. 
+
+## 5.2 Reconstruction Loss 
+
+We employ a Gaussian observation model for each node and time step 𝑝 (x𝑡 +1 
+
+> 𝑗
+
+| x𝑡 , G) = N
+
+
+
+𝝁 𝑡 +1 
+
+> 𝑗
+
+, 𝜎 2I
+
+
+
+, where 𝝁 𝑡 +1 
+
+> 𝑗
+
+is produced by the GNN decoder conditioned on the graph G, and 𝜎 2 is a fixed variance. Up to an additive constant, the negative log-likelihood reduces to a scaled MSE objective: 
+
+Lrec (X) = 12𝜎 2 E𝑞 𝜃 enc (𝑍 0 |X)
+
+"
+
+E𝑞 (z|𝑍 0 ) 
+
+> 𝑇 −1
+
+∑︁  
+
+> 𝑡 =1
+> 𝑁
+
+∑︁ 
+
+> 𝑗 =1
+
+x𝑡 +1 
+
+> 𝑗
+
+− 𝝁 𝑡 +1
+
+> 𝑗
+> 22
+
+#
+
+. (19) In practice, we approximate the expectations using one sample of 
+
+z (e.g., via Gumbel-Softmax) per mini-batch and report the mean squared error averaged over nodes and time steps. 
+
+## 5.3 Diffusion Loss 
+
+Recall that our diffusion module induces an implicit prior over the continuous logit latent 𝑍 0 ∈ R𝑀 ×𝐾 , denoted by 𝑝 𝜃 diff (𝑍 0). Let 𝑆 be the number of diffusion steps. We consider a fixed forward noising process 𝑞 (𝑍 1: 𝑆 | 𝑍 0) = Î𝑆 𝑠 =1 𝑞 (𝑍 𝑠 | 𝑍 𝑠 −1), where each transition is Gaussian with a pre-defined variance schedule, and a learned reverse process 𝑝 𝜃 diff (𝑍 0: 𝑆 ) = 𝑝 (𝑍 𝑆 ) Î𝑆 𝑠 =1 𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 ), with 
+
+𝑝 (𝑍 𝑆 ) = N ( 0, I).
+
+Intractable marginal KL. The diffusion regularizer is 
+
+Lmarg diff (X) = KL  𝑞 𝜃 enc (𝑍 0 | X) ∥ 𝑝 𝜃 diff (𝑍 0) , (20) which is generally intractable because 𝑝 𝜃 diff (𝑍 0) is defined only implicitly as the marginal of the diffusion chain. 
+
+A tractable upper bound via joint augmentation. We introduce the augmented variational distribution 
+
+𝑄 𝜃 enc (𝑍 0: 𝑆 | X) := 𝑞 𝜃 enc (𝑍 0 | X) 𝑞 (𝑍 1: 𝑆 | 𝑍 0), (21) and the diffusion joint 
+
+𝑃 𝜃 diff (𝑍 0: 𝑆 ) := 𝑝 𝜃 diff (𝑍 0: 𝑆 ). (22) 
+
+Theorem 5.1 (Marginal-to-joint KL bound). For any X, the marginal KL in Eq. (20) is upper bounded by 
+
+KL  𝑞 𝜃 enc (𝑍 0 | X) ∥ 𝑝 𝜃 diff (𝑍 0) ≤ KL  𝑄 𝜃 enc (𝑍 0: 𝑆 | X) ∥ 𝑃 𝜃 diff (𝑍 0: 𝑆 ) .
+
+(23) We denote the right-hand side of Eq. (23) by eLdiff (X). The inequality follows from the data-processing inequality for KL under marginal-ization. The complete proof is provided in Appendix B.1. 
+
+Connection to the diffusion variational objective. The surrogate 
+
+eLdiff (X) admits a standard diffusion-style decomposition into a sum of per-step terms, each of which is tractable for Gaussian transitions: 
+
+eLdiff (X) = E𝑞 𝜃 enc (𝑍 0 |X)
+
+h
+
+− ELBO 𝜃 diff (𝑍 0)
+
+i
+
+,
+
+−ELBO 𝜃 diff (𝑍 0) = 𝐿 𝑆 +
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =2
+
+𝐿 𝑠 −1 + 𝐿 0.
+
+(24) where each 𝐿 𝑠 is a KL between Gaussians comparing the forward posterior and the learned reverse transition,and the specific form of 𝐿 𝑠 , 𝑠 ∈ { 0, 1, ...𝑆 } is provided in Appendix B.3. Derivations and explicit forms are given in Appendix B.2–B.3. KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Trovato et al. 
+
+In the next section, we further present an efficient single-timestep Monte Carlo estimator for optimizing eLdiff (X) in practice. 
+
+## 5.4 Efficient Optimization via Single-Timestep Sampling 
+
+Eq. (24) expresses the diffusion surrogate as a sum of 𝑂 (𝑆 ) per-step terms. Computing all steps for every minibatch is unnecessary. In-stead, we optimize the diffusion regularizer using a single-timestep Monte Carlo estimator, following the standard practice in diffusion model training. 
+
+Single-timestep estimator. From Eq. (24) , the intermediate sum can be rewritten as an expectation: 
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =2
+
+𝐿 𝑠 −1 (𝑍 0) = (𝑆 − 1) E𝑠 ∼Unif ( { 1,...,𝑆 } ) [𝐿 𝑠 −1 (𝑍 0)] . (25) Therefore, we estimate −ELBO 𝜃 diff (𝑍 0) by sampling a single timestep 
+
+𝑠 ∼ Unif ({ 1, . . . , 𝑆 }) per iteration, which reduces the diffusion-loss cost from 𝑂 (𝑆 ) to 𝑂 (1).
+
+Noise-prediction form. We adopt the common 𝜖 -prediction pa-rameterization for the reverse process. The forward marginal admits the closed-form reparameterization 
+
+𝑍 𝑠 = √ ¯𝛼 𝑠 𝑍 0 + √1 − ¯𝛼 𝑠 𝜖, 𝜖 ∼ N ( 0, I). (26) The denoiser 𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) predicts 𝜖 from (𝑍 𝑠 , 𝑠 ). As shown in Ap-pendix B.3, the per-step KL term is equivalent (up to a known weighting and additive constants) to a weighted noise regression loss. Concretely, we optimize 
+
+Ldiff (X) = E𝑍 0∼𝑞 𝜃 enc (𝑍 0 |X) E𝑠 ∼Unif ({ 1,...,𝑆 }) , 𝜖 ∼N ( 0,I)
+
+h
+
+𝑤 𝑠 𝜖 −𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) 22
+
+i
+
+,
+
+(27) 
+
+where 
+
+𝑤 𝑠 := 𝛽 2
+
+> 𝑠
+
+2 𝜎 2 
+
+> 𝑠
+
+𝛼 𝑠 (1 − ¯𝛼 𝑠 ) , 𝛼 𝑠 := 1 − 𝛽 𝑠 , ¯𝛼 𝑠 :=
+
+> 𝑠
+
+Ö 
+
+> 𝑟 =1
+
+𝛼 𝑟 , (28) and 𝜎 2 
+
+> 𝑠
+
+is the reverse-process variance at step 𝑠 . The derivation of this weighting from the per-step Gaussian KL terms is provided in Appendix B.4. This single-timestep estimator is unbiased for the corresponding expectation objective, which is proved in Appen-dix B.5. 
+
+## 5.5 Overall Objective 
+
+Plugging the estimator in Sec.5.4 into the diffusion regularizer, we minimize the following empirical objective over the training set D:
+
+min  
+
+> 𝜃 enc , 𝜃 diff , 𝜃 dec
+
+EX∼D 
+
+h
+
+Lrec (X) + L diff (X)
+
+i
+
+, (29) where Lrec is the Gaussian reconstruction loss in Sec.5.2 and Ldiff 
+
+is the single-timestep diffusion estimator in Eq.27. Algorithm 1 summarizes the optimization procedure. 
+
+## 6 Experiments 6.1 Experiments Setup 
+
+We evaluate our method on the public benchmarks from the Struct-Infer suite 1, and re-run all experiments to obtain consistent results under the same protocol. We operationalize the graph structural 
+
+> 1https://structinfer.github.io/methods/
+
+Algorithm 1 Joint training with a latent diffusion prior. 
+
+Require: minibatch trajectories x; encoder 𝑞 𝜃 enc ; decoder 𝑝 𝜃 dec ;denoiser 𝜖 𝜃 diff (· , ·) ; diffusion steps 𝑆 and schedule {𝛽 𝑠 }𝑆 𝑠 =1 with 
+
+𝛼 𝑠 = 1 − 𝛽 𝑠 , ¯𝛼 𝑠 = Î𝑠 𝑟 =1 𝛼 𝑟 ; 𝜎 enc ; refinement strength 𝛾 ;
+
+Ensure: updated parameters (𝜃 enc , 𝜃 dec , 𝜃 diff ). 
+
+> 1:
+
+function RefineOneStep (𝑍 0, 𝛾, 𝜖 ) 
+
+> 2:
+
+𝑠 𝑟𝑒 𝑓 ∼ 𝑈 𝑛𝑖 𝑓 (1, 2, ...𝑆 ) 
+
+> 3:
+
+𝑍 𝑠 ref ←√︁ ¯𝛼 𝑠 ref 𝑍 0 +√︁ 1 − ¯𝛼 𝑠 ref 𝜖  
+
+> 4:
+
+b𝜖 ← 𝜖 𝜃 diff (𝑍 𝑠 ref , 𝑠 ref ) 
+
+> 5:
+
+b𝑍 0 ←  𝑍 𝑠 ref −√︁ 1 − ¯𝛼 𝑠 ref b𝜖  √︁ ¯𝛼 𝑠 ref  
+
+> 6:
+
+return 𝑍 0 + 𝛾  b𝑍 0 − 𝑍 0
+
+ 
+
+> 7:
+
+end function  
+
+> 8:
+
+ℓ ← 𝑓 𝜃 enc (x) 
+
+> 9:
+
+sample 𝜖 𝑟𝑒 𝑓 , 𝜖 0 ∼ N ( 0, 𝐼 ) 
+
+> 10:
+
+𝑍 0 ← ℓ + 𝜎 enc 𝜖 0 
+
+> 11:
+
+𝑍 ref 0 ← RefineOneStep (𝑍 0, 𝛾, 𝜖 𝑟𝑒 𝑓 ) 
+
+> 12:
+
+sample edges 𝐺 ∼ GumbelSoftmax (𝑍 ref 0 ) 
+
+> 13:
+
+Lrec ← − log 𝑝 𝜃 dec (x | 𝐺 ) 
+
+> 14:
+
+sample 𝑠 ∼ Unif {1, 2, . . . , 𝑆 } and 𝜖 ∼ N ( 0, 𝐼 ) 
+
+> 15:
+
+𝑍 𝑠 ← √ ¯𝛼 𝑠 𝑍 0 + √1 − ¯𝛼 𝑠 𝜖  
+
+> 16:
+
+b𝜖 ← 𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) 
+
+> 17:
+
+Ldiff (X) ← 𝑤 𝑠 ∥𝜖 − b𝜖 ∥22 
+
+> 18:
+
+L ← L rec + L 𝑑𝑖 𝑓 𝑓 (X) 
+
+> 19:
+
+update (𝜃 enc , 𝜃 dec , 𝜃 diff ) by one optimizer step on ∇L 
+
+reasoning task as a binary link-inference problem. Deviating from generic data-splitting heuristics, we implement a rigorous partition-ing strategy where the training, validation, and test sets are strictly disjoint and non-overlapping, ensuring no leakage of structural priors. Each dataset is standardized to 𝑁 =15 nodes (e.g., VN_15 ,FW_15 , and so on) and graphs are split into train/validation/test sets with samples 8000/2000/2000. Unless otherwise specified, we adopt the same observation settings as the benchmark with state dimensions 𝑑 =4 for Springs ( SP ) and 𝑑 =1 for Netsims ( NS ). Fol-lowing the benchmark, we report AUROC for structure inference. To evaluate uncertainty quality, we also report average posterior entropy (mean Shannon entropy over edges) and ECE, computed on softmax probabilities with 10 equal-width bins. All results are averaged over five random seeds and evaluation metrics can be found in Appendix C. Our approach is a plug-in prior for NRI-family neural structure inference models. We use NRI [ 2], ACD [29 ], and MPM [30 ] as back-bones, and the only modification is the prior module: we replace the default independent edge prior with our diffusion-based prior, while keeping the backbone architecture, training schedule, and all other hyperparameters unchanged. For binary link inference, “Uniform” denotes an uninformative Bernoulli prior with edge prob-ability 𝑝 = 0.5, whereas “Fixed” denotes the sparse fixed prior used in the original NRI implementation, with edge probability 𝑝 = 0.03 .We do not introduce additional non-neural baselines, as our method is designed to be a drop-in component within the same neural infer-ence pipeline. For training, we adopt the benchmark configuration: Adam optimizer with learning rate 5 × 10 −4, batch size 64 , and 800 
+
+epochs, with the learning rate halved every 200 epochs. The dif-fusion denoiser is implemented as a multi-layer MLP with hidden Diff-prior KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+Table 1: Main results (AUROC, %). Diff-prior is plugged into different backbones across network families and dynamics. Bold indicates the best performance. 
+
+Dynamics Model Prior VN_15 FW_15 BN_15 GRN_15 CRNA_15 AVG. Imp. Spring NRI Uniform 95.51 ±0.60 81.09 ±0.02 99.65 ±0.00 89.94 ±2.41 83.91 ±0.53 90.02 0.00 Fixed 95.71 ±0.47 81.01 ±0.03 99.67 ±0.00 90.22 ±1.99 84.36 ±0.32 90.19 +0.17 Diff-prior 95.17 ±0.13 81.51 ±0.14 99.52 ±0.02 90.58 ±1.67 85.65 ±1.28 90.49 +0.47 
+
+ACD Uniform 94.31 ±0.14 81.58 ±0.02 99.69 ±0.02 89.52 ±0.23 85.9 ±0.43 90.20 0.00 Fixed 94.38 ±0.18 81.49 ±0.09 99.71 ±0.01 87.53 ±0.06 83.47 ±0.59 89.31 -0.89 Diff-prior 95.96 ±0.24 81.73 ±0.00 99.76 ±0.00 91.19 ±0.05 90.15 ±0.37 91.17 +0.97 
+
+MPM Uniform 98.25 ±0.09 79.67 ±0.26 100 ±0.00 92.31 ±0.28 85.75 ±0.91 91.20 0.00 Diff-prior 98.44 ±0.03 80.5 ±0.03 99.99 ±0.01 93.49 ±0.19 89.88 ±0.66 92.46 +1.26 
+
+Netsim NRI Uniform 86.17 ±0.68 51.78 ±0.02 99.88 ±0.00 77.87 ±0.31 50.53 ±0.11 73.25 0.00 Fixed 88.75 ±7.57 50.60 ±0.00 99.68 ±0.00 83.7 ±0.28 51.61 ±0.13 74.87 +1.62 Diff-prior 91.5 ±0.33 55.73 ±0.02 99.75 ±0.08 77.38 ±0.60 51.80 ±0.65 75.23 +1.98 
+
+ACD Uniform 93.91 ±0.75 51.79 ±0.03 99.85 ±0.00 69.85 ±0.21 51.74 ±0.66 73.43 0.00 Fixed 93.62 ±0.48 50.03 ±0.06 99.83 ±0.01 69.99 ±0.17 60.70 ±0.13 74.83 +1.40 Diff-prior 92.15 ±0.52 52.31 ±0.08 99.88 ±0.01 80.98 ±0.63 62.28 ±0.11 77.52 +4.09 
+
+MPM Uniform 81.45 ±0.28 52.17 ±0.19 99.95 ±0.03 70.46 ±0.77 50.28 ±0.06 70.86 0.00 Diff-prior 96.65 ±0.32 52.98 ±0.66 99.75 ±0.08 84.51 ±3.66 52.56 ±0.04 77.29 +6.43 
+
+dimensions [128 , 128 ]; other diffusion hyperparameters will be pro-vided in Appendix D. For robustness tests, we construct perturbed variants of the benchmark datasets: (i) Noise : We inject additive zero-mean Gaussian observation noise, i.e., 𝜖 ∼ N ( 0, 𝜎 2) with 
+
+𝜎 2 = 0.1; (ii) Short-T : we truncate the last 10% timesteps of each trajectory; and (iii) Missing : at each timestep, each variable is set to zero with probability 0.1. Experiments are conducted on three NVIDIA A6000 GPUs. Our prior does not significantly increase runtime, and runtime statistics are reported in Appendix E. 
+
+## 6.2 Main Results 
+
+We evaluated the Diff-prior algorithm on the StructInfer benchmark set by applying it to multiple NRI series backbone networks (NRI, ACD, and MPM) without changing any backbone network archi-tecture or training configuration (Table 1). In simulation data from both dynamics, Diff-prior improved network structure generation compared to uniform or fixed priors. Specifically, in SP dynamics, we observed stable performance improvements across all tested network structures, with average AUROC percentage values in-creasing by 0.47 (NRI), 0.97 (ACD), and 1.26 (MPM), respectively. In NS dynamics, the advantage of Diff-prior was significantly en-hanced due to the more complex dynamic process, which made the posterior marginal probabilities more likely to become close to a uniform distribution: average AUROC values increased by 1.98 (NRI), 4.09 (ACD), and 6.43 (MPM), respectively. The improvement is particularly significant on more challenging network datasets such as FW_15, GRN_15, and CRNA_15, indicating that the Diff-prior performs better on indecisive edge posteriors probabilities where uniform priors tend to produce indecisive ones. Table 1 reveals a clear pattern in the test results across differ-ent dynamics: when the dynamic mechanism is more complex (NS compared to SP), the uniform prior is more likely to lead to a near-uniform edge posteriors, thus limiting the backbone’s graph structure generation capability; while Diff-prior significantly im-proves this bottleneck through adaptive prior calibration. More specifically, the significant improvement brought by Diff-prior on NS indicates that even in models with better expressive power, uni-form prior can still be a major source of error, and our Diff-prior can further improve the performance of models with strong expressive power. Meanwhile, Diff-prior also shows consistent improvement on SP, indicating that it is not only effective under extremely diffi-cult settings, but provides a more reasonable prior form for various dynamics. Since our modifications are strictly limited to the prior module, the above improvements can be attributed to the structural relevance and calibration capabilities provided by Diff-prior, rather than the benefits from model capacity, training budget, or hyperpa-rameter tuning. Therefore, Table 1 demonstrates that Diff-prior, as a general, backbone-decoupled structural prior plugin, can stabi-lize the performance of network structure inference models across various inference frameworks and network distributions. 
+
+## 6.3 Beyond Binary Synthetic Link Inference 
+
+We also evaluate Diff-prior beyond the standard binary synthetic StructInfer setting. We first consider a multi-relational setting with 
+
+𝐾 = 3 edge types and relation strengths of 0, 0.5, and 1. As shown in Table 2, Diff-prior improves both Micro-F1 and Macro-F1 over the NRI backbone. This suggests that the learned prior also supports non-binary relation calibration. We then evaluate Diff-prior on IRMA, a real-world dataset. Despite the small scale of IRMA ( 𝑁 = 5,sequence length 7), Diff-prior slightly outperforms NRI, suggesting that prior calibration can transfer beyond synthetic benchmarks. 
+
+## 6.4 Posterior Diagnostics 
+
+Beyond AUROC, we analyze the posterior distribution and edge con-fidence induced by different priors to test whether the independent priors used in NRI-family models (Uniform/Fixed) lead to more am-biguous structural estimates. Fig. 3 plots the confidence distribution KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Trovato et al. 
+
+Figure 3: Confidence distributions of edge posteriors under the NRI backbone across five network families and two dynamics. Each subplot shows the complementary CDF ( 1 − CDF ) of confidence max (𝑝, 1 − 𝑝 ); higher curves near 1 indicate a larger fraction of high-confidence predictions. Table 2: Additional evaluation beyond binary synthetic link inference.                             
+
+> Setting Data Metric NRI Diff-prior Gain Multi-relational Synthetic, 𝐾 =3Micro-F1 0.31 0.38 +0.07 Synthetic, 𝐾 =3Macro-F1 0.33 0.38 +0.05 Real-world IRMA, 𝑁 =5AUROC 59.88 60.24 +0.36
+
+for five network types and two dynamics under the NRI backbone. The horizontal axis gives the edge confidence max (𝑝, 1 − 𝑝 ), and the vertical axis gives 1 − CDF , the fraction of edges whose confi-dence exceeds a given threshold. Diff-prior is consistently shifted to the right and retains a higher 1 − CDF in the high-confidence region, meaning that more edges receive probabilities close to 0 or 1. By contrast, the Uniform/Fixed curves drop earlier, indicating that independent priors leave more edges with ambiguous posterior beliefs. Higher confidence alone does not guarantee reliable inference, since overconfident predictions can still be poorly calibrated. We therefore measure posterior quality using two complementary met-rics: the average Shannon entropy of edge posteriors, where lower values indicate more concentrated beliefs, and ECE with 10 con-fidence bins, where lower values indicate better calibration. As shown in Table 3, Diff-prior reduces both entropy and ECE in most network/dynamics combinations. On NS_VN, entropy decreases from 0.0281/0.0268 to 0.0011 and ECE from 0.0226/0.0189 to 0.0007; on NS_GRN, entropy decreases from 0.0374 under Uniform to 0.0052 and ECE from 0.0296 to 0.0041. The same pattern appears under SP dynamics: on SP_GRN, entropy decreases from 0.0219/0.0222 to 0.0168 and ECE from 0.0209/0.0189 to 0.0121; on SP_FW, entropy decreases from 0.0380/0.0361 to 0.0337 and ECE from 0.0241/0.0253 to 0.0239. To check whether this lower entropy reflects overconfident sharpening, we evaluate calibration on the 10% lowest-entropy test samples, which correspond to the most confident posterior predictions. Table 4 reports ECE and NLL under the NRI backbone. 
+
+Table 3: Posterior diagnostics and calibration under NRI : av-erage entropy and ECE (10 bins) of edge posteriors. Bold indicates the best (lowest) value.                                                                    
+
+> Networks Entropy ECE Uniform Fixed Diff-prior Uniform Fixed Diff-prior SP_VN 0.0055 0.0055 0.0029 0.0033 0.0041 0.0023
+> SP_FW 0.038 0.0361 0.0337 0.0241 0.0253 0.0239
+> SP_BN 0.0018 0.0015 0.0013 0.0013 0.0008 0.0007
+> SP_GRN 0.0219 0.0222 0.0168 0.0209 0.0189 0.0121
+> SP_CRNA 0.0234 0.0246 0.0222 0.0204 0.0172 0.0153
+> NS_VN 0.0281 0.0268 0.0011 0.0226 0.0189 0.0007
+> NS_FW 0.0274 0.0213 0.0025 0.0361 0.0036 0.0027
+> NS_BN 0.0024 0.0043 0.0003 0.0023 0.0047 0.0002
+> NS_GRN 0.0374 0.0117 0.0052 0.0296 0.0105 0.0041
+> NS_CRNA 0.0337 0.0461 0.0303 0.0239 0.0241 0.0161
+
+In this low-entropy regime, Diff-prior reduces average ECE from 0.030 to 0.022 and average NLL from 4.691 to 4.378. Although the improvement is not uniform across every dataset, the overall trend suggests that Diff-prior remains more reliable even among highly confident predictions. Together, Fig. 3, Table 3, and Table 4 support the view of Diff-prior as a posterior calibration mechanism: it turns diffuse edge beliefs into more decisive posteriors while preserving, and often improving, calibration quality. 
+
+## 6.5 Higher-Order Structural Pattern Recovery 
+
+The previous diagnostics focus on edge-level posterior confidence and calibration. We next examine whether Diff-prior also improves graph-level structural recovery. We compare the inferred graphs with the ground-truth graphs using higher-order structural statis-tics: density ( 𝐷 ), clustering coefficient ( 𝐶 ), modularity ( 𝑀 ), average degree ( 𝐴𝐷 ), and triads ( 𝑇 ). For each statistic, we report the absolute deviation between the inferred and ground-truth graphs. Smaller values indicate better recovery of the corresponding structural pattern. Diff-prior KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+Table 4: Calibration on the 10% lowest-entropy test samples under the NRI backbone. Lower ECE and NLL indicate better calibrated and more reliable confident predictions. 
+
+Network ECE (Uni.) ECE (Diff.) NLL (Uni.) NLL (Diff.) SP_FW 0.177 0.171 7.637 7.610 
+
+SP_GRN 0.012 0.005 3.750 3.040 
+
+SP_CRNA 0.012 0.009 5.380 4.470 
+
+SP_VN 0.001 0.000 1.620 1.580 
+
+SP_BN 0.000 0.000 0.320 0.420 NS_FW 0.000 0.000 14.630 NS_14.690 NS_GRN 0.014 0.001 5.430 4.460 
+
+NS_CRNA 0.000 0.000 7.180 6.570 
+
+NS_VN 0.080 0.035 0.620 0.460 
+
+NS_BN 0.000 0.000 0.340 0.480 
+
+Table 5: Higher-order structural pattern recovery under the NRI backbone. Each entry reports the absolute deviation from the ground-truth graph as Uniform/Diff-prior; lower is better. 
+
+Metric CRNA-NS FW-NS GRN-NS VN-NS 
+
+Δ𝐷 0.32/ 0.21 0.23 /0.32 0.11/ 0.05 0.15/ 0.01 
+
+Δ𝐶 0.39/ 0.18 0.28/ 0.27 0.06/ 0.00 0.44/ 0.12 
+
+Δ𝑀 0.24/ 0.23 0.06/ 0.05 0.03/ 0.02 0.28/ 0.13 
+
+Δ𝐴𝐷 4.53/ 2.91 3.26 /4.41 1.60/ 0.67 2.07/ 0.15 
+
+Δ𝑇 18.00 /170.68 29.09 /58.52 36.23/ 24.43 22.30/ 1.50 
+
+Table 5 shows that Diff-prior reduces the deviation in most metric-network pairs. The gains are clearest on GRN-NS and VN-NS, where Diff-prior improves all reported statistics. On CRNA-NS, it improves density, clustering coefficient, modularity, and aver-age degree, although the triad deviation increases. FW-NS shows a more mixed pattern: Diff-prior improves clustering coefficient and modularity but not every statistic. These results indicate that the learned diffusion prior captures graph-level regularities beyond in-dependent edge confidence, although higher-order motif recovery remains dataset-dependent. 
+
+## 6.6 Robustness tests 
+
+To verify whether Diff-prior is more effective under more challeng-ing conditions, we constructed three types of robustness tests on CRNA: Noise (additive noise with 𝜖 ∼ N ( 0, 𝜎 2) with 𝜎 2 = 0.1), Short-T (truncating the last 10% of time steps), and Missing (setting the time to zero with a 10% probability at each step), and evaluated them under 𝑁 = 15 and 𝑁 = 30 respectively (Table 6). These pertur-bations systematically weaken the trajectory information, making the uniform prior model more prone to generating a confused pos-terior distribution, thus better testing the effect of the relevant prior. The results show that Diff-prior achieves a positive improvement over Uniform in Entropy, ECE reduction, and AUROC increase under all robustness tests. Specifically, taking NRI_CRNA_15 as an example, under Noise, Diff-prior improves Entropy from 0.0274 to 0.0265, ECE from 0.0234 to 0.0178, and AUROC from 54.33 to 55.41. 
+
+Table 6: Robustness tests on CRNA under NRI : Noise , Short-T ,and Missing for 𝑁 =15 /30 . We report entropy, ECE, and AU-ROC. Bold indicates the best result.                                              
+
+> Prior NRI_CRNA_15 NRI_CRNA_30 Entropy ECE AUROC Entropy ECE AUROC Noise Uniform 0.0274 0.0234 54.33 0.1010 0.3668 59.36 Diff-prior 0.0265 0.0178 55.41 0.0988 0.3642 59.53
+> Short-T Uniform 0.0282 0.0152 54.56 0.1135 0.4383 50.36 Diff-prior 0.0271 0.0128 55.06 0.1034 0.4322 50.45
+> Missing Uniform 0.0481 0.0358 58.58 0.1472 0.3889 53.988 Diff-prior 0.0432 0.0341 59.44 0.1429 0.3839 53.989
+
+Table 7: Ablation and controls on FW_NRI_SP and GRN_NRI_SP : removing 𝛾 and replacing Diff-prior with a parameter-matched MLP prior. Bold is the best result.                                      
+
+> Prior Variant FW_NRI_SP GRN_NRI_SP Entropy ECE AUROC Entropy ECE AUROC Uniform 0.038 0.0241 81.09 0.0219 0.0209 89.94 Fixed 0.0361 0.0253 81.01 0.0222 0.0189 90.22 Diff-prior 0.0337 0.0239 81.51 0.0168 0.0121 90.58
+> Diff-prior w/o 𝛾 0.0763 0.2173 80.91 0.0368 0.1641 87.53 PM-MLP Prior 0.113 0.1975 80.84 0.0554 0.1008 87.49
+
+This demonstrates the noise immunity of diff-prior. In Short-T, En-tropy improves from 0.0282 to 0.0271, ECE from 0.0152 to 0.0128, and AUROC from 54.56 to 55.06, indicating that Diff-prior still achieves improved performance even with shorter trajectories. In the Missing test, Entropy improved from 0.0481 to 0.0432, ECE from 0.0358 to 0.0341, and AUROC from 58.58 to 59.44, indicating that the diff-prior is also more robust in missing scenarios. Consistent con-clusions were observed for NRI_CRNA_30 dataset with nodes num increase to 30. Robustness testing further demonstrates the effec-tiveness of our proposed Diff-prior. The Diff-prior can alleviate the near-uniform posterior bottleneck when information is insufficient and achieves improved performance in complex scenarios. 
+
+## 6.7 Ablation studies 
+
+We use ablations on FW_NRI_SP and GRN_NRI_SP to identify where the gains of Diff-prior come from (Table 7). The full model obtains Entropy/ECE/AUROC values of 0.0337/0.0239/81.51 on FW and 0.0168/0.0121/90.58 on GRN. Removing the residual calibration intensity 𝛾 (Diff-prior w/o 𝛾 )sharply worsens calibration and also lowers AUROC. On FW, ECE increases from 0.0239 to 0.2173, while AUROC drops from 81.51 to 80.91. On GRN, ECE increases from 0.0121 to 0.1641, while AUROC drops from 90.58 to 87.53. Thus, the 𝛾 -controlled calibration step is essential to the diffusion prior. We also replace the Diff-prior module (PM-MLP prior) with a parameter-matched MLP to control for model size. This variant again performs worse: ECE/AUROC becomes 0.1975/80.84 on FW and 0.1008/87.49 on GRN. These results show that the improvement does not come from extra parameters or an arbitrary adaptive prior. It comes from the diffusion-based prior and its calibration mechanism. KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Trovato et al. 
+
+## 7 Discussion 
+
+Our experiments consistently show that in NRI-family models, commonly used independent priors (Uniform/Fixed) cause some edge posteriors to remain in a near-moderate region, thus limiting structural recovery performance and posterior reliability. Diff-prior constructs an adaptive prior distribution through diffusion denois-ing, which can be understood as a learnable posterior calibration mechanism, so that the model can obtain a more deterministic and accurate edge posteriors distribution without changing the back-bone and training configuration. The main results in Table 1 are consistent with this mechanism: Diff-prior delivers improvements on all three backbones (NRI/ACD/MPM) and two types of dynam-ics (SP/NS), with the gain being more significant on NS. Posterior diagnostics (Fig. 3 and Table 3) provide direct evidence: the con-fidence distribution of Diff-prior shows more edges falling in the high-confidence interval, while Entropy and ECE decrease syn-chronously in most settings, indicating that its improvement is not simply due to overconfidence. Robustness testing (Table 6) further validates robustness: under noise, short sequences, and missing observation perturbations, Diff-prior maintains a consistent trend of decreasing Entropy and ECE/increasing AUROC, showing the same conclusions at both N=15 and N=30 scales. As shown in Table 7, the ablation study further confirmed the above conclusions. When we removed the key calibration intensity 
+
+𝛾 , the ECE deteriorated significantly and the AUROC decreased, indicating that this calibration step is crucial to the effectiveness of Diff-prior. We replaced the Diff prior with a parameter-matched MLP prior, but it failed to reproduce the performance and cali-bration gain, indicating that the improvement did not come from additional parameters or arbitrary adaptive priors, instead, it relied on prior enhancements caused by diffusion denoising. We have sys-tematically validated this on multiple network families, two types of dynamics, and two scales ( 𝑁 = 15 /30 ), current experiments still mainly focus on the StructInfer baseline setting and binary edge inference task. Further expansion to a wider range of data and relational forms is a meaningful direction. Our diagnostics mainly revolve around AUROC, entropy, and ECE; future work could sup-plement this with more fine-grained reliability analysis to more comprehensively characterize posterior quality. This work demon-strates that using diffusion models to construct pluggable relevant structural priors can simultaneously improve structure discovery performance and posterior reliability across various NRI-family inference frameworks. 
+
+## 8 Acknowledgments 
+
+This work is supported by the National Key R&D Program of China under Grant No. 2022ZD0120004, the Zhishan Youth Scholar Pro-gram, the National Natural Science Foundation of China under Grant Nos. 62233004, 62273090, and the Jiangsu Provincial Sci-entific Research Center of Applied Mathematics under Grant No. BK20233002. 
+
+## References 
+
+[1] Peter W. Battaglia, Jessica B. Hamrick, and Joshua B. Tenenbaum. Interaction networks for learning about objects, relations and physics. Advances in Neural Information Processing Systems (NeurIPS) , 29:4502–4510, 2016. [2] Thomas Kipf, Ethan Fetaya, Kuan-Chieh Wang, Max Welling, and Richard Zemel. Neural relational inference for interacting systems. In International conference on machine learning , pages 2688–2697. PMLR, 2018. [3] Ezra Webb, Ben Day, Helena Andres-Terre, and Pietro Lió. Factorised neural relational inference for multi-interaction systems. arXiv preprint arXiv:1905.08721 ,2019. [4] Liming Pan, Cheng Shi, and Ivan Dokmanic. A graph dynamics prior for rela-tional inference. In Proceedings of the AAAI Conference on Artificial Intelligence ,volume 38, pages 14508–14516, 2024. [5] Alessandro Manenti, Daniele Zambon, and Cesare Alippi. Learning latent graph structures and their uncertainty. arXiv preprint arXiv:2405.19933 , 2024. [6] Eric Jang, Shixiang Gu, and Ben Poole. Categorical reparameterization with gumbel-softmax. In International Conference on Learning Representations , 2017. [7] Chris J Maddison, Andriy Mnih, and Yee Whye Teh. The concrete distribution: A continuous relaxation of discrete random variables. In International Conference on Learning Representations , 2017. [8] Aoran Wang, Tsz Pan Tong, Andrzej Mizera, and Jun Pang. Benchmarking structural inference methods for interacting dynamical systems with synthetic data. Advances in Neural Information Processing Systems , 37:135129–135185, 2024. [9] Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q Weinberger. On calibration of modern neural networks. In International conference on machine learning , pages 1321–1330. PMLR, 2017. [10] Alvaro Sanchez-Gonzalez, Nicolas Heess, Jost Tobias Springenberg, Josh Merel, Martin Riedmiller, Raia Hadsell, and Peter Battaglia. Graph networks as learnable physics engines for inference and control. In International conference on machine learning , pages 4470–4479. PMLR, 2018. [11] Albert Gu and Tri Dao. Mamba: Linear-time sequence modeling with selective state spaces. In First conference on language modeling , 2024. [12] Aoran Wang and Jun Pang. Structural inference of dynamical systems with conjoined state space models. Advances in Neural Information Processing Systems ,37:75355–75391, 2024. [13] Peter W Battaglia, Jessica B Hamrick, Victor Bapst, Alvaro Sanchez-Gonzalez, Vinicius Zambaldi, Mateusz Malinowski, Andrea Tacchetti, David Raposo, Adam Santoro, Ryan Faulkner, et al. Relational inductive biases, deep learning, and graph networks. arXiv preprint arXiv:1806.01261 , 2018. [14] Alvaro Sanchez-Gonzalez, Jonathan Godwin, Tobias Pfaff, Rex Ying, Jure Leskovec, and Peter Battaglia. Learning to simulate complex physics with graph networks. In International conference on machine learning , pages 8459–8468. PMLR, 2020. [15] Rose Yu and Rui Wang. Learning dynamical systems from data: An introduction to physics-guided deep learning. Proceedings of the National Academy of Sciences ,121(27):e2311808121, 2024. [16] Ce Yang, Weihao Gao, Di Wu, and Chong Wang. Learning to simulate unseen physical systems with graph neural networks. In NeurIPS 2021 AI for Science Workshop , 2021. [17] Zhe Li, Andreas S Tolias, and Xaq Pitkow. Learning dynamics and structure of complex systems using graph neural networks. In A causal view on dynamical systems, NeurIPS 2022 workshop , 2022. [18] Artur Toshev, Ludger Paehler, Andrea Panizza, and Nikolaus A Adams. On the relationships between graph neural networks for the simulation of physical sys-tems and classical numerical methods. In ICML 2022 2nd AI for Science Workshop ,2022. [19] Colin Graber and Alexander G Schwing. Dynamic neural relational inference. In 
+
+Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pages 8513–8522, 2020. [20] Hong Zhang, Ying Liu, and Romit Maulik. Semi-implicit neural ordinary differ-ential equations. In Proceedings of the AAAI Conference on Artificial Intelligence ,volume 39, pages 22416–22424, 2025. [21] Ruikun Li, Jingwen Cheng, Huandong Wang, Qingmin Liao, and Yong Li. Pre-dicting the dynamics of complex system via multiscale diffusion autoencoder. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.2 , page 1493–1504, New York, NY, USA, 2025. Association for Computing Machinery. [22] Jonathan Ho, Ajay Jain, and Pieter Abbeel. Denoising diffusion probabilistic models. Advances in neural information processing systems , 33:6840–6851, 2020. [23] Lingkai Kong, Jiaming Cui, Haotian Sun, Yuchen Zhuang, B Aditya Prakash, and Chao Zhang. Autoregressive diffusion model for graph generation. In 
+
+International conference on machine learning , pages 17391–17408. PMLR, 2023. [24] Ling Yang, Zhilin Huang, Zhilong Zhang, Zhongyi Liu, Shenda Hong, Wentao Zhang, Wenming Yang, Bin Cui, and Luxia Zhang. Graphusion: Latent diffusion for graph generation. IEEE Transactions on Knowledge and Data Engineering ,36(11):6358–6369, 2024. Diff-prior KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea             
+
+> [25] Jacob Austin, Daniel D Johnson, Jonathan Ho, Daniel Tarlow, and Rianne Van Den Berg. Structured denoising diffusion models in discrete state-spaces. Ad-vances in neural information processing systems , 34:17981–17993, 2021. [26] Clement Vignac, Igor Krawczuk, Antoine Siraudin, Bohan Wang, Volkan Cevher, and Pascal Frossard. Digress: Discrete denoising diffusion for graph generation. In The Eleventh International Conference on Learning Representations , 2023. [27] Lingxiao Zhao, Xueying Ding, and Leman Akoglu. Pard: Permutation-invariant autoregressive diffusion for graph generation. Advances in Neural Information Processing Systems , 37:7156–7184, 2024. [28] Gang Liu, Jiaxin Xu, Tengfei Luo, and Meng Jiang. Graph diffusion transformers for multi-conditional molecular generation. Advances in Neural Information Processing Systems , 37:8065–8092, 2024. [29] Sindy Löwe, David Madras, Richard Zemel, and Max Welling. Amortized causal discovery: Learning to infer causal graphs from time-series data. In Conference on Causal Learning and Reasoning , pages 509–525. PMLR, 2022. [30] Siyuan Chen, Jiahai Wang, and Guoqing Li. Neural relational inference with efficient message passing mechanisms. In Proceedings of the AAAI Conference on Artificial Intelligence , volume 35, pages 7055–7063, 2021.
+
+## A Why Use Joint Distribution Optimization 
+
+This appendix explains why simplifications that drop terms treated as constants (e.g., 𝐶 1, 𝐶 2) in ESM–DSM style derivations can be invalid when the encoder is trained jointly with a latent diffusion prior. The discussion follows the key observation highlighted by Graphusion for latent diffusion models [24]. 
+
+## A.1 ESM–DSM connection and the origin of constant terms 
+
+Let 𝑞 (𝑍 𝑡 | 𝑍 0) be a forward noising process and define the induced marginal 
+
+𝑞 𝜃 enc (𝑍 𝑡 ) =
+
+∫
+
+𝑞 (𝑍 𝑡 | 𝑍 0) 𝑞 𝜃 enc (𝑍 0) 𝑑𝑍 0, (30) where 𝑞 𝜃 enc (𝑍 0) denotes the (possibly learned) latent data distribu-tion induced by the encoder (e.g., an aggregated encoder posterior). Consider explicit score matching (ESM) at noise level 𝑡 :
+
+JESM (𝜃 diff ; 𝜃 enc ) = E𝑡 E𝑍 𝑡 ∼𝑞 𝜃 enc (𝑍 𝑡 ) 𝑠 𝜃 diff (𝑍 𝑡 , 𝑡 )−∇ 𝑍 𝑡 log 𝑞 𝜃 enc (𝑍 𝑡 ) 22,
+
+(31) where 𝑠 𝜃 diff (𝑍 𝑡 , 𝑡 ) is the learned score network. Expanding Eq. (31) gives 
+
+JESM (𝜃 diff ; 𝜃 enc ) = E𝑡 E𝑞 𝜃 enc (𝑍 𝑡 ) 𝑠 𝜃 diff (𝑍 𝑡 , 𝑡 ) 22
+
+− 2 E𝑡 E𝑞 𝜃 enc (𝑍 𝑡 )
+
+D
+
+𝑠 𝜃 diff (𝑍 𝑡 , 𝑡 ), ∇𝑍 𝑡 log 𝑞 𝜃 enc (𝑍 𝑡 )
+
+E
+
+(32) 
+
++ 𝐶 1 (𝜃 enc ), (33) where 
+
+𝐶 1 (𝜃 enc ) := E𝑡 E𝑞 𝜃 enc (𝑍 𝑡 ) ∇𝑍 𝑡 log 𝑞 𝜃 enc (𝑍 𝑡 ) 22. (34) The term 𝐶 1 (𝜃 enc ) does not depend on 𝜃 diff , but it generally depends on the marginal distribution 𝑞 𝜃 enc (𝑍 𝑡 ). Under standard regularity conditions, integration-by-parts arguments can further eliminate 
+
+∇ log 𝑞 𝜃 enc (𝑍 𝑡 ) from the cross term, leading to implicit score match-ing and denoising variants. In such equivalences, additional terms (often grouped as 𝐶 2) may appear and are sometimes informally described as constants. 
+
+## A.2 Learned-latent diffusion makes the marginal parameter-dependent 
+
+In learned latent diffusion, 𝑞 𝜃 enc (𝑍 0) is induced by the encoder and thus varies with 𝜃 enc . Consequently, the marginal 𝑞 𝜃 enc (𝑍 𝑡 )
+
+in Eq. (30) also varies with 𝜃 enc through the marginalization inte-gral. This dependence is exactly what makes the marginal score 
+
+∇𝑍 𝑡 log 𝑞 𝜃 enc (𝑍 𝑡 ) difficult to access analytically in latent space. Gra-phusion discusses this issue explicitly in latent diffusion settings [24]. 
+
+## A.3 Why 𝐶 1, 𝐶 2 are not constant under joint optimization 
+
+If one optimizes only the diffusion/score parameters 𝜃 diff while treating 𝑞 𝜃 enc (𝑍 0) as fixed (e.g., a strictly two-stage pipeline where the encoder is frozen), then 𝐶 1 (𝜃 enc ) and related terms can indeed be treated as constants with respect to 𝜃 diff and dropped. However, under joint training of (𝜃 diff , 𝜃 enc ), these terms gener-ally contribute non-trivially to the gradient with respect to 𝜃 enc . In particular, differentiating Eq. (33) yields the decomposition 
+
+∇𝜃 enc JESM (𝜃 diff ; 𝜃 enc ) = ∇𝜃 enc E𝑡 E𝑞 𝜃 enc (𝑍 𝑡 ) 𝑠 𝜃 diff (𝑍 𝑡 , 𝑡 ) 22
+
+!
+
+− 2 ∇𝜃 enc E𝑡 E𝑞 𝜃 enc (𝑍 𝑡 )
+
+D
+
+𝑠 𝜃 diff (𝑍 𝑡 , 𝑡 ), ∇𝑍 𝑡 log 𝑞 𝜃 enc (𝑍 𝑡 )
+
+E!
+
++ ∇ 𝜃 enc 𝐶 1 (𝜃 enc ),
+
+and ∇𝜃 enc 𝐶 1 (𝜃 enc ) is generally non-zero because 𝑞 𝜃 enc (𝑍 𝑡 ) depends on 𝜃 enc via Eq. (30) . The same conclusion applies to other terms aris-ing in ESM–DSM equivalences (often denoted 𝐶 2): their constancy typically holds only when the underlying data distribution is fixed. Therefore, replacing the intended regularizer by a simplified target that drops such terms changes the optimization problem and may yield a mismatch in the training signal passed to the encoder. 
+
+## A.4 Implication for our objective 
+
+To obtain a tractable objective that remains valid under joint train-ing of the encoder, diffusion prior, and decoder, we avoid relying on constant-term simplifications. Instead, the main text upper bounds the marginal regularizer 
+
+KL  𝑞 𝜃 enc (𝑍 0 | X) ∥ 𝑝 𝜃 diff (𝑍 0) (35) by a joint diffusion-path KL (Thm. 5.1), which admits a diffusion-style decomposition (Sec. 5.3) and an efficient single-timestep esti-mator (Sec. 5.4). 
+
+## B Proofs for the diffusion KL surrogate B.1 Proof of Theorem 5.1 
+
+For clarity, we prove a slightly more general statement and then apply it to 𝑄 𝜃 enc (𝑍 0: 𝑆 | X) and 𝑃 𝜃 diff (𝑍 0: 𝑆 ).
+
+Lemma B.1 (Marginal-to-joint KL bound). Let (Ω, F ) be a measurable space and let 𝑄, 𝑃 be probability measures on it. Let 
+
+𝜋 : Ω → Z be a measurable map, and denote the push-forward (marginal) measures 𝑄 0 := 𝜋 #𝑄 and 𝑃 0 := 𝜋 #𝑃 on (Z , B(Z)) . Then 
+
+KL (𝑄 0 ∥𝑃 0) ≤ KL (𝑄 ∥𝑃 ). (36) 
+
+Proof. Step 0 (the case 𝑄 3 𝑃 ). If 𝑄 3 𝑃 , then by the standard convention KL (𝑄 ∥𝑃 ) = +∞ . Since KL (𝑄 0 ∥𝑃 0) ≥ 0 (possibly +∞ ), KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Trovato et al. 
+
+the inequality holds trivially: KL (𝑄 0 ∥𝑃 0) ≤ KL (𝑄 ∥𝑃 ) = +∞ . Hence, it suffices to consider the case 𝑄 ≪ 𝑃 .
+
+Step 1 (Radon–Nikodym derivative of the joint). Assume 
+
+𝑄 ≪ 𝑃 and let 
+
+𝑓 := 𝑑𝑄 𝑑𝑃 . (37) Then 𝑓 ≥ 0 𝑃 -a.s. and E𝑃 [𝑓 ] = ∫ 
+
+> Ω
+
+𝑓 𝑑𝑃 = 𝑄 (Ω) = 1.
+
+Step 2 (Radon–Nikodym derivative of the marginal). Let 
+
+G := 𝜎 (𝜋 ) be the 𝜎 -algebra generated by 𝜋 and define 
+
+𝑔 := E𝑃 [𝑓 | G] . (38) Then 𝑔 is G-measurable. Hence there exists a measurable function 
+
+˜𝑔 : Z → [ 0, ∞) such that 
+
+𝑔 (𝜔 ) = ˜𝑔 (𝜋 (𝜔 )) 𝑃 -a.s. (39) We claim that 𝑄 0 ≪ 𝑃 0 and that ˜𝑔 is the Radon–Nikodym deriv-ative of 𝑄 0 w.r.t. 𝑃 0, i.e., 
+
+𝑑𝑄 0
+
+𝑑𝑃 0
+
+(𝑧 ) = ˜𝑔 (𝑧 ) 𝑃 0-a.s. (40) To show this, take any measurable set 𝐴 ⊆ Z . By definition of push-forward, 
+
+𝑄 0 (𝐴 ) = 𝑄 (𝜋 ∈ 𝐴 ) =
+
+∫
+
+> Ω
+
+1{𝜋 (𝜔 ) ∈ 𝐴 } 𝑑𝑄 (𝜔 )
+
+=
+
+∫
+
+> Ω
+
+1{𝜋 (𝜔 ) ∈ 𝐴 } 𝑓 (𝜔 ) 𝑑𝑃 (𝜔 ).
+
+(41) Since 1{𝜋 (𝜔 ) ∈ 𝐴 } is G-measurable, the tower property gives 
+
+∫
+
+> Ω
+
+1{𝜋 ∈ 𝐴 } 𝑓 𝑑𝑃 =
+
+∫
+
+> Ω
+
+1{𝜋 ∈ 𝐴 } E𝑃 [𝑓 | G] 𝑑𝑃 
+
+=
+
+∫
+
+> Ω
+
+1{𝜋 ∈ 𝐴 } 𝑔 (𝜔 ) 𝑑𝑃 (𝜔 ).
+
+(42) Using 𝑔 (𝜔 ) = ˜𝑔 (𝜋 (𝜔 )) 𝑃 -a.s. and the change-of-variables identity for push-forward measures, ∫ 
+
+> Ω
+
+𝜑 (𝜋 (𝜔 )) 𝑑𝑃 (𝜔 ) = ∫ 
+
+> Z
+
+𝜑 (𝑧 ) 𝑑𝑃 0 (𝑧 ),we obtain 
+
+𝑄 0 (𝐴 ) =
+
+∫
+
+> Ω
+
+1{𝜋 ∈ 𝐴 } ˜𝑔 (𝜋 (𝜔 )) 𝑑𝑃 (𝜔 ) =
+
+∫
+
+> Z
+
+1{𝑧 ∈ 𝐴 } ˜𝑔 (𝑧 ) 𝑑𝑃 0 (𝑧 ),
+
+(43) which is exactly (40). 
+
+Step 3 (conclude via conditional Jensen). If KL (𝑄 ∥𝑃 ) =∫ 𝑓 log 𝑓 𝑑𝑃 = +∞ , then the desired inequality holds trivially. As-sume henceforth that ∫ 𝑓 log 𝑓 𝑑𝑃 < +∞ .Let 𝜑 (𝑢 ) = 𝑢 log 𝑢 for 𝑢 ≥ 0, which is convex. Since 𝑔 = E𝑃 [𝑓 |G] , conditional Jensen’s inequality yields 
+
+𝜑 (𝑔 ) = 𝜑 (E𝑃 [𝑓 | G]) ≤ E𝑃 [𝜑 (𝑓 ) | G] 𝑃 -a.s. (44) Taking expectation under 𝑃 gives 
+
+E𝑃 [𝑔 log 𝑔 ] ≤ E𝑃 [𝑓 log 𝑓 ]. (45) By (40) and 𝑔 (𝜔 ) = ˜𝑔 (𝜋 (𝜔 )) 𝑃 -a.s., we have 
+
+KL (𝑄 0 ∥𝑃 0) =
+
+∫
+
+> Z
+
+˜𝑔 (𝑧 ) log ˜ 𝑔 (𝑧 ) 𝑑𝑃 0 (𝑧 )
+
+=
+
+∫
+
+> Ω
+
+𝑔 (𝜔 ) log 𝑔 (𝜔 ) 𝑑𝑃 (𝜔 ) = E𝑃 [𝑔 log 𝑔 ].
+
+(46) Similarly, 
+
+KL (𝑄 ∥𝑃 ) =
+
+∫
+
+> Ω
+
+𝑓 log 𝑓 𝑑𝑃 = E𝑃 [𝑓 log 𝑓 ]. (47) Therefore, 
+
+KL (𝑄 0 ∥𝑃 0) ≤ KL (𝑄 ∥𝑃 ), (48) which proves Lemma B.1. □
+
+Applying Lemma B.1 to Theorem 5.1. In our setting, let Ω be the space of diffusion paths 𝑍 0: 𝑆 and let 𝜋 (𝑍 0: 𝑆 ) = 𝑍 0. Take 𝑄 =
+
+𝑄 𝜃 enc (𝑍 0: 𝑆 | X) and 𝑃 = 𝑃 𝜃 diff (𝑍 0: 𝑆 ). Then 𝑄 0 = 𝑞 𝜃 enc (𝑍 0 | X) and 
+
+𝑃 0 = 𝑝 𝜃 diff (𝑍 0), and Lemma B.1 gives Eq. (23). 
+
+## B.2 Proof of the Decomposition of eLdiff (X)
+
+In this appendix we prove the following statement : 
+
+Proposition B.2 (Joint-KL identity). Let 
+
+𝑄 𝜃 enc (𝑍 0: 𝑆 | X) := 𝑞 𝜃 enc (𝑍 0 | X) 𝑞 (𝑍 1: 𝑆 | 𝑍 0), 𝑃 𝜃 diff (𝑍 0: 𝑆 ) := 𝑝 𝜃 diff (𝑍 0: 𝑆 ),
+
+(49) 
+
+and define the diffusion ELBO for a fixed 𝑍 0 as 
+
+ELBO 𝜃 diff (𝑍 0) := E𝑞 (𝑍 1: 𝑆 |𝑍 0 )
+
+ log 𝑝 𝜃 diff (𝑍 0: 𝑆 ) − log 𝑞 (𝑍 1: 𝑆 | 𝑍 0) .
+
+(50) 
+
+Then the joint KL admits the following identity: 
+
+eLdiff (X) : = KL  𝑄 𝜃 enc (· | X) ∥ 𝑃 𝜃 diff (·)  (51) 
+
+= E𝑞 𝜃 enc (𝑍 0 |X)
+
+h
+
+log 𝑞 𝜃 enc (𝑍 0 | X) − ELBO 𝜃 diff (𝑍 0)
+
+i
+
+. (52) 
+
+Proof. By definition of KL divergence and the Radon–Nikodym derivative, 
+
+eLdiff (X) =E𝑄 𝜃 enc (𝑍 0: 𝑆 |X)
+
+
+
+log 𝑄 𝜃 enc (𝑍 0: 𝑆 | X)
+
+𝑃 𝜃 diff (𝑍 0: 𝑆 )
+
+
+
+=E𝑞 𝜃 enc (𝑍 0 |X) 𝑞 (𝑍 1: 𝑆 |𝑍 0 ) [log 𝑞 𝜃 enc (𝑍 0 | X) (53) 
+
++ log 𝑞 (𝑍 1: 𝑆 | 𝑍 0) − log 𝑝 𝜃 diff (𝑍 0: 𝑆 )] . (54) Now apply the tower property (iterated expectation) with respect to 𝑍 0 ∼ 𝑞 𝜃 enc (𝑍 0 | X) and 𝑍 1: 𝑆 ∼ 𝑞 (𝑍 1: 𝑆 | 𝑍 0):
+
+eLdiff (X) =E𝑞 𝜃 enc (𝑍 0 |X) [E𝑞 (𝑍 1: 𝑆 |𝑍 0 ) (log 𝑞 𝜃 enc (𝑍 0 | X) (55) 
+
++ log 𝑞 (𝑍 1: 𝑆 | 𝑍 0) − log 𝑝 𝜃 diff (𝑍 0: 𝑆 ))] 
+
+=E𝑞 𝜃 enc (𝑍 0 |X) [log 𝑞 𝜃 enc (𝑍 0 | X) (56) 
+
++ E𝑞 (𝑍 1: 𝑆 |𝑍 0 ) (log 𝑞 (𝑍 1: 𝑆 | 𝑍 0) − log 𝑝 𝜃 diff (𝑍 0: 𝑆 ))] 
+
+=E𝑞 𝜃 enc (𝑍 0 |X) [log 𝑞 𝜃 enc (𝑍 0 | X) (57) 
+
+− E𝑞 (𝑍 1: 𝑆 |𝑍 0 ) (log 𝑝 𝜃 diff (𝑍 0: 𝑆 ) − log 𝑞 (𝑍 1: 𝑆 | 𝑍 0))] . (58) The inner expectation is exactly ELBO 𝜃 diff (𝑍 0) defined in Eq. (50) ,which yields Eq. (52). □
+
+## B.3 Proof of the Diff-prior ELBO decomposition 
+
+We prove the standard per-step decomposition. Assume the diffu-sion joint is 
+
+𝑝 𝜃 diff (𝑍 0: 𝑆 ) = 𝑝 (𝑍 𝑆 )
+
+> 𝑆
+
+Ö
+
+> 𝑠 =1
+
+𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 ), 𝑝 (𝑍 𝑆 ) = N ( 0, I),
+
+(59) and the forward noising process is Markov: 
+
+𝑞 (𝑍 1: 𝑆 | 𝑍 0) =
+
+> 𝑆
+
+Ö
+
+> 𝑠 =1
+
+𝑞 (𝑍 𝑠 | 𝑍 𝑠 −1). (60) Diff-prior KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+Theorem B.3 (Per-step KL decomposition of −ELBO ). For any fixed 𝑍 0, the negative ELBO in Eq. (50) satisfies 
+
+−ELBO 𝜃 diff (𝑍 0) = KL (𝑞 (𝑍 𝑆 | 𝑍 0) ∥ 𝑝 (𝑍 𝑆 )) 
+
+| {z }  
+
+> 𝐿 𝑆 (𝑍 0)
+
+(61) 
+
++
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =2
+
+E𝑞 (𝑍 𝑠 |𝑍 0 ) KL  𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0) ∥ 𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 )| {z }   
+
+> 𝐿 𝑠 −1(𝑍 0)
+
+(62) 
+
++ E𝑞 (𝑍 1 |𝑍 0 )
+
+ − log 𝑝 𝜃 diff (𝑍 0 | 𝑍 1)| {z }  
+
+> 𝐿 0(𝑍 0)
+
+. (63) 
+
+Proof. Start from the definition of the ELBO: 
+
+−ELBO 𝜃 diff (𝑍 0) = E𝑞 (𝑍 1: 𝑆 |𝑍 0 )
+
+h
+
+− log 𝑝 𝜃 diff (𝑍 0: 𝑆 ) + log 𝑞 (𝑍 1: 𝑆 | 𝑍 0)
+
+i
+
+= E𝑞 (𝑍 1: 𝑆 |𝑍 0 ) [− log 𝑝 (𝑍 𝑆 ) − 
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =1
+
+log 𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 )
+
+(64) 
+
++
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =1
+
+log 𝑞 (𝑍 𝑠 | 𝑍 𝑠 −1)] . (65) Next, for each 𝑠 ≥ 2, apply Bayes’ rule to the forward Markov chain: 
+
+𝑞 (𝑍 𝑠 | 𝑍 𝑠 −1) = 𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0) 𝑞 (𝑍 𝑠 | 𝑍 0)
+
+𝑞 (𝑍 𝑠 −1 | 𝑍 0) . (66) Taking logs and summing over 𝑠 = 2, . . . , 𝑆 gives a telescoping cancellation: 
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =2
+
+log 𝑞 (𝑍 𝑠 | 𝑍 𝑠 −1) =
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =2
+
+log 𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0) (67) 
+
++ log 𝑞 (𝑍 𝑆 | 𝑍 0) − log 𝑞 (𝑍 1 | 𝑍 0). (68) Substitute Eq. (68) into Eq. (65) and separate the 𝑠 = 1 terms: 
+
+−ELBO 𝜃 diff (𝑍 0) =E𝑞 (𝑍 1: 𝑆 |𝑍 0 )
+
+h
+
+log 𝑞 (𝑍 𝑆 | 𝑍 0)
+
+𝑝 (𝑍 𝑆 ) (69) 
+
++
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =2
+
+log 𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0)
+
+𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 ) − log 𝑝 𝜃 diff (𝑍 0 | 𝑍 1)
+
+i
+
+.
+
+(70) We now rewrite each term as a KL divergence: (i) Terminal term. Since the first term depends only on 𝑍 𝑆 (given 
+
+𝑍 0), 
+
+E𝑞 (𝑍 1: 𝑆 |𝑍 0 )
+
+
+
+log 𝑞 (𝑍 𝑆 | 𝑍 0)
+
+𝑝 (𝑍 𝑆 )
+
+
+
+= E𝑞 (𝑍 𝑆 |𝑍 0 )
+
+
+
+log 𝑞 (𝑍 𝑆 | 𝑍 0)
+
+𝑝 (𝑍 𝑆 )
+
+
+
+(71) 
+
+= KL (𝑞 (𝑍 𝑆 | 𝑍 0) ∥ 𝑝 (𝑍 𝑆 )) . (72) (ii) Intermediate terms. For each 𝑠 ≥ 2, the corresponding log-ratio depends on (𝑍 𝑠 −1, 𝑍 𝑠 ), and conditioning on 𝑍 𝑠 yields 
+
+E𝑞 (𝑍 1: 𝑆 |𝑍 0 )
+
+
+
+log 𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0)
+
+𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 )
+
+
+
+(73) 
+
+= E𝑞 (𝑍 𝑠 |𝑍 0 )
+
+"
+
+E𝑞 (𝑍 𝑠 −1 |𝑍 𝑠 ,𝑍 0 )
+
+
+
+log 𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0)
+
+𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 )
+
+ #
+
+= E𝑞 (𝑍 𝑠 |𝑍 0 ) KL  𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0) ∥ 𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 ) . (74) (iii) Reconstruction term. The remaining term is 
+
+E𝑞 (𝑍 1: 𝑆 |𝑍 0 )
+
+ − log 𝑝 𝜃 diff (𝑍 0 | 𝑍 1) = E𝑞 (𝑍 1 |𝑍 0 )
+
+ − log 𝑝 𝜃 diff (𝑍 0 | 𝑍 1) .
+
+(75) Combining (i)–(iii) with Eq. (70) yields the decomposition in Eq. (63). □
+
+## B.4 From per-step KL to the 𝜖 -prediction objective 
+
+This appendix shows that, under the standard Gaussian diffusion parameterization with fixed variances, the per-step KL terms in Theorem B.3 reduce (up to known weights and constants) to a weighted noise-prediction regression loss, yielding Eq. (27) . Our derivation follows the standard DDPM analysis. 
+
+Forward process and closed-form marginals. Fix a variance sched-ule {𝛽 𝑠 }𝑆 𝑠 =1 with 𝛼 𝑠 := 1 − 𝛽 𝑠 and ¯𝛼 𝑠 := Î𝑠 𝑟 =1 𝛼 𝑟 . The forward Markov chain is 
+
+𝑞 (𝑍 𝑠 | 𝑍 𝑠 −1) = N  √𝛼 𝑠 𝑍 𝑠 −1, 𝛽 𝑠 I . (76) It admits the closed-form marginal 
+
+𝑞 (𝑍 𝑠 | 𝑍 0 ) = N
+
+√ ¯𝛼 𝑠 𝑍 0, (1 − ¯𝛼 𝑠 )I
+
+
+
+, 𝑍 𝑠 = √ ¯𝛼 𝑠 𝑍 0+√1 − ¯𝛼 𝑠 𝜖, 𝜖 ∼ N ( 0, I),
+
+(77) 
+
+which matches Eq. (26) in the main text. 
+
+Forward posterior. The posterior of the forward process is also Gaussian: 
+
+𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0) = N
+
+
+
+˜𝜇 𝑠 (𝑍 𝑠 , 𝑍 0), ˜𝛽 𝑠 I
+
+
+
+, (78) with 
+
+˜𝛽 𝑠 := 1 − ¯𝛼 𝑠 −1
+
+1 − ¯𝛼 𝑠 
+
+𝛽 𝑠 , (79) 
+
+˜𝜇 𝑠 (𝑍 𝑠 , 𝑍 0) :=
+
+√ ¯𝛼 𝑠 −1 𝛽 𝑠 
+
+1 − ¯𝛼 𝑠 
+
+𝑍 0 +√𝛼 𝑠 (1 − ¯𝛼 𝑠 −1)
+
+1 − ¯𝛼 𝑠 
+
+𝑍 𝑠 . (80) These are standard identities obtained by Gaussian conditioning. 
+
+Reverse model and 𝜖 -parameterization. Assume the learned re-verse transition has fixed variance 𝜎 2 
+
+> 𝑠
+
+I:
+
+𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 ) = N  𝜇 𝜃 diff (𝑍 𝑠 , 𝑠 ), 𝜎 2 
+
+> 𝑠
+
+I . (81) Following DDPM, we parameterize the mean via a noise predictor 
+
+𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ):
+
+𝜇 𝜃 diff (𝑍 𝑠 , 𝑠 ) := 1
+
+√𝛼 𝑠 
+
+
+
+𝑍 𝑠 − 𝛽 𝑠 
+
+√1 − ¯𝛼 𝑠 
+
+𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 )
+
+
+
+. (82) Moreover, using the reparameterization in Eq. (77) , one can rewrite 
+
+˜𝜇 𝑠 (𝑍 𝑠 , 𝑍 0) in an equivalent “noise form”: 
+
+˜𝜇 𝑠 (𝑍 𝑠 , 𝑍 0) = 1
+
+√𝛼 𝑠 
+
+
+
+𝑍 𝑠 − 𝛽 𝑠 
+
+√1 − ¯𝛼 𝑠 
+
+𝜖 
+
+
+
+, where 𝑍 𝑠 = √ ¯𝛼 𝑠 𝑍 0+√1 − ¯𝛼 𝑠 𝜖. 
+
+(83) (An explicit verification follows by substituting 𝑍 𝑠 into Eq. (80) and simplifying.) KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea Trovato et al. 
+
+Key step: per-step KL becomes weighted MSE.. Consider the inter-mediate term in Theorem B.3: 
+
+𝐿 𝑠 −1 (𝑍 0) = E𝑞 (𝑍 𝑠 |𝑍 0 ) KL  𝑞 (𝑍 𝑠 −1 | 𝑍 𝑠 , 𝑍 0) ∥ 𝑝 𝜃 diff (𝑍 𝑠 −1 | 𝑍 𝑠 ) . (84) Since both distributions are Gaussians with isotropic covariances (Eqs. (78)–(81)), their KL divergence has the closed form 
+
+KL 
+
+
+
+N ( ˜𝜇 𝑠 , ˜𝛽 𝑠 I) ∥ N ( 𝜇 𝜃 diff , 𝜎 2 
+
+> 𝑠
+
+I)
+
+
+
+= 12𝜎 2
+
+> 𝑠
+
+˜𝜇 𝑠 −𝜇 𝜃 diff 
+
+> 22
+
++𝑑 
+
+2
+
+˜𝛽 𝑠 
+
+𝜎 2
+
+> 𝑠
+
+− 1 − log ˜𝛽 𝑠 
+
+𝜎 2
+
+> 𝑠
+
+!
+
+,
+
+(85) 
+
+where 𝑑 is the dimensionality of 𝑍 𝑠 −1. The second term does not depend on 𝜃 diff .Substituting Eqs. (82) and (83) into the mean difference yields 
+
+˜𝜇 𝑠 (𝑍 𝑠 , 𝑍 0) − 𝜇 𝜃 diff (𝑍 𝑠 , 𝑠 ) = 𝛽 𝑠 
+
+√𝛼 𝑠 
+
+√1 − ¯𝛼 𝑠 
+
+ 𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) − 𝜖  . (86) Therefore, 
+
+12𝜎 2
+
+> 𝑠
+
+˜𝜇 𝑠 −𝜇 𝜃 diff  
+
+> 22
+
+= 𝑤 𝑠 𝜖 −𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) 22, 𝑤 𝑠 := 𝛽 2
+
+> 𝑠
+
+2𝜎 2 
+
+> 𝑠
+
+𝛼 𝑠 (1 − ¯𝛼 𝑠 ) .
+
+(87) Plugging Eq. (87) into Eq. (84) and using the reparameterization 
+
+𝑍 𝑠 = √ ¯𝛼 𝑠 𝑍 0 + √1 − ¯𝛼 𝑠 𝜖 yields 
+
+𝐿 𝑠 −1 (𝑍 0) = E𝜖 ∼N ( 0,I)
+
+h
+
+𝑤 𝑠 𝜖 − 𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) 22
+
+i
+
++ const (𝑠 ), (88) where const (𝑠 ) collects all terms independent of 𝜃 diff (including the covariance-only term in Eq. (85)). 
+
+From per-step terms to the training objective. Summing over 𝑠 
+
+and dropping 𝜃 diff -independent constants gives a diffusion train-ing objective equivalent to minimizing a weighted noise regres-sion over noise levels. In practice, we sample a single timestep 
+
+𝑠 ∼ Unif ({ 1, . . . , 𝑆 }) per iteration and optimize the Monte Carlo estimate 
+
+bLtrain diff (X) = E𝑍 0∼𝑞 𝜃 enc (𝑍 0 |X) E𝑠 ∼Unif ({ 1,...,𝑆 }) , 𝜖 ∼N ( 0,I)
+
+h
+
+𝑤 𝑠 𝜖 −𝜖 𝜃 diff (𝑍 𝑠 , 𝑠 ) 22
+
+i
+
+,
+
+(89) 
+
+which is exactly Eq. (27). □
+
+## B.5 Unbiasedness of single-timestep Monte Carlo training 
+
+This appendix justifies the single-timestep training strategy used in Sec. 5.4 by showing that sampling one diffusion timestep per iteration yields an unbiased Monte Carlo estimator of the multi-step diffusion objective. This aligns with the standard diffusion training practice of sampling 𝑡 uniformly. 
+
+Setup. Let 𝑆 be the number of diffusion steps and let 𝐹 𝑠 (𝑍 0)
+
+denote any per-timestep loss term (e.g., a per-step KL term or its equivalent noise-prediction form). We consider two equivalent ways to write the diffusion objective: 
+
+(i) Sum form: 
+
+JΣ (𝑍 0) :=
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =1
+
+𝐹 𝑠 (𝑍 0). (90) 
+
+(ii) Expectation form (uniform over steps): 
+
+JE (𝑍 0) := E𝑠 ∼Unif ( { 1,...,𝑆 } ) 
+
+𝐹 𝑠 (𝑍 0) = 1
+
+𝑆 
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =1
+
+𝐹 𝑠 (𝑍 0). (91) The two objectives differ only by a constant scaling: JΣ (𝑍 0) =
+
+𝑆 JE (𝑍 0).
+
+Unbiased estimator under uniform sampling. Let ˆ𝑠 ∼ Unif ({ 1, . . . , 𝑆 }) 
+
+be a single sampled timestep. Define the single-sample estimators 
+
+bJE (𝑍 0) := 𝐹 ˆ𝑠 (𝑍 0), bJΣ (𝑍 0) := 𝑆 𝐹 ˆ𝑠 (𝑍 0). (92) 
+
+Lemma B.4 (Unbiasedness under uniform sampling). For any fixed 𝑍 0, the estimators in Eq. (92) satisfy 
+
+Eˆ𝑠 
+
+ bJE (𝑍 0) = JE (𝑍 0), Eˆ𝑠 
+
+ bJΣ (𝑍 0) = JΣ (𝑍 0). (93) 
+
+Proof. By definition of the uniform distribution and linearity of expectation, 
+
+Eˆ𝑠 
+
+𝐹 ˆ𝑠 (𝑍 0) = 1
+
+𝑆 
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =1
+
+𝐹 𝑠 (𝑍 0) = JE (𝑍 0), (94) which proves the first identity. Multiplying both sides by 𝑆 yields 
+
+Eˆ𝑠 [𝑆𝐹 ˆ𝑠 (𝑍 0)] = Í𝑆 𝑠 =1 𝐹 𝑠 (𝑍 0) = JΣ (𝑍 0), proving the second identity. 
+
+□
+
+General (importance) sampling over timesteps. More generally, let 𝑝 (𝑠 ) be any probability distribution on {1, . . . , 𝑆 } with 𝑝 (𝑠 ) > 0
+
+for all 𝑠 . If ˆ𝑠 ∼ 𝑝 (·) , then 
+
+bJ IS  
+
+> Σ
+
+(𝑍 0) := 𝐹 ˆ𝑠 (𝑍 0)
+
+𝑝 (ˆ𝑠 ) (95) is an unbiased estimator of the sum objective: 
+
+Eˆ𝑠 ∼𝑝 
+
+h bJ IS  
+
+> Σ
+
+(𝑍 0)
+
+i
+
+=
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =1
+
+𝑝 (𝑠 ) 𝐹 𝑠 (𝑍 0)
+
+𝑝 (𝑠 ) =
+
+> 𝑆
+
+∑︁ 
+
+> 𝑠 =1
+
+𝐹 𝑠 (𝑍 0) = JΣ (𝑍 0). (96) Similarly, an unbiased estimator for the expectation objective in Eq. (91) is bJ IS  
+
+> E
+
+(𝑍 0) := 1       
+
+> 𝑆 𝐹 ˆ𝑠 (𝑍 0)
+> 𝑝 (ˆ𝑠 )
+
+.
+
+Implication for Sec. 5.4. In Sec. 5.4 we define the diffusion train-ing loss directly in expectation form over a uniformly sampled timestep, which makes the single-timestep estimator unbiased by Lemma B.4. The same argument holds when 𝐹 𝑠 (𝑍 0) is instantiated as the weighted 𝜖 -prediction loss derived in Appendix B.4, since the unbiasedness depends only on the timestep sampling and not on the specific functional form of 𝐹 𝑠 .
+
+## C Performance Metrics 
+
+We report two uncertainty/reliability metrics. The average posterior entropy is the mean Shannon entropy of the predicted posterior over edges: 
+
+¯𝐻 = 1
+
+|E| ∑︁ 𝑒 ∈ E 
+
+𝐻 (𝑝 𝑒 ), 𝐻 (𝑝 𝑒 ) = −∑︁  
+
+> 𝑦 ∈ Y
+
+𝑝 𝑒 (𝑦 ) log 𝑝 𝑒 (𝑦 ). (97) Lower ¯𝐻 indicates more concentrated, and thus more certain, posteriors. We also compute the expected calibration error (ECE) with 𝐵 = 10 confidence bins: 
+
+ECE =
+
+> 𝐵
+
+∑︁ 
+
+> 𝑏 =1
+
+|𝐼 𝑏 |
+
+𝑁 |Acc (𝐼 𝑏 ) − Conf (𝐼 𝑏 )| ,
+
+Acc (𝐼 𝑏 ) = 1
+
+|𝐼 𝑏 |∑︁ 𝑖 ∈𝐼 𝑏 
+
+1( ˆ𝑦 𝑖 = 𝑦 𝑖 ), Conf (𝐼 𝑏 ) = 1
+
+|𝐼 𝑏 |∑︁ 𝑖 ∈𝐼 𝑏 
+
+ˆ𝑐 𝑖 .
+
+(98) Here, 𝐼 𝑏 contains samples whose confidence ˆ𝑐 𝑖 = max 𝑦 𝑝 𝑖 (𝑦 )
+
+falls in bin 𝑏 . Lower ECE indicates better calibration. Diff-prior KDD ’26, August 09–13, 2026, Jeju Island, Republic of Korea 
+
+Table 8: Comparison between MLP and Transformer denois-ers in the diffusion module. Results are reported as AUROC (%). Bold indicates the better result under the same dynamics and dataset. 
+
+Dynamics Denoiser VN FW BN GRN CRNA SP MLP 95.17 81.51 99.52 90.58 85.65 
+
+SP Trans. 94.75 81.17 99.60 91.41 84.78 NS MLP 91.50 55.73 99.75 77.38 51.80 
+
+NS Trans. 95.31 51.35 99.79 82.55 50.77 
+
+## D Diffusion hyperparameters 
+
+We adopt an edge-wise DDPM prior over the encoder logits and set the diffusion horizon to 𝑆 =100 . We use a linear noise schedule with 
+
+𝛽 𝑠 linearly interpolated from 10 −4 to 2 × 10 −2. The denoiser 𝜖 𝜃 (z𝑠 , 𝑠 )
+
+is implemented as a three-layer MLP that takes the concatenation of z𝑠 ∈ R𝐾 and a sinusoidal time embedding of dimension 64 as input, uses two hidden layers of width 128 with SiLU activations and dropout 0.3, and outputs a prediction in R𝐾 . During training, we sample diffusion steps uniformly from {2, . . . , 𝑠 max }, averaging the resulting weighted noise-prediction objective. Following the benchmark setting, we use 𝜎 2 
+
+> 𝑠
+
+=𝛽 𝑠 when constructing the per-step weight. For the decoder input, we apply a decisive one-step residual refinement at 𝑠 ref =30 with residual scale 𝛾 =0.1, using fixed Gaussian noise; we additionally clip the refined prediction with ∥ˆz0 ∥∞ ≤ 10 
+
+for stability. To further examine the effect of the denoiser architec-ture in the diffusion module, we additionally replace the default MLP denoiser with a Transformer-based denoiser and report the comparison in Table 8. The two denoiser choices achieve compara-ble structure inference performance, while the Transformer variant introduces higher computational cost due to its attention operations. Therefore, we use the MLP denoiser as the default implementation in our main experiments. 
+
+## E Runtime Statistics 
+
+Table 9 summarizes the per-epoch average training time for each baseline across three dynamic backbones and five network settings. Despite introducing additional parameters, Diff-prior does not incur noticeable training-time overhead compared to Uniform/Fixed, and exhibits comparable per-epoch runtime under identical hardware and training configurations. We further report the runtime and memory usage under larger graph sizes in Table 10. When increasing the number of nodes from 30 to 50, the absolute runtime and memory naturally increase because the number of candidate edges grows with graph size. However, the additional overhead introduced by Diff-prior remains marginal compared with the corresponding Uniform-prior baseline. For the 30-node setting, Diff-prior only increases the runtime from 250 to 260 seconds per epoch and the memory usage from 4.65 GB to 4.74 GB. For the 50-node setting, the runtime increases from 675 to 712 seconds per epoch, while the memory usage only changes from 12.73 GB to 12.80 GB. These results show that Diff-prior introduces only a slight extra runtime extra memory cost overhead, even when the graph size becomes larger. 
+
+Table 9: Training time per epoch (in seconds) under differ-ent graph priors (Uniform, Fixed, and Diff-prior) across five datasets.                                                                                                       
+
+> Spring Model prior VN_15 FW_15 BN_15 GRN_15 CRNA_15 AVG NRI Uniform 133 131 93 96 62 103
+> Fixed 124 137 124 98 82 113
+> Diff-prior 175 104 112 114 85 118
+> ACD Uniform 175 82 115 189 111 134.4
+> Fixed 92 119 91 91 89 96.4
+> Diff-prior 115 97 101 98 102 102.6
+> MPM Uniform 118 87 165 88 114 114.4
+> Diff-prior 179 171 104 167 179 160
+> Netsims Model prior VN_15 FW_15 BN_15 GRN_15 CRNA_15 AVG NRI Uniform 101 78 110 71 65 85
+> Fixed 106 102 77 107 65 91.4
+> Diff-prior 99 100 103 102 78 96.4
+> ACD Uniform 85 92 83 82 69 82.2
+> Fixed 101 93 91 104 113 100.4
+> Diff-prior 92 87 93 153 89 102.8
+> MPM Uniform 148 154 152 153 152 151.8
+> Diff-prior 109 111 152 199 144 143
+
+Table 10: Runtime and memory comparison.            
+
+> Uni-30 Diff-30 Uni-50 Diff-50 Time (s/epoch) 250 260 675 712 Mem (GB) 4.65 4.74 12.73 12.80
+
+## F Step-wise Performance on NRI 
+
+Table 11 reports the step-wise AUROC performance of the NRI backbone on the FW dataset under SP and NS dynamics. The pur-pose of this comparison is to examine whether multiple refinement steps are necessary for the diffusion-based calibration. For FW-SP, the best result is achieved at step-1, while the performances from step-1 to step-10 remain very close. For FW-NS, although step-3 gives the highest AUROC, the gap between step-1 and step-3 is relatively small compared with the improvement already obtained after the first refinement step. These results indicate that most of the calibration benefit can be achieved with a single refinement step, and using more steps only brings marginal additional gains. Therefore, in our main experiments, we adopt one-step refinement as the default setting, which preserves the effectiveness of Diff-prior while avoiding additional iterative computation and runtime overhead. 
+
+Table 11: Step-wise performance comparison on NRI. 
+
+NRI step-0 step-1 step-3 step-5 step-10 FW-SP 81.09 80.91 81.51 81.39 81.22 81.23 FW-NS 51.78 50.60 55.73 56.89 52.24 51.02

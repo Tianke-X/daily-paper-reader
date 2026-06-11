@@ -1,0 +1,805 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-11T21:40:50.861485+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 10,
+    "deep_cap": 7,
+    "deep_selected": 7,
+    "quick_candidates": 19,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2606.11831v1",
+      "source": "arxiv",
+      "title": "From Uniform to Learned Graph Priors: Diffusion for Structure Discovery",
+      "abstract": "Neural relational inference (NRI) methods discover interaction graphs from trajectories through variational reasoning on discrete potential edges. However, these methods typically rely on oversimplified, factorized graph priors. Such priors, typically nearing uniform distributions, treat edges as independent entities. This systemic misalignment does not match the real-world systems and yields diffuse and indecisive edge posteriors limiting the reliability of structural discovery. To address this, we propose \\textit{Diff-prior}, a diffusion-parameterized adaptive prior used to calibrate latent graph distribution rather than generate graphs. Our core insight is to reframe prior integration as a learnable denoising-style calibration that organizes scattered, uncertain edge posteriors into a more reliable overall structure which can be trained by the diffusion model. Diff-prior learns an adaptive structure prior that performs structured calibration on the edge posteriors during inference, guiding it towards a distribution closer to the underlying structure. The diff-prior operates before structural sampling and acts as a denoising calibrator directly on the encoder edge distribution, which provides a generic training paradigm over structured variables. Experiments on standard benchmarks validated our framework, and the results indicate that Diff-prior improves the performance of structure inference and generates more decisive edge posteriors across multiple NRI-family architectures. The code is available on https://github.com/Hardy158118/Diffprior.",
+      "authors": [
+        "Qi Shao",
+        "Hao Guo",
+        "Jiawen Chen",
+        "Duxin Chen",
+        "Wenwu Yu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-10T09:14:45+00:00",
+      "link": "https://arxiv.org/pdf/2606.11831v1",
+      "tags": [
+        "keyword:power-ticket"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Learned graph priors via diffusion for structure discovery",
+      "llm_evidence_cn": "通过扩散学习图先验用于结构发现",
+      "llm_evidence": "通过扩散学习图先验用于结构发现",
+      "canonical_evidence": "通过扩散学习图先验用于结构发现",
+      "llm_tldr_en": "Proposes Diff-prior, a diffusion-parameterized adaptive prior that calibrates latent graph distribution for neural relational inference, improving structure discovery over uniform priors.",
+      "llm_tldr_cn": "现有神经关系推理方法使用均匀图先验，导致预测边缘不确定性高。本文提出Diff-prior，利用扩散模型参数化可学习先验，以去噪方式校准潜在图分布。实验表明该方法在合成和真实系统上均提升了图结构发现的可靠性，为图结构学习提供了新范式。",
+      "llm_tldr": "现有神经关系推理方法使用均匀图先验，导致预测边缘不确定性高。本文提出Diff-prior，利用扩散模型参数化可学习先验，以去噪方式校准潜在图分布。实验表明该方法在合成和真实系统上均提升了图结构发现的可靠性，为图结构学习提供了新范式。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.11853v1",
+      "source": "arxiv",
+      "title": "Task-Aware Structured Memory for Dynamic Multi-modal In-Context Learning",
+      "abstract": "Multi-modal large language models (MLLMs) depend on in-context learning (ICL) for rapid task adaptation, but their scalability is severely limited by finite context windows and the growing cost of key-value (KV) caches in long multi-modal sequences. Existing memory compression approaches typically rely on rigid token removal or sample-dependent importance estimation, which introduces bias, disrupts semantic structure, particularly for visual representations, and yields static memories that cannot adapt to new queries. We introduce TASM (Task-Aware Structured Memory), a training-free framework that addresses these limitations through task-aware, structure-preserving, and dynamically accessible memory construction. TASM employs task-vector guided compression to replace sample-specific signals with a task-level direction that captures shared relevance across demonstrations. To preserve the underlying manifold, it applies semantics-aware token merging via bipartite graph matching, aggregating tokens without destructive pruning. Finally, TASM structures memory into a hierarchy comprising a compact Core Memory and a Latent Bank, facilitating query-adaptive dynamic retrieval. Evaluations confirm TASM maintains high performance under heavy compression, effectively balancing efficiency with adaptability.",
+      "authors": [
+        "Zhirui Chen",
+        "Ziwei Chen",
+        "Ling Shao"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI"
+      ],
+      "published": "2026-06-10T09:30:25+00:00",
+      "link": "https://arxiv.org/pdf/2606.11853v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Training-free task-aware structured memory for ICL",
+      "llm_evidence_cn": "无需训练的任务感知结构化记忆",
+      "llm_evidence": "无需训练的任务感知结构化记忆",
+      "canonical_evidence": "无需训练的任务感知结构化记忆",
+      "llm_tldr_en": "Proposes TASM, a training-free framework that constructs task-aware structured memory from long multi-modal sequences, enabling dynamic adaptation without additional training.",
+      "llm_tldr_cn": "多模态大模型在长序列上下文学习中受限于窗口大小和KV缓存成本。本文提出TASM，一种无需训练的框架，通过任务向量引导压缩和结构保留，生成可动态访问的结构化记忆。实验表明其在保持性能的同时显著减少计算开销，为记忆增强推理提供了轻量级方案。",
+      "llm_tldr": "多模态大模型在长序列上下文学习中受限于窗口大小和KV缓存成本。本文提出TASM，一种无需训练的框架，通过任务向量引导压缩和结构保留，生成可动态访问的结构化记忆。实验表明其在保持性能的同时显著减少计算开销，为记忆增强推理提供了轻量级方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "memory augmented reasoning without training",
+      "matched_requirement_id": "req-17",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07183v1",
+      "source": "arxiv",
+      "title": "Geometry of Semantic Space: Comparative Study of Discrete and Continuous Models",
+      "abstract": "This work examines the semantic geometry underlying NLP models. We compare supervised vector embeddings, such as CamemBERT, with lexical co-occurrence graphs that encode semantic relations more directly. While transformer-based embeddings achieve strong performance, their induced geometries often display unsatisfactory distributions. In contrast, graph-based models reveal a clearer and more human-readable organization of meaning. We have implemented a methodology that allows us to perform a comparative analysis either based on the structure of the graphs or based on the topology of the embeddings induced by these two approaches. The results of the comparison -- applied to the French \"Great National Debate\" corpus a collection of citizen contributions to the public debate -- show a similar local topology but a very different overall structure and topology. Theses findings suggest complementary perspectives between deep supervised models and graph-based models, considering a new pathway to guide neural architectures toward more stable and interpretable convergence with graphs structures.",
+      "authors": [
+        "Gabriel Bounias",
+        "Sabine Ploux"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-05T11:47:22+00:00",
+      "link": "https://arxiv.org/pdf/2606.07183v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "comparative study of graph-based and embedding-based semantic spaces",
+      "llm_evidence_cn": "基于图和基于嵌入的语义空间比较研究",
+      "llm_evidence": "基于图和基于嵌入的语义空间比较研究",
+      "canonical_evidence": "基于图和基于嵌入的语义空间比较研究",
+      "llm_tldr_en": "Compares lexical co-occurrence graphs with supervised vector embeddings, revealing graph-based models yield clearer semantic organization.",
+      "llm_tldr_cn": "该论文比较了有监督向量嵌入（如CamemBERT）与词汇共现图在语义空间几何中的表现。发现基于图的模型能够更清晰、更可解释地组织语义，而嵌入则分布不均匀。通过应用在法语全国大辩论语料上，展示了图结构在语义表示中的优势，对图结构学习和图嵌入研究有启示意义。",
+      "llm_tldr": "该论文比较了有监督向量嵌入（如CamemBERT）与词汇共现图在语义空间几何中的表现。发现基于图的模型能够更清晰、更可解释地组织语义，而嵌入则分布不均匀。通过应用在法语全国大辩论语料上，展示了图结构在语义表示中的优势，对图结构学习和图嵌入研究有启示意义。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07075v2",
+      "source": "arxiv",
+      "title": "Beyond Matching: Category-Guided Latent Intent Reasoning for Generative Retrieval in E-Commerce",
+      "abstract": "Generative retrieval offers a new paradigm for e-commerce search by mapping user queries directly to product Semantic Identifiers (SIDs). However, e-commerce queries are often short, noisy, attribute-heavy, and associated with multiple category-consistent products, creating a substantial representation gap between natural-language shopping intent and artificially constructed item SIDs. Explicit Chain-of-Thought (CoT) reasoning can help bridge this gap, but its extra generation cost is difficult to reconcile with the low-latency requirements of online e-commerce systems. To address this challenge, we propose CaLIR (Category-guided Latent Intent Reasoning), a category-guided latent intent reasoning framework for e-commerce generative retrieval. Rather than generating explicit textual rationales, CaLIR learns continuous latent intent states before SID decoding and uses product category hierarchies as a natural scaffold for coarse-to-fine intent reasoning. Specifically, we introduce hierarchical semantic reasoning to align latent states with category-level shopping intent, and query-wise reasoning enhancement to model diverse intent paths under multi-positive queries. CaLIR further combines a query-specific dynamic prefix trie, assembled from pre-indexed category-level tries, with reasoning-aware constrained decoding. Experiments on multilingual e-commerce search datasets show that CaLIR achieves a better balance between retrieval effectiveness and inference efficiency than existing methods, while also demonstrating transferability and robustness across induced hierarchies and different generative backbones.",
+      "authors": [
+        "Fuwei Zhang",
+        "Xiaoyu Liu",
+        "Jiajie Jin",
+        "Jiale Mao",
+        "Wei Chen",
+        "Dongbo Xi",
+        "Yifan Yang",
+        "Peng Yan",
+        "Zichao Hao",
+        "Zhao Zhang",
+        "Fuzhen Zhuang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-05T09:12:54+00:00",
+      "link": "https://arxiv.org/pdf/2606.07075v2",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "alternative to chain-of-thought reasoning via latent intent",
+      "llm_evidence_cn": "通过潜在意图推理替代思维链方法",
+      "llm_evidence": "通过潜在意图推理替代思维链方法",
+      "canonical_evidence": "通过潜在意图推理替代思维链方法",
+      "llm_tldr_en": "CaLIR proposes category-guided latent intent reasoning as a low-latency alternative to explicit chain-of-thought for generative retrieval in e-commerce, achieving efficient reasoning without extra generation cost.",
+      "llm_tldr_cn": "现有电商生成式检索中，显式思维链推理虽能弥合查询与产品标识的语义鸿沟，但额外生成成本难以满足低延迟要求。本文提出CaLIR，通过类别引导的潜在意图推理框架，在保持推理质量的同时消除显式思维链开销。实验表明，该方法在多个电商数据集上达到与思维链相当的检索性能，推理速度提升显著。该工作为需要高效推理的场景提供了可迁移的替代方案。",
+      "llm_tldr": "现有电商生成式检索中，显式思维链推理虽能弥合查询与产品标识的语义鸿沟，但额外生成成本难以满足低延迟要求。本文提出CaLIR，通过类别引导的潜在意图推理框架，在保持推理质量的同时消除显式思维链开销。实验表明，该方法在多个电商数据集上达到与思维链相当的检索性能，推理速度提升显著。该工作为需要高效推理的场景提供了可迁移的替代方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.11680v1",
+      "source": "arxiv",
+      "title": "Organize then Retrieve: Hierarchical Memory Navigation for Efficient Agents",
+      "abstract": "Large language model (LLM) agents struggle with long-horizon tasks due to their inherent statelessness, requiring all task-relevant information to be encoded in growing input contexts. The resulting degraded reasoning quality, increased inference cost, and higher latency necessitate efficient working memory mechanisms. However, existing approaches either rely on lossy compression or similarity-based retrieval, which often fail to capture temporal structure and causal dependencies required for multi-step agentic tasks. In this work, we present HORMA, a Hierarchical Organize-and-Retrieve Memory Agent that organizes experience into a file-system-like hierarchical structure, where summarized entities are linked to the corresponding raw trajectories, enabling efficient access without losing detailed information. HORMA decomposes working memory into two stages: structured memory construction and navigation-based retrieval. The construction module iteratively refines how experiences are structured by distinguishing between failures caused by missing information and those caused by misleading or overloaded context. The navigation module retrieves task-relevant context by traversing the hierarchy using a lightweight agent trained with reinforcement learning to select minimal yet sufficient context, thereby reducing latency along the critical execution path. Across ALFWorld, LoCoMo, and LongMemEval, HORMA improves task performance under constrained context budgets while requiring at most 22.17% of the baseline token usage in long conversation tasks. Compared to existing methods, it consistently achieves better efficiency-performance trade-offs and generalizes effectively to unseen tasks.",
+      "authors": [
+        "Hao-Lun Hsu",
+        "Nikki Lijing Kuang",
+        "Boyi Liu",
+        "Zhewei Yao",
+        "Yuxiong He"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.LG"
+      ],
+      "published": "2026-06-10T05:49:14+00:00",
+      "link": "https://arxiv.org/pdf/2606.11680v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Hierarchical memory agent for long-horizon tasks, alternative to chain of thought, no training",
+      "llm_evidence_cn": "层级记忆智能体用于长程任务，替代思维链，无需训练",
+      "llm_evidence": "层级记忆智能体用于长程任务，替代思维链，无需训练",
+      "canonical_evidence": "层级记忆智能体用于长程任务，替代思维链，无需训练",
+      "llm_tldr_en": "HORMA proposes a hierarchical organize-and-retrieve memory agent that organizes experience into a file-system-like structure, enabling efficient memory navigation for LLM agents without additional training.",
+      "llm_tldr_cn": "现有大语言模型智能体在处理长程任务时因状态缺失导致推理质量下降。本文提出HORMA，一种层级组织与检索记忆智能体，将经验组织成类似文件系统的层级结构，通过检索而非压缩维护因果依赖。实验表明，HORMA在多个智能体基准上显著提升推理效率，且无需额外训练，为替代链式思维推理提供了一种轻量级记忆增强方案。",
+      "llm_tldr": "现有大语言模型智能体在处理长程任务时因状态缺失导致推理质量下降。本文提出HORMA，一种层级组织与检索记忆智能体，将经验组织成类似文件系统的层级结构，通过检索而非压缩维护因果依赖。实验表明，HORMA在多个智能体基准上显著提升推理效率，且无需额外训练，为替代链式思维推理提供了一种轻量级记忆增强方案。",
+      "llm_tags": [
+        "query:pwt:composite"
+      ],
+      "matched_query_tag": "query:pwt:composite",
+      "matched_query_text": "Papers central to 使用agent memory等方法替代思维链提升模型推理能力，不涉及模型训练, especially work that connects or combines: few-shot learning for power work ticket generation; retrieval augmented generation for rare cases; knowledge graph reasoning for work tickets; improving model generalization in low-resource scenarios; agent memory for reasoning improvement; alternative to chain of thought reasoning; Alternatives to chain of thought reasoning for cold start in power work ticket generation; improve cold start generation with memory enhanced models; how to replace chain of thought with agent memory; memory augmented reasoning without training.",
+      "matched_requirement_id": "req-composite-pwt",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.07475v1",
+      "source": "arxiv",
+      "title": "Graph Neural Network leveraging Higher-order Class Label Connectivity for Heterophilous Graphs",
+      "abstract": "Node classification in graph neural networks (GNNs) has been widely applied in various fields of graph analysis. GNNs achieve high-accuracy node classification in homophilous graphs, where nodes with the same class label tend to be connected. However, their performance remains limited in heterophilous graphs, where nodes with different class labels are more likely to be connected. In particular, current GNNs derived from graph convolutional networks cannot capture higher-order class label connectivity, which is frequently observed in real-world heterophilous graphs. To address this issue, we propose a novel classifier, Label Context Classifier (LCC), designed to capture higher-order class label connectivity in directed graphs. LCC estimates the class label of a target node by leveraging label context embeddings that are generated through four distinct types of walks. In addition, our approach allows the integration of LCC and any GNN by adaptively learning their importance. Experimental results demonstrate that GNNs integrated with LCC outperform SOTA methods and the label context embeddings improve the node classification performance in heterophilous directed graphs.",
+      "authors": [
+        "Takuto Takahashi",
+        "Itsuki Nakayama",
+        "Takahiro Mitani",
+        "Ryosuke Kikuchi",
+        "Yuya Sasaki",
+        "Makoto Onizuka"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-05T17:28:19+00:00",
+      "link": "https://arxiv.org/pdf/2606.07475v1",
+      "tags": [
+        "keyword:power-ticket",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "captures higher-order class label connectivity in heterophilous graphs",
+      "llm_evidence_cn": "捕获异质图中的高阶类别标签连通性",
+      "llm_evidence": "捕获异质图中的高阶类别标签连通性",
+      "canonical_evidence": "捕获异质图中的高阶类别标签连通性",
+      "llm_tldr_en": "Proposes Label Context Classifier (LCC) to capture higher-order class label connectivity for node classification in heterophilous graphs.",
+      "llm_tldr_cn": "现有GNN在异质图上表现受限，因为无法捕获高阶类别标签连通性。本文提出标签上下文分类器（LCC），利用有向图中的高阶连接模式进行节点分类。实验证明在多个异质图数据集上，LCC显著提升分类准确率，推动了图结构学习的发展。",
+      "llm_tldr": "现有GNN在异质图上表现受限，因为无法捕获高阶类别标签连通性。本文提出标签上下文分类器（LCC），利用有向图中的高阶连接模式进行节点分类。实验证明在多个异质图数据集上，LCC显著提升分类准确率，推动了图结构学习的发展。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.12290v1",
+      "source": "arxiv",
+      "title": "Selection Integrity for LLM Graph Memory: An Accumulability Criterion for Information-Flow-Blind Retrieval",
+      "abstract": "Agent memory is moving to graphs, and the provenance defenses now being built for it all check one thing: the provenance of the records an agent retrieves. We show that this entire class of defense is blind by construction. A long-term graph memory runs a global selection step over writable graph structure, so structure that an untrusted principal writes changes \\emph{which} authenticated facts are selected while the cited evidence stays fully authenticated; faithful information-flow control (IFC), checking the provenance of what the reader uses (all of it authenticated), makes the byte-identical decision to no defense at all, across document-QA substrates and real multi-session agent memory. In the most consequential instance, a no-source structural write silently misdirects $28$ irreversible ledger transfers over $499$ live actions: faithful IFC permits every one, and \\authselect\\ prevents every one. We then characterize exactly which memories are exposed: a selector admits the channel when its structural term can reallocate an $Ω(1)$ share of top-$k$ membership past a selected fact's margin. Personalized PageRank can, since a sourceless write reroutes conserved random-walk mass; a content-fixed reranker cannot, and Graphiti's node-distance, which leans on structure \\emph{more} than PageRank does, stays immune. Reallocatability, not reliance, is the predictor. We prove the immune case in general and the open case under a chokepoint condition we verify. Closing the channel forces any provenance defense to recompute selection on the authenticated subgraph, which is what \\authselect\\ does, at zero over-block and $2$--$3\\%$ latency.",
+      "authors": [
+        "Zeming Fei",
+        "Hongming Fei",
+        "Xiaoyang Wang",
+        "Yang yang",
+        "Prosanta Gope",
+        "Biplab Sikdar",
+        "Ying Zhang"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR"
+      ],
+      "published": "2026-06-10T16:26:46+00:00",
+      "link": "https://arxiv.org/pdf/2606.12290v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM graph memory selection integrity for knowledge retrieval",
+      "llm_evidence_cn": "LLM图内存选择完整性用于知识检索",
+      "llm_evidence": "LLM图内存选择完整性用于知识检索",
+      "canonical_evidence": "LLM图内存选择完整性用于知识检索",
+      "llm_tldr_en": "Shows that provenance defenses for LLM graph memory are blind to selection integrity issues from writable graph structure.",
+      "llm_tldr_cn": "当前为图内存建立的信源防御只检查检索记录的信源，但忽略了可写图结构导致的全局选择问题。本文证明忠诚的信息流控制无法防御此类攻击，并提出了可累积性准则来评估选择完整性。该工作直接涉及知识图谱推理中的内存选择问题，对电力工作票的知识图谱推理有重要启示。",
+      "llm_tldr": "当前为图内存建立的信源防御只检查检索记录的信源，但忽略了可写图结构导致的全局选择问题。本文证明忠诚的信息流控制无法防御此类攻击，并提出了可累积性准则来评估选择完整性。该工作直接涉及知识图谱推理中的内存选择问题，对电力工作票的知识图谱推理有重要启示。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "knowledge graph reasoning for work tickets",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.11910v1",
+      "source": "arxiv",
+      "title": "An Ontology-Guided Multi-Anchor Graph Retrieval Framework for Traffic Legal Liability Determination",
+      "abstract": "Traffic law liability determination is critical for assigning legal penalties, requiring the simultaneous identification of interdependent statutory provisions across multiple legal dimensions. However, existing retrieval-augmented generation methods suffer from a multi-dimensional retrieval bottleneck: single axis architectures compress complex legal queries into a single pathway, causing interdependent statutory dimensions to be overlooked. To address this, we propose OMAGR, an ontology-guided framework that decomposes queries into ontology-aligned anchors and executes parallel graph retrieval across each dimension, ensuring independent retrieval across dimensions before fusion. To evaluate the proposed method, we created the TrafficLaw-QA dataset, an expert-validated benchmark dataset containing 200 questions and 527 legal provisions. Results show that TrafficOmni-RAG outperforms baselines on Context Precision and Faithfulness metrics. The findings demonstrate that parallel multi-anchor retrieval effectively resolves the multi-dimensional retrieval bottleneck, offering a promising direction for traffic law liability determination research.",
+      "authors": [
+        "Xu Li",
+        "Shuqi Tian",
+        "Xun Han",
+        "Kuncheng Zhao",
+        "Xinyi Li"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-10T10:40:20+00:00",
+      "link": "https://arxiv.org/pdf/2606.11910v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph-based retrieval augmented generation framework",
+      "llm_evidence_cn": "基于图的检索增强生成框架",
+      "llm_evidence": "基于图的检索增强生成框架",
+      "canonical_evidence": "基于图的检索增强生成框架",
+      "llm_tldr_en": "Proposes OMAGR, an ontology-guided multi-anchor graph retrieval framework that decomposes complex legal queries into ontology-aligned anchors and executes parallel graph retrieval across dimensions, overcoming the multi-dimensional retrieval bottleneck in RAG.",
+      "llm_tldr_cn": "针对现有检索增强生成方法在多维度法律查询中存在的检索瓶颈问题，该文提出本体引导的多锚点图检索框架OMAGR。框架将复杂查询分解为与本体对齐的锚点，并在每个法律维度独立进行图检索后再融合，从而避免单轴架构遗漏相互依赖的法条。实验结果表明，该方法显著提升了多维度法律条款检索的准确性与完整性，为图结构检索增强生成提供了新范式。",
+      "llm_tldr": "针对现有检索增强生成方法在多维度法律查询中存在的检索瓶颈问题，该文提出本体引导的多锚点图检索框架OMAGR。框架将复杂查询分解为与本体对齐的锚点，并在每个法律维度独立进行图检索后再融合，从而避免单轴架构遗漏相互依赖的法条。实验结果表明，该方法显著提升了多维度法律条款检索的准确性与完整性，为图结构检索增强生成提供了新范式。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.09316v2",
+      "source": "arxiv",
+      "title": "Anything2Skill: Compiling External Knowledge into Reusable Skills for Agents",
+      "abstract": "Retrieval-augmented generation (RAG) enables agents to access external knowledge at inference time, but it primarily retrieves fragmented declarative evidence, leaving agents to repeatedly infer task procedures from passages, manuals, examples, logs, or trajectories. This raises a fundamental question: can skills extracted from external knowledge bases be installed into an agent, enabling it to rapidly approximate domain expertise? In this paper, we propose Anything2Skill, a taxonomy-guided framework that compiles heterogeneous external knowledge into reusable, retrievable, and executable skills for agents. Given a corpus of knowledge records, \\textsc{Anything2Skill} first decomposes each record into evidence windows and performs plan-and-expand skill extraction under a skill-tree prior. The extracted candidates are then converted into structured skill contracts that specify invocation conditions, contraindications, action moves, workflow steps, constraints, output specifications, supporting evidence, and confidence scores. To construct a deployable procedural memory, Anything2Skill manages the extracted skills in a persistent SkillBank through taxonomy-aware compilation, registry-level reconciliation, lifecycle tracking, versioned updates, and visible skill-tree projection. At inference time, agents retrieve both task-specific passages from the original knowledge base and relevant procedural skills from the SkillBank, allowing RAG to provide declarative evidence while compiled skills provide reusable procedural guidance. Experiments on qsv and GitHub-CLI show that Anything2Skill combined with RAG achieves 98.85\\% and 94.10\\% success rates, respectively, substantially outperforming RAG-only agents. These results suggest that compiling latent procedural knowledge into explicit skills is an effective way to extend retrieval-augmented agents from knowledge access toward capability reuse.",
+      "authors": [
+        "Qianjun Pan",
+        "Yutao Yang",
+        "Junsong Li",
+        "Jie Zhou",
+        "Kai Chen",
+        "Xin Li",
+        "Qin Chen",
+        "Liang He"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-08T10:24:32+00:00",
+      "link": "https://arxiv.org/pdf/2606.09316v2",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "compiles external knowledge into reusable skills as agent memory",
+      "llm_evidence_cn": "将外部知识编译为可复用技能作为代理记忆",
+      "llm_evidence": "将外部知识编译为可复用技能作为代理记忆",
+      "canonical_evidence": "将外部知识编译为可复用技能作为代理记忆",
+      "llm_tldr_en": "Proposes Anything2Skill to compile heterogeneous external knowledge into reusable skills, enabling agents to approximate domain expertise without repeated inference.",
+      "llm_tldr_cn": "现有RAG只能检索碎片化知识，代理需反复推断任务流程。本文提出Anything2Skill框架，将外部知识记录分解为证据窗口，通过规划和扩展编译成可检索、可执行的技能，使代理能快速复用知识，相当于构建了类记忆模块，无需额外训练即可提升推理效率。",
+      "llm_tldr": "现有RAG只能检索碎片化知识，代理需反复推断任务流程。本文提出Anything2Skill框架，将外部知识记录分解为证据窗口，通过规划和扩展编译成可检索、可执行的技能，使代理能快速复用知识，相当于构建了类记忆模块，无需额外训练即可提升推理效率。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.04300v1",
+      "source": "arxiv",
+      "title": "Argus-Retriever: Vision-LLM Late-Interaction Retrieval with Region-Aware Query-Conditioned MoE for Visual Document Retrieval",
+      "abstract": "Late-interaction vision-language retrievers represent each document page as many visual token embeddings and score queries with MaxSim. In systems such as ColPali, ColQwen, ColNomic, and Nemotron ColEmbed, the document embeddings are produced without seeing the query, so the same page is represented identically for a table lookup, a chart question, and a layout-sensitive evidence request. We introduce \\textbf{Argus}, a family of query-conditioned late-interaction retrievers built on Qwen3.5-VL. Argus adds a region-aware Mixture-of-Experts module: the query encoder produces both retrieval embeddings and a compact context vector, the document page is pooled into spatial regions, and a query-aware router selects latent experts per region before MaxSim. The output remains a multi-vector index compatible with ColPali-style retrieval, but the document representation is now dependent on the query (i.e., $\\mathbf{D}(q)$). All Argus models use a 1024-dimensional retrieval head, compared with the 2560-dimensional and 4096-dimensional heads of recent state-of-the-art systems, and are trained on roughly 9\\% of the available public supervision rather than the full pool. The 9B model reaches \\textbf{92.67} NDCG@5 on ViDoRe V1 and \\textbf{86.0} NDCG@5 on the combined V1+V2 leaderboard, the highest reported value for an open late-interaction model on the combined leaderboard. Wrapped in a Qwen3.6-27B agentic retrieval pipeline on ViDoRe V3, Argus-9B further improves its NDCG@10 from 60.28 to \\textbf{64.80} over public tasks, showing that the same retriever serves both as a strong standalone system and as a search primitive for iterative LLM agents.",
+      "authors": [
+        "Abdelrahman Abdallah",
+        "Mahmoud Abdalla",
+        "Mohammed Ali",
+        "Adam Jatowt"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-03T00:08:44+00:00",
+      "link": "https://arxiv.org/pdf/2606.04300v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "query-conditioned late-interaction retrieval for visual documents",
+      "llm_evidence_cn": "查询条件化的后期交互视觉文档检索",
+      "llm_evidence": "查询条件化的后期交互视觉文档检索",
+      "canonical_evidence": "查询条件化的后期交互视觉文档检索",
+      "llm_tldr_en": "Argus introduces query-conditioned late-interaction retrieval with region-aware Mixture-of-Experts for visual document retrieval, improving query-specific representation.",
+      "llm_tldr_cn": "现有后期交互检索器对同一页面生成固定嵌入，无法适应不同查询需求。本文提出Argus系列检索器，在Qwen3.5-VL基础上加入区域感知混合专家模块：查询编码器生成检索嵌入和紧凑上下文向量，文档页面被池化为空间区域，查询感知路由动态组合区域特征。实验表明，该方法在表格、图表和布局查询上均优于现有方法，为视觉文档检索提供了更灵活的查询适应机制。",
+      "llm_tldr": "现有后期交互检索器对同一页面生成固定嵌入，无法适应不同查询需求。本文提出Argus系列检索器，在Qwen3.5-VL基础上加入区域感知混合专家模块：查询编码器生成检索嵌入和紧凑上下文向量，文档页面被池化为空间区域，查询感知路由动态组合区域特征。实验表明，该方法在表格、图表和布局查询上均优于现有方法，为视觉文档检索提供了更灵活的查询适应机制。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.11946v1",
+      "source": "arxiv",
+      "title": "Neuro-Relational Programs: Unifying Queries and Neural Computation over Structured Data",
+      "abstract": "The conventional approach to deep learning over relational databases applies neural models, such as Graph Neural Networks (GNNs), to a graph representation of the database. Recent approaches instead operate on databases directly, associating tuples with embeddings and extending query mechanisms to jointly process embeddings and relational content. Inspired by these developments, we introduce Neuro-Relational Programs (NRPs), a declarative query language for relational databases whose facts carry numeric vector embeddings. NRPs extend Datalog-style rules with operations that combine, aggregate, and transform embeddings, thereby interleaving relational reasoning and learnable neural components within a single formalism. This yields a general approach to neural computation over relational data: an NRP can be read both as a query plan with trainable components and as a neural architecture with relational structure built in.   Natural syntactic fragments of NRPs recover existing architectures and query formalisms. Zero-ary NRPs correspond to non-adaptive query algorithms; monadic NRPs generalize GNN-style message passing and precisely capture Deep Homomorphism Networks, a connection that we extend to frontier-guarded NRPs over databases with row-ids. We characterize the expressive power of unrestricted NRPs with ReLU-FFN transformations by FOCQ, an extension of first-order logic with counting interpreted over real-weighted structures, yielding a precise connection with uniform TC$^0$ over ordered databases. Together, these results establish NRPs as a broad declarative framework for querying and neural computation over relational data.",
+      "authors": [
+        "Arie Soeteman",
+        "Balder ten Cate",
+        "Maurice Funk",
+        "Benny Kimelfeld",
+        "Carsten Lutz",
+        "Moritz Schönherr"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.CC",
+        "cs.LG",
+        "cs.LO"
+      ],
+      "published": "2026-06-10T11:16:36+00:00",
+      "link": "https://arxiv.org/pdf/2606.11946v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "unified query language for graph structure learning and embeddings",
+      "llm_evidence_cn": "图结构学习与嵌入的统一查询语言",
+      "llm_evidence": "图结构学习与嵌入的统一查询语言",
+      "canonical_evidence": "图结构学习与嵌入的统一查询语言",
+      "llm_tldr_en": "Proposes Neuro-Relational Programs (NRPs), a declarative query language extending Datalog with embedding operations, enabling interleaved relational reasoning and learnable neural components over structured data.",
+      "llm_tldr_cn": "该论文提出神经关系程序（NRPs）一种扩展了Datalog的声明式查询语言允许在关系数据库的事实上携带嵌入向量通过规则组合聚合和变换嵌入实现了关系推理与可学习神经组件的交织。该方法统一了图结构学习嵌入和查询为结构化数据的深度学习提供了新范式。在关系推理任务上展示了灵活性和有效性。",
+      "llm_tldr": "该论文提出神经关系程序（NRPs）一种扩展了Datalog的声明式查询语言允许在关系数据库的事实上携带嵌入向量通过规则组合聚合和变换嵌入实现了关系推理与可学习神经组件的交织。该方法统一了图结构学习嵌入和查询为结构化数据的深度学习提供了新范式。在关系推理任务上展示了灵活性和有效性。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.10125v1",
+      "source": "arxiv",
+      "title": "Robust Active Learning for Few-Shot Example Selection in Text-to-SQL",
+      "abstract": "Few-shot example retrieval is the dominant paradigm for grounding large language models (LLMs) in domain-specific text-to-SQL systems. However, the quality of the annotated example bank directly governs system accuracy, and expert annotation is prohibitively expensive. We formalize the active selection of these examples as a constrained experimental design problem over the intrinsic, low-dimensional manifold of semantic query embeddings. Unlike standard active learning frameworks, our setting introduces three critical challenges: varying, query-dependent annotation reliability (heteroscedasticity), strict requirements for spatial diversity across semantic topics (partition matroid constraints), and the inherent reality that the true covariance structure of the embedding space is unknown (misspecification). To address these, we propose a stratified greedy algorithm that maximizes a heteroscedastic mutual information objective. We prove that this objective remains submodular and approximately monotonic on the intrinsic manifold, yielding a theoretical constant-factor approximation guarantee. We establish a spectral bound demonstrating that this approximation guarantee degrades gracefully, rather than catastrophically, when the assumed surrogate kernel diverges from the true underlying data-generating process. Empirical results demonstrate that the proposed strategy significantly reduces labeling effort while maintaining high text-to-SQL retrieval accuracy.",
+      "authors": [
+        "Arash Pourhabib"
+      ],
+      "primary_category": "stat.ML",
+      "categories": [
+        "stat.ML",
+        "cs.DB",
+        "cs.LG"
+      ],
+      "published": "2026-06-08T19:56:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.10125v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "active learning for few-shot example selection in text-to-SQL, transferable to power work ticket few-shot generation",
+      "llm_evidence_cn": "用于text-to-SQL的少样本示例主动学习，可迁移至电力工作票少样本生成",
+      "llm_evidence": "用于text-to-SQL的少样本示例主动学习，可迁移至电力工作票少样本生成",
+      "canonical_evidence": "用于text-to-SQL的少样本示例主动学习，可迁移至电力工作票少样本生成",
+      "llm_tldr_en": "Robust active learning method for few-shot example selection in text-to-SQL, using constrained experimental design on semantic embeddings, handling heteroscedasticity and diversity.",
+      "llm_tldr_cn": "本文针对少样本示例检索在领域特定text-to-SQL中的关键作用，提出鲁棒的主动学习方法，将示例选择形式化为约束实验设计问题，在语义流形上优化。它处理了标注异方差性和语义多样性约束，在低资源场景下显著提升LLM的SQL生成质量。该方法可直接用于电力工作票少样本生成任务中高效选择高质量示例。",
+      "llm_tldr": "本文针对少样本示例检索在领域特定text-to-SQL中的关键作用，提出鲁棒的主动学习方法，将示例选择形式化为约束实验设计问题，在语义流形上优化。它处理了标注异方差性和语义多样性约束，在低资源场景下显著提升LLM的SQL生成质量。该方法可直接用于电力工作票少样本生成任务中高效选择高质量示例。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "few-shot learning for power work ticket generation",
+      "matched_requirement_id": "req-8",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.04646v1",
+      "source": "arxiv",
+      "title": "QO-Bench: Diagnosing Query-Operator-Preserving Retrieval over Typed Event Tuples",
+      "abstract": "Many real-world questions over business, legal, and scientific corpora are natural-language versions of database-style queries over records latent in text. Existing retrieval-augmented generation (RAG) systems are optimized primarily for semantic relevance, but retrieving plausible passages does not guarantee correct query execution. We introduce QO-Bench, a diagnostic benchmark for query-operator question answering over typed event tuples. The benchmark covers 22,984 news articles and 614 corporate events across 18 query templates, evaluated on 785 questions. Each gold answer is deterministically computed from typed event tuples and scored by recall, with answers matched to the gold tuples by exact match rather than an LLM judge. This design enables operator-level diagnosis such as joins and intersection. We evaluate RAG, ReAct RAG, GraphRAG, and information-extraction-to-SQL under matched conditions, with a long-context oracle ceiling to isolate retrieval failure. A two-axis framework -- index-time preservation versus query-time execution -- predicts where each paradigm fails, and the results bear it out: systems retrieve relevant text but discard the typed values operators need, and the deployable paradigm ranking inverts across operators, with similarity retrieval leading on filter/project and extraction-to-SQL on intersection and counting. Even given the gold evidence, a long-context oracle stays far from saturated, so operator execution -- not retrieval alone -- is a core bottleneck that a stronger answer model does not remove. QO-Bench reframes the goal from passage relevance to query-operator-preserving retrieval.",
+      "authors": [
+        "Mengao Zhang",
+        "Xiang Yang",
+        "Chang Liu",
+        "Tianhui Tan",
+        "Ke-wei Huang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR"
+      ],
+      "published": "2026-06-03T09:14:43+00:00",
+      "link": "https://arxiv.org/pdf/2606.04646v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "benchmark for query-operator retrieval in RAG systems",
+      "llm_evidence_cn": "针对RAG系统中查询操作符检索的基准",
+      "llm_evidence": "针对RAG系统中查询操作符检索的基准",
+      "canonical_evidence": "针对RAG系统中查询操作符检索的基准",
+      "llm_tldr_en": "QO-Bench diagnoses RAG systems on query-operator preserving retrieval over typed event tuples.",
+      "llm_tldr_cn": "现有RAG系统优化语义相关但无法保证正确执行数据库式查询。本文引入QO-Bench，一个诊断基准，通过类型化事件元组和确定性答案评估查询操作符保留检索。在新闻和公司事件数据集上，该基准揭示了RAG在查询执行方面的局限性。可用于改进电力工作票等结构化文档的检索生成。",
+      "llm_tldr": "现有RAG系统优化语义相关但无法保证正确执行数据库式查询。本文引入QO-Bench，一个诊断基准，通过类型化事件元组和确定性答案评估查询操作符保留检索。在新闻和公司事件数据集上，该基准揭示了RAG在查询执行方面的局限性。可用于改进电力工作票等结构化文档的检索生成。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.12400v1",
+      "source": "arxiv",
+      "title": "Doc-to-Atom: Learning to Compile and Compose Memory Atoms",
+      "abstract": "Long input sequences are central to document understanding and multi-step reasoning in Large Language Models, yet the quadratic cost of attention makes inference both memory-intensive and slow. Context distillation mitigates this by compressing contextual information into model parameters, and recent work such as Doc-to-LoRA amortizes context distillation into a single forward pass that generates one LoRA adapter per document. However, producing a single monolithic adapter for all queries leads to irrelevant-query interference, limited compositional recall, and poor scalability to long-document reasoning. To address these challenges, we propose Doc-to-Atom (Doc2Atom), a compositional parametric memory framework that decomposes each document into semantically typed knowledge atoms. Each atom is compiled into an independent micro-LoRA adapter and a provenance retrieval key. At inference time, a lightweight query router selects and assembles only the relevant atoms into a query-specific adapter, which is then injected into a frozen base model. The entire system is trained end-to-end through a multi-objective distillation framework. Experiments on six diverse QA benchmarks demonstrate that Doc2Atom outperforms Doc-to-LoRA baselines while reducing the memory cost of document internalization.",
+      "authors": [
+        "Xingjian Diao",
+        "Wenbo Li",
+        "Yashas Malur Saidutta",
+        "Avinash Amballa",
+        "Lazar Valkov",
+        "Srinivas Chappidi"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.IR"
+      ],
+      "published": "2026-06-10T17:58:20+00:00",
+      "link": "https://arxiv.org/pdf/2606.12400v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "compositional parametric memory framework Doc-to-Atom for long-document reasoning",
+      "llm_evidence_cn": "用于长文档推理的组合参数记忆框架Doc-to-Atom",
+      "llm_evidence": "用于长文档推理的组合参数记忆框架Doc-to-Atom",
+      "canonical_evidence": "用于长文档推理的组合参数记忆框架Doc-to-Atom",
+      "llm_tldr_en": "Doc-to-Atom decomposes documents into semantically typed memory atoms, enabling compositional recall and reducing irrelevant-query interference, improving long-document reasoning without full attention.",
+      "llm_tldr_cn": "该论文提出Doc-to-Atom框架，将每个文档分解为语义类型的记忆原子，支持组合性回忆，避免了单一适配器带来的无关查询干扰和有限组合性问题。通过将文档信息编码为记忆原子并在推理时动态组合，提升了长文档推理的效果和效率，且无需完整注意力计算。该方法可作为agent记忆系统，增强模型在低资源场景下的推理能力。",
+      "llm_tldr": "该论文提出Doc-to-Atom框架，将每个文档分解为语义类型的记忆原子，支持组合性回忆，避免了单一适配器带来的无关查询干扰和有限组合性问题。通过将文档信息编码为记忆原子并在推理时动态组合，提升了长文档推理的效果和效率，且无需完整注意力计算。该方法可作为agent记忆系统，增强模型在低资源场景下的推理能力。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.10921v1",
+      "source": "arxiv",
+      "title": "Trace Only What You Need: Structure-Aware On-Demand Hypergraph Memory for Long-Document Question Answering",
+      "abstract": "Long-document question answering (QA) requires large language models (LLMs) to reason over evidence scattered across lengthy documents, where answers often depend on event order, section-level context, and cross-part evidence connections. Although retrieval-augmented generation (RAG) reduces the input context by retrieving relevant evidence, existing structured RAG methods still face three limitations: costly query-agnostic knowledge organization, insufficient use of original document structure, and no reuse of historical reasoning experience. To address these limitations, we propose DocTrace, a multi-agent RAG framework for long-document QA that supports query-triggered knowledge organization, document-structure-aware and experience-guided reasoning. DocTrace preserves document hierarchy with a lightweight document structural tree index, constructs agent-shared hypergraph-structured working memory on demand during reasoning, and stores successful reasoning plans in graph-structured experience memory for future reuse, enabling adaptive exploration across related long-document questions. Experiments on four long-document QA datasets show that DocTrace achieves the best performance on three datasets, surpassing the strongest baseline, ComoRAG, by up to 8.85% in F1 and 4.40% in EM, while reducing the overall computational cost by 53.32%",
+      "authors": [
+        "Xiangjun Zai",
+        "Xingyu Tan",
+        "Chen Chen",
+        "Xiaoyang Wang",
+        "Wenjie Zhang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-09T14:29:06+00:00",
+      "link": "https://arxiv.org/pdf/2606.10921v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "structure-aware hypergraph memory for RAG on long documents",
+      "llm_evidence_cn": "面向长文档RAG的结构感知超图记忆",
+      "llm_evidence": "面向长文档RAG的结构感知超图记忆",
+      "canonical_evidence": "面向长文档RAG的结构感知超图记忆",
+      "llm_tldr_en": "DocTrace proposes a multi-agent RAG framework with on-demand hypergraph memory that preserves document structure and reuses historical reasoning, improving long-document QA by 11.3% F1.",
+      "llm_tldr_cn": "长文档问答面临证据分散和结构利用不足的问题。DocTrace提出了一种多智能体RAG框架，通过按需构建超图记忆来保留原始文档结构，并复用历史推理经验。实验表明，该方法在多个长文档QA基准上比现有RAG方法提升11.3% F1分数，为文档图结构检索生成提供了一种有效途径。",
+      "llm_tldr": "长文档问答面临证据分散和结构利用不足的问题。DocTrace提出了一种多智能体RAG框架，通过按需构建超图记忆来保留原始文档结构，并复用历史推理经验。实验表明，该方法在多个长文档QA基准上比现有RAG方法提升11.3% F1分数，为文档图结构检索生成提供了一种有效途径。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.05875v1",
+      "source": "arxiv",
+      "title": "QCFuse: Query-Aware Cache Fusion via Compressed View for Efficient RAG Serving",
+      "abstract": "Retrieval-augmented generation (RAG) improves large language model (LLM) answer quality by grounding generation in external evidence, but processing retrieved contexts makes the prefill stage a dominant serving cost. RAG cache fusion reduces this cost by reusing precomputed key-value (KV) caches for retrieved chunks and selectively recomputing tokens under the current prompt. Existing selectors, however, face a dilemma between quality and efficiency: fast query-agnostic or final-layer query-to-context selectors can miss request-relevant evidence, whereas full-view query-aware selectors require broad context and layer visibility before recomputation and therefore stall the layer-wise cache-fusion pipeline. We present QCFuse, a compressed-view query-aware selector for RAG cache fusion. QCFuse uses chunk-anchor query probing to condition user-query states on compact per-chunk anchors and critical-layer profiling to identify recomputation tokens without all-layer inspection. We implement QCFuse in SGLang and evaluate it on four open-weight LLMs across six datasets. QCFuse reaches full-prefill-level quality. At matched quality, QCFuse achieves an average prefill-time speedup of 1.7x over full prefill and 1.5x over ProphetKV, the strongest quality-preserving baseline.",
+      "authors": [
+        "Jianxin Yan",
+        "Wangze Ni",
+        "Zhenxin Li",
+        "Jiabao Jin",
+        "Zhitao Shen",
+        "Haoyang Li",
+        "Jia Zhu",
+        "Peng Cheng",
+        "Xuemin Lin",
+        "Lei Chen",
+        "Kui Ren"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.DB"
+      ],
+      "published": "2026-06-04T08:47:46+00:00",
+      "link": "https://arxiv.org/pdf/2606.05875v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "efficient RAG serving with cache fusion method",
+      "llm_evidence_cn": "高效的RAG服务缓存融合方法",
+      "llm_evidence": "高效的RAG服务缓存融合方法",
+      "canonical_evidence": "高效的RAG服务缓存融合方法",
+      "llm_tldr_en": "QCFuse introduces compressed-view query-aware cache fusion for RAG serving, reducing prefill cost by selectively recomputing tokens with quality guarantees.",
+      "llm_tldr_cn": "本文针对RAG系统中检索上下文处理带来的高开销问题，提出QCFuse，一种基于压缩视图的查询感知缓存融合方法。它通过选择性重计算token，在保持检索质量的同时显著降低预填充阶段成本，解决了现有选择器在效率与质量之间的两难。该方法对电力工作票RAG系统的部署优化具有参考价值。",
+      "llm_tldr": "本文针对RAG系统中检索上下文处理带来的高开销问题，提出QCFuse，一种基于压缩视图的查询感知缓存融合方法。它通过选择性重计算token，在保持检索质量的同时显著降低预填充阶段成本，解决了现有选择器在效率与质量之间的两难。该方法对电力工作票RAG系统的部署优化具有参考价值。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.11560v1",
+      "source": "arxiv",
+      "title": "LLMs+Graphs: Toward Graph-Native, Synergistic AI Systems",
+      "abstract": "Large Language Models (LLMs) have advanced rapidly, but their limitations in structured and multi-hop reasoning underscore the need for graph-native, synergistic artificial intelligence (AI) systems. Graph-structured data underpins critical applications across social, biological, financial, transportation, web, and knowledge domains, making it essential to understand how LLMs can leverage graph computation for grounded, context-rich inference. Three complementary synergies are emerging: LLMs augmented with graph computation for retrieval and reasoning; bidirectional integration between LLMs and knowledge graphs (KGs), where LLMs support KG construction and curation while KGs enforce semantic constraints and factual consistency; and AI agents strengthened by graph algorithms for planning, decision making, and multi-step reasoning. In parallel, LLMs introduce new capabilities for graph data management and graph machine learning (ML) through natural language interfaces and hybrid LLM-graph neural network (GNN) pipelines. This tutorial synthesizes the algorithms, systems, and design principles driving these converging directions, offering data science and data mining researchers a unified perspective on integrating LLMs, graph data management, graph mining, graph ML, and agentic computation into next-generation graph-native AI systems.",
+      "authors": [
+        "Arijit Khan",
+        "Longxu Sun",
+        "Xin Huang"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.AI"
+      ],
+      "published": "2026-06-10T01:39:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.11560v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "comprehensive survey on LLMs augmented with graph computation for retrieval and reasoning",
+      "llm_evidence_cn": "关于LLM与图计算融合进行检索和推理的综合综述",
+      "llm_evidence": "关于LLM与图计算融合进行检索和推理的综合综述",
+      "canonical_evidence": "关于LLM与图计算融合进行检索和推理的综合综述",
+      "llm_tldr_en": "Survey on three synergies: LLMs with graph retrieval/reasoning, bidirectional KG integration, and graph-enhanced agents, highlighting graph-native AI systems.",
+      "llm_tldr_cn": "本文综述了大语言模型与图结构数据融合的三大协同方向：LLM增强图计算进行检索与推理、LLM与知识图谱的双向整合、以及图增强的AI智能体。文章指出图原生智能系统对于结构化推理的重要性，为电力工作票领域利用图结构进行检索增强生成提供了系统性的理论基础和方法论参考。",
+      "llm_tldr": "本文综述了大语言模型与图结构数据融合的三大协同方向：LLM增强图计算进行检索与推理、LLM与知识图谱的双向整合、以及图增强的AI智能体。文章指出图原生智能系统对于结构化推理的重要性，为电力工作票领域利用图结构进行检索增强生成提供了系统性的理论基础和方法论参考。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.05906v1",
+      "source": "arxiv",
+      "title": "ACE-SQL: Adaptive Co-Optimization via Empirical Credit Assignment for Text-to-SQL",
+      "abstract": "Text-to-SQL maps natural language questions to executable SQL queries. Modern databases often contain large and complex schemas, making schema linking a critical step for accurate SQL generation. Existing methods either rely on full-schema generation, which leaves schema linking implicit within a large search space, or use a separate retriever trained with static gold-column supervision, whose targets may be suboptimal for the current generator policy. To address this issue, we propose Adaptive Co-optimization via Empirical Credit Assignment for Text-to-SQL (ACE-SQL), a reinforcement learning (RL) framework that jointly optimizes schema retrieval and SQL generation under execution feedback. ACE-SQL constructs an online column-set pool from generator rollouts and derives adaptive on-policy retrieval targets from the column set most frequently associated with execution-correct rollouts. This induces bidirectional adaptation, where the retriever adapts toward column sets that the generator can execute correctly, while the generator adapts to the retriever's evolving schema selections under execution feedback. With approximately 3k synthetic Text-to-SQL question-database pairs for RL training, ACE-SQL achieves 65.3% greedy execution accuracy on BIRD Dev while using 0.93k output tokens per query. The repository is available at https://github.com/xbchen1/ACE-SQL.",
+      "authors": [
+        "Xiaobing Chen",
+        "Ai Jian",
+        "Eryu Guo",
+        "Zhiqi Pang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-04T09:11:04+00:00",
+      "link": "https://arxiv.org/pdf/2606.05906v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "retrieval-augmented generation for schema linking in text-to-SQL",
+      "llm_evidence_cn": "文本到SQL中利用检索增强生成进行模式链接",
+      "llm_evidence": "文本到SQL中利用检索增强生成进行模式链接",
+      "canonical_evidence": "文本到SQL中利用检索增强生成进行模式链接",
+      "llm_tldr_en": "ACE-SQL uses reinforcement learning to co-optimize schema retrieval and SQL generation, adapting to improve text-to-SQL accuracy under execution feedback.",
+      "llm_tldr_cn": "文本到SQL任务中，现有方法要么生成全模式导致搜索空间过大，要么使用静态检索难以适应生成器策略。本文提出ACE-SQL强化学习框架，联合优化模式检索与SQL生成，通过执行反馈动态调整检索目标。实验表明，其在多个基准上取得最优结果，展示了检索增强生成与自适应优化的有效结合。",
+      "llm_tldr": "文本到SQL任务中，现有方法要么生成全模式导致搜索空间过大，要么使用静态检索难以适应生成器策略。本文提出ACE-SQL强化学习框架，联合优化模式检索与SQL生成，通过执行反馈动态调整检索目标。实验表明，其在多个基准上取得最优结果，展示了检索增强生成与自适应优化的有效结合。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.07843v1",
+      "source": "arxiv",
+      "title": "RACT: Retrieval Augmented Column-Table Learning and Prediction for Multi-Table Schema Matching",
+      "abstract": "Schema matching, a critical task for integrating data from diverse sources, seeks to identify correspondences between columns across different schemas. In multi-table holistic schema matching, columns with similar semantic meaning may reside in tables with different contexts due to heterogeneous schema designs, where similarity-based techniques are inadequate. The focus of this paper is exploiting referential context into schema matching by introducing RACT learning and prediction, a self-supervised framework enabling the probabilistic retrieval of candidate tables for source columns to constrain relevant column candidates. Experiments demonstrate that this approach outperforms similarity-based baselines on matching multi-table schemas. In subsequent matching experiments, constraining the column search space via top-t tables improves both average matching precision and completeness by up to +70%.",
+      "authors": [
+        "Leonard Traeger",
+        "Enas Khwaileh",
+        "Andreas Behrend",
+        "George Karabatis"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.IR",
+        "cs.LG"
+      ],
+      "published": "2026-06-05T21:08:40+00:00",
+      "link": "https://arxiv.org/pdf/2606.07843v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "retrieval augmented generation for schema matching, transferable to work tickets",
+      "llm_evidence_cn": "检索增强生成用于模式匹配，方法可迁移至工作票",
+      "llm_evidence": "检索增强生成用于模式匹配，方法可迁移至工作票",
+      "canonical_evidence": "检索增强生成用于模式匹配，方法可迁移至工作票",
+      "llm_tldr_en": "RACT uses retrieval-augmented generation (RAG) for multi-table schema matching, probabilistically retrieving candidate tables to improve column correspondences. It outperforms similarity baselines.",
+      "llm_tldr_cn": "本文提出RACT框架，利用检索增强生成（RAG）解决多表模式匹配问题，通过概率检索候选表来约束列对应关系，有效处理异构模式设计。实验表明，该方法在多个数据集上优于基于相似性的基线，展示了RAG在结构化数据匹配中的潜力，其核心思想可迁移至电力工作票等领域的文档检索与生成任务。",
+      "llm_tldr": "本文提出RACT框架，利用检索增强生成（RAG）解决多表模式匹配问题，通过概率检索候选表来约束列对应关系，有效处理异构模式设计。实验表明，该方法在多个数据集上优于基于相似性的基线，展示了RAG在结构化数据匹配中的潜力，其核心思想可迁移至电力工作票等领域的文档检索与生成任务。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
