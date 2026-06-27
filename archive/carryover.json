@@ -1,17 +1,317 @@
 {
-  "generated_at": "2026-06-22T22:33:34.011126+00:00",
-  "updated_date": "20260622",
+  "generated_at": "2026-06-27T20:12:02.015825+00:00",
+  "updated_date": "20260627",
   "carryover_days": 9,
   "tag_states": {
     "power-ticket": {
-      "updated_date": "20260622",
+      "updated_date": "20260627",
       "carryover_days": 9,
-      "items": []
+      "items": [
+        {
+          "id": "2606.22180v1",
+          "source": "arxiv",
+          "title": "FeLoG: Scalable and Efficient Distributed Graph Embedding with Feedback Loop Mechanism",
+          "abstract": "Graph embedding maps graph nodes into low-dimensional vectors to support applications such as recommendation, fraud detection, and graph-based retrieval-augmented generation (GraphRAG). As graphs scale to billions of edges, scalable and efficient graph embedding has become increasingly important. Existing frameworks commonly adopt a sampling-training paradigm, in which mini-batches are constructed by sampling nodes and their neighbors. However, sampling is typically decoupled from evolving embedding quality, causing redundant exploration of well-trained regions while under-sampling undertrained nodes. At the system level, such decoupling further leads to excessive communication, serialized execution, and low resource utilization in distributed environments. We present FeLoG, a feedback loop-driven system for scalable distributed graph embedding. (1) FeLoG introduces feedback-coupled sampling and training, dynamically prioritizing undertrained nodes according to real-time embedding-quality feedback, thereby reducing redundant computation and accelerating convergence. (2) It employs activity-aware communication that compresses frequently occurring node sequences to reduce intra-machine PCIe traffic and selectively synchronizes frequently updated embeddings to reduce inter-machine communication. (3) It adopts a round-interleaved pipeline that overlaps next-round sampling with current-round training to improve CPU-GPU utilization. Experiments against six state-of-the-art baselines on large-scale graphs show that FeLoG achieves an average speedup of 27.9x, reduces communication cost by more than 53.1%, and sustains over 80% CPU-GPU utilization.",
+          "authors": [
+            "Peng Fang",
+            "Arijit Khan",
+            "Ziqiang Wu",
+            "Zhenli Li",
+            "Yibo Zhou",
+            "Fang Wang",
+            "Dan Feng"
+          ],
+          "primary_category": "cs.DC",
+          "categories": [
+            "cs.DC",
+            "cs.LG"
+          ],
+          "published": "2026-06-20T18:21:15+00:00",
+          "link": "https://arxiv.org/pdf/2606.22180v1",
+          "tags": [
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:power-ticket"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "graph embedding for GraphRAG",
+          "llm_evidence_cn": "图嵌入用于基于图的检索增强生成",
+          "llm_evidence": "图嵌入用于基于图的检索增强生成",
+          "canonical_evidence": "图嵌入用于基于图的检索增强生成",
+          "llm_tldr_en": "FeLoG proposes a scalable distributed graph embedding framework with a feedback loop mechanism that adaptively samples nodes based on embedding quality, improving efficiency for GraphRAG and other applications.",
+          "llm_tldr_cn": "现有图嵌入框架中采样与嵌入质量脱离，导致冗余探索和资源浪费。本文提出FeLoG，通过反馈循环机制自适应采样，重点训练嵌入质量不足的节点。实验表明，该方法显著提高了分布式图嵌入的可扩展性和效率。该工作为大规模GraphRAG系统提供了高效的图嵌入基础。",
+          "llm_tldr": "现有图嵌入框架中采样与嵌入质量脱离，导致冗余探索和资源浪费。本文提出FeLoG，通过反馈循环机制自适应采样，重点训练嵌入质量不足的节点。实验表明，该方法显著提高了分布式图嵌入的可扩展性和效率。该工作为大规模GraphRAG系统提供了高效的图嵌入基础。",
+          "llm_tags": [
+            "query:power-ticket"
+          ],
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "graph embedding",
+          "matched_requirement_id": "req-5",
+          "selection_source": "carryover_cache",
+          "paper_id": "2606.22180v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2606.23997v1",
+          "source": "arxiv",
+          "title": "ChartWalker: Benchmarking the Cross-Chart RAG Task with Hierarchical Knowledge Graphs",
+          "abstract": "Cross-Chart Retrieval-Augmented Generation (RAG) is critical for complex multi-modal analytical tasks in scientific, business, and political domains. However, existing benchmarks either focus on tables, which are well-structured and textualized, or generate cross-chart questions by simply extracting key points, which often induces lexical overlap between queries and evidence and yields logically inconsistent reasoning chains. To address this, we introduce ChartWalker, a novel framework for constructing challenging cross-chart RAG tasks. ChartWalker features a hierarchical knowledge graph construction method tailored to charts, which organizes entities and relations by granularity to preserve analytical structure. We then propose a structure-aware sampling algorithm that synthesizes semantically coherent, multi-hop reasoning paths, enabling explicit control over query difficulty and granularity for QA generation. Built with this framework, we release ChartWalker-Bench, a comprehensive benchmark spanning diverse domains and cross-chart query types. Extensive evaluations across major RAG paradigms reveal significant performance gaps, underscoring the benchmark's difficulty and utility. Furthermore, we provide ChartWalker-Agent, an agentic baseline to facilitate analysis and inspire future system design.",
+          "authors": [
+            "Ning Tang",
+            "Chenghan Xie",
+            "Hanyang Yuan",
+            "Yi Li",
+            "Renhong Huang",
+            "Qian Kou",
+            "Xiaofeng Shi",
+            "Hua Zhou",
+            "Jiarong Xu"
+          ],
+          "primary_category": "cs.IR",
+          "categories": [
+            "cs.IR"
+          ],
+          "published": "2026-06-22T23:07:38+00:00",
+          "link": "https://arxiv.org/pdf/2606.23997v1",
+          "tags": [
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "hierarchical knowledge graphs for cross-chart RAG tasks",
+          "llm_evidence_cn": "层次知识图谱用于跨图表RAG任务",
+          "llm_evidence": "层次知识图谱用于跨图表RAG任务",
+          "canonical_evidence": "层次知识图谱用于跨图表RAG任务",
+          "llm_tldr_en": "Introduces ChartWalker, a framework using hierarchical KGs to construct challenging cross-chart RAG benchmarks.",
+          "llm_tldr_cn": "该论文提出ChartWalker，一个用于构建跨图表RAG任务的框架。它利用层次知识图谱按粒度组织图表中的实体和关系，生成具有逻辑一致性的复杂问答。该工作直接推动了基于图结构的检索增强生成，可用于电力工作票等文档的图式检索与生成。",
+          "llm_tldr": "该论文提出ChartWalker，一个用于构建跨图表RAG任务的框架。它利用层次知识图谱按粒度组织图表中的实体和关系，生成具有逻辑一致性的复杂问答。该工作直接推动了基于图结构的检索增强生成，可用于电力工作票等文档的图式检索与生成。",
+          "llm_tags": [
+            "query:power-ticket"
+          ],
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "graph based retrieval augmented generation",
+          "matched_requirement_id": "req-7",
+          "selection_source": "carryover_cache",
+          "paper_id": "2606.23997v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2606.26807v1",
+          "source": "arxiv",
+          "title": "KARLA: Knowledge-base Augmented Retrieval for Language Models",
+          "abstract": "We propose a new method that allows an LLM to automatically pull in factual knowledge from a knowledge base during token generation. This means that (1)~factual knowledge in the LLM output can be updated without retraining the LLM, (2)~facts in the LLM output can be traced to the knowledge base for transparency and explainability, and (3)~smaller models can achieve the same factual accuracy as larger models. Our core idea is to train the model to produce special tokens that trigger a query to the knowledge base. Our experiments show that our method improves factual grounding in both short and long-form generation, and allows factual revisions to take effect through KB edits rather than parameter updates.",
+          "authors": [
+            "Francois Crespin",
+            "Fabian M. Suchanek",
+            "Nils Holzenberger"
+          ],
+          "primary_category": "cs.AI",
+          "categories": [
+            "cs.AI",
+            "cs.CL"
+          ],
+          "published": "2026-06-25T09:44:40+00:00",
+          "link": "https://arxiv.org/pdf/2606.26807v1",
+          "tags": [
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "knowledge-base augmented retrieval for LLMs during generation",
+          "llm_evidence_cn": "知识库增强的检索生成方法",
+          "llm_evidence": "知识库增强的检索生成方法",
+          "canonical_evidence": "知识库增强的检索生成方法",
+          "llm_tldr_en": "Proposes KARLA, enabling LLMs to automatically query a knowledge base via special tokens for factual grounding during generation.",
+          "llm_tldr_cn": "该论文提出KARLA方法，让大语言模型在生成过程中自动触发知识库查询，以获取事实知识。通过训练模型生成特殊token实现知识调用，无需重新训练LLM即可更新知识，且可追溯事实来源。实验表明KARLA提升了短文本和长文本生成的事实准确性，并支持通过知识库编辑更新模型知识。",
+          "llm_tldr": "该论文提出KARLA方法，让大语言模型在生成过程中自动触发知识库查询，以获取事实知识。通过训练模型生成特殊token实现知识调用，无需重新训练LLM即可更新知识，且可追溯事实来源。实验表明KARLA提升了短文本和长文本生成的事实准确性，并支持通过知识库编辑更新模型知识。",
+          "llm_tags": [
+            "query:power-ticket"
+          ],
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "retrieval augmented generation for work tickets",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2606.26807v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2606.24948v1",
+          "source": "arxiv",
+          "title": "Holographic Memory for Zero-Shot Compositional Reasoning in Knowledge Graphs: A Mechanistic Study of Where and Why It Fails",
+          "abstract": "Knowledge graph embedding (KGE) models predict single-hop links well but have no mechanism for zero-shot compositional queries: multi-hop questions whose relation chains never appeared during training. Holographic Reduced Representations (HRR), which bind and unbind symbols via circular convolution, are a theoretically attractive candidate, since binding is approximately invertible and associative. We test whether this promise holds.   We study two holographic memory variants, real-valued HRR and phase-only Fourier HRR (FHRR), each with a modern Hopfield cleanup, on FB15k-237 over five seeds. Four findings follow. First, both are competitive single-hop retrievers (filtered MRR 0.358 +/- 0.002 for HRR, 0.350 +/- 0.021 for FHRR). Second, neither composes zero-shot: accuracy stays at chance across all cleanup temperatures. Third, the main contribution, we localise the failure mechanistically. A hop-1 probe shows the memory recovers the correct intermediate entity with high fidelity (MRR 0.896 +/- 0.002 for HRR), yet composition still fails even with a verified-correct intermediate. A second probe shows why: posing the ground-truth second-hop fact as a standalone atomic query, bypassing composition entirely, already recovers it at only 0.26 to 0.48x average atomic accuracy, uniformly across relation fan-out. The bottleneck is not the bind-unbind algebra or the cleanup; it is that facts compositional chains pass through are intrinsically harder for the superposed memory to retrieve, a capacity and interference effect present already at a single hop. Fourth, we prove (Lemma 4.1) that FHRR's softmax cleanup is not phase-equivariant, compounding the primary failure on the minority of chains where hop-1 itself errs. Fixing zero-shot composition requires improving retrieval capacity under superposition, not just redesigning the cleanup.",
+          "authors": [
+            "Randhir Kumar"
+          ],
+          "primary_category": "cs.LG",
+          "categories": [
+            "cs.LG",
+            "cs.AI"
+          ],
+          "published": "2026-06-23T07:33:27+00:00",
+          "link": "https://arxiv.org/pdf/2606.24948v1",
+          "tags": [
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Knowledge graph embedding and holographic memory for zero-shot reasoning",
+          "llm_evidence_cn": "知识图谱嵌入与全息记忆用于零样本推理",
+          "llm_evidence": "知识图谱嵌入与全息记忆用于零样本推理",
+          "canonical_evidence": "知识图谱嵌入与全息记忆用于零样本推理",
+          "llm_tldr_en": "Studies holographic memory (HRR) for zero-shot compositional reasoning in knowledge graphs, showing competitive single-hop retrieval but failure on multi-hop queries.",
+          "llm_tldr_cn": "该论文研究全息记忆（HRR）在知识图谱零样本组合推理中的应用。实验发现HRR在单跳检索上表现强劲，但在多跳查询上失败，揭示了当前方法在组合泛化上的局限性。",
+          "llm_tldr": "该论文研究全息记忆（HRR）在知识图谱零样本组合推理中的应用。实验发现HRR在单跳检索上表现强劲，但在多跳查询上失败，揭示了当前方法在组合泛化上的局限性。",
+          "llm_tags": [
+            "query:power-ticket"
+          ],
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "graph embedding",
+          "matched_requirement_id": "req-5",
+          "selection_source": "carryover_cache",
+          "paper_id": "2606.24948v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2606.26458v1",
+          "source": "arxiv",
+          "title": "MKG-RAG-Bench: Benchmarking Retrieval in Multimodal Knowledge Graph-Augmented Generation",
+          "abstract": "Retrieval-augmented generation (RAG) over knowledge graphs has emerged as a promising approach for grounding large language models, yet existing benchmarks largely overlook the challenges of retrieval in multimodal knowledge graph RAG (MKG-RAG). In practice, retrieval is a critical bottleneck: multimodal knowledge is heterogeneous, difficult to align across modalities, and often poorly served by retrievers designed for unstructured corpora. To address this gap, we introduce MKG-RAG-Bench, a cross-domain benchmark explicitly designed to evaluate retrieval in MKG-RAG. MKG-RAG-Bench is constructed from two multimodal knowledge graphs spanning general and medical domains, and includes carefully aligned question-answering datasets that support controlled evaluation of both retrieval and downstream generation. The benchmark is built using an LLM-based curation pipeline that filters low-utility knowledge, generates structurally grounded queries with exact supervision, and systematically covers diverse modality configurations. Through extensive experiments across representative retriever families and modality settings, we show that effective multimodal retrieval remains challenging yet crucial for end-to-end MKG-RAG performance, and that retrieval quality strongly determines generation outcomes. By isolating retrieval as a first-class evaluation target, MKG-RAG-Bench provides a principled foundation for diagnosing current limitations and advancing multimodal knowledge graph RAG systems.",
+          "authors": [
+            "Xiaochen Wang",
+            "Bao Hoang",
+            "Han Liu",
+            "Ting Wang",
+            "Fenglong Ma"
+          ],
+          "primary_category": "cs.AI",
+          "categories": [
+            "cs.AI"
+          ],
+          "published": "2026-06-24T23:38:42+00:00",
+          "link": "https://arxiv.org/pdf/2606.26458v1",
+          "tags": [
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:power-ticket"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "introduces a benchmark for retrieval in multimodal knowledge graph-augmented generation, directly relevant to graph-based RAG",
+          "llm_evidence_cn": "提出了多模态知识图谱增强检索的基准，直接相关于基于图的检索增强生成",
+          "llm_evidence": "提出了多模态知识图谱增强检索的基准，直接相关于基于图的检索增强生成",
+          "canonical_evidence": "提出了多模态知识图谱增强检索的基准，直接相关于基于图的检索增强生成",
+          "llm_tldr_en": "MKG-RAG-Bench evaluates retrieval in multimodal knowledge graph RAG, providing a benchmark that can guide methods for graph-structured retrieval generation.",
+          "llm_tldr_cn": "多模态知识图谱RAG中检索是关键瓶颈，现有基准忽略此挑战。本文提出MKG-RAG-Bench，从通用和医学两个知识图谱构建数据集，包含对齐的问答对，用于评测多模态检索。该基准为图结构检索增强生成提供了标准化评估平台，可应用于电力工作票等领域的图检索生成。",
+          "llm_tldr": "多模态知识图谱RAG中检索是关键瓶颈，现有基准忽略此挑战。本文提出MKG-RAG-Bench，从通用和医学两个知识图谱构建数据集，包含对齐的问答对，用于评测多模态检索。该基准为图结构检索增强生成提供了标准化评估平台，可应用于电力工作票等领域的图检索生成。",
+          "llm_tags": [
+            "query:power-ticket"
+          ],
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "graph based retrieval augmented generation",
+          "matched_requirement_id": "req-7",
+          "selection_source": "carryover_cache",
+          "paper_id": "2606.26458v1",
+          "carry_days": 1
+        }
+      ]
     },
     "pwt": {
-      "updated_date": "20260622",
+      "updated_date": "20260627",
       "carryover_days": 9,
-      "items": []
+      "items": [
+        {
+          "id": "2606.26511v1",
+          "source": "arxiv",
+          "title": "Temporal Validity in Retrieval Memory: Eliminating Stale-Fact Errors for AI Agents over Evolving Knowledge",
+          "abstract": "Retrieval-augmented generation (RAG) gives agents access to accumulated knowledge, but has no model of time. When a fact changes (e.g., a function is renamed or API restructured), RAG retrieves both the stale and current value with near-identical embedding similarity. The agent then either abstains or serves the superseded fact. We show this is a structural problem: on a calibrated dataset, cosine similarity distinguishes a contradicted fact from a duplicated one with AUROC 0.59 (near chance), as contradictions are often more embedding-similar to the original than rephrased duplicates.   We present MemStrata, a retrieval memory maintaining temporal validity. It stores facts like RAG, preserving static recall, but when a fact's value is contradicted, a deterministic (subject, relation, object) supersession rule retires the stale value in a bi-temporal ledger - with no similarity threshold and no LLM call. Across six benchmarks run locally with a 7B model, MemStrata ties RAG on static knowledge and reaches 0.95-1.00 accuracy on evolving knowledge (where RAG reaches 0.20-0.47). The central result is the stale-fact-error rate: when required to answer, RAG serves superseded values 15-40% of the time; MemStrata drives this to ~0%, a failure class RAG cannot avoid. MemStrata achieves this at retrieval latency (~2.1s) versus ~16-18s for LLM-reranking baselines. We release the harness, datasets, and a marker-free evaluation protocol for memory under knowledge evolution.",
+          "authors": [
+            "Neeraj Yadav"
+          ],
+          "primary_category": "cs.CL",
+          "categories": [
+            "cs.CL",
+            "cs.AI",
+            "cs.ET",
+            "cs.LG"
+          ],
+          "published": "2026-06-25T01:31:53+00:00",
+          "link": "https://arxiv.org/pdf/2606.26511v1",
+          "tags": [
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "retrieval memory with temporal validity for AI agents",
+          "llm_evidence_cn": "为AI智能体提供时序有效的检索记忆",
+          "llm_evidence": "为AI智能体提供时序有效的检索记忆",
+          "canonical_evidence": "为AI智能体提供时序有效的检索记忆",
+          "llm_tldr_en": "MemStrata introduces temporal validity to retrieval memory, eliminating stale-fact errors in AI agents by storing facts with time-aware retrieval.",
+          "llm_tldr_cn": "本文指出检索增强生成（RAG）缺乏时间建模，导致智能体在知识更新时产生过时事实错误。为此提出MemStrata，一种维护时序有效性的检索记忆方法，在保持静态召回的同时动态区分新旧事实。实验表明该方法能有效消除过时事实错误，提升智能体在动态环境中的可靠性。该工作直接推动了智能体记忆与推理能力的改进，适用于电力工单生成等需要动态知识的场景。",
+          "llm_tldr": "本文指出检索增强生成（RAG）缺乏时间建模，导致智能体在知识更新时产生过时事实错误。为此提出MemStrata，一种维护时序有效性的检索记忆方法，在保持静态召回的同时动态区分新旧事实。实验表明该方法能有效消除过时事实错误，提升智能体在动态环境中的可靠性。该工作直接推动了智能体记忆与推理能力的改进，适用于电力工单生成等需要动态知识的场景。",
+          "llm_tags": [
+            "query:pwt"
+          ],
+          "matched_query_tag": "query:pwt",
+          "matched_query_text": "agent memory for reasoning improvement",
+          "matched_requirement_id": "req-12",
+          "selection_source": "carryover_cache",
+          "paper_id": "2606.26511v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2606.22485v1",
+          "source": "arxiv",
+          "title": "VADAOrchestra: Neurosymbolic Orchestration of Adaptive Reasoning Workflows",
+          "abstract": "Decision-making in real-world settings rarely follows a fixed script. Instead, it unfolds as a dynamic reasoning process in which the appropriate course of action evolves as new context and data become available. Traditional Business Process Management systems provide rigor, determinism, and auditability, yet they generally struggle to adapt their execution at runtime. Conversely, agentic systems based on Large Language Models (LLMs) bring flexibility to decision-making, but they are inherently opaque, often unreliable, and suffer from significant scalability constraints when operating over large datasets. To combine these complementary paradigms, we introduce VADAOrchestra, a neurosymbolic framework that models complex workflows as evolving reasoning processes. The framework adopts a hybrid approach: given a user query and a collection of data sources, an LLM-based orchestrator incrementally plans and adapts the workflow. This is encoded as a logic program in a fragment of Datalog+/- where predicates correspond to tool invocations and rules represent both predefined domain dependencies and logic constructs synthesized on demand to manipulate intermediate results. All logical inference tasks are then executed by a state-of-the-art Datalog+/- symbolic engine. This approach provides a verifiable reasoning trace, supporting the auditability and reproducibility of the entire process. Furthermore, by decoupling high-level orchestration from symbolic inference, it addresses scalability concerns, enabling complex reasoning over large datasets through targeted data querying. We evaluate VADAOrchestra on real-world financial use cases, demonstrating faithfulness, scalability, and explainability compared to standard agentic architectures.",
+          "authors": [
+            "Teodoro Baldazzi",
+            "Luigi Bellomarini",
+            "Andrea Coletta",
+            "Michela Iezzi",
+            "Carsten Maple",
+            "Alessandro Pesare",
+            "Emanuel Sallinger"
+          ],
+          "primary_category": "cs.AI",
+          "categories": [
+            "cs.AI",
+            "cs.CL",
+            "cs.DB",
+            "cs.LO"
+          ],
+          "published": "2026-06-21T13:10:48+00:00",
+          "link": "https://arxiv.org/pdf/2606.22485v1",
+          "tags": [
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "neuro-symbolic orchestration for adaptive reasoning workflows",
+          "llm_evidence_cn": "神经符号自适应推理工作流编排",
+          "llm_evidence": "神经符号自适应推理工作流编排",
+          "canonical_evidence": "神经符号自适应推理工作流编排",
+          "llm_tldr_en": "Introduces VADAOrchestra, a neurosymbolic framework that models complex workflows as evolving reasoning workflows, combining BPM rigor with LLM flexibility.",
+          "llm_tldr_cn": "本文提出VADAOrchestra，一种神经符号框架，将复杂工作流建模为演化推理过程，结合了传统业务流程管理的确定性和大语言模型的灵活性。该框架通过运行时自适应推理解决了动态决策中的挑战，可作为一种增强LLM推理能力的智能体记忆机制，替代或补充思维链方法。",
+          "llm_tldr": "本文提出VADAOrchestra，一种神经符号框架，将复杂工作流建模为演化推理过程，结合了传统业务流程管理的确定性和大语言模型的灵活性。该框架通过运行时自适应推理解决了动态决策中的挑战，可作为一种增强LLM推理能力的智能体记忆机制，替代或补充思维链方法。",
+          "llm_tags": [
+            "query:pwt"
+          ],
+          "matched_query_tag": "query:pwt",
+          "matched_query_text": "agent memory for reasoning improvement",
+          "matched_requirement_id": "req-12",
+          "selection_source": "carryover_cache",
+          "paper_id": "2606.22485v1",
+          "carry_days": 1
+        }
+      ]
     }
   }
 }
