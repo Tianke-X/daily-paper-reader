@@ -6,77 +6,79 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-06-27
-- 运行时间：2026-06-27 20:21:41 UTC
+- 最新运行日期：2026-06-28
+- 运行时间：2026-06-28 21:41:17 UTC
 - 运行状态：成功
 - 本次总论文数：19
 - 精读区：7
 - 速读区：12
 
 ### 今日简报（AI）
-今日共精读7篇、速读12篇，重点聚焦长上下文检索与智能体记忆的进化表示方法。最值得关注的是EvoEmbedding（9.0分）提出可进化表示用于长上下文检索与智能体记忆，同时面向数据流半监督学习的SLeDGe和向量检索的能量色散网络也值得参考。建议优先研读EvoEmbedding论文，并关注长期记忆微调策略（如《Learning What Not to Forget》），后续可探索结合图结构的流式学习方案。
-- 详情：[/202606/27/README](/202606/27/README)
+1) 今日聚焦图嵌入动态优化与测试时计算，以及多模态知识图谱检索增强的基准测评。  
+2) 最值得精读的两篇均获9分：《FeLoG》以反馈循环机制实现可扩展图嵌入，《Adaptive Recurrent Message Passing》探索图上的自适应测试时计算。  
+3) 建议优先关注MKG-RAG-Bench（8分），了解多模态检索增强生成评估方法，以及时间有效性工作（8分），规避知识演化中的过期事实错误。
+- 详情：[/202606/28/README](/202606/28/README)
 
 ### 精读区论文标签
-1. [EvoEmbedding: Evolvable Representations for Long-Context Retrieval and Agentic Memory](/202606/27/2606.21649v1-evoembedding-evolvable-representations-for-long-context-retrieval-and-agentic-memory)  
-   标签：评分：9.0/10、query:pwt
-   evidence：提出带有潜在记忆的可演化嵌入用于长语境检索，直接针对推理的代理记忆
-2. [EvoEmbedding: Evolvable Representations for Long-Context Retrieval and Agentic Memory](/202606/27/2606.21649v2-evoembedding-evolvable-representations-for-long-context-retrieval-and-agentic-memory)  
-   标签：评分：9.0/10、query:pwt
-   evidence：用于检索和智能体记忆的可进化嵌入
-3. [Nous: A Predictive World Model for Long-Term Agent Memory](/202606/27/2606.22030v1-nous-a-predictive-world-model-for-long-term-agent-memory)  
-   标签：评分：9.0/10、query:pwt
-   evidence：无需训练的预测世界模型用于长期智能体记忆
-4. [POTracker: Optimizing Large Language Models for Standard-Compliant Power Outage Report Generation](/202606/27/2606.23533v1-potracker-optimizing-large-language-models-for-standard-compliant-power-outage-report-generation)  
+1. [FeLoG: Scalable and Efficient Distributed Graph Embedding with Feedback Loop Mechanism](/202606/28/2606.22180v1-felog-scalable-and-efficient-distributed-graph-embedding-with-feedback-loop-mechanism)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：电力停电报告生成，涉及大模型优化
-5. [ReM-MoA: Reasoning Memory Sustains Mixture-of-Agents Scaling](/202606/27/2606.24437v1-rem-moa-reasoning-memory-sustains-mixture-of-agents-scaling)  
-   标签：评分：9.0/10、query:pwt
-   evidence：提出记忆增强的混合智能体框架以维持推理扩展
-6. [Reasoning as Attractor Dynamics: Latent Memory Retrieval via Gibbs-Weighted Energy Minimization](/202606/27/2606.24543v1-reasoning-as-attractor-dynamics-latent-memory-retrieval-via-gibbs-weighted-energy-minimization)  
-   标签：评分：9.0/10、query:pwt
-   evidence：通过吉布斯加权能量最小化进行潜在记忆检索作为思维链的替代
-7. [Is GraphRAG Needed? From Basic RAG to Graph-/Agentic Solutions with Context Optimization](/202606/27/2606.25656v1-is-graphrag-needed-from-basic-rag-to-graph-agentic-solutions-with-context-optimization)  
+   evidence：带反馈循环的分布式图嵌入，支持图基检索增强生成
+2. [Adaptive Recurrent Message Passing for Test Time Computing on Graphs](/202606/28/2606.22462v1-adaptive-recurrent-message-passing-for-test-time-computing-on-graphs)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：直接讨论图检索增强生成（GraphRAG）
+   evidence：自适应递归消息传递用于图结构学习和测试时计算
+3. [TaLK: Text-attributed Graph Dataset Distillation via Coupling Language Model with Graph-Aware Kernel](/202606/28/2606.22975v1-talk-text-attributed-graph-dataset-distillation-via-coupling-language-model-with-graph-aware-kernel)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：用于图结构学习的文本属性图数据集蒸馏
+4. [DART: Draft-Agreement Routing for Training-Free Adaptive Thinking Budgets in Hybrid Reasoning Models](/202606/28/2606.23181v1-dart-draft-agreement-routing-for-training-free-adaptive-thinking-budgets-in-hybrid-reasoning-models)  
+   标签：评分：8.0/10、query:pwt
+   evidence：DART提出无训练路由方法，在直接回答与扩展思考间选择，作为思维链推理的替代方案。
+5. [Towards Root Memories: Benchmarking and Enhancing Implicit Logical Memory Retrieval for Personalized LLMs](/202606/28/2606.23283v1-towards-root-memories-benchmarking-and-enhancing-implicit-logical-memory-retrieval-for-personalized-llms)  
+   标签：评分：8.0/10、query:pwt
+   evidence：用于个性化LLM的记忆检索，增强推理能力
+6. [ChartWalker: Benchmarking the Cross-Chart RAG Task with Hierarchical Knowledge Graphs](/202606/28/2606.23997v1-chartwalker-benchmarking-the-cross-chart-rag-task-with-hierarchical-knowledge-graphs)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：基于图的检索增强生成
+7. [Communicability-Inspired Positional Encoding (CIPE)](/202606/28/2606.25293v1-communicability-inspired-positional-encoding-cipe)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：基于通信性的图位置编码用于图结构学习
 
 ### 速读区论文标签
-1. [Learning What Not to Forget: Long-Horizon Agent Memory from a Few Kilobytes of Learning](/202606/27/2606.20954v1-learning-what-not-to-forget-long-horizon-agent-memory-from-a-few-kilobytes-of-learning)  
-   标签：评分：8.0/10、query:pwt
-   evidence：针对长程智能体记忆的习得性相关性驱逐策略
-2. [SLeDGe: Semi-Supervised Learning on Data Streams with Graph Structure Learning](/202606/27/2606.21096v1-sledge-semi-supervised-learning-on-data-streams-with-graph-structure-learning)  
+1. [MKG-RAG-Bench: Benchmarking Retrieval in Multimodal Knowledge Graph-Augmented Generation](/202606/28/2606.26458v1-mkg-rag-bench-benchmarking-retrieval-in-multimodal-knowledge-graph-augmented-generation)  
    标签：评分：8.0/10、query:power-ticket
-   evidence：数据流上的图结构学习
-3. [From Embedding Geometry to Spectral Search: Energy Dispersion Networks For Vector Retrieval](/202606/27/2606.21535v1-from-embedding-geometry-to-spectral-search-energy-dispersion-networks-for-vector-retrieval)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：利用谱图结构的图导线框架进行向量检索
-4. [Improving Reasoning in Vision-Language Models via Perception Verified Self-Training](/202606/27/2606.22158v2-improving-reasoning-in-vision-language-models-via-perception-verified-self-training)  
+   evidence：多模态知识图谱RAG基准
+2. [Retrieval-Warmed Energy-Based Reasoning: A Five-Arm Ablation Methodology for Diffusion-as-Inference on Structured Reasoning Tasks](/202606/28/2606.26476v1-retrieval-warmed-energy-based-reasoning-a-five-arm-ablation-methodology-for-diffusion-as-inference-on-structured-reasoning-tasks)  
    标签：评分：8.0/10、query:pwt
-   evidence：提出自训练方法作为思维链推理的替代方案
-5. [AdaMem: Learning What to Remember for Personalized Long-Horizon LLM Agents](/202606/27/2606.21144v1-adamem-learning-what-to-remember-for-personalized-long-horizon-llm-agents)  
-   标签：评分：7.0/10、query:pwt
-   evidence：自适应记忆助力个性化LLM智能体，通过相关保留提升推理
-6. [Ramanujan Graph Rewiring with Non Negative Resistance Curvature](/202606/27/2606.21333v2-ramanujan-graph-rewiring-with-non-negative-resistance-curvature)  
+   evidence：检索预热能量推理作为思维链的替代方法
+3. [Temporal Validity in Retrieval Memory: Eliminating Stale-Fact Errors for AI Agents over Evolving Knowledge](/202606/28/2606.26511v1-temporal-validity-in-retrieval-memory-eliminating-stale-fact-errors-for-ai-agents-over-evolving-knowledge)  
+   标签：评分：8.0/10、query:pwt
+   evidence：代理记忆用于推理改进
+4. [KARLA: Knowledge-base Augmented Retrieval for Language Models](/202606/28/2606.26807v1-karla-knowledge-base-augmented-retrieval-for-language-models)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：用于工作票的检索增强生成
+5. [All Relations Lead to Rome: Automated Knowledge Graph Creation and Question Generation](/202606/28/2606.22645v1-all-relations-lead-to-rome-automated-knowledge-graph-creation-and-question-generation)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：图结构学习中的图重连方法
-7. [Universal Encoders for Modular Relational Deep Learning](/202606/27/2606.21434v1-universal-encoders-for-modular-relational-deep-learning)  
+   evidence：自动化知识图谱构建与问题生成，统一检索与推理
+6. [Only Ask What You Don't Know: Grounded Delta Planning for Efficient Multi-step RAG](/202606/28/2606.22681v1-only-ask-what-you-dont-know-grounded-delta-planning-for-efficient-multi-step-rag)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：面向时序异质图的关系深度学习
-8. [Enhancing LLMs for Graph Tasks via Graph-aware LoRA Generation](/202606/27/2606.22429v1-enhancing-llms-for-graph-tasks-via-graph-aware-lora-generation)  
+   evidence：GDP-RAG是一个基于规划的多步RAG框架，只检索缺失信息，适用于工作票生成。
+7. [HAKARI-Bench: A Lightweight Benchmark for Comparing Retrieval Architectures and Efficiency Settings under Unified Conditions](/202606/28/2606.22778v1-hakari-bench-a-lightweight-benchmark-for-comparing-retrieval-architectures-and-efficiency-settings-under-unified-conditions)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：通过图感知LoRA将LLM适配到图任务
-9. [Factual Retrieval in LLMs Is a Redundant, Distributed and Non-Contiguous Process](/202606/27/2606.21345v1-factual-retrieval-in-llms-is-a-redundant-distributed-and-non-contiguous-process)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：研究LLM中的事实检索机制
-10. [Dissecting Agentic RAG: A Component Ablation for Multi-Hop QA with a Local 7B Model](/202606/27/2606.21553v1-dissecting-agentic-rag-a-component-ablation-for-multi-hop-qa-with-a-local-7b-model)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：智能体RAG组件消融，可迁移至工作票检索生成场景
-11. [$π$-RAG: Oblivious Retrieval via Semantic Quantization and Transcendental Addressing for Large Language Models](/202606/27/2606.22153v1--rag-oblivious-retrieval-via-semantic-quantization-and-transcendental-addressing-for-large-language-models)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：隐私保护RAG架构，适用于工作票生成场景
-12. [Concept-Constrained Prompt Learning for Few-Shot CLIP Adaptation](/202606/27/2606.22567v1-concept-constrained-prompt-learning-for-few-shot-clip-adaptation)  
+   evidence：用于RAG架构的轻量级检索基准
+8. [Predicate Importance Estimation and Decoupled Rationale-Score Distillation for Entity Alignment](/202606/28/2606.22992v1-predicate-importance-estimation-and-decoupled-rationale-score-distillation-for-entity-alignment)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：面向KG-RAG的知识图谱实体对齐方法
+9. [Novelty-Aware Agentic Retrieval: Comparing Research Contributions Through Structured Multi-Step Reasoning](/202606/28/2606.22151v1-novelty-aware-agentic-retrieval-comparing-research-contributions-through-structured-multi-step-reasoning)  
    标签：评分：6.0/10、query:pwt
-   evidence：适用于低资源场景的概念约束少样本提示学习
+   evidence：基于agent的多步推理检索改进
+10. [RAVEN: Agentic RAG for Automated Vulnerability Repair](/202606/28/2606.22647v1-raven-agentic-rag-for-automated-vulnerability-repair)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：用于自动漏洞修复的智能体检索增强生成管道
+11. [LightSTAR: Efficient Visual Document Retrieval via Lightweight Selection with Vision-Adaptive Refinement](/202606/28/2606.23539v1-lightstar-efficient-visual-document-retrieval-via-lightweight-selection-with-vision-adaptive-refinement)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：高效的视觉文档检索方法
+12. [Improving Long-Context Retrieval with Multi-Prefix Embedding](/202606/28/2606.23642v1-improving-long-context-retrieval-with-multi-prefix-embedding)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：多前缀嵌入提升检索增强生成中的文档检索效果
 
 
 <div class="dpr-home-promo-card">

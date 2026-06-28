@@ -1,0 +1,785 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-28T21:29:45.647382+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 12,
+    "deep_cap": 7,
+    "deep_selected": 7,
+    "quick_candidates": 21,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2606.22180v1",
+      "source": "arxiv",
+      "title": "FeLoG: Scalable and Efficient Distributed Graph Embedding with Feedback Loop Mechanism",
+      "abstract": "Graph embedding maps graph nodes into low-dimensional vectors to support applications such as recommendation, fraud detection, and graph-based retrieval-augmented generation (GraphRAG). As graphs scale to billions of edges, scalable and efficient graph embedding has become increasingly important. Existing frameworks commonly adopt a sampling-training paradigm, in which mini-batches are constructed by sampling nodes and their neighbors. However, sampling is typically decoupled from evolving embedding quality, causing redundant exploration of well-trained regions while under-sampling undertrained nodes. At the system level, such decoupling further leads to excessive communication, serialized execution, and low resource utilization in distributed environments. We present FeLoG, a feedback loop-driven system for scalable distributed graph embedding. (1) FeLoG introduces feedback-coupled sampling and training, dynamically prioritizing undertrained nodes according to real-time embedding-quality feedback, thereby reducing redundant computation and accelerating convergence. (2) It employs activity-aware communication that compresses frequently occurring node sequences to reduce intra-machine PCIe traffic and selectively synchronizes frequently updated embeddings to reduce inter-machine communication. (3) It adopts a round-interleaved pipeline that overlaps next-round sampling with current-round training to improve CPU-GPU utilization. Experiments against six state-of-the-art baselines on large-scale graphs show that FeLoG achieves an average speedup of 27.9x, reduces communication cost by more than 53.1%, and sustains over 80% CPU-GPU utilization.",
+      "authors": [
+        "Peng Fang",
+        "Arijit Khan",
+        "Ziqiang Wu",
+        "Zhenli Li",
+        "Yibo Zhou",
+        "Fang Wang",
+        "Dan Feng"
+      ],
+      "primary_category": "cs.DC",
+      "categories": [
+        "cs.DC",
+        "cs.LG"
+      ],
+      "published": "2026-06-20T18:21:15+00:00",
+      "link": "https://arxiv.org/pdf/2606.22180v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "distributed graph embedding with feedback loop for GraphRAG",
+      "llm_evidence_cn": "带反馈循环的分布式图嵌入，支持图基检索增强生成",
+      "llm_evidence": "带反馈循环的分布式图嵌入，支持图基检索增强生成",
+      "canonical_evidence": "带反馈循环的分布式图嵌入，支持图基检索增强生成",
+      "llm_tldr_en": "FeLoG provides scalable distributed graph embedding with a feedback loop that adapts sampling to embedding quality, explicitly supporting GraphRAG applications.",
+      "llm_tldr_cn": "大规模图嵌入面临采样与嵌入质量脱节的问题。FeLoG引入反馈循环机制，根据嵌入质量动态调整采样策略，避免冗余探索。系统设计支持高效分布式训练，可应用于图基检索增强生成（GraphRAG），与电力工作票等图结构任务高度相关。",
+      "llm_tldr": "大规模图嵌入面临采样与嵌入质量脱节的问题。FeLoG引入反馈循环机制，根据嵌入质量动态调整采样策略，避免冗余探索。系统设计支持高效分布式训练，可应用于图基检索增强生成（GraphRAG），与电力工作票等图结构任务高度相关。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph embedding",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.22462v1",
+      "source": "arxiv",
+      "title": "Adaptive Recurrent Message Passing for Test Time Computing on Graphs",
+      "abstract": "Pre-trained foundation models have demonstrated remarkable success in many domains, enabling a unified backbone to generalize across diverse downstream tasks. However, extending this paradigm to graph learning remains challenging due to the intrinsic mismatch between graph data and fixed architectural designs. In this work, we show that this limitation can be overcome via recurrent graph models. To achieve this, we conduct a systematic theoretical analysis, rigorously deriving step dependence as a necessary and sufficient condition for an adaptively convergent recurrent process. Building on this foundation, we propose AdaR, an Adaptive Recurrent graph model, empowering flexible test-time computing on various downstream tasks without changing model parameters. To enable adaptive inference, AdaR explicitly encodes normalized step information and representation-target relations into the recurrent updates. To ensure convergence of the recurrent process, AdaR employs gradient-based supervision signals that guide representation updates throughout the recurrence. Empirical results demonstrate that AdaR consistently outperforms strong baselines in both inductive and transductive settings.",
+      "authors": [
+        "Junshu Sun",
+        "Wanxing Chang",
+        "Qingming Huang",
+        "Shuhui Wang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-21T12:14:11+00:00",
+      "link": "https://arxiv.org/pdf/2606.22462v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "Adaptive recurrent message passing for graph structure learning and test-time computing",
+      "llm_evidence_cn": "自适应递归消息传递用于图结构学习和测试时计算",
+      "llm_evidence": "自适应递归消息传递用于图结构学习和测试时计算",
+      "canonical_evidence": "自适应递归消息传递用于图结构学习和测试时计算",
+      "llm_tldr_en": "Proposes AdaR, an adaptive recurrent graph model that enables flexible test-time computing on various downstream tasks without changing model parameters, addressing the mismatch between graph data and fixed architectures.",
+      "llm_tldr_cn": "针对预训练图模型难以泛化到不同下游任务的问题，本文提出AdaR，一种自适应递归图模型。通过理论推导证明步骤依赖性是自适应收敛递归过程的必要条件，使得模型能够在测试时灵活适应不同任务而不改变参数。实验验证了AdaR在多种图任务上的有效性。该工作为图模型的测试时适应提供了新思路。",
+      "llm_tldr": "针对预训练图模型难以泛化到不同下游任务的问题，本文提出AdaR，一种自适应递归图模型。通过理论推导证明步骤依赖性是自适应收敛递归过程的必要条件，使得模型能够在测试时灵活适应不同任务而不改变参数。实验验证了AdaR在多种图任务上的有效性。该工作为图模型的测试时适应提供了新思路。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.22975v1",
+      "source": "arxiv",
+      "title": "TaLK: Text-attributed Graph Dataset Distillation via Coupling Language Model with Graph-Aware Kernel",
+      "abstract": "Text-attributed graphs (TAGs) are widely used in many real-world domains, and learning on TAGs requires jointly modeling text semantics and graph structure. A standard approach for modeling TAGs is to combine a language model (LM) and a graph neural network (GNN), but joint training is computationally expensive and difficult to scale. Dataset distillation is a promising way to reduce training costs, but existing methods are not well suited to TAGs because they are typically designed for a single modality or still require repeatedly training expensive LM-GNN models on the full dataset during distillation. To address this, we propose TaLK, an effective dataset distillation method for TAGs that couples an LM with a graph-aware neural tangent kernel.This design enables efficient dataset distillation, avoiding repeated joint training on the full dataset while reflecting both textual and structural information for effective TAG learning.Experiments on multiple TAG benchmarks show that TaLK consistently outperforms existing baselines and achieves up to 97% of full-dataset performance with only 1% synthetic data.",
+      "authors": [
+        "Yeongho Kim",
+        "Yeonje Choi",
+        "Kijung Shin"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-22T07:55:55+00:00",
+      "link": "https://arxiv.org/pdf/2606.22975v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "text-attributed graph dataset distillation for graph structure learning",
+      "llm_evidence_cn": "用于图结构学习的文本属性图数据集蒸馏",
+      "llm_evidence": "用于图结构学习的文本属性图数据集蒸馏",
+      "canonical_evidence": "用于图结构学习的文本属性图数据集蒸馏",
+      "llm_tldr_en": "Proposes TaLK for distilling text-attributed graphs by coupling language model with graph-aware kernel, reducing training cost while preserving graph-structure information.",
+      "llm_tldr_cn": "该论文针对文本属性图（TAG）提出TaLK数据集蒸馏方法，将语言模型与图感知核耦合，以生成紧凑但信息丰富的蒸馏图。现有蒸馏方法难以处理多模态TAG，而TaLK通过联合建模文本语义和图结构，在不重复训练LM-GNN模型的情况下完成蒸馏。实验表明，蒸馏后的数据集可在保持较少样本的同时有效训练图模型，为图结构学习提供高效的数据压缩方案。",
+      "llm_tldr": "该论文针对文本属性图（TAG）提出TaLK数据集蒸馏方法，将语言模型与图感知核耦合，以生成紧凑但信息丰富的蒸馏图。现有蒸馏方法难以处理多模态TAG，而TaLK通过联合建模文本语义和图结构，在不重复训练LM-GNN模型的情况下完成蒸馏。实验表明，蒸馏后的数据集可在保持较少样本的同时有效训练图模型，为图结构学习提供高效的数据压缩方案。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.23181v1",
+      "source": "arxiv",
+      "title": "DART: Draft-Agreement Routing for Training-Free Adaptive Thinking Budgets in Hybrid Reasoning Models",
+      "abstract": "Hybrid reasoning models can answer directly or spend extra tokens on extended thinking. A practical router should choose between these modes for each query, so easy problems avoid unnecessary reasoning and hard problems receive enough budget to finish the answer. Existing routers move in this direction, but they typically require labeled training data or fix thinking budgets up front, ignoring answer-level evidence from the model itself. We introduce DART, a training-free routing framework that samples two cheap no-think drafts, accepts direct answering when the drafts agree, and predicts a thinking budget from draft entropy when they disagree. Across the main comparisons, DART preserves or improves always-thinking accuracy in most settings while reducing thinking-token use. On math reasoning, accuracy improves by up to $+$9.0 points on Olympiad-level problems while thinking tokens drop 15-69%. On code reasoning under execution-based equivalence, accuracy improves by up to +22.5 points while thinking tokens drop 51-63%. The Stage~1 signal extends across model scales (0.6B-32B), model families, and API-only hosted settings, with no labeled data and no gradient updates required.",
+      "authors": [
+        "Jungseob Lee",
+        "Seongtae Hong",
+        "Seungjun Lee",
+        "Jaehyung Seo",
+        "Junyoung Son",
+        "Sugyeong Eo",
+        "Chanjun Park",
+        "Hyeongju Park",
+        "Hyeonseok Moon",
+        "Heuiseok Lim"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-06-22T11:24:59+00:00",
+      "link": "https://arxiv.org/pdf/2606.23181v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "DART proposes a training-free routing method that chooses between direct answering and extended thinking, serving as an alternative to chain-of-thought reasoning.",
+      "llm_evidence_cn": "DART提出无训练路由方法，在直接回答与扩展思考间选择，作为思维链推理的替代方案。",
+      "llm_evidence": "DART提出无训练路由方法，在直接回答与扩展思考间选择，作为思维链推理的替代方案。",
+      "canonical_evidence": "DART提出无训练路由方法，在直接回答与扩展思考间选择，作为思维链推理的替代方案。",
+      "llm_tldr_en": "DART introduces draft-agreement routing for hybrid reasoning models, using cheap no-think drafts to decide when to think, achieving adaptive thinking budgets without training.",
+      "llm_tldr_cn": "针对混合推理模型，本文提出DART框架，通过采样两个廉价的无思考草稿，基于一致性判断是否直接回答；当不一致时，利用草稿熵预测思考预算，实现无需训练的自适应推理预算分配。实验表明，DART在保持或提升始终思考模式准确率的同时，显著降低了简单问题的推理成本。该工作为替代固定思维链提供了一种高效、无训练的路由方案。",
+      "llm_tldr": "针对混合推理模型，本文提出DART框架，通过采样两个廉价的无思考草稿，基于一致性判断是否直接回答；当不一致时，利用草稿熵预测思考预算，实现无需训练的自适应推理预算分配。实验表明，DART在保持或提升始终思考模式准确率的同时，显著降低了简单问题的推理成本。该工作为替代固定思维链提供了一种高效、无训练的路由方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.23997v1",
+      "source": "arxiv",
+      "title": "ChartWalker: Benchmarking the Cross-Chart RAG Task with Hierarchical Knowledge Graphs",
+      "abstract": "Cross-Chart Retrieval-Augmented Generation (RAG) is critical for complex multi-modal analytical tasks in scientific, business, and political domains. However, existing benchmarks either focus on tables, which are well-structured and textualized, or generate cross-chart questions by simply extracting key points, which often induces lexical overlap between queries and evidence and yields logically inconsistent reasoning chains. To address this, we introduce ChartWalker, a novel framework for constructing challenging cross-chart RAG tasks. ChartWalker features a hierarchical knowledge graph construction method tailored to charts, which organizes entities and relations by granularity to preserve analytical structure. We then propose a structure-aware sampling algorithm that synthesizes semantically coherent, multi-hop reasoning paths, enabling explicit control over query difficulty and granularity for QA generation. Built with this framework, we release ChartWalker-Bench, a comprehensive benchmark spanning diverse domains and cross-chart query types. Extensive evaluations across major RAG paradigms reveal significant performance gaps, underscoring the benchmark's difficulty and utility. Furthermore, we provide ChartWalker-Agent, an agentic baseline to facilitate analysis and inspire future system design.",
+      "authors": [
+        "Ning Tang",
+        "Chenghan Xie",
+        "Hanyang Yuan",
+        "Yi Li",
+        "Renhong Huang",
+        "Qian Kou",
+        "Xiaofeng Shi",
+        "Hua Zhou",
+        "Jiarong Xu"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-22T23:07:38+00:00",
+      "link": "https://arxiv.org/pdf/2606.23997v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph based retrieval augmented generation",
+      "llm_evidence_cn": "基于图的检索增强生成",
+      "llm_evidence": "基于图的检索增强生成",
+      "canonical_evidence": "基于图的检索增强生成",
+      "llm_tldr_en": "ChartWalker constructs hierarchical knowledge graphs for cross-chart RAG benchmarking.",
+      "llm_tldr_cn": "现有跨图表RAG基准存在词汇重叠和推理链不一致问题。本文提出ChartWalker，通过构建层次化知识图谱组织图表实体和关系，并设计结构化问题生成方法，创建了更具挑战性的跨图表RAG任务。实验表明该基准能有效评估模型的多步推理和跨模态检索能力，为电力系统等领域的文档检索生成提供了图结构增强的参考框架。",
+      "llm_tldr": "现有跨图表RAG基准存在词汇重叠和推理链不一致问题。本文提出ChartWalker，通过构建层次化知识图谱组织图表实体和关系，并设计结构化问题生成方法，创建了更具挑战性的跨图表RAG任务。实验表明该基准能有效评估模型的多步推理和跨模态检索能力，为电力系统等领域的文档检索生成提供了图结构增强的参考框架。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.25293v1",
+      "source": "arxiv",
+      "title": "Communicability-Inspired Positional Encoding (CIPE)",
+      "abstract": "Positional encodings (PEs) are essential for Transformers. Yet designing effective PEs for non-Euclidean graphs remains challenging. Such encodings should ideally induce an Attention-Compatible Geometry for self-attention: not merely describing graph structure, but defining a geometry whose inner products reflect meaningful structural relatedness. To realize this geometry, we propose Communicability-Inspired Positional Encoding (CIPE), built from communicability, a measure between pairs of nodes that aggregates contributions from paths of all lengths. By construction, CIPE inner products recover communicability, converting global multi-path connectivity into an attention-ready similarity geometry. For practical Transformer training, we introduce dimensionality alignment, mapping graph-size-dependent CIPE representations to prescribed dimensions while faithfully preserving the induced geometry. Empirically, CIPE improves structure-agnostic Transformers by 35.5% on average across seven benchmarks, outperforming representative PEs; it also consistently improves structure-biased graph Transformers, where competing PEs often yield only marginal benefits. These results position CIPE as a principled framework for attention-compatible graph positional encodings.",
+      "authors": [
+        "Yipeng Zhang",
+        "Zhongtian Sun",
+        "Pietro Liò",
+        "Kelin Xia"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-24T01:56:20+00:00",
+      "link": "https://arxiv.org/pdf/2606.25293v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "communicability-based positional encoding for graph structure learning",
+      "llm_evidence_cn": "基于通信性的图位置编码用于图结构学习",
+      "llm_evidence": "基于通信性的图位置编码用于图结构学习",
+      "canonical_evidence": "基于通信性的图位置编码用于图结构学习",
+      "llm_tldr_en": "Proposes CIPE, a graph positional encoding that induces an attention-compatible geometry by using communicability, improving Transformer performance on graph structure learning tasks.",
+      "llm_tldr_cn": "该论文提出CIPE位置编码方法，基于通信性度量（综合所有路径长度的节点对相似性）为图Transformer设计几何结构。CIPE构建的内积空间能直接恢复通信性，使自注意力机制能够捕获图的多路径连通性。实验证明，CIPE在多个图结构学习任务中显著优于现有位置编码，为图数据的Transformer建模提供了更有效的结构编码。",
+      "llm_tldr": "该论文提出CIPE位置编码方法，基于通信性度量（综合所有路径长度的节点对相似性）为图Transformer设计几何结构。CIPE构建的内积空间能直接恢复通信性，使自注意力机制能够捕获图的多路径连通性。实验证明，CIPE在多个图结构学习任务中显著优于现有位置编码，为图数据的Transformer建模提供了更有效的结构编码。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.23283v1",
+      "source": "arxiv",
+      "title": "Towards Root Memories: Benchmarking and Enhancing Implicit Logical Memory Retrieval for Personalized LLMs",
+      "abstract": "Memory systems are essential for personalized Large Language Models (LLMs). However, existing retrieval methods in these systems primarily rely on semantic similarity, potentially missing logically critical memories with limited semantic overlap. Current benchmarks remain inadequate for evaluating this problem. To address this gap, we construct IMLogic, the first high-quality benchmark targeting implicit logical memory retrieval in long-dialogue scenarios. Motivated by this challenge, we introduce root memory, a structured, decision-preserving representation that distills reusable personalized logic from long-term user histories. We then propose RootMem, a plug-and-play framework that first distills raw histories into structured root memories and then uses an LLM-based router to activate logically relevant ones, complementing semantic retrieval with personalized decision logic. Extensive experiments demonstrate that RootMem significantly outperforms the strongest retrieval baselines and consistently boosts the accuracy of existing memory agents. Our benchmark and codes will be available at https://anonymous.4open.science/r/IMLogic-DBB3.",
+      "authors": [
+        "Hongxun Ding",
+        "Xiang Yu",
+        "Chengbing Wang",
+        "Jianfei Xiao",
+        "Keqin Bao",
+        "Wenjie Wang",
+        "Xiangnan He"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-22T12:58:10+00:00",
+      "link": "https://arxiv.org/pdf/2606.23283v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "memory retrieval for personalized LLMs enhances reasoning",
+      "llm_evidence_cn": "用于个性化LLM的记忆检索，增强推理能力",
+      "llm_evidence": "用于个性化LLM的记忆检索，增强推理能力",
+      "canonical_evidence": "用于个性化LLM的记忆检索，增强推理能力",
+      "llm_tldr_en": "Introduces root memory, a structured representation for implicit logical memory retrieval in personalized LLMs, improving reasoning by preserving decision logic.",
+      "llm_tldr_cn": "现有记忆系统主要依赖语义相似性检索，可能遗漏逻辑关键的记忆。本文提出根记忆（root memory），一种结构化的决策保持表示，用于从长程用户历史中提取可复用的个性化逻辑。基于此设计的RootMem框架能够在不重新训练的情况下增强推理能力。实验表明，该方法在隐式逻辑记忆检索基准上优于基线。",
+      "llm_tldr": "现有记忆系统主要依赖语义相似性检索，可能遗漏逻辑关键的记忆。本文提出根记忆（root memory），一种结构化的决策保持表示，用于从长程用户历史中提取可复用的个性化逻辑。基于此设计的RootMem框架能够在不重新训练的情况下增强推理能力。实验表明，该方法在隐式逻辑记忆检索基准上优于基线。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.26458v1",
+      "source": "arxiv",
+      "title": "MKG-RAG-Bench: Benchmarking Retrieval in Multimodal Knowledge Graph-Augmented Generation",
+      "abstract": "Retrieval-augmented generation (RAG) over knowledge graphs has emerged as a promising approach for grounding large language models, yet existing benchmarks largely overlook the challenges of retrieval in multimodal knowledge graph RAG (MKG-RAG). In practice, retrieval is a critical bottleneck: multimodal knowledge is heterogeneous, difficult to align across modalities, and often poorly served by retrievers designed for unstructured corpora. To address this gap, we introduce MKG-RAG-Bench, a cross-domain benchmark explicitly designed to evaluate retrieval in MKG-RAG. MKG-RAG-Bench is constructed from two multimodal knowledge graphs spanning general and medical domains, and includes carefully aligned question-answering datasets that support controlled evaluation of both retrieval and downstream generation. The benchmark is built using an LLM-based curation pipeline that filters low-utility knowledge, generates structurally grounded queries with exact supervision, and systematically covers diverse modality configurations. Through extensive experiments across representative retriever families and modality settings, we show that effective multimodal retrieval remains challenging yet crucial for end-to-end MKG-RAG performance, and that retrieval quality strongly determines generation outcomes. By isolating retrieval as a first-class evaluation target, MKG-RAG-Bench provides a principled foundation for diagnosing current limitations and advancing multimodal knowledge graph RAG systems.",
+      "authors": [
+        "Xiaochen Wang",
+        "Bao Hoang",
+        "Han Liu",
+        "Ting Wang",
+        "Fenglong Ma"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-24T23:38:42+00:00",
+      "link": "https://arxiv.org/pdf/2606.26458v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "multimodal knowledge graph RAG benchmark",
+      "llm_evidence_cn": "多模态知识图谱RAG基准",
+      "llm_evidence": "多模态知识图谱RAG基准",
+      "canonical_evidence": "多模态知识图谱RAG基准",
+      "llm_tldr_en": "First benchmark for retrieval in multimodal knowledge graph RAG, covering two domains with aligned QA datasets.",
+      "llm_tldr_cn": "本文提出MKG-RAG-Bench，首个专门评估多模态知识图谱RAG中检索能力的跨领域基准。基准涵盖通用和医疗两个领域的多模态知识图谱，并包含精心对齐的问答数据集。实验揭示了多模态检索的关键瓶颈，如跨模态对齐困难，为后续研究提供了标准化的评估平台。",
+      "llm_tldr": "本文提出MKG-RAG-Bench，首个专门评估多模态知识图谱RAG中检索能力的跨领域基准。基准涵盖通用和医疗两个领域的多模态知识图谱，并包含精心对齐的问答数据集。实验揭示了多模态检索的关键瓶颈，如跨模态对齐困难，为后续研究提供了标准化的评估平台。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.22645v1",
+      "source": "arxiv",
+      "title": "All Relations Lead to Rome: Automated Knowledge Graph Creation and Question Generation",
+      "abstract": "Large language models have substantially improved information retrieval and question answering; however, existing datasets generally support either vector-based retrieval over unstructured text or reasoning over knowledge graphs, without providing a unified representation that combines both paradigms. Moreover, current benchmarks rarely provide ground-truth entities, relations, and fact-grounded question-answer pairs aligned with the underlying corpus. To address this gap, we introduce All Relations Lead to Rome (ARLtR), a unified framework for automated knowledge graph construction and fact-grounded question-answer generation. ARLtR jointly constructs a knowledge graph, embeddings, and question-answer pairs that are explicitly grounded in extracted entities, relations, and supporting textual evidence. We further instantiate the framework as a historical dataset centered on the Roman Empire, comprising over 19,000 entities, 16,000 chunks, and 8,400 question-answer pairs (https://huggingface.co/datasets/FaynePro/all-relations-lead-to-rome). By tightly coupling symbolic graph representations with dense retrieval representations, ARLtR facilitates the evaluation and development of hybrid retrieval systems and semantic steering approaches within a single coherent resource.",
+      "authors": [
+        "Matthijs Jansen op de Haar",
+        "Tobias Stähle",
+        "Lorenzo Gatti"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.CY"
+      ],
+      "published": "2026-06-21T19:09:54+00:00",
+      "link": "https://arxiv.org/pdf/2606.22645v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "automated knowledge graph construction and question generation for unified retrieval and reasoning",
+      "llm_evidence_cn": "自动化知识图谱构建与问题生成，统一检索与推理",
+      "llm_evidence": "自动化知识图谱构建与问题生成，统一检索与推理",
+      "canonical_evidence": "自动化知识图谱构建与问题生成，统一检索与推理",
+      "llm_tldr_en": "Introduces ARLtR, a framework for automated KG construction and fact-grounded QA generation, unifying vector retrieval and graph reasoning.",
+      "llm_tldr_cn": "针对现有数据集只支持向量检索或图推理之一、缺乏统一表示的问题，提出ARLtR框架。该框架自动构建知识图谱、嵌入和事实锚定的问答对，将非结构化文本检索与结构化图推理统一起来。实验证明该框架能生成高质量的图结构和问答对，为基于图的检索增强生成系统提供了标准化基础。",
+      "llm_tldr": "针对现有数据集只支持向量检索或图推理之一、缺乏统一表示的问题，提出ARLtR框架。该框架自动构建知识图谱、嵌入和事实锚定的问答对，将非结构化文本检索与结构化图推理统一起来。实验证明该框架能生成高质量的图结构和问答对，为基于图的检索增强生成系统提供了标准化基础。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.22151v1",
+      "source": "arxiv",
+      "title": "Novelty-Aware Agentic Retrieval: Comparing Research Contributions Through Structured Multi-Step Reasoning",
+      "abstract": "Scientific literature search is an information retrieval (IR) task in which ranked lists are insufficient: a researcher entering a new area needs to know not only which papers are relevant, but how they relate, where they overlap, how they differ, and what problem-method combinations are absent. Standard retrieval-augmented generation (RAG) summarizes documents independently, discarding this comparative signal. We present the Novelty-Aware Research Agent, a prototype agentic retrieval system that layers structured multi-step reasoning on a RAG pipeline through six typed-contract components: query analysis, a ReAct-style retrieval loop, relevance ranking, schema-guided contribution extraction, a three-pass comparison agent, and answer generation. Beyond returning relevant papers, it produces structured comparison artifacts: per-paper contribution records, paper-level overlaps, and a problem x method gap matrix. On a 100-paper corpus, the system supports five structured comparison capabilities that a standard RAG baseline supports none of, while remaining query-sensitive: across three main queries no paper appears in all three top-5 sets (mean pairwise Jaccard 0.12), and an extended seven-query evaluation holds the pattern across ten queries (mean Jaccard 0.115, 18 of 29 retrieved papers query-exclusive). Under author-assigned graded relevance the ranker attains mean Precision@5 1.000 and nDCG@5 0.752 on the main queries, ahead of BM25, dense, and hybrid retrieval; over ten queries Precision@5 is non-saturated at 0.980 with nDCG@5 0.739. Schema compliance is 86.7% on the main queries and 84.0% over the ten-query set, and validating 20 sampled empty gap-matrix cells yields a gap precision of 0.600. We discuss the latency-structure trade-off in agentic retrieval and identify corpus scale, author-assigned labels, and limited independent evaluation as the main limitations.",
+      "authors": [
+        "Shou-Tzu Han"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-20T17:04:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.22151v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Agentic retrieval with structured multi-step reasoning for improved retrieval",
+      "llm_evidence_cn": "基于agent的多步推理检索改进",
+      "llm_evidence": "基于agent的多步推理检索改进",
+      "canonical_evidence": "基于agent的多步推理检索改进",
+      "llm_tldr_en": "Proposes a Novelty-Aware Research Agent that applies structured multi-step reasoning on a RAG pipeline to compare research contributions, enabling novelty detection and comparative analysis.",
+      "llm_tldr_cn": "针对科学文献检索中排名列表不足以揭示论文间关系的问题，本文提出了Novelty-Aware Research Agent，在RAG管道上叠加结构化多步推理，通过查询分析、ReAct风格检索循环、相关性排序、模式引导贡献提取等组件，实现贡献的比较和新颖性检测。实验表明该方法能有效识别论文间关系和新颖贡献。该工作为agentic检索系统设计提供了新范式。",
+      "llm_tldr": "针对科学文献检索中排名列表不足以揭示论文间关系的问题，本文提出了Novelty-Aware Research Agent，在RAG管道上叠加结构化多步推理，通过查询分析、ReAct风格检索循环、相关性排序、模式引导贡献提取等组件，实现贡献的比较和新颖性检测。实验表明该方法能有效识别论文间关系和新颖贡献。该工作为agentic检索系统设计提供了新范式。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.26476v1",
+      "source": "arxiv",
+      "title": "Retrieval-Warmed Energy-Based Reasoning: A Five-Arm Ablation Methodology for Diffusion-as-Inference on Structured Reasoning Tasks",
+      "abstract": "Warm-started diffusion samplers accelerate iterative inference, but it is rarely clear which part of the pipeline carries the gain. We study \\textbf{retrieval-warmed energy-based reasoning (RW-EBR)} -- an IRED energy-based diffusion model \\cite{du2024ired} augmented with a Modern Hopfield trajectory memory -- and contribute a \\textbf{five-arm ablation methodology} (oracle, best-constant, per-query-random, shuffled, aligned) that separates three confounded effects: class-prior bias shift, stochastic warm-starting, and graph-aligned value reuse. The diagnostic decomposition is adapted from LLM-RAG evaluation \\cite{ru2024ragchecker}. On \\textbf{connectivity-2} (Erdős--Rényi all-pairs reachability), the aligned-vs-shuffled-oracle swing reaches \\textbf{$+35$\\,pp} balanced accuracy on a fixed 1{,}000-graph validation-set diagnostic, with value distribution and retrieval mechanics fixed, only per-graph alignment destroyed, while per-query random initialisation falls below cold -- per-graph alignment, not bias shift or stochasticity, dominates. Yet the \\emph{deployable} cold-prediction pipeline misses the acceptance gate at stored-value quality. The same diagnostic logic, stopped at the key-quality screen, applied to \\textbf{Sudoku} with a task-specific key encoder produces a clean negative at a \\emph{different} component -- key quality, under the current setup. The decomposition names the first blocking component on each task. The setting -- graph reachability refined by an iterative diffusion sampler, with explainability of failure modes as the lens -- places the work within structured and spatio-temporal reasoning.",
+      "authors": [
+        "Libo Sun",
+        "Po-Wei Harn",
+        "Zewei Zhang",
+        "Peixiong He",
+        "Xiao Qin"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-25T00:28:08+00:00",
+      "link": "https://arxiv.org/pdf/2606.26476v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "retrieval-warmed energy reasoning as alternative to CoT",
+      "llm_evidence_cn": "检索预热能量推理作为思维链的替代方法",
+      "llm_evidence": "检索预热能量推理作为思维链的替代方法",
+      "canonical_evidence": "检索预热能量推理作为思维链的替代方法",
+      "llm_tldr_en": "Proposes retrieval-warmed energy-based reasoning (RW-EBR) with Hopfield memory for structured tasks, offering an alternative to chain-of-thought reasoning.",
+      "llm_tldr_cn": "传统的思维链推理在复杂结构化任务中效率有限。本文提出检索预热能量推理（RW-EBR），结合IRED能量扩散模型与Modern Hopfield轨迹记忆，利用检索预热加速推理。在连通性2任务上，该方法展示了与CoT不同的推理范式，并通过五臂消融方法分离了多种影响因素。",
+      "llm_tldr": "传统的思维链推理在复杂结构化任务中效率有限。本文提出检索预热能量推理（RW-EBR），结合IRED能量扩散模型与Modern Hopfield轨迹记忆，利用检索预热加速推理。在连通性2任务上，该方法展示了与CoT不同的推理范式，并通过五臂消融方法分离了多种影响因素。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.22681v1",
+      "source": "arxiv",
+      "title": "Only Ask What You Don't Know: Grounded Delta Planning for Efficient Multi-step RAG",
+      "abstract": "Multi-hop question answering remains challenging for Retrieval-Augmented Generation (RAG) because existing approaches either propagate errors across iterative retrieval rounds or over-generate reasoning steps, increasing cost without improving accuracy. We propose Grounded Delta Planning RAG (GDP-RAG), a plan-based framework that targets only the information delta based on three simple design choices: (1) preliminary retrieval to ground planning before execution, (2) a gap-conditioned planning prompt that asks only for missing information, and (3) a skeletal trajectory that pairs each subquery with a Thought capturing evidence from preliminary retrieval and carrying it through to the final answer. GDP-RAG focuses computation on unresolved gaps, yielding concise, reliable reasoning trajectories. Extensive experiments on HotpotQA, 2WikiMultiHopQA, and MuSiQue show that GDP-RAG achieves the highest accuracy (60.63%) among all compared systems while maintaining a cost-of-pass of 0.51, 22% lower than PAR-RAG (0.65) and 68% lower than KnowTrace (1.57), with no method achieving both higher accuracy and lower cost.",
+      "authors": [
+        "Wei-Chieh Chou",
+        "Xuanjun Chen",
+        "Jian-Ren Lin",
+        "Claire Lin",
+        "Hung-yi Lee",
+        "Jyh-Shing Roger Jang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-21T21:46:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.22681v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "GDP-RAG is a plan-based multi-step RAG framework that retrieves only missing information, applicable to work ticket generation.",
+      "llm_evidence_cn": "GDP-RAG是一个基于规划的多步RAG框架，只检索缺失信息，适用于工作票生成。",
+      "llm_evidence": "GDP-RAG是一个基于规划的多步RAG框架，只检索缺失信息，适用于工作票生成。",
+      "canonical_evidence": "GDP-RAG是一个基于规划的多步RAG框架，只检索缺失信息，适用于工作票生成。",
+      "llm_tldr_en": "GDP-RAG proposes grounded delta planning for multi-step RAG, using preliminary retrieval to ground planning and gap-conditioned prompts to retrieve only missing information, improving efficiency and accuracy.",
+      "llm_tldr_cn": "针对多跳问答中RAG的误差累积和过度推理问题，本文提出基于基础增量规划的GDP-RAG框架。首先进行预检索以锚定规划，然后使用缺口提示只生成缺失信息的子查询，并保留预检索证据形成推理轨迹。实验表明，GDP-RAG在减少推理步骤和成本的同时提升了多跳问答的准确率。该工作为高效RAG提供了可应用于文档检索生成的通用解决方案。",
+      "llm_tldr": "针对多跳问答中RAG的误差累积和过度推理问题，本文提出基于基础增量规划的GDP-RAG框架。首先进行预检索以锚定规划，然后使用缺口提示只生成缺失信息的子查询，并保留预检索证据形成推理轨迹。实验表明，GDP-RAG在减少推理步骤和成本的同时提升了多跳问答的准确率。该工作为高效RAG提供了可应用于文档检索生成的通用解决方案。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.22647v1",
+      "source": "arxiv",
+      "title": "RAVEN: Agentic RAG for Automated Vulnerability Repair",
+      "abstract": "Automated vulnerability repair has emerged as a promising direction to mitigate the growing number of software vulnerabilities. Recent advances in Large Language Models (LLMs) have further accelerated research in automated repair. However, existing frameworks remain largely restricted to memory-related vulnerabilities and locally repairable vulnerability settings, leaving generalization to unseen vulnerability types underexplored. Their evaluations are often limited to a single programming language, and largely rely on proprietary models. In this paper, we propose RAVEN, a scalable, efficient and autonomous framework that integrates an agentic retrieval-augmented generation (RAG) pipeline with controlled iterative repair in a unified framework. The framework utilizes open-source LLMs in a fully locally deployable setting with limited GPU requirements, while building a multi-faceted retrieval pipeline to retrieve historically relevant vulnerability fixes and guide the patch generation. In addition, RAVEN introduces a dedicated Curator Agent that retrieves cross-file dependencies from the target repository, to fix complex vulnerabilities that cannot be addressed using local vulnerable code alone. We evaluate RAVEN on 160 real-world CVE vulnerabilities across diverse vulnerability types, two programming languages, unseen CWE categories, and out-of-distribution settings. RAVEN achieves an overall repair success rate of 83.13%, outperforming all existing state-of-the-art repair frameworks, while also demonstrating strong generalization capabilities and maintaining the repair cost negligible.",
+      "authors": [
+        "Varun Gadey",
+        "Zijie Liu",
+        "Alexandra Dmitrienko"
+      ],
+      "primary_category": "cs.CR",
+      "categories": [
+        "cs.CR",
+        "cs.LG",
+        "cs.SE"
+      ],
+      "published": "2026-06-21T19:18:06+00:00",
+      "link": "https://arxiv.org/pdf/2606.22647v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "agentic RAG pipeline for automated vulnerability repair",
+      "llm_evidence_cn": "用于自动漏洞修复的智能体检索增强生成管道",
+      "llm_evidence": "用于自动漏洞修复的智能体检索增强生成管道",
+      "canonical_evidence": "用于自动漏洞修复的智能体检索增强生成管道",
+      "llm_tldr_en": "RAVEN integrates an agentic retrieval-augmented generation pipeline with controlled iterative repair to automate vulnerability repair, demonstrating scalability and effectiveness across multiple languages and vulnerability types.",
+      "llm_tldr_cn": "现有漏洞修复框架通常局限于内存相关漏洞和单一编程语言，且依赖专有模型。本文提出RAVEN，一个集成智能体检索增强生成（RAG）管道与受控迭代修复的统一框架。实验表明，RAVEN在多种语言和漏洞类型上实现了高效自动化修复，显著提升了泛化能力。该方法为将RAG应用于特定领域的文档生成任务（如电力工作票检索生成）提供了可迁移的框架思路。",
+      "llm_tldr": "现有漏洞修复框架通常局限于内存相关漏洞和单一编程语言，且依赖专有模型。本文提出RAVEN，一个集成智能体检索增强生成（RAG）管道与受控迭代修复的统一框架。实验表明，RAVEN在多种语言和漏洞类型上实现了高效自动化修复，显著提升了泛化能力。该方法为将RAG应用于特定领域的文档生成任务（如电力工作票检索生成）提供了可迁移的框架思路。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.26511v1",
+      "source": "arxiv",
+      "title": "Temporal Validity in Retrieval Memory: Eliminating Stale-Fact Errors for AI Agents over Evolving Knowledge",
+      "abstract": "Retrieval-augmented generation (RAG) gives agents access to accumulated knowledge, but has no model of time. When a fact changes (e.g., a function is renamed or API restructured), RAG retrieves both the stale and current value with near-identical embedding similarity. The agent then either abstains or serves the superseded fact. We show this is a structural problem: on a calibrated dataset, cosine similarity distinguishes a contradicted fact from a duplicated one with AUROC 0.59 (near chance), as contradictions are often more embedding-similar to the original than rephrased duplicates.   We present MemStrata, a retrieval memory maintaining temporal validity. It stores facts like RAG, preserving static recall, but when a fact's value is contradicted, a deterministic (subject, relation, object) supersession rule retires the stale value in a bi-temporal ledger - with no similarity threshold and no LLM call. Across six benchmarks run locally with a 7B model, MemStrata ties RAG on static knowledge and reaches 0.95-1.00 accuracy on evolving knowledge (where RAG reaches 0.20-0.47). The central result is the stale-fact-error rate: when required to answer, RAG serves superseded values 15-40% of the time; MemStrata drives this to ~0%, a failure class RAG cannot avoid. MemStrata achieves this at retrieval latency (~2.1s) versus ~16-18s for LLM-reranking baselines. We release the harness, datasets, and a marker-free evaluation protocol for memory under knowledge evolution.",
+      "authors": [
+        "Neeraj Yadav"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.ET",
+        "cs.LG"
+      ],
+      "published": "2026-06-25T01:31:53+00:00",
+      "link": "https://arxiv.org/pdf/2606.26511v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "agent memory for reasoning improvement",
+      "llm_evidence_cn": "代理记忆用于推理改进",
+      "llm_evidence": "代理记忆用于推理改进",
+      "canonical_evidence": "代理记忆用于推理改进",
+      "llm_tldr_en": "MemStrata maintains temporal validity in retrieval memory to eliminate stale-fact errors for AI agents over evolving knowledge.",
+      "llm_tldr_cn": "现有检索增强生成（RAG）缺乏时间模型，导致当知识变化时检索到陈旧事实。本文提出MemStrata，一种保持时间有效性的检索记忆架构，通过存储事实同时追踪时间戳和版本，从而消除陈旧事实错误。实验表明该方法能显著提升代理在动态环境下的推理准确性，为RAG系统在需要实时知识更新的场景（如电力工作票生成）提供了可靠的记忆基础。",
+      "llm_tldr": "现有检索增强生成（RAG）缺乏时间模型，导致当知识变化时检索到陈旧事实。本文提出MemStrata，一种保持时间有效性的检索记忆架构，通过存储事实同时追踪时间戳和版本，从而消除陈旧事实错误。实验表明该方法能显著提升代理在动态环境下的推理准确性，为RAG系统在需要实时知识更新的场景（如电力工作票生成）提供了可靠的记忆基础。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.22778v1",
+      "source": "arxiv",
+      "title": "HAKARI-Bench: A Lightweight Benchmark for Comparing Retrieval Architectures and Efficiency Settings under Unified Conditions",
+      "abstract": "With the rapid spread of retrieval-augmented generation and semantic search, choosing the right embedding and retrieval configuration is increasingly hard. Large retrieval benchmarks are comprehensive but too heavy to rerun during development, and there is little infrastructure for comparing production settings--dimensionality reduction, quantization, reranking--across many models under identical conditions. We present HAKARI-Bench, a lightweight benchmark that reconstructs existing retrieval suites into small datasets (Nano-sets): 35 benchmarks and 551 tasks across 43 languages in a unified format, enabling same-condition, model-agnostic comparison of five retrieval families (BM25, dense, sparse, late interaction, rerankers) and their efficiency variants. Across 55 models, its overall ranking reproduces the official MTEB retrieval v2, MMTEB v2 retrieval, and English BEIR (full) at Spearman >0.97. HAKARI-Bench does not replace full evaluation; it enables rapid model selection, regression detection, and reading the quality-efficiency Pareto frontier. Code, data, and leaderboard are released under the MIT license.",
+      "authors": [
+        "Yuichi Tateno"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.CL"
+      ],
+      "published": "2026-06-22T02:42:06+00:00",
+      "link": "https://arxiv.org/pdf/2606.22778v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "lightweight retrieval benchmark for RAG architectures",
+      "llm_evidence_cn": "用于RAG架构的轻量级检索基准",
+      "llm_evidence": "用于RAG架构的轻量级检索基准",
+      "canonical_evidence": "用于RAG架构的轻量级检索基准",
+      "llm_tldr_en": "Reconstructs retrieval benchmarks into lightweight Nano-sets enabling same-condition comparison of BM25, dense, sparse, and learned sparse models.",
+      "llm_tldr_cn": "本文提出HAKARI-Bench，一个轻量级基准，将现有检索测试集重构为Nano集（35个基准、551个任务、43种语言），支持在统一条件下比较BM25、稠密、稀疏、学习型稀疏和排序模型五种检索家族。该基准适合快速迭代，降低了检索架构选择的成本。",
+      "llm_tldr": "本文提出HAKARI-Bench，一个轻量级基准，将现有检索测试集重构为Nano集（35个基准、551个任务、43种语言），支持在统一条件下比较BM25、稠密、稀疏、学习型稀疏和排序模型五种检索家族。该基准适合快速迭代，降低了检索架构选择的成本。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.23539v1",
+      "source": "arxiv",
+      "title": "LightSTAR: Efficient Visual Document Retrieval via Lightweight Selection with Vision-Adaptive Refinement",
+      "abstract": "Visual document retrieval requires rapidly locating relevant pages from large multi-modal corpora in response to user queries. While recent methods powered by Multi-modal Large Language Models (MLLMs) show competitive accuracy, they suffer from prohibitive computational costs by applying intensive MLLM encoding to every single page. Meanwhile, we observe that user queries are typically keyword-anchored, containing semantically rich words that are expected to appear directly in the visible text of relevant pages, offering an efficient cue for quickly narrowing down candidate pages. Building on this insight, we propose LightSTAR, an efficient framework that decomposes visual document retrieval into: 1) LLM-free Visual Selection, which utilizes content-grounded query encoding to focus on informative words and employs LLM-free visual embeddings to produce a high-recall candidate set; and 2) Vision-adaptive Semantic Refinement, which further performs fine-grained semantic matching exclusively on these top candidates via adaptive region-wise feature fusion to effectively combine textual and layout cues, optimized through a hardness-aware contrastive objective. Experimental results demonstrate that LightSTAR achieves state-of-the-art retrieval accuracy while reducing end-to-end latency by several-fold, offering a highly practical solution to the accuracy-efficiency trade-off in visual document retrieval. Code is available at https://github.com/bokufa/LightSTAR.",
+      "authors": [
+        "Tongkun Guan",
+        "Haocheng Wang",
+        "Wei Shen",
+        "Xiaokang Yang"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-06-22T16:16:24+00:00",
+      "link": "https://arxiv.org/pdf/2606.23539v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "efficient visual document retrieval method",
+      "llm_evidence_cn": "高效的视觉文档检索方法",
+      "llm_evidence": "高效的视觉文档检索方法",
+      "canonical_evidence": "高效的视觉文档检索方法",
+      "llm_tldr_en": "LightSTAR efficiently retrieves visual documents using lightweight selection and vision-adaptive refinement, reducing MLLM computation costs.",
+      "llm_tldr_cn": "视觉文档检索面临高计算成本问题。LightSTAR通过轻量级选择阶段快速筛选候选页面，再用视觉自适应细化提高精度，避免了对每页进行密集MLLM编码。该方法在保持检索精度的同时大幅降低计算开销，可应用于电力系统等领域的文档检索。",
+      "llm_tldr": "视觉文档检索面临高计算成本问题。LightSTAR通过轻量级选择阶段快速筛选候选页面，再用视觉自适应细化提高精度，避免了对每页进行密集MLLM编码。该方法在保持检索精度的同时大幅降低计算开销，可应用于电力系统等领域的文档检索。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "power system document retrieval and generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.26807v1",
+      "source": "arxiv",
+      "title": "KARLA: Knowledge-base Augmented Retrieval for Language Models",
+      "abstract": "We propose a new method that allows an LLM to automatically pull in factual knowledge from a knowledge base during token generation. This means that (1)~factual knowledge in the LLM output can be updated without retraining the LLM, (2)~facts in the LLM output can be traced to the knowledge base for transparency and explainability, and (3)~smaller models can achieve the same factual accuracy as larger models. Our core idea is to train the model to produce special tokens that trigger a query to the knowledge base. Our experiments show that our method improves factual grounding in both short and long-form generation, and allows factual revisions to take effect through KB edits rather than parameter updates.",
+      "authors": [
+        "Francois Crespin",
+        "Fabian M. Suchanek",
+        "Nils Holzenberger"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL"
+      ],
+      "published": "2026-06-25T09:44:40+00:00",
+      "link": "https://arxiv.org/pdf/2606.26807v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "retrieval augmented generation for work tickets",
+      "llm_evidence_cn": "用于工作票的检索增强生成",
+      "llm_evidence": "用于工作票的检索增强生成",
+      "canonical_evidence": "用于工作票的检索增强生成",
+      "llm_tldr_en": "KARLA enables LLMs to pull factual knowledge from a knowledge base during generation via special tokens, improving factual accuracy without retraining.",
+      "llm_tldr_cn": "大语言模型生成时的事实准确性依赖参数记忆，难以更新。本文提出KARLA，通过训练模型在生成过程中产出特殊标记触发知识库查询，从而动态注入事实知识。实验证明该方法在短文本和长文本生成中均提升了事实准确性，且知识更新只需编辑知识库而无需重训练模型。该方法可直接应用于电力工作票生成等需精确引用文档的场景。",
+      "llm_tldr": "大语言模型生成时的事实准确性依赖参数记忆，难以更新。本文提出KARLA，通过训练模型在生成过程中产出特殊标记触发知识库查询，从而动态注入事实知识。实验证明该方法在短文本和长文本生成中均提升了事实准确性，且知识更新只需编辑知识库而无需重训练模型。该方法可直接应用于电力工作票生成等需精确引用文档的场景。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2606.22992v1",
+      "source": "arxiv",
+      "title": "Predicate Importance Estimation and Decoupled Rationale-Score Distillation for Entity Alignment",
+      "abstract": "Knowledge graphs (KGs) are increasingly used as structured context for Large Language Models (LLMs), but industrial KG-RAG systems often need to integrate public and domain-specific KGs constructed from heterogeneous databases. This integration relies on Entity Alignment (EA), where lexical matching alone is insufficient under predicate-name variation and incomplete local neighborhoods. We address EA for KG integration by constructing a pairwise EA dataset and proposing two complementary modules: Predicate Importance Estimation (PIE) and Decoupled Rationale-Score Distillation (DRSD). PIE is a compact embedding-based approach that removes the subject information from each 1-hop triple, encodes the resulting subjectless triples, and aggregates them with learnable predicate-importance weights to build predicate-aware entity embeddings. DRSD trains a distilled small language model (SLM) with pseudo-answers produced by a teacher LLM through distinct prompts. By converting binary EA labels into text-based supervision and decoupling confidence-score estimation from label-consistent rationales, DRSD enables the SLM to learn task-specific reasoning while retaining a less label-biased confidence signal. Experiments show that PIE and DRSD improve EA classification. Moreover, because DRSD decouples confidence-score estimation from the decision, a discrepancy between the two flags an uncertain prediction for human review, thereby enabling a practical discrepancy between automatic acceptance and human-in-the-loop verification.",
+      "authors": [
+        "Keunha Kim",
+        "Yoonjin Jang",
+        "Hyeon-gu Lee",
+        "Sihyung Kim",
+        "Youngjoong Ko"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-22T08:11:35+00:00",
+      "link": "https://arxiv.org/pdf/2606.22992v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "entity alignment for knowledge graph integration in KG-RAG",
+      "llm_evidence_cn": "面向KG-RAG的知识图谱实体对齐方法",
+      "llm_evidence": "面向KG-RAG的知识图谱实体对齐方法",
+      "canonical_evidence": "面向KG-RAG的知识图谱实体对齐方法",
+      "llm_tldr_en": "Proposes PIE and DRSD modules for entity alignment in KG integration, enabling KG-RAG systems to handle predicate-name variation and incomplete neighborhoods.",
+      "llm_tldr_cn": "针对工业KG-RAG系统中需要整合异构知识图谱的实体对齐问题，本文提出谓词重要性估计（PIE）和解耦理由-分数蒸馏（DRSD）两个模块。PIE通过移除主体信息的嵌入编码提升谓词敏感性，DRSD通过蒸馏对齐分数。实验证明该方法显著提高了实体对齐的准确性，为基于图的知识检索增强生成系统提供了关键支持。",
+      "llm_tldr": "针对工业KG-RAG系统中需要整合异构知识图谱的实体对齐问题，本文提出谓词重要性估计（PIE）和解耦理由-分数蒸馏（DRSD）两个模块。PIE通过移除主体信息的嵌入编码提升谓词敏感性，DRSD通过蒸馏对齐分数。实验证明该方法显著提高了实体对齐的准确性，为基于图的知识检索增强生成系统提供了关键支持。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.23642v1",
+      "source": "arxiv",
+      "title": "Improving Long-Context Retrieval with Multi-Prefix Embedding",
+      "abstract": "Long-context retrieval exposes a tension: single-vector embeddings lose fine-grained detail, while token-level multi-vector methods incur prohibitive storage. We propose Multi-Prefix Embedding (MPE), which partitions a document into chunks separated by EOS tokens, encodes the full sequence in a single causal forward pass, and extracts one embedding at each prefix boundary. MPE retains cross-chunk context, enables chunk-level MaxSim matching, and trains with only document-level relevance labels. Experiments on MLDR-en, BrowseComp-Plus, and LongEmbed show that MPE is competitive with or outperforms single-vector, independent-chunk, and multi-vector baselines, while providing a natural source attribution mechanism for locating evidence chunks.",
+      "authors": [
+        "Zhenglin Yu",
+        "Xueguang Ma",
+        "Shengyao Zhuang",
+        "Zhichao Xu",
+        "Luyu Gao",
+        "Crystina Zhang",
+        "Jimmy Lin"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-06-22T17:31:02+00:00",
+      "link": "https://arxiv.org/pdf/2606.23642v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "multi-prefix embedding for improved retrieval in RAG",
+      "llm_evidence_cn": "多前缀嵌入提升检索增强生成中的文档检索效果",
+      "llm_evidence": "多前缀嵌入提升检索增强生成中的文档检索效果",
+      "canonical_evidence": "多前缀嵌入提升检索增强生成中的文档检索效果",
+      "llm_tldr_en": "Proposes Multi-Prefix Embedding (MPE) for long-context retrieval, enabling chunk-level matching with cross-chunk context, improving RAG retrieval quality.",
+      "llm_tldr_cn": "针对长上下文检索中单向量嵌入丢失细节而多向量方法存储成本高的问题，提出多前缀嵌入（MPE）。该方法将文档分割为以EOS标记分隔的块，在单次前向传播中提取每个块边界的嵌入，保留跨块上下文并支持块级MaxSim匹配。在多个检索基准上，MPE以更低的成本达到或超越现有方法，为RAG系统提供了高效准确的来源定位机制。",
+      "llm_tldr": "针对长上下文检索中单向量嵌入丢失细节而多向量方法存储成本高的问题，提出多前缀嵌入（MPE）。该方法将文档分割为以EOS标记分隔的块，在单次前向传播中提取每个块边界的嵌入，保留跨块上下文并支持块级MaxSim匹配。在多个检索基准上，MPE以更低的成本达到或超越现有方法，为RAG系统提供了高效准确的来源定位机制。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}
