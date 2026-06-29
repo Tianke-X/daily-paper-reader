@@ -1,0 +1,942 @@
+Title: Bridge the Gaps: Heterogeneous Attributed Graph Clustering via Quaternion Representation Learning
+
+URL Source: https://arxiv.org/pdf/2606.23199v1
+
+Published Time: Tue, 23 Jun 2026 03:04:42 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+> IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 1
+
+# Bridge the Gaps: Heterogeneous Attributed Graph Clustering via Quaternion Representation Learning 
+
+Xinxi Chen, Junyang Chen, Yiqun Zhang, Senior Member, IEEE , Chuangming Qiu, and Xiang Zhang 
+
+Abstract —Attributed graph clustering partitions nodes by jointly exploiting node attributes and graph topology. It remains challenging due to attribute heterogeneity and representation degradation during graph learning. Real-world datasets often contain heterogeneous attributes (i.e., numerical and categorical attributes), complicating unified representation learning. This challenge becomes more complex in attributed graphs, where constructing a clustering-friendly graph structure from attributes and topology remains difficult. Under deep graph architectures, repeated graph propagation causes node embeddings to be-come overly similar, leading to the over-smoothing (OS) effect. Meanwhile, graph representation learning amplifies topological influence, making discriminative attribute information harder to exploit for clustering, an effect we refer to as over-dominating (OD). To bridge these gaps, an end-to-end framework, Any-type attributed Graph REpresentation lEarning (AGREE) is proposed. It unifies attributed graphs and any-type attributed data through multi-level alignment and similarity-based graph construction. Quaternion-based graph convolution strengthens attribute interaction to alleviate OD, while shallow graph archi-tectures help relieve OS. The learned embeddings are jointly opti-mized for graph reconstruction and clustering, without requiring a predefined number of clusters during training. Experiments on diverse benchmarks show that AGREE achieves strong overall performance in accuracy, robustness, and adaptability. 
+
+Index Terms —Attributed graph data, graph clustering, cate-gorical attribute, hyper-complex space, representation learning 
+
+I. I NTRODUCTION 
+
+# CLUSTERING is a key unsupervised machine learning technique in knowledge discovery and data mining, with the goal of uncovering hidden distributions of data objects. Effective clustering enables the identification of latent device behaviors, anomaly patterns, and functional groupings, essen-tial for optimizing resource allocation, enhancing security, and interpreting complex sensor-driven environments. In attributed graphs, data objects are treated as nodes and are equipped with descriptive attributes while edges capture relational informa-tion, allowing algorithms to integrate attribute and topological 
+
+Xinxi Chen and Yiqun Zhang are with the School of Computer Science and Technology, Guangdong University of Technology, Guangzhou 510006, China (e-mail: 3222004975@mail2.gdut.edu.cn, yqzhang@gdut.edu.cn). Jun-yang Chen is with Tsinghua University, Shenzhen 518055, China (e-mail: chenjuny25@mails.tsinghua.edu.cn). Chuangming Qiu and Xiang Zhang are with BH-Energy Technology Co., Ltd., Shenzhen 518000, China, and also with Shenzhen MSU-BIT University, Shenzhen 518172, China. (e-mail: 
+
+{13510302922, roger.j }@139.com). (Corresponding author: Yiqun Zhang.) © 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works. This is the author-accepted version. The final published version will be available on IEEE Xplore. b) Quaternion Representation Learning on Graph ˆ( , )A 
+
+> Graph Convolusion y
+
+zrxy   
+
+> Features Rotation in 
+> Features Transform in Homogeneous Embeddings
+> Easy -divided Embeddings Nodes Aggregation
+> 1-hop
+> l-hop
+
+zrxyxzyxz1C3C2C   
+
+> …… 1
+> r
+> or
+> r
+> o
+> 
+> Categorical rno1
+> r
+> o
+> Numerical
+> Any -type
+> Data Inputs 1xnxdA1A
+> Value -level
+> Object -level A Heterogeneous D
+> Feature -level P
+> a)Any -type Attributed Data Aligned Encodings
+> Aligned Reconstructed Graph
+
+Fig. 1: Motivation and design of AGREE. a) Multi-level aligned encoding and graph construction mitigate attribute heterogeneity by organizing heterogeneous attributes into a unified graph representation. b) In contrast to vanilla graph encoders, quaternion graph encoders strengthen cross-view interaction in hyper-complex space, helping alleviate the OS and OD effects and thus improving clustering quality. information for richer, more discriminative representations. Accordingly, attributed graph clustering approaches, especially deep graph neural networks, have been proposed to learn fused representations from attributes and graph topology [1]– [3]. Recent research has also started to consider more diverse data types, and studies clustering for complex data in a more general setting [4]. However, heterogeneous attributes and graph neural networks still introduce a series of gaps that limit both the performance and application of current approaches. From the model perspective, deep learning-based graph representation, particularly those based on Graph Convolu-tion Networks (GCN) [5], have proven to be effective in boosting the accuracy of attributed graph clustering. These methods, along with their variants [1], [6], simultaneously capture the graph’s structural information and node attributes, resulting in more comprehensive and insightful embeddings. This is also consistent with studies suggesting that topology-centered propagation may be insufficient in heterogeneous graph learning [7]. In practice, global relationship interaction is important when exploring the cluster distribution of graph data. Increasing the number of graph convolution layers can  
+
+> arXiv:2606.23199v1 [cs.LG] 22 Jun 2026 IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 2
+
+help capture long-range dependencies. However, it often leads to the Over-Smoothing (OS) effect, where node representations become overly similar due to excessive feature overlap. Most OS solutions focus more on relieving the smoothing of nodes in terms of topological information for serving su-pervised learning tasks. However, in unsupervised clustering, overemphasizing the graph topology and the distinction of nodes may hamper the learning of compact clusters. That is, the similarity of nodes’ embeddings can be easily dom-inated by the topology while attribute information tends to be overlooked as the graph convolution operation is guided by the topology. As a result, such an Over-Dominating (OD) effect will improperly drive the learning process away from the objective of clustering. Intuitively, a wide and shallow network can emphasize the coupling of attributes without incurring OS. However, “shallow” restricts abstract-level representations, and “wide” limits model scalability and efficiency, resulting in a contradiction when simultaneously solving OS and OD. These challenges are further exacerbated in dense graphs reconstructed from attribute similarities, whose adjacency ma-trices contain similarity values rather than binary edges. This increased density causes faster propagation of information, but also makes the graph more susceptible to OS and OD effects. The emphasis on graph topology can overshadow the importance of attribute information, leading to less distinct node embeddings. Consequently, this can hinder the learning of compact clusters and reduce clustering performance. There-fore, alleviating OS and OD is essential for learning clustering-friendly representations on attributed graphs. From the perspective of real-world data complexity, analyz-ing heterogeneous attributed data comprising categorical and numerical attributes is challenging due to the attribute type gap. That is, numerical features describe the data quantita-tively, whereas categorical features provide qualitative descrip-tions, making unified similarity measurement difficult. Recent efforts have therefore sought to better handle this attribute-type heterogeneity through richer similarity design and more adaptive clustering strategies, including value occurrence fre-quency, semantic ordinal relationships, and inter-feature de-pendencies [8]. Compared with traditional approaches (e.g., one-hot encoding and Hamming distance [9]), which only match values directly, advanced metrics define distance struc-tures based on statistical distributions of feature values. Recent works [10]–[13] further exploit statistical priors on feature coupling to better represent categorical data. However, they mainly address attribute-type heterogeneity, while neglecting the construction of an appropriate graph representation that captures inter-instance relationships from heterogeneous at-tributes and graph topology. To bridge the heterogeneous-attributes-level and attribute-graph-level gaps, graph convolution is performed in a four-axis hyper-complex space to strengthen attribute interaction and thereby alleviate OD. It adopts a shallow model architec-ture, which also counters OS. More specifically, the hyper-complex space H is introduced for representation learning because the Hamilton product enables efficient feature rotation and interaction [14]. As illustrated in Fig. 1, the feature quaternion can be transformed by the parameter quaternion to model feature interaction. Compared with real-valued space 
+
+R, quaternion transformation provides four times the Degrees of Freedom (DoF) under the same parameter scale, thereby strengthening coupling learning without introducing excessive parameters. This stronger representation capacity enhances the contribution of attributes to representation learning and helps alleviate the OD effect. At the same time, the strong fitting capability of quaternion operation supports expressive shallow graph learning, which further reduces the need for deep GCN stacking and thus lowers the risk of OS. As for the overall model design, a graph auto-encoder framework is adopted to perform Any-type Attributed Graph 
+
+Re presentation L earning ( AGREE ). It uses aligned encoding to construct the graph representation of mixed-type attributed graph data through value-level, feature-level, attribute-type level, and object-level coupling encoding, and then processes it using hyper-complex representation learning. We map input attributes into the hyper-complex space H, utilizing four views that correspond to the four components of a quaternion, enabling efficient feature quaternion transformation via the model’s learnable parameter quaternion. This four-view feature amplification also strengthens the role of attributes, helping to mitigate the over-dominance (OD) effect. By training the parameters of the Four-View Projection (FVP) and Quaternion Graph Encoders (QGE) using a loss function that integrates graph reconstruction loss and a clustering objective, AGREE produces embeddings optimized for a variety of clustering tasks. Since an ideal k is typically not available in real-world IoT clustering scenarios, a general clustering objective is inte-grated into the loss function without requiring a predefined k.This enables the model to learn more versatile representations and, crucially, ensures its practicality in most scenarios where the ’true’ k is unknown. Theoretical analysis and extensive experiments on various real benchmark graph datasets have illustrated the superiority of AGREE. The source code is available at https://github.com/XinxiiChen/AGREE. The main contributions are summarized as:  
+
+> •
+
+Generalized attributed graph clustering framework. 
+
+AGREE is proposed as a unified representation learn-ing framework for both attributed graphs and mixed-type attributed data. It aligns heterogeneous numeri-cal and categorical attributes and constructs a suitable graph representation for subsequent learning, and also extends quaternion algebra to the modeling of arbitrary-dimensional attributes in an unsupervised learning setting.  
+
+> •
+
+Identification and formulation of the OD effect. The 
+
+Over-Dominating (OD) effect in graph clustering is iden-tified and analyzed, revealing how excessive emphasis on topology can lead to underutilization of attribute infor-mation. This provides a novel perspective for explaining performance bottlenecks and for analyzing clustering cases with relatively less reliable topology.  
+
+> •
+
+Quaternion-based graph representation for OS and OD mitigation. A quaternion-based graph representation learning scheme is introduced to strengthen structured attribute interaction on aligned heterogeneous attributes. It alleviates OD by enhancing attribute-side modeling IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 3
+
+during graph propagation, while its shallow yet expressive architecture helps reduce the risk of OS.  
+
+> •
+
+Flexible representation learning across cluster granu-larities. AGREE learns versatile embeddings without be-ing tied to a predefined k in advance. These embeddings support multiple cluster granularities and reduce the need for retraining when exploring different cluster resolutions. II. R ELATED WORKS 
+
+A. Mixed-type Attributed Data Clustering 
+
+Existing methods for clustering mixed-type attributed data fall into two categories: 1) designing distance measures tai-lored to categorical features, and 2) transforming data into numerical representations for clustering. Recent studies on categorical data clustering have improved distance calculations by exploiting statistical properties of the data. Value similarity can be modeled from a probabilistic perspective, where two values are considered more similar if their joint occurrence probability is higher. An information-theoretic view [12] instead uses entropy derived from prob-ability distributions to measure dissimilarity. Recent work further improves distance learning by learning cluster-aware value relationships directly from data [15] and by exploiting order information in distance construction [16]. Moreover, work [10] unifies the treatment of numerical, nominal, and ordinal features, improving the universality of clustering. Another line of research transforms categorical values into numerical forms while preserving information useful for clus-tering. Recent studies develop learnable distance construction strategies. Work [17] learns intra-attribute semantics for dis-tance construction, while [18] exploits order information in qualitative attributes. More recently, the work [19] learns value relationships in a clustering-oriented manner, making distance construction more adaptive to clustering tasks. Recent work also improves robustness through multi-granular competitive learning [20]. For heterogeneous data with different attribute types, ef-fective clustering further requires compatible representations and distance measures. Recent work [21] addresses this issue through unified metric learning. An alternative perspective is to exploit the complementary information provided by different attribute types or encoded representations. Accordingly, SSA-SNMF [22] adaptively learns similarity matrices for multi-view clustering, while FMvPCI [23] combines multiple rep-resentations with fuzzy clustering. On this basis, some multi-view clustering methods further pursue unified representation learning across views [24], whereas others explicitly learn graph structures to support clustering [25]. External semantic priors, including those from large language models, may also provide a promising direction for heterogeneous attribute modeling. However, these strategies often rely on prior as-sumptions about the data or representation design, which may limit their adaptability. The resulting representations can then be directly used by conventional clustering algorithms such as K-Means-type methods or spectral clustering. 
+
+B. Attributed Graph Clustering 
+
+Attributed graph clustering aims to partition nodes with both topological links and attribute information into com-pact groups, and has attracted increasing attention. Existing methods can be roughly grouped into three categories: 1) graph autoencoder-based methods, 2) contrastive learning-based methods, and 3) explicit modeling-based methods. Subsequent studies further extend this reconstruction-based paradigm with attention mechanisms [6], adversarial regu-larization [2], or joint optimization objectives, as in EGAE [1]. DFCN [26] integrates autoencoder and graph autoen-coder features via a fusion module, and employs triplet self-supervision for robust clustering. HyReaL [27] further extends this line by exploring richer hyper-complex representation spaces. Generative or refinement-oriented designs, including diffusion-based methods, have also been explored to improve graph representation quality. These methods are effective in representation reconstruction and benefit from relatively stable training and clustering regularization. To further improve representation discrimination, con-trastive learning has become another important paradigm, usu-ally accompanied by additional view construction or auxiliary contrastive objectives. CCGC [3] leverages clustering as a proxy task to enhance representation discrimination. CON-VERT [28] introduces a reversible perturb–recover mechanism to preserve semantic consistency across augmented views. More recently, GLAC [29] jointly exploits local and global topologies via dual GCN pipelines with adaptive contrastive learning; SCGDN [30] proposes an augmentation-free frame-work using attentional diffusion; and MAGI [31] bridges contrastive learning and modularity maximization by defining community-aware contrastive signals. These methods are well suitable for noisy or structurally challenging graph settings. Other recent studies form another line of research by adopting more explicit optimization or modeling formulations. Some of them emphasize general clustering optimization or structure learning. CDC [4] provides a general clustering framework for complex data with an anchor-based design, while GE-S-D [32] further incorporates debiasing to reduce structural bias in attributed graph clustering. By contrast, DESE [33] emphasizes structure learning guided by entropy minimization. Another branch follows probabilistic or matrix-factorization formulations. In this line, LCAAG [34] adopts a Bayesian formulation, whereas ERNMF [35] and RENMF [36] follow matrix-factorization formulations. These methods usu-ally offer clearer modeling assumptions and stronger inter-pretability. However, they are often less flexible for learning complex graph-attribute interactions in an end-to-end manner. 
+
+C. Quaternion Representation Learning 
+
+Quaternions are a four-dimensional extension of complex numbers, grounded in a comprehensive algebraic structure. The Hamilton product [37] effectively manages the interaction among the four quaternion elements through vector rotation along the three imaginary axes, positioning quaternion opera-tions as a promising tool for improving representation learning capabilities [14]. This is especially relevant for data with IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 4
+
+naturally interconnected feature components. The study [38] is recognized as the pioneering effort to apply quaternions to knowledge graph embedding. Currently, most quaternion applications occur within su-pervised learning frameworks. The input data often feature inherent tuples or multiple interdependent components that correspond to the three imaginary parts of the quaternion, making them particularly suitable for representation learning via quaternion rotation operations. However, their use in more general unsupervised clustering settings remains limited. III. P RELIMINARY 
+
+This section introduces the definition of mixed-type at-tributes graph data. A mixed-type attributed graph is a data structure that extends traditional graphs by associating each node with attributes of various types, including numerical and categorical features. For an undirected attributed graph G = {A, X}, the A ∈
+
+Rn×n is the adjacency matrix representing the relationships between nodes and X ∈ Rn×d is the node attribute matrix. A degree matrix D ∈ Rn×n reflects the connectivity of each node, where Dii = Pnj=1 Aij is the sum of edges connected to node i. To normalize the adjacency matrix, we compute the symmetric normalized Laplacian matrix ˜A = D− 12 ˜LD − 12
+
+where ˜L = I+A is the self-loop adjacency matrix, and I is the identity matrix. The clustering goal is to partition the nodes into k clusters {G1, G 2, ..., G k} based on both the structural and attribute information. Besides, a mixed-type attribute dataset H that can be reconstructed as a graph structure is formally represented as an attributed triplet set: 
+
+H = < X , A, O >, (1) where X = {Xl|l = 1 , 2, . . . , n } represents the set of n
+
+samples, and each sample Xl = [ x1 
+
+> l
+
+, x 2 
+
+> l
+
+, . . . , x dl ]⊤. Also, A =
+
+{Ar |r = 1 , 2, . . . , d } is the set of d feature values, where each feature Ar = [ ar
+
+> 1
+
+, a r
+
+> 2
+
+, . . . , a rn]⊤ is associated with n node-specific values. Finally, O = {O 1, O2, ..., Od} represents the set of possible value sets, where Or = {or
+
+> 1
+
+, o r
+
+> 2
+
+, . . . , o rυr } for categorical features. In this work, the feature set A is divided into two subsets, i.e., categorical and numerical features. Specifically, let d{c}
+
+and d{u} denote the numbers of categorical and numerical features, respectively. Then, A = A{c} ∪A {u} and d = d{c} +
+
+d{u}, where A{c} and A{u} denote the sets of categorical and numerical features, respectively. For a categorical feature 
+
+Ar ∈ A {c}, its values are drawn from a finite set Or , and υr
+
+denotes the number of distinct values in Ar . By contrast, each feature in A{u} takes continuous real-valued observations. Based on these two types of features, a more informative graph structure is constructed for mixed-type data clustering. The quaternion operations used in the hyper-complex do-main are introduced below. A quaternion Q is a hyper-complex number in the field H and can be written as: 
+
+Q = r + xi + yj + zk, (2) where r is for the real part and xi + yj + zk represents the imaginary parts. In H, an orthogonal relationship holds for the imaginary parts, i.e., i2 = j2 = k2 = ijk = −1. The interaction between two quaternions Q1 and Q2 is defined by the Hamilton product, which is given by 
+
+Q1 ⊗ Q2 = ( r1r2 − x1x2 − y1y2 − z1z2)+ ( r1x2 + x1r2 + y1z2 − z1y2)i
+
++ ( r1y2 − x1z2 + y1r2 + z1x2)j
+
++ ( r1z2 + x1y2 − y1x2 + z1r2)k.
+
+(3) This operation enables efficient interactions among feature components in the quaternion field, thereby providing greater flexibility for representing complex data encodings. IV. M ETHOD 
+
+This section first presents the Any-type Attributed Graph Data Aligned Encoding for aligning heterogeneous attributes with graph structure. It then introduces the Four-View Pro-jection for organizing the aligned attributes into quaternion-compatible views, followed by the Hyper-Complex Graph Representation Learning framework for mixed-type attributed graph clustering. The overall pipeline is illustrated in Fig. 2. 
+
+A. Any-type Attributed Graph Data Aligned Encoding 
+
+Mixed-type attributed data contain numerical and categor-ical attributes. This makes direct graph-based representation learning difficult. Meanwhile, relationships among instances are important in many data analysis tasks. Such relationships can be naturally represented and exploited through graph struc-tures and neighborhood aggregation. However, in many prac-tical scenarios, the data are provided only as heterogeneous feature values rather than as an explicit graph. Therefore, these heterogeneous attributes need to be aligned into a unified representation and further organized into a graph format. 
+
+1) Feature Aligned Encoding: The alignment in this sub-section is driven by heterogeneity among attribute types. This differs from conventional multi-view alignment over predefined views and from heterogeneous graph learning with multiple node or edge types. Here, the main goal is to improve the comparability of mixed numerical and categorical attributes and to support graph construction for subsequent learning. There are four types of encoding in mixed-type attributed data: 1) value-level encoding, i.e., the relationships among the possible values within a categorical feature; 2) feature-level encoding, i.e., the dependencies between interre-lated features; 3) attribute-type encoding, i.e., the interactions between different types of attributes in categorical features; and 4) object-level encoding, i.e., the relationships among data objects based on their similarities. By effectively encoding the data, the heterogeneous nature of mixed-type attributes is mitigated, and different attribute types are aligned through these encodings, enabling a more efficient learning process within a deep representation framework. In this subsection, we present the proposed encoding strategies for these encodings. 
+
+a) value-level encoding: The probabilities associated with the potential values Or = {or
+
+> 1
+
+, o r
+
+> 2
+
+, . . . , o rυr } that acategorical feature Ar can take on, can be regarded as a sequence of probabilities: 
+
+Ir = {P ri |i = 1 , . . . , υ r }. (4) IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 5Attributes 
+
+> Graph
+> Inputs
+
+[ ]F F F Fr x y z, , ,312
+
+> n
+
+         
+
+xxxxrxyz
+
+> Quaternion
+> Feature Matrix
+> Quaternion Graph
+> Convolutional Module
+
+FrFxFyFz           
+
+> Quaternion
+> Embedding
+> Quaternion
+> Rotation
+> Laplace adjacent matrix AQ
+> FWFxFrFyFzF=FFF i F j F k rxyz+++
+> Quaternion representation
+> of one row
+> Decoder
+> Reconstructed Graph ˆA
+> Quaternion
+> Fusion
+> Operator
+
+
+
+> Hamilton
+> product
+> KL Loss kl
+
+1C3C2Cyxzryxzr( ˆTr( ) )sc Γ D A Γ=  − yxzr 
+
+> Quaternion Field 
+> Clustering on ˆA
+
+Fig. 2: Overview of AGREE. Mixed-type attributes are aligned and organized into an attributed graph G = {A, ˆX } , in which the aligned attributes ˆX are projected into four views to form a feature quaternion Fprj = Fr + Fxi + Fyj + Fzk. This representation is then encoded with the graph structure by quaternion graph convolution, through which the final embedding 
+
+U is learned under joint graph reconstruction and clustering objectives for clustering. In this context, P ri represents the occurrence probability of the possible value ori emerging within Ar , and it is computed as follows: 
+
+P ri = δ({Ar }n 
+
+> 1
+
+= ori )
+
+δ({Ar }n
+
+> 1
+
+̸ = Null ) . (5) Here, δ({Ar }n 
+
+> 1
+
+= ori ) tallies up the frequency at which 
+
+ori appears in the feature value collection {Ar }n 
+
+> 1
+
+, while 
+
+δ({Ar }n
+
+> 1
+
+̸ = Null ) enumerates the quantity of non-empty values within {Ar }n 
+
+> 1
+
+, which typically equates to n. It should be emphasized that the uppercase P ri is employed here to demarcate the occurrence probability of a value from the conditional probability that will be introduced subsequently. Given that the probabilities adhere to the condition: 
+
+> υr
+
+X
+
+> i=1
+
+P ri = 1 ,
+
+encoding the feature values based on the occurrence prob-abilities of their corresponding possible values undeniably enables the capture of value-level interconnections within each individual feature. 
+
+b) feature-level encoding: In real-world data sets, the original features generally exhibit a certain degree of inter-dependence. In order to depict such relationships between different features, we introduce the Conditional Probability Distribution (CPD) of a feature Am conditioned on a possible value ori from another feature Ar . This CPD is defined as a 
+
+υm-dimensional vector: 
+
+P m|ri = [ p(om 
+
+> 1
+
+|ori ), p (om 
+
+> 2
+
+|ori ), . . . , p (omυm |ori )] ⊤, (6) where the conditional probability p(omj |ori ) is calculated as: 
+
+p(omj |ori ) = σ(X mj ∩ X ri )
+
+σ(X ri ) . (7) Here, X ri = {xl|xrl = ori , l = 1 , 2, · · · , n } denotes a subset of 
+
+X consisting of all data objects whose r-th values are equal to 
+
+ori . The function σ(·) denotes the cardinality of a set. Through 
+
+P m|ri , the value ori can be encoded with respect to different features Am ∈ A{c}, thereby preserving the dependence among different features. 
+
+c) attribute-type encoding: The feature-level encoding described above processes categorical features uniformly based on the Conditional Probability Distributions (CPDs). However, for heterogeneous feature data, numerical and cate-gorical features still follow different distance structures. To bridge this gap while preserving their inherent properties, categorical feature values are projected onto a set of one-dimensional spaces. The categorical values are then encoded according to their projected positions. 
+
+Remark 1. Connecting mixed-type Features. The motivation behind projecting categorical values onto one-dimensional spaces is to unify categorical and numerical features. By doing so, both types of features can represent distances in a consis-tent way, thus establishing the foundation for appropriately aligning mixed-type features. 
+
+The projection is carried out using a commonly-employed categorical feature distance metric based on the CPDs defined in Section IV-A1b. For a feature Ar , the distance between two possible values ori and orj is calculated with respect to each of the categorical features A{c} and can be expressed as: 
+
+d(ori , o rj ) = X
+
+> Am∈A {c}
+
+P m|ri − P m|rj . (8) With this distance definition, all υr possible values of feature Ar can be projected onto each of the υr (υr −1) /2 one-dimensional spaces spanned by corresponding pairs of possible values. Specifically, for a one-dimensional space Rrij spanned IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 6
+
+by two possible values ori and orj , the projection position of a value ort can be determined from its distance to ori (or orj ) in 
+
+Rrij according to: 
+
+ϕ(ort , o ri ; Rrij ) = |d(ort , o ri )2 − d(ort , o rj )2 + d(ori , o rj )2|
+
+2 · d(ori , o rj ) . (9) This projection is derived from the Pythagorean theorem, and more details can be found in [11]. After all υr possible values are projected, the pairwise distances between them in Rrij can be obtained. These distances are then organized into a symmetric matrix Drij ∈ Rυr ×υr
+
+, where the (t, l )-th entry Drij (t, l ) denotes the distance between ort and orl in the projection space Rrij .
+
+Remark 2. Projection Comprehensiveness. Each categorical feature Ar is represented by υr (υr − 1) /2 one-dimensional structures, each corresponding to a different pair of possible values and thus providing a distinct endogenous view of the feature. As indicated in Remark 1, this projection preserves the internal relationships among possible values. Meanwhile, the one-dimensional representation makes it easier to establish a homogeneous connection with numerical features. 2) Coupling Encoding: Through the three types of encod-ing described above, all categorical features A{c} are mapped to higher-dimensional spaces. More precisely, for the l-th value of a categorical feature Ar where arl = ori , arl will be encoded into a vector. This is achieved by concatenating its three types of encoding in the following way: 
+
+ˆarl = [ P ri , P 1|ri , P 2|ri , . . . 
+
+| {z }
+
+> d{c}
+
+, Dr
+
+> 11
+
+(i, ·), Dr
+
+> 12
+
+(i, ·), . . . 
+
+| {z }  
+
+> υr(υr−1) /2
+
+]. (10) Here, P ri represents the value-level encoding, the sequence 
+
+P 1|ri , P 2|ri , . . . corresponds to the feature-level encoding, and 
+
+Dr
+
+> 11
+
+(i, ·), Dr
+
+> 12
+
+(i, ·), . . . denotes the attribute-type encoding. The notation Drij (t, ·) refers to the t-th row of the matrix Drij 
+
+defined in Section IV-A1c. By encoding each feature value within A{c}, the encoded set of categorical features can be denoted as ˆA{c}. Consequently, the entire feature set is updated to ˆA = ˆA{c} ∪ A {u}.Correspondingly, the object set associated with ˆA is denoted as ˆX . So far, three types of encodings have been introduced, namely value-level, feature-level, and attribute-type encodings. The final type, object-level encoding, is accomplished by constructing a fully-connected graph among the data objects. This will be discussed separately in the subsequent subsection. 
+
+3) Graph Aligned Construction: To construct the aligned graph representation, the object-level distance between two objects xa and xb is defined based on the ℓ2 norm as follows: 
+
+Ψ( xa, xb) = [Φ 1(x1
+
+> a
+
+, x 1 
+
+> b
+
+), Φ2(x2
+
+> a
+
+, x 2 
+
+> b
+
+), . . . , Φd(xda, x db )] ⊤ 
+
+> 2
+
+.
+
+(11) In this equation, Φr (xra, x rb ) denotes the distance induced by the r-th feature. To obtain a more reasonable distance measure for mixed-type data, the graph-based unified dissimilarity introduced in [10] is adopted to define Φr (xra, x rb ).For a categorical feature Ar ∈ A {c}, let xra = ori and xrb =
+
+orj . Then, the distance Φr (xra, x rb ) is defined as: 
+
+Φr (xra, x rb ) = 
+
+
+
+> d
+
+X
+
+> m=1
+
+ϕr|m(ori , o rj ) · ωr|m, if Ar ∈ A {c}
+
+|xra − xrb |, if Ar ∈ A {u}
+
+.
+
+(12) Here, 
+
+ϕr|m(ori , o rj ) = ∥| P m|ri − P m|rj |∥ 1
+
+2 (13) denotes the dissimilarity between ori and orj as reflected by 
+
+Am. The weight ωr|m reflects the importance of Am in determining the distances between values of Ar . It can be specified by users or computed from the interdependence between Am and Ar .In line with [10], each numerical feature is discretized into five equal-width intervals, which provides a simple and mod-erately fine-grained partition without introducing excessive discretization complexity. The resulting interval indices are then treated as categorical values when computing Eq. (13), since Am may also be numerical. Although the value-level distances in the two cases of Eq. (12) take different forms, they can be unified from the perspective of transformation cost measured by the Earth Mover’s Distance (EMD). Due to space limitations, readers are referred to [10] for more details on the unification procedure and weight computation. 
+
+Remark 3. Rationale for Graph Aligned Construction. 
+
+Section IV-A2 yields an informative coupling-encoded set ˆX ,which can be used to compute object-level distances based on the Euclidean distance. However, graph construction is still performed on the original X using the graph-based unified dissimilarity for two main reasons: 1) it handles heteroge-neous numerical and categorical features in a unified manner, thereby avoiding information loss; 2) the categorical features in ˆX are substantially expanded, so directly computing dis-tances from ˆX would over-emphasize the categorical features. 
+
+After computing the distances between all pairs of objects using Eq. (11), an adjacency matrix A ∈ Rn×n is obtained, where the (i, j )-th entry is given by Ψ( xi, xj ). Together with the coupling-encoded feature set ˆX , the information derived from all four types of coupling relationships can be concisely represented by the constructed graph G = {A, ˆX } . This graph enriches the internal information of the data and aligns it with the graph format, thereby laying the foundation for the subsequent mixed-type attributed graph clustering process. 
+
+B. Hyper-Complex Graph Representation Learning 
+
+To further model interactions among the aligned attributes, quaternion representation learning is introduced. The Hamilton product provides such a structured transformation in hyper-complex space. Unlike settings with naturally tuple-structured inputs or relational triplets, AGREE applies quaternion learn-ing after mixed-type attribute alignment. Accordingly, the aligned attributes are projected into four views for subsequent quaternion graph encoding. IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 7
+
+1) Four-View Projection: In contrast to many existing hyper-complex representation learning methods, which typ-ically operate on tuple-structured feature components (e.g., RGB images), attributed graph data involves diverse attributes and varying graph structures. Therefore, a learnable projection mechanism is introduced to transform the aligned attribute matrix X into four distinct views. Here, X = ˆX , meaning that the attribute matrix used in this section is exactly the aligned encoding set obtained in the previous section. This mecha-nism removes the tuple-structure requirement on quaternion inputs and enables efficient coupling learning among attributes through the Hamilton product. Specifically, the node attributes ˆX = { ˆXl | l = 1 , 2, . . . , n }
+
+are projected by four independent MLPs into four views, i.e., 
+
+Fr, Fx, Fy, and Fz. This projection is expressed as: 
+
+Fprj = Fprj ( ˆX ) = WLprj ˆX + BLprj , prj ∈ { r, x, y, z }, (14) where Fprj (·) denotes the MLP operation, and WLprj and BLprj 
+
+represent the learnable parameters of the MLPs. These four views are combined to form a quaternion feature matrix F ∈
+
+Hn×(4 × ˆd), expressed as: 
+
+F = Fr + Fxi + Fyj + Fzk, (15) where ˆd is the feature dimensionality encoded by Fprj (·).Each row of F corresponds to the quaternion representation of the respective node. Additionally, we introduce a learnable quaternion weight matrix WQ ∈ H4d×4 ˆd, with the same size as F, to perform further transformation on F:                  
+
+> F⊗WQ=
+> 
+> Fr
+> Fx
+> Fy
+> Fz
+> 
+> ⊤
+> WQrWQxWQyWQz
+> −WQxWQr−WQzWQy
+> −WQyWQzWQr−WQx
+> −WQz−WQyWQxWQr
+> ,(16)
+
+where ⊗ represents the Hamilton product. The processes described by Fprj (·) and ⊗ enable the trans-formation of any-dimensional attribute set into the quaternion space, while associating the feature components through the shared weights in the quaternion weight matrix WQ. By adjusting the weights in WQ, the features in F can be trans-formed with higher degrees of freedom (DoF), allowing the model to capture complex feature couplings more efficiently. 
+
+Remark 4. Quaternion transformation enhances the Degree of Freedom (DoF). As shown in Eq. (16), the learnable parameters in WQ, i.e., {WQr , WQx , WQy , WQz }, enable 16 different feature transformation pairs, facilitating the rotation of F within the hyper-complex space H. In contrast, achieving the same transformation in real-value space R would require four times as many parameters. Thus, the DoF in quaternion feature transformation is four times greater than in R.
+
+Remark 5. Structured coupling and shallow expressive propagation in QGE for alleviating OD and OS. Compared with standard real-valued graph propagation ˜AXW , QGE propagates quaternion features via ˜AH ⊗ W Q. In real-valued networks, repeated multiplication by ˜A tends to homoge-nize node representations as depth increases [39]. In con-trast, the Hamilton product ⊗ in QGE introduces structured coupling among quaternion components, a property widely used in quaternion representation learning to model richer inter-component interactions [40]. This mechanism strength-ens attribute-side modeling during propagation, making the learned representation less dependent on topology- driven averaging and helping alleviate OD. Furthermore, the higher Degree of Freedom (DoF) of quaternion transformation pro-vides richer expressive capacity. This allows AGREE to main-tain strong representation learning with shallow propagation, reducing the need for deep chains that tend to homogenize embeddings, thereby helping alleviate OS. 2) QGE: Quaternion Graph Encoders: To integrate the feature quaternion F with the graph structure ˜A, the feature quaternion is passed through a quaternion graph convolution module composed of several stacked encoders. The operation of the l-th encoder can be expressed as: 
+
+Hl = φl( ˜A · Hl−1 ⊗ WQl ). (17) Here, ⊗ denotes the Hamilton product, which has higher precedence over the matrix multiplication operation. The func-tion φl(·) represents the activation function, and ˜A ∈ Rn×n
+
+is the normalized Laplacian adjacency matrix. Each encoder aggregates the l-hop quaternion representations of nodes based on the graph topology ˜A to generate a more abstract feature representation Hl.The final quaternion representation Hm is then fused into a single embedding matrix U, calculated as: 
+
+U = Re( Hm) ⊛ Im( Hm), (18) where Re( ·) and Im( ·) extract the real and imaginary parts of 
+
+Hm, respectively, and the operation ⊛ represents quaternion fusion, which averages the four parts of the quaternion feature. Finally, the graph is reconstructed as ˆA ∈ Rn×n using the embeddings U by: 
+
+ˆA = U · U⊤. (19) This reconstruction step acts as a decoder to preserve the original graph topology. 
+
+C. Unified Optimization of Graph Reconstruction and Clus-tering 
+
+The FVP and QGE modules work together to integrate attribute information within U, with the graph reconstruction mechanism aligning this representation to the underlying graph structure, ensuring a balance between the attribute and graph consistency. To enhance clustering performance and promote sparsity in the reconstructed graph, a combined loss function is designed, incorporating the graph reconstruction loss Lkl ,spectral clustering term Lsc , and a regularization term Lreg .The total loss is expressed as: 
+
+L = Lkl + αLreg + βLsc , (20) where α controls the strength of the regularization term, and β balances the contributions of the reconstruction-related term and the spectral clustering term. The reconstruction loss 
+
+Lkl measures the discrepancy between the original adjacency IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 8
+
+TABLE I: Statistics of the 19 datasets. n and k denote the number of nodes and clusters, while du and dc represent the numerical and categorical feature dimensions, respectively.                                                                                                                         
+
+> No. Dataset (Source) Abbrev. ndudck
+> Attributed Graph Datasets
+> 1ACM [41] ACM 3025 1870 -32Wiki-CS [42] WIKI 2405 4973 -17 3CiteSeer [43] CITE 3327 3703 -64DBLP [41] DBLP 4057 334 -45FILM [44] FILM 7600 932 -56Cora [43] CORA 2708 1433 -77Wisconsin [44] WISC 251 1703 -58USA Air-Traffic [45] UAT 1190 239 -49Amazon Photo [45] AMAP 7650 745 -8
+> Mixed-Type Attributed Datasets
+> 10 Mammographic [46] MM 961 14211 Heart Failure [46] HF 299 75212 Breast Cancer [46] BC 286 45213 Autism-Adolescent [46] AA 104 27214 Tic-Tac-Toe [46] TTT 958 -9215 Zoo [46] ZO 101 -16 716 Yeast [46] YE 1484 8-10 17 Glass Identification [46] GI 214 9-618 Wine [46] WI 178 13 -319 Iris [46] II 150 4-3
+
+matrix ˜A and the reconstructed adjacency ˆA, and is defined as: 
+
+Lkl = 1
+
+n2
+
+> n
+
+X
+
+> i=1
+> n
+
+X
+
+> j=1
+
+˜Aij log 1
+
+ˆAij 
+
+, (21) where n is the number of nodes. Minimizing Lkl enforces consistency between the graph topology encoded in ˜A and the learned graph representation ˆA. The regularization term 
+
+Lreg is introduced to prevent overfitting by limiting model complexity. The spectral clustering loss Lsc encourages U to align with the graph spectral structure and is defined as: 
+
+Lsc = Tr( U⊤LU ), (22) where L = D− ˆA is the Laplacian matrix of the reconstructed graph, and D is the degree matrix of ˆA. According to the spectral clustering objective in Eq. (23), U in Lsc can be viewed as a relaxed spectral embedding matrix. Minimizing 
+
+Lsc therefore encourages connected and highly similar nodes in ˆA to have similar embeddings, while favoring a graph structure with a lower cut cost, consistent with the spectral clustering objective. After training, the clustering-friendly graph representation 
+
+ˆA is obtained by Eq. (19), and the corresponding semi-definite Laplacian matrix L = D − ˆA is then constructed to support the spectral clustering objective: 
+
+arg min 
+
+> H
+
+Tr( H⊤LH ) s.t. H⊤H = I, (23) where H ∈ Rn×k represents the node-cluster affiliation matrix, and I is the identity matrix. Spectral clustering is performed by first calculating the eigenvectors of L, then applying K-Means clustering to the eigenvector matrix. The number of clusters k is a user-defined parameter. 
+
+Remark 6. Complexity Analysis. Let n be the number of nodes, d the number of original attributes, ˆd the projected feature dimension, m the number of QGE layers, and |E|
+
+the number of edges in the input graph. Let υr denote the number of possible values of the r-th categorical attribute, and let V = max r υr . The overall time complexity of AGREE is O
+
+
+
+Calign + nd ˆd + m|E| ˆd + n2 ˆd
+
+
+
+, where Calign denotes the cost of the aligned encoding stage. The total complexity consists of three parts. 1) Aligned encoding and graph construction: The value-level encoding requires counting the occurrence frequency of each categorical value, which is linear in the data size. The feature-level encoding computes conditional probability distributions among attribute values. For the attribute-type encoding, the distance between each pair of categorical values is computed from the conditional probability vectors in Eq. (6). Let V be the maximum categorical cardinality. Since there are O(V 2) value pairs and each distance computation costs 
+
+O(V ), the complexity of this step is O(d2V 3). In addition, object-level graph construction computes pairwise distances between nodes according to Eq. (11), which introduces an 
+
+O(n2d) term in the dense case. Therefore, the aligned encod-ing stage is dominated by Calign = O(d2n + d2V 3 + n2d).2) Four-view projection and quaternion graph encoding: The four-view projection maps ˆX into Fr, Fx, Fy, and 
+
+Fz by four MLPs, which costs O(nd ˆd). The QGE module then performs m layers of graph propagation on quaternion features. For a graph with |E| edges, the propagation cost is O(m|E| ˆd). The quaternion fusion in Eq. (18) is linear in the embedding size and is therefore dominated by the graph propagation stage. 3) Graph reconstruction and clustering optimization: The reconstructed adjacency matrix ˆA = UU ⊤ in Eq. (19) requires O(n2 ˆd) time in the dense case. The computation of 
+
+Lkl and the Laplacian-based spectral term in Eq. (22) is of the same order as the adjacency-related operations. Hence, this stage is dominated by the dense reconstruction cost O(n2 ˆd).The overall memory complexity is dominated by storing adjacency-related matrices, which is O(n2) in the dense case. It should be noted that O(d2V 3) is a worst-case upper bound for attribute-type encoding. In practice, categorical car-dinalities are usually moderate, so this term does not dominate the actual overhead. Omitting it, the overall time complexity reduces to O(d2n + n2d + nd ˆd + m|E| ˆd + n2 ˆd). For larger-scale applications, sparse or blockwise graph operations can further reduce the practical time and memory costs. 
+
+V. E XPERIMENTS 
+
+This section presents the experimental evaluation of AGREE on two types of benchmark datasets, i.e., attributed graph datasets and mixed-type attributed datasets. A total of 19 datasets and 13 compared methods are included to assess the effectiveness of AGREE. 
+
+A. Experimental Settings 1) Datasets: Experiments are conducted on two types of benchmark datasets, including nine Attributed Graph Datasets IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 9
+
+TABLE II: Clustering performance on the Mixed-Type Attributed Datasets evaluated by ACC, NMI, and ARI (Mean ±Std). The best and second-best results on each dataset are marked in bold and underline, respectively. ‘AR’ denotes the average performance rank of each method. 
+
+Dataset Metric K-Means GAE ARVGAE [2] DAEGC [6] CCGC [3] DFCN [26] EGAE [1] CONVERT [28] SCDGN [30] MAGI [31] GLAC [29] DESE [33] CDC [4] AGREE 
+
+(Classical) (Classical) (IJCAI’18) (IJCAI’19) (AAAI’23) (AAAI’21) (TNNLS’22) (MM’23) (MM’23) (KDD’24) (TAI’25) (KDD’25) (TNNLS’25) (Ours) 
+
+MM ACC 68.55±0.00 53.37±0.00 55.59±1.00 53.06±5.00 68.31±2.00 68.55±0.00 68.52±1.00 67.54±1.05 59.65±5.57 52.30±1.28 51.57±0.00 78.75±5.92 58.84±0.13 82.96±0.00 
+
+NMI 11.02±0.00 0.76±0.00 1.03±1.00 1.05±3.00 10.09±1.00 10.65±0.00 10.30±1.00 10.57±0.34 4.88±5.26 0.40±0.53 0.25±0.00 27.25±9.67 6.93±0.15 34.87±1.00 
+
+ARI 13.67±0.00 0.35±0.00 1.17±1.00 1.09±3.00 13.38±2.00 13.67±0.00 13.62±1.00 12.25±1.05 4.86±5.57 0.16±1.28 0.01±0.00 34.38±11.81 8.74±0.19 43.40±1.00 
+
+HF ACC 62.21±0.00 63.61±1.00 68.90±0.00 67.89±1.00 63.55±0.00 57.42±2.00 69.00±2.00 60.20±2.88 53.41±0.70 55.72±4.77 68.23±0.00 63.55±4.63 60.54±0.09 71.37±3.00 
+
+NMI 0.25±0.00 0.74±1.00 2.67±0.00 1.01±1.00 0.75±0.00 0.02±0.00 2.96±3.00 0.24±0.31 0.04±0.01 0.95±1.64 1.17±0.00 0.37±0.24 1.70±0.01 10.92±3.00 
+
+ARI 1.75±0.00 3.36±0.00 3.31±0.00 0.85±1.00 3.37±0.00 -0.04±0.00 2.63±336.00 0.89±2.88 -0.15±0.70 1.18±4.77 0.74±0.00 1.36±0.86 0.18±0.03 16.63±4.00 
+
+BC ACC 51.40±0.00 70.98±0.00 71.54±1.00 69.93±0.00 70.98±1.00 55.31±5.00 66.47±6.00 66.26±4.46 54.20±0.00 72.03±0.49 72.24±1.63 70.42±3.62 65.45±0.11 72.03±0.00 NMI 0.21±0.00 6.84±0.00 7.56±1.00 0.39±0.00 7.53±1.00 1.66±2.00 2.66±3.00 4.63±2.56 4.11±0.00 4.30±1.26 6.30±2.76 5.93±2.94 5.92±0.03 8.66±1.00 
+
+ARI -0.25±0.00 14.68±0.00 15.72±1.00 -0.40±0.00 15.24±1.00 1.64±4.00 3.62±601.00 9.53±4.46 -0.80±0.00 5.77±0.49 12.47±1.63 10.62±7.59 10.41±0.10 17.00±0.00 
+
+AA ACC 50.96±0.00 51.92±0.00 53.94±1.00 61.25±1.00 57.88±2.00 51.44±2.00 61.92±1.00 51.92±1.43 60.58±0.00 55.38±2.95 62.50±1.05 59.42±2.46 61.54±0.03 63.56±1.00 
+
+NMI 0.06±0.00 0.14±0.00 0.02±0.00 2.50±0.00 1.54±0.00 0.06±0.00 2.71±1.00 0.32±0.43 0.85±0.00 0.72±1.03 3.24±1.31 1.40±1.36 2.19±0.01 4.71±1.00 
+
+ARI -0.90±0.00 -1.27±0.00 -0.87±1.00 0.80±69.00 1.48±1.00 -0.81±1.00 1.62±2.00 -0.82±1.43 2.08±0.00 0.37±2.95 2.49±1.05 0.54±1.96 2.47±0.03 3.75±2.00 
+
+TTT ACC 57.83±0.00 59.92±0.00 54.61±1.00 62.77±6.00 60.33±2.00 53.35±1.00 65.31±1.00 59.61±2.95 62.38±1.14 56.92±5.70 66.10±1.38 61.36±5.38 69.81±0.08 95.74±3.00 
+
+NMI 0.74±0.00 1.10±0.00 0.11±1.00 0.14±0.00 1.26±1.00 0.25±0.00 0.84±1.00 2.09±1.17 1.35±0.09 1.79±2.56 2.57±2.80 0.79±0.79 11.25±0.09 76.33±10.00 
+
+ARI 1.95±0.00 3.08±0.00 0.45±0.00 -0.14±0.00 3.43±1.00 0.40±1.00 0.92±2.00 3.65±2.95 4.24±1.14 2.62±5.70 3.83±1.38 2.13±1.85 15.42±0.12 83.81±9.00 
+
+ZO ACC 72.38±7.00 59.60±1.00 76.34±1.00 36.47±3.00 68.42±3.00 71.68±8.00 68.91±3.00 67.82±5.71 77.92±0.63 40.10±2.35 53.96±8.83 72.67±0.79 77.03±0.16 80.20±2.00 
+
+NMI 77.61±5.00 54.79±2.00 73.15±3.00 15.34±7.00 63.40±2.00 70.68±5.00 71.11±3.00 66.45±2.29 73.99±1.14 26.00±3.27 41.57±11.60 81.88±2.39 82.86±0.10 82.12±2.00 ARI 67.55±11.00 38.11±1.00 64.46±2.00 -4.10±1.00 50.15±4.00 57.44±10.00 56.87±5.00 57.60±5.71 75.13±0.63 10.76±2.35 26.73±8.83 66.24±1.80 73.39±0.22 77.33±3.00 
+
+YE ACC 36.20±1.00 23.23±1.00 28.49±0.00 31.27±0.00 22.40±3.00 21.74±3.00 36.38±1.00 27.84±1.54 31.02±0.77 19.86±2.36 31.32±0.16 38.52±1.95 34.95±0.01 44.22±1.00 
+
+NMI 26.42±1.00 8.74±0.00 8.95±0.00 1.10±0.00 7.58±2.00 16.14±1.00 25.75±1.00 10.81±3.51 21.63±0.25 2.53±0.62 1.15±0.13 17.42±1.70 26.88±0.00 21.82±1.00 ARI 13.95±1.00 4.16±0.00 5.15±0.00 0.05±0.00 3.26±2.00 5.78±1.00 13.95±1.00 2.99±1.54 10.34±0.77 0.15±2.36 0.05±0.16 11.46±2.76 13.87±0.00 14.31±1.00 
+
+GI ACC 54.21±0.00 43.46±0.00 39.02±1.00 36.17±3.00 44.77±1.00 45.56±1.00 55.05±1.00 41.54±3.16 44.11±0.23 26.03±1.98 35.98±0.00 48.13±3.33 36.92±0.08 55.09±3.00 
+
+NMI 42.07±1.00 30.16±0.00 19.49±1.00 6.15±6.00 30.03±2.00 31.48±2.00 37.63±1.00 23.30±4.15 29.63±0.10 4.38±0.78 3.22±0.00 35.48±1.86 17.76±0.07 50.04±6.00 
+
+ARI 26.55±1.00 19.93±0.00 12.89±0.00 1.32±1.00 17.28±3.00 17.70±1.00 25.87±1.00 12.48±3.16 16.87±0.23 -0.08±1.98 -0.74±0.00 21.47±2.58 6.80±0.06 34.76±8.00 
+
+WI ACC 49.33±1.00 38.37±1.00 43.82±0.00 39.33±2.00 57.75±1.00 50.00±1.00 74.72±0.00 72.13±1.40 91.57±0.00 37.98±1.13 44.16±7.91 85.06±0.57 95.51±0.00 96.46±0.00 
+
+NMI 11.23±1.00 2.79±1.00 5.00±0.00 2.21±1.00 16.29±3.00 8.75±1.00 36.55±1.00 40.31±1.85 72.41±0.00 0.77±0.38 9.26±14.80 57.68±1.31 85.29±0.00 87.42±1.00 
+
+ARI 11.69±1.00 -0.89±0.00 3.99±0.00 -0.16±0.00 17.20±2.00 10.52±0.00 38.99±0.00 41.95±1.40 75.30±0.00 -0.25±1.13 4.84±7.91 59.24±1.35 86.85±0.00 89.45±1.00 
+
+II ACC 89.33±0.00 80.00±0.00 88.27±4.00 34.22±1.00 92.53±1.00 83.73±1.00 91.67±1.00 84.47±3.43 94.67±0.00 38.80±2.53 56.80±12.28 67.47±5.89 70.00±0.13 96.27±2.00 
+
+NMI 75.82±0.00 56.84±0.00 76.54±5.00 2.67±1.00 77.56±2.00 70.12±1.00 77.86±2.00 64.13±4.37 83.22±0.00 1.34±0.98 49.01±26.76 58.93±8.96 46.80±0.22 86.95±4.00 
+
+ARI 73.02±0.00 54.75±0.00 71.85±8.00 0.03±0.00 79.51±1.00 63.54±2.00 77.95±3.00 63.12±3.43 85.08±0.00 -0.02±2.53 36.22±12.28 49.06±4.71 40.36±0.23 89.23±4.00 
+
+- AR 7.3 9.2 8.2 11.1 6.4 9.0 5.0 8.1 6.8 11.3 8.8 5.6 6.1 1.1 
+
+and ten Mixed-Type Attributed Datasets . The former consists of graph-structured data with node attributes, while the latter contains categorical and numerical attributes, including pure categorical and pure numerical cases. Statistics and sources of the datasets are shown in Table I. 
+
+2) Experiment Process: All experiments are conducted using PyTorch 1.8.0 on an NVIDIA 3090 GPU. The model is first pre-trained for 10 epochs with only the KL loss Lkl 
+
+and regularization loss Lreg for warm-up. Following recent graph clustering methods [1], [3], [6], [26], [28], the clustering performance is reported as the average result with standard deviation over ten independent runs of each compared method. In each run, the model is trained for 50 epochs. 
+
+3) Compared Methods and AGREE Settings: Thirteen clus-tering methods are included for comparison, including the classic K-Means and twelve state-of-the-art learning-based graph clustering approaches. These baselines are categorized into: 1) autoencoder-based methods, i.e., GAE, ARVGAE [2], EGAE [1], DAEGC [6], and DFCN [26]; 2) contrastive learning-based methods, i.e., CONVERT [28], CCGC [3], SCDGN [30], MAGI [31], and GLAC [29]; and 3) graph structure learning methods, i.e., CDC [4] and DESE [33]. For most compared graph clustering methods on the mixed-type attributed datasets, categorical features are first trans-formed by one-hot encoding, and the adjacency matrix is then constructed based on the inner product between the expanded features. For AGREE, the graph G = {A, ˆX } produced by the proposed aligned encodings is used as input. The quaternion graph encoder is implemented with two quaternion graph convolution layers. The implementation details and hyper-parameter settings are summarized as follows. For GAE, 200 epochs of unsupervised training are first performed, and K-Means is then applied to the learned embeddings. The remaining compared methods are implemented based on their source code. For AGREE, the main settings include the model architecture and training procedure. The layer dimensions are set to [512 , 256 , 128] .Adam is adopted as the optimizer, and ReLU is used as the activation function in the graph encoder. The pre-training learning rate is set to 10 −4, and the model is pre-trained for ten full-batch update steps. During the main training stage, the model is optimized for 200 full-batch update steps in total. The regularization coefficient α and the trade-off coefficient 
+
+β are used to balance the contributions of the regularization term and the spectral clustering term in the objective function, respectively. They are selected from small candidate sets and then fixed as reference settings in the experiments. In practice, the model performance remains reasonably stable within a moderate range around the adopted settings. 
+
+4) Evaluation Metrics: Six widely-used metrics are em-ployed. The external metrics , i.e., Accuracy (ACC), Normal-ized Mutual Information (NMI), and Adjusted Rand Index (ARI) [47], measure the consistency between clustering results and ground-truth labels. The internal metrics , i.e., Silhouette Coefficient (SC) [48], Davies-Bouldin Index (DBI) [49], and Calinski-Harabasz Index (CHI) [50], evaluate clustering qual-ity based on intrinsic data properties without relying on labels. The value ranges are defined as: ACC, NMI ∈ [0 , 1] ; ARI, SC 
+
+∈ [−1, 1] ; and DBI, CHI ∈ [0 , +∞). For all metrics except DBI, a higher value indicates better clustering performance. 
+
+B. Quantitative Results 1) Clustering Performance: a) Performance on the Mixed-Type Attributed Datasets: 
+
+Table II shows that AGREE achieves the best overall per-formance with an average rank of 1.1, demonstrating strong and stable clustering effectiveness across diverse mixed-type IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 10 
+
+TABLE III: Clustering performance on the Attributed Graph Datasets evaluated by ACC, NMI, and ARI (Mean ±Std). The best and second-best results on each dataset are marked in bold and underline, respectively. ‘N/A’ indicates that the result is unavailable due to gradient explosion. ‘AR’ denotes the average performance rank of each method. 
+
+Dataset Metric K-Means GAE ARVGAE [2] DAEGC [6] CCGC [3] DFCN [26] EGAE [1] CONVERT [28] SCDGN [30] MAGI [31] GLAC [29] DESE [33] CDC [4] AGREE 
+
+(Classical) (Classical) (IJCAI’18) (IJCAI’19) (AAAI’23) (AAAI’21) (TNNLS’22) (MM’23) (MM’23) (KDD’24) (TAI’25) (KDD’25) (TNNLS’25) (Ours) 
+
+ACM ACC 36.78±0.01 44.22±4.11 86.94±1.37 74.61±10.00 89.26±0.60 86.04±2.18 85.54±3.62 80.53±2.91 81.64±0.37 89.37±0.51 66.94±12.16 87.42±2.86 75.19±16.05 90.37±0.41 
+
+NMI 0.82±0.01 14.67±4.53 58.20±3.29 47.92±10.35 65.36±1.21 59.66±4.51 56.09±8.26 47.45±4.35 51.63±0.46 66.00±1.07 34.18±12.69 61.29±4.60 53.51±15.68 67.50±1.17 
+
+ARI 0.24±0.01 3.66±2.39 64.94±3.29 48.70±12.59 71.06±1.37 63.94±4.79 62.10±8.21 51.30±6.03 54.02±0.37 71.22±0.51 34.03±12.16 66.66±6.35 54.54±19.97 73.57±1.06 
+
+WIKI ACC 25.81±0.89 33.11±2.08 44.47±3.66 25.38±3.35 51.29±0.84 43.10±3.67 47.49±1.13 51.41±1.15 44.66±0.20 52.61±1.50 23.88±1.66 35.26±0.00 43.69±4.23 52.95±0.88 
+
+NMI 22.69±1.21 31.62±1.51 44.13±2.65 15.15±2.63 46.19±1.01 38.33±2.91 43.33±1.99 48.46±0.62 44.02±0.55 51.93±0.68 14.86±2.75 38.39±3.25 43.37±2.70 49.26±1.32 ARI 2.54±0.32 5.61±0.89 24.44±3.24 7.68±2.25 25.50±2.72 17.17±3.75 28.99±1.58 28.39±1.33 24.33±0.20 34.61±1.50 6.52±1.66 25.25±2.02 13.58±3.29 33.77±0.87 CITE ACC 26.10±1.33 32.93±3.01 54.37±2.96 42.66±4.74 66.31±2.27 42.37±2.05 58.71±3.68 62.14±1.53 59.26±0.40 66.52±0.70 38.47±3.96 39.42±32.18 67.39±4.97 66.57±1.14 NMI 6.92±1.36 20.11±2.63 27.54±2.85 18.79±3.56 40.45±2.68 23.90±1.83 33.15±2.99 34.68±1.78 34.70±0.16 41.24±0.88 19.24±5.00 37.47±3.57 42.46±3.22 40.36±1.21 ARI 0.31±1.93 4.64±2.01 25.11±3.66 16.81±4.38 39.12±3.36 19.19±2.43 31.46±4.61 34.69±1.88 29.58±0.40 40.98±0.70 16.64±3.96 36.63±5.12 42.96±4.10 41.43±1.94 DBLP ACC 32.74±0.06 46.10±1.43 54.97±6.88 43.36±4.72 54.78±1.97 38.91±0.04 53.64±1.46 54.52±2.37 45.42±0.02 71.57±1.73 36.62±3.17 73.41±2.38 62.54±4.58 72.46±2.24 NMI 2.98±0.01 19.71±1.83 22.61±5.44 11.41±3.55 23.81±2.53 8.11±0.04 18.19±1.07 22.33±1.93 13.63±0.05 43.40±0.87 6.02±2.90 41.19±2.39 33.50±2.25 39.12±2.27 ARI 15.31±1.87 5.78±0.87 17.70±5.12 10.40±3.70 18.64±1.28 6.63±0.02 15.07±2.02 17.81±1.17 8.56±0.02 43.30±1.73 5.45±3.17 43.17±4.02 27.50±3.60 41.24±2.55 FILM ACC 24.21±0.01 25.64±0.02 24.31±1.32 24.61±0.33 26.36±0.11 25.91±1.64 22.79±0.25 27.43±0.23 26.32±0.01 23.62±0.18 26.47±0.18 15.47±12.64 27.47±0.52 26.81±0.65 NMI 0.01±0.00 0.09±0.01 0.22±0.39 0.09±0.03 0.15±0.01 0.28±0.03 0.21±0.08 0.79±0.07 1.04±0.00 0.26±0.02 0.50±0.17 0.26±0.12 0.93±0.28 1.47±0.22 
+
+ARI 0.00±0.01 0.13±0.01 0.31±0.51 0.15±0.10 0.24±0.05 0.27±0.04 0.17±0.08 1.34±0.17 0.35±0.01 0.18±0.18 0.84±0.18 0.14±0.27 1.47±0.50 1.78±0.26 
+
+CORA ACC 31.14±3.76 49.47±5.76 66.72±3.04 45.30±5.92 72.00±1.77 45.94±5.80 72.11±1.35 66.34±1.80 74.30±0.37 67.78±2.89 41.11±4.77 23.71±29.15 55.86±8.32 75.82±1.51 
+
+NMI 6.67±5.28 40.86±4.81 48.96±2.62 25.88±4.35 55.02±1.91 36.46±3.44 52.89±1.17 46.84±1.68 56.06±0.39 50.56±1.23 23.71±4.32 44.91±3.13 41.37±6.81 59.02±1.20 
+
+ARI 7.83±1.69 22.49±7.27 42.80±2.69 20.09±5.99 49.17±2.40 23.95±5.52 48.49±2.16 40.13±1.67 51.75±0.37 44.45±2.89 18.38±4.77 36.70±3.97 30.24±9.24 55.64±3.06 
+
+WISC ACC 42.03±2.04 42.11±1.73 37.17±2.58 25.38±3.35 44.14±0.86 40.95±5.44 37.01±2.01 47.61±1.91 45.78±1.03 36.97±2.64 47.05±1.39 46.37±2.55 39.24±5.19 44.46±1.58 NMI 6.25±1.13 8.09±0.63 5.35±3.26 15.15±2.63 8.39±0.45 7.01±0.58 11.02±1.16 9.70±3.35 11.09±1.90 11.52±1.18 5.23±1.15 11.15±3.71 4.39±0.89 16.31±1.66 
+
+ARI -3.02±1.68 2.85±0.54 2.02±1.63 7.68±2.25 3.60±0.90 4.45±0.99 6.00±1.12 4.76±2.69 5.39±1.03 6.19±2.64 1.94±1.39 6.11±2.88 -0.88±2.07 9.92±1.38 
+
+UAT ACC 32.69±0.12 44.55±0.07 41.85±1.63 52.49±1.25 47.88±2.69 39.33±4.72 53.10±0.79 55.18±1.34 44.99±2.01 43.71±0.33 46.59±2.59 43.53±0.00 44.76±3.29 53.84±0.27 NMI 20.63±0.63 18.61±9.44 15.86±2.38 21.42±1.29 20.63±2.64 13.95±1.67 21.80±0.85 27.31±1.18 12.64±1.32 19.18±0.49 17.04±2.13 15.36±1.74 18.55±5.04 24.15±1.16 ARI 6.42±0.44 11.61±5.90 10.33±2.82 21.07±1.11 12.95±1.80 7.28±3.16 20.77±0.64 19.46±1.90 11.27±2.01 16.45±0.33 13.73±2.59 14.44±1.33 14.32±5.62 22.54±0.91 
+
+AMAP ACC 22.66±0.31 60.47±0.87 N/A 47.45±3.36 77.07±0.38 58.51±3.96 76.37±1.32 66.28±1.86 77.52±0.02 68.99±0.82 42.13±5.07 66.44±12.42 72.85±6.18 76.02±0.94 NMI 2.37±0.09 58.01±0.56 N/A 38.83±4.24 67.06±0.72 55.95±1.13 65.44±1.61 52.57±0.79 70.26±0.69 59.95±0.59 27.49±5.71 53.93±14.62 64.84±3.54 66.47±1.50 ARI 0.37±0.03 33.31±1.02 N/A 25.03±4.68 57.55±0.44 41.76±1.58 57.51±1.74 42.89±1.49 61.21±0.02 47.88±0.82 19.51±5.07 44.78±15.66 53.24±7.87 57.73±1.50 - AR 12.7 10.5 8.6 9.7 4.9 9.4 6.4 5.7 6.1 4.6 10.7 7.0 6.4 2.0 
+
+attributed datasets. More detailed results can be found in our conference version paper [51]. On heterogeneous feature datasets (i.e., MM, HF, BC, AA), AGREE shows clear advantages in most cases. In particular, on MM, AGREE shows a clear advantage in ARI, achieving 43.40 versus 34.38 for the best competing method, i.e., DESE. This result supports the effectiveness of aligned encoding in bridging heterogeneous attribute types and preparing unified representations for downstream learning. On pure categorical datasets (i.e., TTT, ZO), AGREE remains highly competitive and performs especially strongly on TTT with an ARI of 83.81 versus 15.42 for the best competing method, i.e., CDC. This reflects the benefit of multi-level encoding and graph construction in capturing categorical dependencies. On pure numerical datasets (i.e., YE, GI, WI, II), it shows clear supe-riority through quaternion representation learning, effectively modeling feature relationships for clustering. 
+
+b) Performance on the Attributed Graph Datasets: Ta-ble III reports the clustering performance of all compared methods, where the cluster number k is set according to the ground-truth labels. Overall, AGREE achieves the best average rank among all methods. It significantly outperforms traditional models and is also competitive with state-of-the-art contrastive learning approaches. AGREE achieves the best results across all metrics on ACM and CORA. In particular, its ARI improves by 2.35 points on ACM and 3.89 points on CORA over the best competing methods. This is mainly because FVP better organizes dis-persed attribute information, while QGE strengthens the joint modeling of attribute semantics and graph topology through a shallow propagation scheme. Beyond these two datasets, AGREE also shows clear advantages over classical baselines (i.e., K-Means and GAE) and most graph autoencoder-based methods (i.e., ARVGAE, DAEGC, DFCN, and EGAE), further demonstrating its stronger representation ability. On WIKI, 2 4 6 8 10 
+
+#Layers 
+
+> 0.30
+> 0.45
+> 0.60
+> 0.75
+> ARI
+
+Dataset @ ACM     
+
+> AGREE-QGE
+> AGREE-GCN
+> 246810
+
+#Layers 
+
+> 0.35
+> 0.40
+> 0.45
+> 0.50
+
+Dataset @ CORA     
+
+> AGREE-QGE
+> AGREE-GCN
+> 246810
+
+#Layers 
+
+> 0.44
+> 0.48
+> 0.52
+> 0.56
+> 0.60
+
+Dataset @ AMAP 
+
+> AGREE-QGE
+> AGREE-GCN
+
+Fig. 3: Comparison of ARI between AGREE and the real-valued GCN counterpart on ACM, CORA, and AMAP under increasing encoder depth. FILM, WISC, and UAT, AGREE remains highly competitive against recent contrastive learning-based methods (i.e., MAGI, CONVERT, GLAC, CCGC, and SCDGN) and structure-oriented methods (i.e., CDC and DESE). These datasets are relatively noisy or have less reliable graph structures, where explicit discriminative objectives or structural optimization may yield sharper cluster boundaries. Nevertheless, AGREE still achieves comparable results without explicit contrastive supervision, highlighting the effectiveness of the learned quaternion representations. 
+
+c) Statistical Significance Analysis: To further verify the reliability of the observed improvements, the Wilcoxon signed-rank test is conducted on ACC, NMI, and ARI between AGREE and the compared methods. The results show that AGREE achieves statistically significant improvements over all baselines on the mixed-type attributed datasets and remains significant against most baselines on attributed graph datasets. Detailed results are provided in online Appendix I-A. To analyze the OS effect, AGREE-QGE is compared with a real-valued counterpart, AGREE-GCN, in which the quater-nion graph encoder is replaced by a standard GCN encoder while the other components remain unchanged. Both models are evaluated on ACM, CORA, and AMAP with 2, 4, 6, 8, and IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 11 0.05 0.10 0.15     
+
+> Perturbation Ratio
+> 0.30
+> 0.45
+> 0.60
+> 0.75
+> 0.90
+> Topo-Perturb. Align. @ ACM
+> AGREE-QGE
+> AGREE-GCN
+> 0.05 0.10 0.15
+> Perturbation Ratio
+> 0.30
+> 0.45
+> 0.60
+> 0.75
+> Topo-Perturb. Align. @ CORA
+> AGREE-QGE
+> AGREE-GCN
+> 0.05 0.10 0.15
+> Perturbation Ratio
+> 0.30
+> 0.45
+> 0.60
+> 0.75
+> Topo-Perturb. Align. @ AMAP
+> AGREE-QGE
+> AGREE-GCN
+
+Fig. 4: Comparison of the alignment between the embeddings learned from the original and perturbed graphs for AGREE and its real-valued GCN counterpart on datasets ACM, CORA, and AMAP under different perturbation ratios. Higher values indicate that the learned representation is more robust to topological influence. 0.0 0.05 0.1 0.15       
+
+> Perturbation Ratio
+> 0.15
+> 0.30
+> 0.45
+> 0.60
+> 0.75
+> ARI @ ACM
+> AGREE-QGE
+> AGREE-GCN
+> 0.0 0.05 0.1 0.15
+> Perturbation Ratio
+> 0.35
+> 0.40
+> 0.45
+> 0.50
+> ARI @ CORA
+> AGREE-QGE
+> AGREE-GCN
+> 0.0 0.05 0.1 0.15
+> Perturbation Ratio
+> 0.40
+> 0.44
+> 0.48
+> 0.52
+> 0.56
+> ARI @ AMAP
+> AGREE-QGE
+> AGREE-GCN
+
+Fig. 5: Comparison of ARI between AGREE and its real-valued GCN counterpart on datasets ACM, CORA, and AMAP under different perturbation ratios. 10 graph-encoding layers. Since OS is typically reflected by representation degradation under repeated graph propagation, this comparison allows the effect of increasing depth to be examined more directly. Fig. 3 reports the ARI results. As the encoder depth increases, both models show clear performance degradation, which is consistent with the OS effect under re-peated graph propagation. By contrast, AGREE-QGE degrades more slowly on ACM and AMAP, and remains slightly more stable on CORA. These results suggest that QGE alleviates OS by improving representation learning at shallow depth and reducing the need for deeper propagation. 
+
+2) Effectiveness of QGE on Mitigating Over-smoothing (OS): 3) Quantitative Analysis of the Over-dominating (OD): To analyze the OD effect, a topology-perturbation experiment is conducted on ACM, CORA, and AMAP. AGREE and the real-valued counterpart AGREE-GCN are both evaluated with two graph-encoding layers. Cross-class edges are injected into the graph according to each node’s degree, with perturbation ratios of 0, 0.05, 0.1, and 0.15. Since OD is reflected by the suscepti-bility of learned representations to excessive topological influ-ence, incorrect topological perturbations are expected to distort the learned embeddings and clustering results more severely. Accordingly, topology-perturbation alignment is measured by CKA [52], which evaluates the similarity between the em-beddings learned from the original and perturbed graphs, and clustering performance is measured by ARI. Figs. 4 and 5 show that, as the perturbation ratio increases, both representation consistency and clustering performance generally decline on ACM, CORA, and AMAP. This is consistent with the OD effect, since incorrect topology in-2 4 6 8 10 12                            
+
+> Number of Clusters ( k)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> ACM @ SC
+> 246810 12
+> Number of Clusters ( k)
+> 0
+> 1
+> 2
+> 3
+> 4
+> ACM @ DBI
+> 246810 12
+> Number of Clusters ( k)
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> ×10 4ACM @ CHI
+> 246810 12
+> Number of Clusters ( k)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> CITESEER @ SC
+> 246810 12
+> Number of Clusters ( k)
+> 1
+> 2
+> 3
+> 4
+> 5
+> CITESEER @ DBI
+> 246810 12
+> Number of Clusters ( k)
+> 0
+> 1
+> 2
+> ×10 4CITESEER @ CHI
+> CCGC
+> EGAE
+> CONVERT
+> SCDGN
+> MAGI
+> GLAC
+> CDC
+> DESE
+> AGREE (Ours)
+
+Fig. 6: Clustering performance comparison under different numbers of clusters k, evaluated by the internal metrics SC, DBI, and CHI. Higher values indicate better performance for SC and CHI, while lower values are preferred for DBI. creasingly distorts the learned representations and clustering results. Compared with AGREE-GCN, AGREE-QGE main-tains higher representation consistency on most perturbation settings and usually exhibits a slower ARI degradation trend. These results suggest that QGE is less sensitive to incorrect topological influence during representation learning. 
+
+4) Separability and Universality Evaluation of Representa-tions: To assess the effectiveness of AGREE under varying numbers of clusters, its performance is compared with the strongest baselines in Table III (i.e., EGAE, CCGC, CON-VERT, SCDGN, MAGI, GLAC, DESE, and CDC) using internal metrics (i.e., SC, DBI, and CHI). As shown in Fig. 6, AGREE shows stronger overall performance over most k ranges and metrics, highlighting the strong separa-bility and robustness of the learned embeddings. Moreover, since AGREE does not rely on the ground-truth number of clusters during training, the same learned representation can be directly evaluated under different k values without retraining, which further demonstrates its universality. More specific observations are as follows: 1) As k increases, the performance of all methods tends to decline slightly. This is because internal metrics emphasize inter-cluster separation and intra-cluster compactness, while larger k usually produces smaller and more compact clusters, making the metric values gradually converge and become less sensitive to performance differences. 2) The k values in Figure 6 include the ground-truth cluster numbers listed in Table I. At these true k values, AGREE still maintains superior performance, further demon-strating the strong separability of its learned representations. 
+
+5) Ablation Studies: a) Ablation Study on Attributed Graph Data: Table IV reports the clustering performance on attributed graph data. Here, Baseline refers to the real-valued counterpart of AGREE, consisting of one MLP followed by two GCN encoders. Three IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 12 
+
+TABLE IV: Ablation study of the key modules of AGREE on attributed graph datasets. The best and second-best results are marked in boldface and underline, respectively.                                                                                                                                                     
+
+> Dataset Metric Baseline w/o FVP w/ Complex GE w/o βAGREE
+> ACM ACC 89.34 89.90 88.79 90.44 90.53
+> NMI 64.54 65.80 63.81 67.48 67.67
+> ARI 70.92 72.27 69.67 73.70 73.93
+> WIKI ACC 51.60 51.57 52.27 53.16 52.59 NMI 49.15 47.91 48.68 50.13 50.01 ARI 32.43 31.99 28.31 34.24 34.35
+> CITE ACC 65.73 66.21 66.64 67.31 67.41
+> NMI 40.24 40.44 41.06 41.08 41.14
+> ARI 40.72 41.28 41.44 42.07 42.17
+> DBLP ACC 67.89 71.41 64.70 69.93 72.45
+> NMI 35.20 38.15 34.60 37.80 39.58
+> ARI 35.48 39.73 27.90 38.15 40.96
+> FILM ACC 26.95 27.41 29.51 27.42 26.84 NMI 1.12 1.28 2.04 1.49 1.39 ARI 1.76 1.97 2.95 1.86 1.74 CORA ACC 72.73 73.12 71.53 70.89 73.28
+> NMI 55.84 55.13 55.31 53.25 56.22
+> ARI 51.44 50.61 48.43 48.05 51.34 WISC ACC 40.92 43.03 42.47 43.63 44.14
+> NMI 13.54 16.09 9.86 16.40 16.59
+> ARI 8.03 9.37 0.71 9.78 10.38
+> UAT ACC 53.68 53.71 52.66 53.47 53.82
+> NMI 23.69 23.77 23.68 23.68 24.03
+> ARI 21.87 22.36 21.39 22.11 22.38
+> AMAP ACC 73.23 74.69 71.42 77.00 77.00
+> NMI 61.13 63.65 62.33 69.01 69.01
+> ARI 53.81 55.53 51.61 59.85 59.85
+> -AR 4.60 3.75 4.22 2.87 1.88
+
+additional variants are considered: AGREE w/o FVP (FVP replaced by a linear layer), AGREE w/ Complex GE (QGE replaced by a complex-valued graph encoder), and AGREE w/o β (Lsc removed), together with the full AGREE model. Comparisons with these variants reveal the respective roles of FVP, QGE, and the clustering-oriented loss in enhancing attribute preservation, extraction, and adaptability. Several observations can be drawn: 1) Adaptability: AGREE surpasses the Baseline in 26/27 cases, highlighting the adaptability of FVP and QGE in representation learning. 2) Role of FVP: AGREE outperforms w/o FVP in 26/27 cases, confirming FVP as a necessary pre-phase for QGE. Without FVP, the four MLPs become unlearnable, reducing FVP to a random projection and failing to generate suitable feature quaternions for QGE. 3) Role of QGE: AGREE exceeds w/o QGE in 24/27 cases. It should be noted that this variant is already a stronger substitution than a standard real-valued GCN, since complex-valued representation learning still preserves hyper-complex feature coupling to some extent. Even under this stronger setting, AGREE remains stronger overall. This sug-gests that quaternion representation learning provides stronger expressive power than its lower-dimensional hyper-complex counterpart for modeling attribute interactions and alleviating the OD effect. 4) Cluster-oriented loss: AGREE outperforms w/o β in 24/27 cases, demonstrating that Lsc enhances rep-resentation learning by guiding optimization toward more clustering-friendly embeddings. 
+
+b) Ablation Study on Mixed-Type Attributed Data: Ta-ble V reports the ablation results on mixed-type attributed data. Here, Baseline refers to the GAE, equipped with KL TABLE V: Ablation study of the key modules of AGREE on mixed-type attributed datasets. AE represents the mixed-typed attributed graph aligned encodings, and QRL represents the quaternion representation learning. The best and second-best results are marked in boldface and underline, respectively.                                                                                   
+
+> Dataset Metric Baseline Baseline + AE Baseline + QRL AGREE
+> MM ACC 54.99 53.46 68.19 82.96
+> NMI 0.77 0.73 9.97 34.87
+> ARI 0.89 0.52 13.13 43.40
+> HF ACC 62.61 70.80 65.28 71.37
+> NMI 2.18 6.06 4.04 10.92
+> ARI 5.13 13.10 8.11 16.63
+> BC ACC 70.28 52.45 54.62 72.03
+> NMI 6.27 1.81 0.85 8.66
+> ARI 13.66 -0.77 0.60 17.00
+> AA ACC 52.02 53.47 63.46 63.56
+> NMI 0.13 0.73 4.49 4.71
+> ARI -1.23 0.52 3.86 3.75 TTT ACC 60.34 61.38 61.53 95.74
+> NMI 1.24 1.90 4.61 76.33
+> ARI 3.40 4.44 5.25 83.81
+> ZO ACC 65.05 53.57 70.30 80.20
+> NMI 63.45 0.75 75.71 82.12
+> ARI 49.88 0.53 56.17 77.33
+> -AR 3.28 3.28 2.33 1.11 0.02
+> 0.04
+> 0.06
+> 0.08
+> 0.10
+> 0.12
+> ARI @ HF
+> V+O
+> VF+O
+> VFT+O
+> VFT+OH
+> 0.01
+> 0.02
+> 0.03
+> 0.04
+> ARI @ AA
+> V+O
+> VF+O
+> VFT+O
+> VFT+OH
+> 0.730
+> 0.735
+> 0.740
+> 0.745
+> 0.750
+> 0.755
+> 0.760
+> ARI @ ZO
+> V+O
+> VF+O
+> VFT+O
+> VFT+OH
+
+Fig. 7: Comparison of ARI for the progressive alignment ab-lation on mixed-type attributed data. Here, V, F, and T denote value-, feature-, and attribute-type encoding, respectively. O
+
+denotes the proposed object-level graph construction, while 
+
+OH denotes the one-hot similarity graph. loss, one-hot encoding, and Euclidean distance-based graph construction (Remark 3). Three additional variants are con-sidered: Baseline+AE (with the aligned encoding module), Baseline+QRL (with the quaternion representation learning module), and the full AGREE model. Several observations can be drawn: 1) Baseline+AE yields no notable improve-ment, as AE mainly captures hierarchical couplings, which alone are insufficient to enhance representation learning and may introduce redundancy without a complementary mech-anism. 2) Baseline+QRL achieves superior performance on datasets such as AA and MM, reflecting QRL’s ability to extract meaningful features from data with limited infor-mation richness. However, its performance declines on BC, likely due to the absence of AE, which limits hierarchical coupling encoding and hinders QRL’s pattern learning. 3) The advantage of AGREE over Baseline+QRL is marginal on AA because most categorical features are Boolean-valued and largely independent, diminishing AE’s effect. Since both models use QRL, which improves representation flexibility, their performance remains similar on AA while exceeding that of Baseline and Baseline+AE. (4) Overall, the full AGREE achieves substantial gains across most datasets, demonstrating that AE and QRL are mutually complementary: AE provides IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 13 
+
+structured encoding, while QRL enhances coupling learning, together producing more comprehensive and discriminative representations for clustering. To evaluate the contribution of each alignment level, an ablation study is conducted. Specifically, the aligned encoding is introduced incrementally from Value-level encoding to 
+
+Feature-level and attribute-Type encodings on the proposed 
+
+Object-level graph. For comparison, the proposed graph O
+
+is also replaced with a One-Hot similarity graph to assess its contribution. Fig. 7 reports the corresponding clustering performance in terms of ARI. On AA and ZO, VFT+O 
+
+achieves best performance, highlighting the value of the richer alignment design in AGREE. On HF, performance remains similar across different encoding variants, suggesting that lower-level statistics are already sufficient. However, replacing the proposed object-level graph O leads to clear degradation on all three datasets, confirming the effectiveness of the proposed graph construction in alleviating attribute heterogeneity and preserving clustering-relevant structure. Overall, although the benefit of richer alignment varies across datasets, the full aligned encoding provides a more complete and generally effective design for mixed-type attributed data clustering. 
+
+6) Efficiency Analysis: To evaluate the efficiency of AGREE under increasing graph size, node-scaling experiments are conducted on sampled subgraphs of ogbn-arxiv from the Open Graph Benchmark (OGB) [53]. The results show that AGREE scales steadily with graph size and maintains compet-itive runtime and memory efficiency, demonstrating acceptable scalability under the evaluated settings. Detailed experimental settings and results are provided in online Appendix I-B. 
+
+C. Qualitative Results 
+
+To provide an intuitive view of the learned representations, Figure 8 visualizes the embeddings generated by several com-petitive methods on ACM (i.e., CCGC, EGAE, CONVERT, SCDGN, MAGI, DESE, CDC, and AGREE) using t-SNE [54]. Different colors denote the ground-truth clusters, and the corresponding NMI values are also reported. Overall, AGREE, MAGI, and CCGC exhibit the clearest cluster separation, which is consistent with their performance on the external metrics. Among them, AGREE shows the most favorable balance between intra-cluster compactness and inter-cluster separability. EGAE and DESE also produce relatively compact local groups, but their global cluster boundaries are less dis-tinct. By contrast, the remaining methods show more overlap among clusters, indicating weaker discriminative structure in the learned embeddings. These observations are consistent with the quantitative results on ACM and further suggest that AGREE learns more clustering-friendly representations by better integrating attribute semantics with graph structure. VI. C ONCLUSION 
+
+This paper proposes AGREE, a novel any-type attributed graph clustering method for unified representation learning on attributed graphs and heterogeneous attribute data. To reduce attribute heterogeneity and improve the coordination between CCGC | NMI: 65.36 EGAE | NMI: 56.09 CONVERT | NMI: 47.45 SCDGN | NMI: 51.63    
+
+> MAGI | NMI: 66.00 DESE | NMI: 61.29 CDC | NMI: 53.51 AGREE (Ours) | NMI: 67.50
+
+Fig. 8: t-SNE visualization of the ACM dataset produced by eight representative methods and AGREE. Different colors de-note ground-truth clusters, and the corresponding NMI values are also reported. attributes and graph structure, AGREE introduces a multi-level aligned encoding scheme together with similarity graph construction to improve the comparability and organization of mixed-type attributes for subsequent learning. It then in-corporates quaternion representation learning to strengthen structured feature interaction. Specifically, Four-View Projec-tion organizes arbitrary-dimensional attributes into quaternion-compatible inputs, and the subsequent quaternion graph learn-ing process enhances cross-view interaction and attribute-side modeling, thereby helping alleviate the OD effect. Its shallow yet expressive architecture also helps alleviate the OS effect. Under the joint optimization of graph reconstruction and clus-tering objectives, AGREE learns embeddings with improved semantic consistency and clustering discrimination. This work also identifies the OD effect in graph clustering, offering a useful perspective for understanding topology-dominated rep-resentation behavior. In addition, AGREE extends quaternion-based graph learning to more general attributed data settings, and its learned embeddings can be reused under different candidate k values without retraining. Experimental results on diverse benchmarks demonstrate the effectiveness, robustness, and adaptability of AGREE. Future work will extend to more complex graph data forms and more challenging real-world settings, such as federated graph learning. Potential bias in-troduced by skewed or imbalanced attributes in heterogeneous clustering will also be explored to broaden practical impact. REFERENCES [1] H. Zhang, P. Li, R. Zhang, and X. Li, “Embedding graph auto-encoder for graph clustering,” IEEE Transactions on Neural Networks and Learning Systems , 2022. [2] S. Pan, R. Hu, G. Long, J. Jiang, L. Yao, and C. Zhang, “Adversarially regularized graph autoencoder for graph embedding,” in Proceedings of the International Joint Conference on Artificial Intelligence , pp. 2609– 2615, 2018. [3] X. Yang, Y. Liu, S. Zhou, S. Wang, W. Tu, Q. Zheng, X. Liu, L. Fang, and E. Zhu, “Cluster-guided contrastive graph clustering network,” in Proceedings of the AAAI Conference on Artificial Intelligence ,pp. 10834–10842, 2023. [4] Z. Kang, X. Xie, B. Li, and E. Pan, “CDC: A simple framework for complex data clustering,” IEEE Transactions on Neural Networks and Learning Systems , vol. 36, no. 7, pp. 13177–13188, 2025. [5] T. N. Kipf and M. Welling, “Semi-supervised classification with graph convolutional networks,” in Proceedings of the International Conference on Learning Representations , 2017. IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 14 
+
+[6] C. Wang, S. Pan, R. Hu, G. Long, J. Jiang, and C. Zhang, “Attributed graph clustering: A deep attentional embedding approach,” in Proceed-ings of the International Joint Conference on Artificial Intelligence ,pp. 3670–3676, 2019. [7] Z. Shen and Z. Kang, “When heterophily meets heterogeneous graphs: Latent graphs guided unsupervised representation learning,” IEEE Trans-actions on Neural Networks and Learning Systems , vol. 36, no. 6, pp. 10283–10296, 2025. [8] Y. Zhang, R. Zou, Y. Zhang, Y. Zhang, Y.-M. Cheung, and K. Li, “Adaptive micro partition and hierarchical merging for accurate mixed data clustering,” Complex & Intelligent Systems , vol. 11, no. 1, pp. 1–14, 2025. [9] V. Batagelj, H.-H. Bock, A. Ferligoj, and A. ˇZiberna, eds., Data Science and Classification . Studies in Classification, Data Analysis, and Knowledge Organization, Springer, 2006. [10] Y. Zhang and Y.-M. Cheung, “Graph-based dissimilarity measurement for cluster analysis of any-type-attributed data,” IEEE Transactions on Neural Networks and Learning Systems , vol. 34, no. 9, pp. 6530–6544, 2023. [11] Y. Zhang, Y.-M. Cheung, and A. Zeng, “Het2Hom: Representation of heterogeneous attributes into homogeneous concept spaces for categorical-and-numerical-attribute data clustering,” in Proceedings of the International Joint Conference on Artificial Intelligence , pp. 3758– 3765, 2022. [12] Y. Zhang, Y.-M. Cheung, and K. C. Tan, “A unified entropy-based distance metric for ordinal-and-nominal-attribute data clustering,” IEEE Transactions on Neural Networks and Learning Systems , vol. 31, no. 1, pp. 39–52, 2020. [13] C. Zhu, L. Cao, and J. Yin, “Unsupervised heterogeneous coupling learning for categorical representation,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 44, no. 1, pp. 533–549, 2022. [14] T. Parcollet, M. Morchid, and G. Linar` es, “A survey of quaternion neural networks,” Artificial Intelligence Review , vol. 53, pp. 2957–2982, 2020. [15] M. Zhao, Z. Huang, Y. Lu, M. Li, Y. Zhang, W. Su, and Y.-M. Cheung, “Break the tie: Learning cluster-customized category relationships for categorical data clustering,” in Proceedings of the AAAI Conference on Artificial Intelligence , pp. 28715–28723, 2026. [16] Y. Zhang and Y.-M. Cheung, “An ordinal data clustering algorithm with automated distance learning,” in Proceedings of the AAAI Conference on Artificial Intelligence , vol. 34, pp. 6869–6876, 2020. [17] Y. Zhang and Y.-M. Cheung, “Learnable weighting of intra-attribute distances for categorical data clustering with nominal and ordinal attributes,” IEEE Transactions on Pattern Analysis and Machine Intelli-gence , vol. 44, no. 7, pp. 3560–3576, 2022. [18] M. Zhao, S. Feng, Y. Zhang, M. Li, Y. Lu, and Y.-M. Cheung, “Learning order forest for qualitative-attribute data clustering,” in Proceedings of the European Conference on Artificial Intelligence , pp. 1943–1950, 2024. [19] Y. Zhang, M. Zhao, H. Jia, M. Li, Y. Lu, and Y.-M. Cheung, “Categorical data clustering via value order estimated distance metric learning,” 
+
+Proceedings of the ACM on Management of Data , vol. 3, no. 6, pp. 1–24, 2025. [20] S. Cai, Y. Zhang, X. Luo, Y.-M. Cheung, H. Jia, and P. Liu, “Robust cat-egorical data clustering guided by multi-granular competitive learning,” in Proceedings of the IEEE International Conference on Distributed Computing Systems , pp. 288–299, 2024. [21] Y. Zhang, M. Zhao, Y. Chen, Y. Lu, and Y.-M. Cheung, “Learning unified distance metric for heterogeneous attribute data clustering,” 
+
+Expert Systems with Applications , vol. 273, p. 126738, 2025. [22] M. Mohammadi, K. Berahmand, S. Azizi, R. Sheikhpour, and H. Khos-ravi, “Semi-supervised adaptive symmetric nonnegative matrix factoriza-tion for multi-view clustering,” IEEE Transactions on Network Science and Engineering , vol. 12, no. 6, pp. 4967–4981, 2025. [23] Y. Yang, L. Hu, G. Li, D. Li, P. Hu, and X. Luo, “FMvPCI: A multiview fusion neural network for identifying protein complex via fuzzy clustering,” IEEE Transactions on Systems, Man, and Cybernetics: Systems , vol. 55, no. 9, pp. 6189–6202, 2025. [24] Y. Zhang, S. Wang, W. Huang, C.-D. Wang, and D. Huang, “Unified representation learning for multi-view clustering by between/within view deep majorization,” IEEE Transactions on Emerging Topics in Computational Intelligence , vol. 8, no. 1, pp. 615–626, 2024. [25] M.-S. Chen, Z.-Y. Li, J.-Q. Lin, C.-D. Wang, and D. Huang, “Sparse graph tensor learning for multi-view spectral clustering,” IEEE Transac-tions on Emerging Topics in Computational Intelligence , vol. 8, no. 5, pp. 3534–3543, 2024. [26] W. Tu, S. Zhou, X. Liu, X. Guo, Z. Cai, E. Zhu, and J. Cheng, “Deep fusion clustering network,” in Proceedings of the AAAI Conference on Artificial Intelligence , pp. 9978–9987, 2021. [27] J. Chen, Y. Lu, M. Li, C. Yang, Y. Zhang, and Y.-M. Cheung, “HyReaL: Clustering attributed graph via hyper-complex space representation learning,” in Proceedings of the International Conference on Database Systems for Advanced Applications , 2026. [28] X. Yang, C. Tan, Y. Liu, K. Liang, S. Wang, S. Zhou, J. Xia, S. Z. Li, X. Liu, and E. Zhu, “CONVERT: Contrastive graph clustering with reliable augmentation,” in Proceedings of the ACM International Conference on Multimedia , pp. 319–327, 2023. [29] Y. Xu, D. Huang, C. Wang, and J. Lai, “GLAC-GCN: Global and local topology-aware contrastive graph clustering network,” IEEE Transac-tions on Artificial Intelligence , vol. 6, no. 6, pp. 1448–1459, 2025. [30] Y. Ma and K. Zhan, “Self-contrastive graph diffusion network,” in Pro-ceedings of the ACM International Conference on Multimedia , pp. 3857– 3865, 2023. [31] Y. Liu, J. Li, Y. Chen, R. Wu, E. Wang, J. Zhou, S. Tian, S. Shen, X. Fu, C. Meng, W. Wang, and L. Chen, “Revisiting modularity maximization for graph clustering: A contrastive learning perspective,” in Proceedings of the ACM SIGKDD Conference on Knowledge Discovery and Data Mining , pp. 1968–1979, 2024. [32] Q. Tang, W. Zhang, Y. Wang, Y. Yang, and Z. Lu, “Node clustering on attributed graph using anchor sampling strategy and debiasing strategy,” 
+
+IEEE Transactions on Emerging Topics in Computational Intelligence ,vol. 8, no. 4, pp. 3017–3028, 2024. [33] J. Zhang, H. Peng, L. Sun, G. Wu, C. Liu, and Z. Yu, “Unsupervised graph clustering with deep structural entropy,” in Proceedings of the ACM SIGKDD Conference on Knowledge Discovery and Data Mining ,ACM, 2025. [34] Y. Yang, L. Hu, G. Li, D. Li, P. Hu, and X. Luo, “Link-based attributed graph clustering via approximate generative bayesian learning,” IEEE Transactions on Systems, Man, and Cybernetics: Systems , vol. 55, no. 8, pp. 5730–5743, 2025. [35] M. Mohammadi, K. Berahmand, S. Forouzandeh, X. Zhou, and H. Khosravi, “Dual-view entropy-regularized nonnegative matrix factor-ization for attributed graph clustering,” Information Sciences , vol. 721, p. 122566, 2025. [36] K. Berahmand, M. Mohammadi, R. Sheikhpour, M. Jalili, R. Nayak, and H. Khosravi, “Relative entropy-based regularized non-negative matrix factorization for attributed graph clustering,” ACM Transactions on Knowledge Discovery from Data , vol. 19, no. 9, pp. 1–28, 2025. [37] F. Zhang, “Quaternions and matrices of quaternions,” Linear Algebra and its Applications , vol. 251, pp. 21–57, 1997. [38] S. Zhang, Y. Tay, L. Yao, and Q. Liu, “Quaternion knowledge graph embeddings,” in Advances in Neural Information Processing Systems ,pp. 2731–2741, 2019. [39] K. Oono and T. Suzuki, “Graph neural networks exponentially lose expressive power for node classification,” in Proceedings of the Inter-national Conference on Learning Representations , 2020. [40] Y. Tay, S. Zhang, M. Dehghani, C. S. Ong, D. Bahri, and D. Metzler, “Lightweight and efficient neural natural language processing with quaternion networks,” in Proceedings of the Annual Meeting of the Association for Computational Linguistics , pp. 1498–1508, 2019. [41] D. Bo, X. Wang, C. Shi, M. Zhu, E. Lu, and P. Cui, “Structural deep clustering network,” in Proceedings of the Web Conference , pp. 1400– 1410, 2020. [42] C. Yang, Z. Liu, D. Zhao, M. Sun, and E. Y. Chang, “Network representation learning with rich text information,” in Proceedings of the International Joint Conference on Artificial Intelligence , pp. 2111– 2117, 2015. [43] P. Sen, G. Namata, M. Bilgic, L. Getoor, B. Gallagher, and T. Eliassi-Rad, “Collective classification in network data,” AI Magazine , vol. 29, no. 3, pp. 93–106, 2008. [44] H. Pei, B. Wei, K. C. Chang, Y. Lei, and B. Yang, “Geom-GCN: Geomet-ric graph convolutional networks,” in Proceedings of the International Conference on Learning Representations , 2020. [45] Y. Liu, J. Xia, S. Zhou, X. Yang, K. Liang, C. Fan, Y. Zhuang, S. Z. Li, X. Liu, and K. He, “A survey of deep graph clustering: Taxonomy, challenge, application, and open resource,” arXiv preprint arXiv:2211.12875 , 2023. [46] M. Kelly, R. Longjohn, and K. Nottingham, “The uci machine learning repository.” https://archive.ics.uci.edu, 2023. [47] S. Zhou, H. Xu, Z. Zheng, J. Chen, Z. Li, J. Bu, J. Wu, X. Wang, W. Zhu, and M. Ester, “A comprehensive survey on deep clustering: Taxonomy, challenges, and future directions,” CoRR , vol. abs/2206.07579, 2022. IEEE TRANSACTIONS ON EMERGING TOPICS IN COMPUTATIONAL INTELLIGENCE, JUNE 2026 15 
+
+[48] P. J. Rousseeuw, “Silhouettes: A graphical aid to the interpretation and validation of cluster analysis,” Journal of Computational and Applied Mathematics , vol. 20, pp. 53–65, 1987. [49] D. L. Davies and D. W. Bouldin, “A cluster separation measure,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 1, no. 2, pp. 224–227, 1979. [50] T. Cali´ nski and J. Harabasz, “A dendrite method for cluster analysis,” 
+
+Communications in Statistics , vol. 3, no. 1, pp. 1–27, 1974. [51] J. Chen, Y. Ji, R. Zou, Y. Zhang, and Y.-M. Cheung, “QGRL: Quaternion graph representation learning for heterogeneous feature data clustering,” in Proceedings of the ACM SIGKDD Conference on Knowledge Discov-ery and Data Mining , pp. 297–306, 2024. [52] S. Kornblith, M. Norouzi, H. Lee, and G. Hinton, “Similarity of neural network representations revisited,” in Proceedings of the International Conference on Machine Learning , pp. 3519–3529, 2019. [53] W. Hu, M. Fey, M. Zitnik, Y. Dong, H. Ren, B. Liu, M. Catasta, and J. Leskovec, “Open Graph Benchmark: Datasets for machine learning on graphs,” in Advances in Neural Information Processing Systems , 2020. [54] L. Van der Maaten and G. Hinton, “Visualizing data using t-SNE,” 
+
+Journal of Machine Learning Research , vol. 9, no. 11, 2008.

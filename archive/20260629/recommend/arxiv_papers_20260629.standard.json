@@ -1,0 +1,717 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-06-29T21:54:27.093801+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 2,
+    "deep_divecandidates": 5,
+    "deep_cap": 7,
+    "deep_selected": 5,
+    "quick_candidates": 21,
+    "quick_skim_target": 12,
+    "quick_selected": 12
+  },
+  "deep_dive": [
+    {
+      "id": "2606.23533v2",
+      "source": "arxiv",
+      "title": "POTracker: Optimizing Large Language Models for Standard-Compliant Power Outage Report Generation",
+      "abstract": "Recent large language models (LLMs) are good at general text generation, but it is still hard to use them for domain-specific data generation because the output must follow strict formatting and structural rules. Unlike open-ended tasks such as question answering or translation, domain-specific generation must be both semantically correct and compliant with existing guidelines and standards. In this work, we study the nationwide interoperability problem of utility power outage reports in the United States. In practice, outage reports need to be machine-readable (e.g., JSON or XML) and must strictly follow requirements from energy-sector regulatory bodies. To address this problem, we propose POTracker, an optimized LLM for power outage report generation. We fine-tune Qwen2.5-7B-Instruct using our proposed objective. The key contribution is a new loss function, POTrackerLoss, that considers both textual similarity and structural (tag) similarity between the generated report and the ground-truth report. We evaluate POTracker on a dataset of 1,000 power outage reports and compare it with five well-known fine-tuning methods and one rule-based XML conversion method. Results show that POTracker outperforms other fine-tuning approaches, improving overall accuracy by up to 51% and reaching 86.47% structural accuracy for generated power outage reports. In addition, we conduct a human study to assess the quality of the ground-truth standard reports, where domain experts assign the generated labels an average score of 4.03 on a 0--5 scale.",
+      "authors": [
+        "Hung Phan",
+        "Aniroop Naladala",
+        "Dubey Avanindra",
+        "Supryia Chinthavali",
+        "Lunga Dalton",
+        "Ali Jannesari"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-06-22T16:12:50+00:00",
+      "link": "https://arxiv.org/pdf/2606.23533v2",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "LLM optimized for standard-compliant power outage report generation",
+      "llm_evidence_cn": "针对电力停电报告生成优化的LLM，符合标准格式",
+      "llm_evidence": "针对电力停电报告生成优化的LLM，符合标准格式",
+      "canonical_evidence": "针对电力停电报告生成优化的LLM，符合标准格式",
+      "llm_tldr_en": "POTracker optimizes LLMs for generating standard-compliant power outage reports in machine-readable formats, addressing domain-specific generation with strict formatting rules.",
+      "llm_tldr_cn": "本文提出POTracker，针对电力停电报告生成任务优化大语言模型，使其输出符合美国能源监管机构的机器可读格式（如JSON/XML）。通过领域微调与格式约束，解决了开放生成模型在领域特定生成中难以同时保证语义正确性和格式合规性的问题。",
+      "llm_tldr": "本文提出POTracker，针对电力停电报告生成任务优化大语言模型，使其输出符合美国能源监管机构的机器可读格式（如JSON/XML）。通过领域微调与格式约束，解决了开放生成模型在领域特定生成中难以同时保证语义正确性和格式合规性的问题。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "electric power work ticket",
+      "matched_requirement_id": "req-1",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.27651v1",
+      "source": "arxiv",
+      "title": "TeRoR: Decoupled Temporal Rotation with Relational Circular Region for Temporal Knowledge Graph Embedding",
+      "abstract": "In recent years, with the emergence of Temporal Knowledge Graphs (TKGs), research on learning entity and relation representations in TKGs has attracted increasing attention, giving rise to a large number of TKG embedding methods. TeRo is a simple and efficient temporal knowledge graph embedding approach. However, TeRo does not do well in modeling the mapping properties of various relations, such as one-to-many, many-to-one, and many-to-many. Meanwhile, it also has limitations in the expression of temporal information. To address these issues, we propose a novel TKG embedding method named TeRoR. This method divides the temporal evolution of entity embeddings, and conducts independent rotation transformations on head and tail entities in the complex vector space to strengthen temporal information modeling capacity. In terms of relational characteristics, we train a radius to constrain the rotated and translated head entities within a circular region centered on the tail entity, which effectively captures the diverse mapping properties of relations. Experimental results demonstrate that TeRoR achieves competitive performance against state-of-the-art models on four distinct TKG datasets.",
+      "authors": [
+        "Peijia Xie",
+        "Yike Liu",
+        "Chao He",
+        "Huiling Zhu"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-26T02:06:34+00:00",
+      "link": "https://arxiv.org/pdf/2606.27651v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "proposes a temporal knowledge graph embedding method, directly relevant to graph embedding",
+      "llm_evidence_cn": "提出时序知识图谱嵌入方法，直接与图嵌入需求相关",
+      "llm_evidence": "提出时序知识图谱嵌入方法，直接与图嵌入需求相关",
+      "canonical_evidence": "提出时序知识图谱嵌入方法，直接与图嵌入需求相关",
+      "llm_tldr_en": "TeRoR improves temporal knowledge graph embedding by decoupling temporal evolution of entity embeddings and applying independent rotation transformations with relational circular regions, addressing mapping property limitations.",
+      "llm_tldr_cn": "该论文针对时序知识图谱嵌入方法TeRo在建模关系映射属性和时间信息方面的不足，提出TeRoR方法。它分解实体嵌入的时间演化，对头部和尾部实体分别进行独立的旋转变换，并引入关系环形区域来捕获多种映射类型。实验表明TeRoR在多个时序知识图谱基准上优于现有方法。",
+      "llm_tldr": "该论文针对时序知识图谱嵌入方法TeRo在建模关系映射属性和时间信息方面的不足，提出TeRoR方法。它分解实体嵌入的时间演化，对头部和尾部实体分别进行独立的旋转变换，并引入关系环形区域来捕获多种映射类型。实验表明TeRoR在多个时序知识图谱基准上优于现有方法。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph embedding",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.24948v1",
+      "source": "arxiv",
+      "title": "Holographic Memory for Zero-Shot Compositional Reasoning in Knowledge Graphs: A Mechanistic Study of Where and Why It Fails",
+      "abstract": "Knowledge graph embedding (KGE) models predict single-hop links well but have no mechanism for zero-shot compositional queries: multi-hop questions whose relation chains never appeared during training. Holographic Reduced Representations (HRR), which bind and unbind symbols via circular convolution, are a theoretically attractive candidate, since binding is approximately invertible and associative. We test whether this promise holds.   We study two holographic memory variants, real-valued HRR and phase-only Fourier HRR (FHRR), each with a modern Hopfield cleanup, on FB15k-237 over five seeds. Four findings follow. First, both are competitive single-hop retrievers (filtered MRR 0.358 +/- 0.002 for HRR, 0.350 +/- 0.021 for FHRR). Second, neither composes zero-shot: accuracy stays at chance across all cleanup temperatures. Third, the main contribution, we localise the failure mechanistically. A hop-1 probe shows the memory recovers the correct intermediate entity with high fidelity (MRR 0.896 +/- 0.002 for HRR), yet composition still fails even with a verified-correct intermediate. A second probe shows why: posing the ground-truth second-hop fact as a standalone atomic query, bypassing composition entirely, already recovers it at only 0.26 to 0.48x average atomic accuracy, uniformly across relation fan-out. The bottleneck is not the bind-unbind algebra or the cleanup; it is that facts compositional chains pass through are intrinsically harder for the superposed memory to retrieve, a capacity and interference effect present already at a single hop. Fourth, we prove (Lemma 4.1) that FHRR's softmax cleanup is not phase-equivariant, compounding the primary failure on the minority of chains where hop-1 itself errs. Fixing zero-shot composition requires improving retrieval capacity under superposition, not just redesigning the cleanup.",
+      "authors": [
+        "Randhir Kumar"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG",
+        "cs.AI"
+      ],
+      "published": "2026-06-23T07:33:27+00:00",
+      "link": "https://arxiv.org/pdf/2606.24948v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "holographic memory for KG embeddings and reasoning",
+      "llm_evidence_cn": "全息记忆用于知识图谱嵌入与推理",
+      "llm_evidence": "全息记忆用于知识图谱嵌入与推理",
+      "canonical_evidence": "全息记忆用于知识图谱嵌入与推理",
+      "llm_tldr_en": "Studies holographic memory (HRR/FHRR) for zero-shot compositional reasoning in KGs, showing competitive single-hop retrieval but limited multi-hop generalization.",
+      "llm_tldr_cn": "针对知识图谱零样本组合推理问题，系统研究了全息约简表示（HRR）及其变体。实验表明HRR在单跳检索上表现良好，但零样本多跳推理仍存在局限，揭示了记忆方法在图推理中的能力边界。",
+      "llm_tldr": "针对知识图谱零样本组合推理问题，系统研究了全息约简表示（HRR）及其变体。实验表明HRR在单跳检索上表现良好，但零样本多跳推理仍存在局限，揭示了记忆方法在图推理中的能力边界。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph embedding",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2606.28011v1",
+      "source": "arxiv",
+      "title": "From Detection to Action: Using LLM Agents for Fault-Tolerant Control",
+      "abstract": "We propose an agentic Large Language Model (LLM) framework for active Fault-Tolerant Control (FTC) that transforms fault detection outputs into constraint-aware recovery actions grounded in plant-specific knowledge. The approach couples (i) a multi-agent workflow that decomposes operator duties into monitoring, planning, action synthesis, simulation, validation, and reprompting; (ii) a Digital Process Plant Twin (DPPT) that exposes plant data, models, and a simulation service for pre-execution testing; and (iii) a Graph Retrieval-Augmented Generation (Graph RAG) layer built on the CPSMod ontology, which organizes plant knowledge (structure, function, hybrid dynamics, control context, and fault semantics) into a graph that supports relation-aware, multi-hop retrieval for the agents. Corrective actions are generated as minimal-risk state-machine recovery paths and corresponding discrete commands or continuous setpoint adaptations, then validated deterministically against interlocks, envelopes, and dynamic feasibility before any actuation. If no acceptable plan is found within a bounded time window, control is handed to a safety fallback. The framework is evaluated in simulation on two representative benchmarks: a discrete batch Mixing Module and a Continuous Stirred-Tank Reactor (CSTR) under closed-loop PID regulation. Results with lightweight LLMs (GPT-4o-mini and GPT-4.1-mini) show that semantically grounded agents can derive valid recovery decisions within latency budgets compatible with the respective process dynamics, demonstrating a practical pathway from detection to validated corrective action across both discrete and continuous FTC tasks.",
+      "authors": [
+        "Javal Vyas",
+        "Milapji Singh Gill",
+        "Artan Markaj",
+        "Felix Gehlhoff",
+        "Mehmet Mercangöz"
+      ],
+      "primary_category": "eess.SY",
+      "categories": [
+        "eess.SY",
+        "cs.LG"
+      ],
+      "published": "2026-06-26T12:13:58+00:00",
+      "link": "https://arxiv.org/pdf/2606.28011v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "uses Graph RAG with LLM agents for fault-tolerant control",
+      "llm_evidence_cn": "使用图检索增强生成和LLM代理实现容错控制",
+      "llm_evidence": "使用图检索增强生成和LLM代理实现容错控制",
+      "canonical_evidence": "使用图检索增强生成和LLM代理实现容错控制",
+      "llm_tldr_en": "Proposes an agentic LLM framework for fault-tolerant control that integrates a Graph RAG layer built on ontology, enabling relation-aware retrieval and multi-agent workflow.",
+      "llm_tldr_cn": "该论文提出一个基于大语言模型代理的容错控制框架，核心是构建在CPSMod本体之上的图检索增强生成(Graph RAG)层，该层将工厂知识（结构、功能、控制上下文等）组织成图，支持关系感知的检索。框架结合多代理工作流和数字孪生模拟，实现从故障检测到恢复动作的端到端处理。实验表明该方法能有效提升工业控制系统的鲁棒性。该工作对电力工作票领域中的图结构检索生成方法具有重要借鉴意义。",
+      "llm_tldr": "该论文提出一个基于大语言模型代理的容错控制框架，核心是构建在CPSMod本体之上的图检索增强生成(Graph RAG)层，该层将工厂知识（结构、功能、控制上下文等）组织成图，支持关系感知的检索。框架结合多代理工作流和数字孪生模拟，实现从故障检测到恢复动作的端到端处理。实验表明该方法能有效提升工业控制系统的鲁棒性。该工作对电力工作票领域中的图结构检索生成方法具有重要借鉴意义。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "biorxiv-10-64898-2026-06-21-733631-v1",
+      "source": "biorxiv",
+      "title": "Few-Shot Classification of C. elegans Developmental Stages via Explainable Hierarchical Hyperbolic Graph Embeddings",
+      "abstract": "Automated, accurate, and fast developmental-stage classification of C. elegans from microscopy-based morphological images is essential for aging research, drug screening, and disease modeling. However, it remains challenging due to morphological similarities between stages and the limited annotated data. In this work, we propose HyperDev, a hyperbolic few-shot learning framework that addresses these limitations by directly encoding developmental hierarchies in the embedding space, unlike conventional Euclidean approaches that treat stages as independent classes. HyperDev uses Poincare ball geometry, combined with a biologically informed developmental prior, to naturally represent stage relationships. We introduce our self-curated C. elegans dataset spanning seven developmental stages (Egg, L1-L4, Adult, Dauer) with extreme class imbalance (6-8 samples per minority class). HyperDev achieves competitive classification accuracy (76.9-88.3%) while providing intrinsic explainability across nine 7-way few-shot evaluation settings. The learned embeddings exhibited strong biological alignment (Pearson r = 0.669, p < 0.001), while significantly outperforming ProtoNet (r = 0.187), MatchingNet (r = 0.235), and RelationNet (r = 0.464). These results establish hyperbolic geometry as a principled approach to explainable few-shot learning in biological imaging, where understanding learned representations is as critical as predictive performance.\n\nClinical RelevanceBy enabling explainable, data-efficient developmental staging from scarce samples, HyperDev supports improved phenotype quantification for aging research, disease modeling, and drug screening.",
+      "authors": [
+        "Khalid, N.",
+        "Elliott, L.",
+        "Obafemi-Ajayi, T.",
+        "Wunsch, D.",
+        "Scharf, A."
+      ],
+      "primary_category": "bioinformatics",
+      "categories": [
+        "bioinformatics"
+      ],
+      "published": "2026-06-22T00:00:00+00:00",
+      "link": "https://www.biorxiv.org/content/10.64898/2026.06.21.733631v1.full.pdf",
+      "tags": [
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "graph embedding method",
+      "llm_evidence_cn": "图嵌入方法",
+      "llm_evidence": "图嵌入方法",
+      "canonical_evidence": "图嵌入方法",
+      "llm_tldr_en": "Proposes HyperDev, a hyperbolic few-shot learning framework that uses hierarchical graph embeddings with Poincare ball geometry for C. elegans developmental stage classification, achieving superior accuracy over Euclidean baselines in low-data settings.",
+      "llm_tldr_cn": "针对线虫发育阶段分类中标注数据少、阶段间形态相似的问题，提出基于可解释分层双曲图嵌入的少样本学习框架HyperDev，通过庞加莱球几何和生物先验编码发育层级关系。在少样本设定下，该方法显著优于传统欧几里得方法，准确率提升明显。该研究为生物图像分析中少样本分类提供了高效工具，并展示了双曲嵌入在层级结构建模中的优势。",
+      "llm_tldr": "针对线虫发育阶段分类中标注数据少、阶段间形态相似的问题，提出基于可解释分层双曲图嵌入的少样本学习框架HyperDev，通过庞加莱球几何和生物先验编码发育层级关系。在少样本设定下，该方法显著优于传统欧几里得方法，准确率提升明显。该研究为生物图像分析中少样本分类提供了高效工具，并展示了双曲嵌入在层级结构建模中的优势。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph embedding",
+      "matched_requirement_id": "req-5",
+      "selection_source": "fresh_fetch"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2606.22485v1",
+      "source": "arxiv",
+      "title": "VADAOrchestra: Neurosymbolic Orchestration of Adaptive Reasoning Workflows",
+      "abstract": "Decision-making in real-world settings rarely follows a fixed script. Instead, it unfolds as a dynamic reasoning process in which the appropriate course of action evolves as new context and data become available. Traditional Business Process Management systems provide rigor, determinism, and auditability, yet they generally struggle to adapt their execution at runtime. Conversely, agentic systems based on Large Language Models (LLMs) bring flexibility to decision-making, but they are inherently opaque, often unreliable, and suffer from significant scalability constraints when operating over large datasets. To combine these complementary paradigms, we introduce VADAOrchestra, a neurosymbolic framework that models complex workflows as evolving reasoning processes. The framework adopts a hybrid approach: given a user query and a collection of data sources, an LLM-based orchestrator incrementally plans and adapts the workflow. This is encoded as a logic program in a fragment of Datalog+/- where predicates correspond to tool invocations and rules represent both predefined domain dependencies and logic constructs synthesized on demand to manipulate intermediate results. All logical inference tasks are then executed by a state-of-the-art Datalog+/- symbolic engine. This approach provides a verifiable reasoning trace, supporting the auditability and reproducibility of the entire process. Furthermore, by decoupling high-level orchestration from symbolic inference, it addresses scalability concerns, enabling complex reasoning over large datasets through targeted data querying. We evaluate VADAOrchestra on real-world financial use cases, demonstrating faithfulness, scalability, and explainability compared to standard agentic architectures.",
+      "authors": [
+        "Teodoro Baldazzi",
+        "Luigi Bellomarini",
+        "Andrea Coletta",
+        "Michela Iezzi",
+        "Carsten Maple",
+        "Alessandro Pesare",
+        "Emanuel Sallinger"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.DB",
+        "cs.LO"
+      ],
+      "published": "2026-06-21T13:10:48+00:00",
+      "link": "https://arxiv.org/pdf/2606.22485v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "neurosymbolic adaptive reasoning workflow with agent-like orchestration",
+      "llm_evidence_cn": "神经符号自适应推理工作流，类似代理编排",
+      "llm_evidence": "神经符号自适应推理工作流，类似代理编排",
+      "canonical_evidence": "神经符号自适应推理工作流，类似代理编排",
+      "llm_tldr_en": "VADAOrchestra combines LLM agents with BPM to create adaptive reasoning workflows, offering an alternative to fixed CoT for dynamic decision-making.",
+      "llm_tldr_cn": "针对传统业务流程管理缺乏运行时适应性、纯LLM代理系统不可靠且可扩展性差的问题，本文提出VADAOrchestra神经符号框架，将复杂工作流建模为演化推理过程，结合了BPM的严格性和LLM的灵活性。该框架通过自适应编排实现动态决策，无需模型训练即可提升推理能力，为电力工作票等冷启动场景中的思维链替代提供了可行方案。",
+      "llm_tldr": "针对传统业务流程管理缺乏运行时适应性、纯LLM代理系统不可靠且可扩展性差的问题，本文提出VADAOrchestra神经符号框架，将复杂工作流建模为演化推理过程，结合了BPM的严格性和LLM的灵活性。该框架通过自适应编排实现动态决策，无需模型训练即可提升推理能力，为电力工作票等冷启动场景中的思维链替代提供了可行方案。",
+      "llm_tags": [
+        "query:pwt:composite"
+      ],
+      "matched_query_tag": "query:pwt:composite",
+      "matched_query_text": "Papers central to 使用agent memory等方法替代思维链提升模型推理能力，不涉及模型训练, especially work that connects or combines: few-shot learning for power work ticket generation; retrieval augmented generation for rare cases; knowledge graph reasoning for work tickets; improving model generalization in low-resource scenarios; agent memory for reasoning improvement; alternative to chain of thought reasoning; Alternatives to chain of thought reasoning for cold start in power work ticket generation; improve cold start generation with memory enhanced models; how to replace chain of thought with agent memory; memory augmented reasoning without training.",
+      "matched_requirement_id": "req-composite-pwt",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.22485v2",
+      "source": "arxiv",
+      "title": "VADAOrchestra: Neurosymbolic Orchestration of Adaptive Reasoning Workflows",
+      "abstract": "Decision-making in real-world settings rarely follows a fixed script. Instead, it unfolds as a dynamic reasoning process in which the appropriate course of action evolves as new context and data become available. Traditional Business Process Management systems provide rigor, determinism, and auditability, yet they generally struggle to adapt their execution at runtime. Conversely, agentic systems based on Large Language Models (LLMs) bring flexibility to decision-making, but they are inherently opaque, often unreliable, and suffer from significant scalability constraints when operating over large datasets. To combine these complementary paradigms, we introduce VADAOrchestra, a neurosymbolic framework that models complex workflows as evolving reasoning processes. The framework adopts a hybrid approach: given a user query and a collection of data sources, an LLM-based orchestrator incrementally plans and adapts the workflow. This is encoded as a logic program in a fragment of Datalog+/- where predicates correspond to tool invocations and rules represent both predefined domain dependencies and logic constructs synthesized on demand to manipulate intermediate results. All logical inference tasks are then executed by a state-of-the-art Datalog+/- symbolic engine. This approach provides a verifiable reasoning trace, supporting the auditability and reproducibility of the entire process. Furthermore, by decoupling high-level orchestration from symbolic inference, it addresses scalability concerns, enabling complex reasoning over large datasets through targeted data querying. We evaluate VADAOrchestra on real-world financial use cases, demonstrating faithfulness, scalability, and explainability compared to standard agentic architectures.",
+      "authors": [
+        "Teodoro Baldazzi",
+        "Luigi Bellomarini",
+        "Andrea Coletta",
+        "Michela Iezzi",
+        "Carsten Maple",
+        "Alessandro Pesare",
+        "Emanuel Sallinger"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.CL",
+        "cs.DB",
+        "cs.LO"
+      ],
+      "published": "2026-06-21T13:10:48+00:00",
+      "link": "https://arxiv.org/pdf/2606.22485v2",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "neurosymbolic orchestration of adaptive reasoning workflows with LLM agents",
+      "llm_evidence_cn": "利用LLM代理进行自适应推理工作流的神经符号编排",
+      "llm_evidence": "利用LLM代理进行自适应推理工作流的神经符号编排",
+      "canonical_evidence": "利用LLM代理进行自适应推理工作流的神经符号编排",
+      "llm_tldr_en": "Proposes VADAOrchestra, a neurosymbolic framework that models complex workflows as evolving reasoning processes, combining BPM rigor with LLM flexibility.",
+      "llm_tldr_cn": "该论文提出VADAOrchestra，一种神经符号框架，将复杂工作流建模为动态推理过程，结合了业务流程管理的严格性与LLM代理的灵活性。框架支持运行时自适应，可扩展应用于需要推理链调整的场景。尽管未直接涉及记忆，但其对推理工作流的编排方法对改进代理推理能力有启发意义，可作为替代思维链的一种实现思路。",
+      "llm_tldr": "该论文提出VADAOrchestra，一种神经符号框架，将复杂工作流建模为动态推理过程，结合了业务流程管理的严格性与LLM代理的灵活性。框架支持运行时自适应，可扩展应用于需要推理链调整的场景。尽管未直接涉及记忆，但其对推理工作流的编排方法对改进代理推理能力有启发意义，可作为替代思维链的一种实现思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.22645v1",
+      "source": "arxiv",
+      "title": "All Relations Lead to Rome: Automated Knowledge Graph Creation and Question Generation",
+      "abstract": "Large language models have substantially improved information retrieval and question answering; however, existing datasets generally support either vector-based retrieval over unstructured text or reasoning over knowledge graphs, without providing a unified representation that combines both paradigms. Moreover, current benchmarks rarely provide ground-truth entities, relations, and fact-grounded question-answer pairs aligned with the underlying corpus. To address this gap, we introduce All Relations Lead to Rome (ARLtR), a unified framework for automated knowledge graph construction and fact-grounded question-answer generation. ARLtR jointly constructs a knowledge graph, embeddings, and question-answer pairs that are explicitly grounded in extracted entities, relations, and supporting textual evidence. We further instantiate the framework as a historical dataset centered on the Roman Empire, comprising over 19,000 entities, 16,000 chunks, and 8,400 question-answer pairs (https://huggingface.co/datasets/FaynePro/all-relations-lead-to-rome). By tightly coupling symbolic graph representations with dense retrieval representations, ARLtR facilitates the evaluation and development of hybrid retrieval systems and semantic steering approaches within a single coherent resource.",
+      "authors": [
+        "Matthijs Jansen op de Haar",
+        "Tobias Stähle",
+        "Lorenzo Gatti"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.CY"
+      ],
+      "published": "2026-06-21T19:09:54+00:00",
+      "link": "https://arxiv.org/pdf/2606.22645v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "unified framework for KG construction and QA generation combining retrieval and KG reasoning",
+      "llm_evidence_cn": "联合知识图谱构建与问答生成，融合检索与图推理",
+      "llm_evidence": "联合知识图谱构建与问答生成，融合检索与图推理",
+      "canonical_evidence": "联合知识图谱构建与问答生成，融合检索与图推理",
+      "llm_tldr_en": "ARLtR jointly constructs a knowledge graph, embeddings, and fact-grounded QA pairs, unifying vector retrieval and KG reasoning.",
+      "llm_tldr_cn": "现有数据集要么支持基于向量的非结构化文本检索，要么支持知识图谱推理，缺乏统一表示。ARLtR框架自动构建知识图谱、嵌入和基于事实的问答对，同时支持两种范式。实验证明该方法能生成高质量的知识图谱和问答对，为下游检索与推理任务提供坚实基础。有助于图结构检索增强生成的研究。",
+      "llm_tldr": "现有数据集要么支持基于向量的非结构化文本检索，要么支持知识图谱推理，缺乏统一表示。ARLtR框架自动构建知识图谱、嵌入和基于事实的问答对，同时支持两种范式。实验证明该方法能生成高质量的知识图谱和问答对，为下游检索与推理任务提供坚实基础。有助于图结构检索增强生成的研究。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.22807v1",
+      "source": "arxiv",
+      "title": "KaLM-Reranker-V1: Fast but Not Late Interaction for Compressed Document Reranking",
+      "abstract": "As retrieval systems scale, high-quality reranking becomes increasingly important. However, most existing rerankers, whether encoder-based or decoder-based, jointly encode the query and passage, tightly coupling their computation and limiting deployment efficiency as well as flexibility. We present KaLM-Reranker-V1, a fast but not late-interaction (FBNL) reranker that decouples query and passage computation while retaining expressive relevance modeling. Built on an encoder-decoder architecture, KaLM-Reranker-V1 uses the encoder to pre-encode passages with Matryoshka embedding pooling, while the decoder models the system instruction, user instruction, and query intent; cross-attention then captures relevance between the query context and passage representations. This design makes KaLM-Reranker-V1 efficient through decoupled passage encoding, yet not late interaction, by preserving rich relevance modeling through cross-attention. We instantiate KaLM-Reranker-V1 in three sizes, Nano, Small, and Large, with 0.27B, 1B, and 4B activated parameters, respectively. Extensive experiments on BEIR, MIRACL, and LMEB demonstrate that KaLM-Reranker-V1 achieves strong reranking performance with superior efficiency. On BEIR, KaLM-Reranker-V1 achieves state-of-the-art performance, on par with strong industrial models such as the Qwen3-Reranker series; on MIRACL, despite not being extensively trained on multilingual data, KaLM-Reranker-V1 still shows excellent reranking performance. Moreover, on LMEB, reranking models demonstrate a clear advantage, with even the 0.27B Nano model remaining competitive with 7-12B embedding models.",
+      "authors": [
+        "Xinping Zhao",
+        "Jiaxin Xu",
+        "Ziqi Dai",
+        "Xin Zhang",
+        "Shouzheng Huang",
+        "Danyu Tang",
+        "Xinshuo Hu",
+        "Meishan Zhang",
+        "Baotian Hu",
+        "Min Zhang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-22T03:36:31+00:00",
+      "link": "https://arxiv.org/pdf/2606.22807v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "document reranking method that decouples query and passage encoding, relevant to power system document retrieval and generation",
+      "llm_evidence_cn": "解耦查询和段落的文档重排序方法，适用于电力系统文档检索与生成",
+      "llm_evidence": "解耦查询和段落的文档重排序方法，适用于电力系统文档检索与生成",
+      "canonical_evidence": "解耦查询和段落的文档重排序方法，适用于电力系统文档检索与生成",
+      "llm_tldr_en": "KaLM-Reranker-V1 is a fast reranker that decouples query and passage computation using encoder-decoder architecture, applicable to power system document retrieval pipelines.",
+      "llm_tldr_cn": "现有重排序器大多将查询和段落联合编码，限制部署效率。本文提出KaLM-Reranker-V1，采用编码器-解码器架构，编码器使用Matryoshka嵌入池化预编码段落，解码器建模查询意图，通过交叉注意力计算相关性。该方法实现了查询和段落的解耦，在保持精度的同时大幅提升效率，适用于电力系统文档检索生成中的重排序环节。",
+      "llm_tldr": "现有重排序器大多将查询和段落联合编码，限制部署效率。本文提出KaLM-Reranker-V1，采用编码器-解码器架构，编码器使用Matryoshka嵌入池化预编码段落，解码器建模查询意图，通过交叉注意力计算相关性。该方法实现了查询和段落的解耦，在保持精度的同时大幅提升效率，适用于电力系统文档检索生成中的重排序环节。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "power system document retrieval and generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.23199v1",
+      "source": "arxiv",
+      "title": "Bridge the Gaps: Heterogeneous Attributed Graph Clustering via Quaternion Representation Learning",
+      "abstract": "Attributed graph clustering partitions nodes by jointly exploiting node attributes and graph topology. It remains challenging due to attribute heterogeneity and representation degradation during graph learning. Real-world datasets often contain heterogeneous attributes, i.e., numerical and categorical attributes, complicating unified representation learning. This challenge becomes more complex in attributed graphs, where constructing a clustering-friendly graph structure from attributes and topology remains difficult. Under deep graph architectures, repeated graph propagation causes node embeddings to become overly similar, leading to the over-smoothing (OS) effect. Meanwhile, graph representation learning amplifies topological influence, making discriminative attribute information harder to exploit for clustering, an effect we refer to as over-dominating (OD). To bridge these gaps, an end-to-end framework, Any-type attributed Graph REpresentation lEarning (AGREE), is proposed. It unifies attributed graphs and any-type attributed data through multi-level alignment and similarity-based graph construction. Quaternion-based graph convolution strengthens attribute interaction to alleviate OD, while shallow graph architectures help relieve OS. The learned embeddings are jointly optimized for graph reconstruction and clustering, without requiring a predefined number of clusters during training. Experiments on diverse benchmarks show that AGREE achieves strong overall performance in accuracy, robustness, and adaptability.",
+      "authors": [
+        "Xinxi Chen",
+        "Junyang Chen",
+        "Yiqun Zhang",
+        "Chuangming Qiu",
+        "Xiang Zhang"
+      ],
+      "primary_category": "cs.LG",
+      "categories": [
+        "cs.LG"
+      ],
+      "published": "2026-06-22T11:46:07+00:00",
+      "link": "https://arxiv.org/pdf/2606.23199v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "graph representation learning for heterogeneous graphs",
+      "llm_evidence_cn": "异质图的图表示学习",
+      "llm_evidence": "异质图的图表示学习",
+      "canonical_evidence": "异质图的图表示学习",
+      "llm_tldr_en": "Proposes quaternion representation learning for heterogeneous attributed graph clustering, addressing attribute heterogeneity and over-smoothing.",
+      "llm_tldr_cn": "针对异质属性图聚类中属性异构和过平滑问题，提出四元数表示学习方法。利用四元数的旋转特性统一表示数值和类别属性，并设计图传播策略抑制过平滑，在多个数据集上提升聚类效果。",
+      "llm_tldr": "针对异质属性图聚类中属性异构和过平滑问题，提出四元数表示学习方法。利用四元数的旋转特性统一表示数值和类别属性，并设计图传播策略抑制过平滑，在多个数据集上提升聚类效果。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.23875v1",
+      "source": "arxiv",
+      "title": "On the Semantics of Generative SPARQL",
+      "abstract": "We extend SPARQL with a generative query construct, called \\tx{GenOp}, whose evaluation calls a language model and produces typed solution mappings. We define the semantics of the GenOp in the query in a way that maintains the fixed-dataset assumption, on which formal semantics of SPARQL build, and extend solution mappings with values generated by the language model. We formalize the semantics of the extended language over these mappings using a compatibility relation that generalizes equality and supports similarity-based matching between RDF terms and generated values. We analyze the semantic consequences of generative query patterns, focusing on mapping-level recursion induced by the reuse of generated bindings. Under deterministic bounded generation and finite candidate coverage assumptions, we characterize acyclic and stratified fragments with fixpoint semantics, establish algebraic equivalence and semantics-preserving rewrite rules, and provide an executable evaluation method; and we show that data and combined complexity coincide with those of standard SPARQL.",
+      "authors": [
+        "Ratan Bahadur Thapa",
+        "Steffen Staab"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB"
+      ],
+      "published": "2026-06-22T19:21:41+00:00",
+      "link": "https://arxiv.org/pdf/2606.23875v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "generative SPARQL for graph-based RAG",
+      "llm_evidence_cn": "生成式SPARQL支持基于图的检索增强生成",
+      "llm_evidence": "生成式SPARQL支持基于图的检索增强生成",
+      "canonical_evidence": "生成式SPARQL支持基于图的检索增强生成",
+      "llm_tldr_en": "Extends SPARQL with a generative construct GenOp that calls an LLM, enabling graph-based retrieval-augmented generation.",
+      "llm_tldr_cn": "针对RDF图上的检索增强生成问题，提出生成式SPARQL扩展GenOp，允许在查询中调用语言模型生成值。在保持固定数据集假设下定义语义，兼容相似度匹配，为图结构上的检索生成提供了形式化基础。",
+      "llm_tldr": "针对RDF图上的检索增强生成问题，提出生成式SPARQL扩展GenOp，允许在查询中调用语言模型生成值。在保持固定数据集假设下定义语义，兼容相似度匹配，为图结构上的检索生成提供了形式化基础。",
+      "llm_tags": [
+        "query:power-ticket:composite"
+      ],
+      "matched_query_tag": "query:power-ticket:composite",
+      "matched_query_text": "Papers central to 关于图结构的检索生成, especially work that connects or combines: electric power work ticket; retrieval augmented generation for work tickets; power system document retrieval and generation; graph structure learning; graph embedding; Find articles about retrieval generation for electric power work tickets; graph based retrieval augmented generation.",
+      "matched_requirement_id": "req-composite-power-ticket",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.24667v1",
+      "source": "arxiv",
+      "title": "DREAM: Dense Retrieval Embeddings via Autoregressive Modeling",
+      "abstract": "Dense retrieval embedding models are a fundamental component of modern retrieval-based AI systems. Most dense retrievers are trained with contrastive objectives, which require labeled positive and negative document pairs that are often costly and difficult to obtain. In this work, we investigate whether the autoregressive next-token prediction objective of a large language model (LLM) can provide supervision for dense retrieval. The intuition is simple: if a document contains information relevant to a query, conditioning on that document should make the target output easier for the LLM to predict. A key challenge is that the next-token prediction loss is computed inside the LLM, while the retriever is a separate embedding model. To address this challenge, we propose DREAM (Dense Retrieval Embeddings via Autoregressive Modeling), which injects retriever-generated query-document similarity scores into selected attention heads of a frozen LLM. During training, these scores determine how much attention each candidate document receives while the LLM predicts the target output. The resulting prediction loss provides gradients for retriever training through the attention mechanism. We evaluate DREAM on retrieval benchmarks BEIR and RTEB using embedding backbones ranging from 0.5B to 3B parameters. DREAM consistently outperforms existing baselines across different model scales. These results demonstrate that DREAM provides a promising approach for training dense retrievers through autoregressive modeling.",
+      "authors": [
+        "Yixuan Tang",
+        "Yi Yang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-23T15:00:30+00:00",
+      "link": "https://arxiv.org/pdf/2606.24667v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "dense retrieval method applicable to RAG for work tickets",
+      "llm_evidence_cn": "密集检索方法可用于工作票的RAG",
+      "llm_evidence": "密集检索方法可用于工作票的RAG",
+      "canonical_evidence": "密集检索方法可用于工作票的RAG",
+      "llm_tldr_en": "Proposes DREAM, using autoregressive LLM objective to supervise dense retrieval, reducing need for labeled pairs.",
+      "llm_tldr_cn": "针对监督数据稀缺问题，提出DREAM方法，利用自回归语言模型的下一词预测任务为密集检索提供监督信号，无需大量标注对。实验表明该方法在多个检索基准上具有竞争力，为检索增强生成提供新的训练范式。",
+      "llm_tldr": "针对监督数据稀缺问题，提出DREAM方法，利用自回归语言模型的下一词预测任务为密集检索提供监督信号，无需大量标注对。实验表明该方法在多个检索基准上具有竞争力，为检索增强生成提供新的训练范式。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.24204v1",
+      "source": "arxiv",
+      "title": "Unified Dominance Graph for Interval-Predicate Approximate Nearest Neighbor Search",
+      "abstract": "Approximate Nearest Neighbor Search (ANNS) is a core primitive for unstructured data retrieval. Real-world applications--such as temporal databases, financial data analysis, and retrieval-augmented generation--often require hybrid queries whose valid objects are constrained by continuous interval attributes, such as lifespans or price ranges. We study Interval-Predicate ANNS (IPANNS), where validity is determined by a predicate between an object interval and a query interval. Existing range-filtering ANNS (RFANNS) methods are designed for single-dimensional scalar filters, but interval predicates such as containment and overlap rely on two coupled endpoint constraints. Treating endpoints as independent scalar attributes can incur large intersection overhead, while containment-specific methods lack a generalized indexing abstraction. In this paper, we propose the Unified Dominance Graph (UDG), a graph-indexing framework for the closed two-bound conjunctive fragment of IPANNS. For a chosen interval predicate, UDG maps object and query endpoints into a normalized two-dimensional dominance space and builds a dominance-labeled graph over the transformed coordinates. Containment, overlap, and other supported endpoint-bound predicates therefore reuse the same construction and search algorithms after semantic mapping, while each UDG instance remains tied to its selected predicate. UDG compresses query-state-specific proximity graphs into one compact index. To improve graph search under restrictive interval filters, we add validity-preserving patch edges that provide routing choices when few objects remain valid. Extensive evaluations on standard benchmarks and real-world datasets show that UDG achieves stable query performance across multiple interval relations and workloads, significantly outperforming existing hybrid search baselines while maintaining low indexing overhead.",
+      "authors": [
+        "Kwun Hang Lau",
+        "Ruiyuan Zhang",
+        "Elton Chun-Chai Li",
+        "Wun Yu Chan",
+        "Xiaojun Cheng",
+        "Xiaofang Zhou"
+      ],
+      "primary_category": "cs.DB",
+      "categories": [
+        "cs.DB",
+        "cs.IR"
+      ],
+      "published": "2026-06-23T06:46:28+00:00",
+      "link": "https://arxiv.org/pdf/2606.24204v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Unified dominace graph for interval-predicate ANNS applied to RAG",
+      "llm_evidence_cn": "用于RAG的区间谓词近似最近邻搜索的统一支配图",
+      "llm_evidence": "用于RAG的区间谓词近似最近邻搜索的统一支配图",
+      "canonical_evidence": "用于RAG的区间谓词近似最近邻搜索的统一支配图",
+      "llm_tldr_en": "Proposes a unified dominance graph structure to efficiently support interval-predicate ANNS with applications in RAG, reducing filter overhead.",
+      "llm_tldr_cn": "真实应用（如RAG）中经常需要按区间属性（如时间范围）筛选对象。现有方法将区间视为两个独立标量导致效率低下。提出统一支配图（UDG），将区间谓词约束编码为图结构，实现高效的近似最近邻搜索。该方法在RAG中可加速带时间约束的检索，支持知识时效性过滤。实验证明在区间谓词查询上比此前方法快数倍，为图结构辅助RAG提供了新思路。",
+      "llm_tldr": "真实应用（如RAG）中经常需要按区间属性（如时间范围）筛选对象。现有方法将区间视为两个独立标量导致效率低下。提出统一支配图（UDG），将区间谓词约束编码为图结构，实现高效的近似最近邻搜索。该方法在RAG中可加速带时间约束的检索，支持知识时效性过滤。实验证明在区间谓词查询上比此前方法快数倍，为图结构辅助RAG提供了新思路。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.25338v1",
+      "source": "arxiv",
+      "title": "Hybrid-IR: Dual-Path Hybrid Retrieval with Iterative Reasoning for Complex Medical Question Answering",
+      "abstract": "Large language models (LLMs) have shown promising performance across a wide range of biomedical applications, including medical question answering (QA), yet they remain prone to hallucinations and outdated knowledge. Although retrieval-augmented generation (RAG) can alleviate this issue by incorporating external documents, there still exist two fundamental limitations. First, medical knowledge is often fragmented across documents, while most RAG methods rely on a single retrieval path, which makes it challenging to jointly preserve fine-grained semantic information and structured global associations. Second, static retrieval strategies are typically insufficient to support deep reasoning that is important in complex medical QA. In this paper, we present a dual-path retrieval framework with an iterative retrieval-reasoning mechanism termed \"Hybrid-IR\" for complex medical QA. The proposed Hybrid-IR integrates graph-based retrieval for exploration of structured knowledge and dense retrieval for fine-grained semantic matching. Moreover, the reasoning trajectory can be progressively refined through an iterative retrieve-reason loop. Experiments on three widely used medical QA benchmarks demonstrate the effectiveness of our Hybrid-IR.",
+      "authors": [
+        "Sheng Wan",
+        "Jiahui Zhang",
+        "Zicheng Zhao",
+        "Shougang Ren"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-24T03:09:50+00:00",
+      "link": "https://arxiv.org/pdf/2606.25338v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "dual-path hybrid retrieval with iterative reasoning for complex QA",
+      "llm_evidence_cn": "双路径混合检索与迭代推理用于复杂问答",
+      "llm_evidence": "双路径混合检索与迭代推理用于复杂问答",
+      "canonical_evidence": "双路径混合检索与迭代推理用于复杂问答",
+      "llm_tldr_en": "Hybrid-IR uses dual retrieval paths (semantic and structured) with iterative reasoning to improve medical QA accuracy.",
+      "llm_tldr_cn": "检索增强生成（RAG）在医疗问答中存在信息碎片化和推理不足的问题。Hybrid-IR提出双路径混合检索，联合保留细粒度语义和结构化全局关联，并采用迭代推理策略。在多个医疗问答基准上显著优于单路径RAG方法。该方法可迁移至电力工作票等领域的复杂文档检索与推理任务。",
+      "llm_tldr": "检索增强生成（RAG）在医疗问答中存在信息碎片化和推理不足的问题。Hybrid-IR提出双路径混合检索，联合保留细粒度语义和结构化全局关联，并采用迭代推理策略。在多个医疗问答基准上显著优于单路径RAG方法。该方法可迁移至电力工作票等领域的复杂文档检索与推理任务。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph based retrieval augmented generation",
+      "matched_requirement_id": "req-7",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.24526v1",
+      "source": "arxiv",
+      "title": "AGORA: An Archive-Grounded Benchmark for Agentic Workplace Document Reasoning",
+      "abstract": "Large language models are increasingly deployed as agents that reason over documents rather than answer from parametric knowledge. We study archive-grounded reasoning: locating sparse evidence across a large, messy collection of workplace files, reconciling inconsistent terminology, units, and time conventions, and computing an answer. Existing benchmarks address only parts of this setting and none jointly stresses archive-groundedness, agentic exploration, and cross-domain coverage. We introduce Agora, a benchmark pairing 362 questions with eight domain collections of 9,664 authentic documents and 372M tokens, far exceeding any model's context window, so agents must explore deliberately rather than scan exhaustively. Agora is built by an agentic pipeline combining cross-document task synthesis, leakage-preventing obfuscation, and difficulty filtering. Evaluating eight models, we find the task far from solved: even the strongest reaches only 59.4% accuracy, with notable variation across domains.",
+      "authors": [
+        "Honglin Guo",
+        "Qi Zhang",
+        "Yu Zhang",
+        "Weijie Li",
+        "Rui Zheng",
+        "Zhikai Lei",
+        "Qiyuan Peng",
+        "Zhiheng Xi",
+        "Tao Gui",
+        "Qi Zhang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-06-23T12:57:18+00:00",
+      "link": "https://arxiv.org/pdf/2606.24526v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "benchmark for agentic reasoning over workplace documents",
+      "llm_evidence_cn": "面向文档智能agent推理的基准，涉及记忆与探索",
+      "llm_evidence": "面向文档智能agent推理的基准，涉及记忆与探索",
+      "canonical_evidence": "面向文档智能agent推理的基准，涉及记忆与探索",
+      "llm_tldr_en": "AGORA benchmarks agentic document reasoning with 362 questions across 8 domains, forcing agents to explore large collections due to documents exceeding context windows.",
+      "llm_tldr_cn": "本文提出AGORA基准，用于评估大语言模型作为智能体在工作场所文档中的档案推理能力。基准包含362个问题和来自8个领域的9644份真实文档（3.72亿词元），远超任何模型的上下文窗口，迫使智能体进行策略性探索而非穷举扫描，同时要求协调不一致的术语、单位和时间约定。",
+      "llm_tldr": "本文提出AGORA基准，用于评估大语言模型作为智能体在工作场所文档中的档案推理能力。基准包含362个问题和来自8个领域的9644份真实文档（3.72亿词元），远超任何模型的上下文窗口，迫使智能体进行策略性探索而非穷举扫描，同时要求协调不一致的术语、单位和时间约定。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2606.27742v1",
+      "source": "arxiv",
+      "title": "KG2Cypher: Data-Centric Pipeline for Building Enterprise Text-to-Cypher Systems",
+      "abstract": "Enterprise Knowledge Graphs (KGs) are increasingly used for internal search, analytics, and question answering, but building natural-language interfaces for private enterprise graphs remains costly. We present KG2Cypher, a data-centric pipeline for building enterprise text-to-Cypher systems from existing KGs. KG2Cypher first constructs an executable Cypher query from observed graph facts and then uses LLMs to generate its associated natural-language question. The resulting Text-Cypher pairs are validated with an LLM judge and human validation, and are converted into candidate-aware SFT data. The trained generator is served with class-conditioned schema prompting, entity retrieval, and LoRA-based inference. We evaluate KG2Cypher in Korean enterprise settings, where short search-style queries and schema paraphrases make language grounding difficult. LoRA SFT improves execution-result F1 from 0.806 to 0.950 on broadcast-program queries and from 0.70 to 0.92 on company queries. In an 11-class setting, KG2Cypher achieves 95.2% exact match, 99.9% execution rate, and 0.964 execution-result F1.",
+      "authors": [
+        "Minjun Choi",
+        "Yerin Kim",
+        "Junghyuk Seo",
+        "Sujin Mo",
+        "Hyemin Lee",
+        "Youngjoong Ko"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-06-26T05:41:33+00:00",
+      "link": "https://arxiv.org/pdf/2606.27742v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "pipeline for building text-to-Cypher on enterprise knowledge graphs",
+      "llm_evidence_cn": "面向企业知识图谱的文本到Cypher查询构建流水线",
+      "llm_evidence": "面向企业知识图谱的文本到Cypher查询构建流水线",
+      "canonical_evidence": "面向企业知识图谱的文本到Cypher查询构建流水线",
+      "llm_tldr_en": "KG2Cypher builds enterprise text-to-Cypher systems by constructing executable queries from graph facts and generating NL questions, using LLM judge and human validation for SFT data.",
+      "llm_tldr_cn": "本文提出KG2Cypher流水线，用于从现有企业知识图谱构建自然语言到Cypher查询的系统。它首先从图事实构造可执行的Cypher查询，再用LLM生成对应的自然语言问题，经过LLM评审和人工验证后形成候选感知的SFT数据，并通过类条件模式提示、实体检索和LoRA推理提供服务。",
+      "llm_tldr": "本文提出KG2Cypher流水线，用于从现有企业知识图谱构建自然语言到Cypher查询的系统。它首先从图事实构造可执行的Cypher查询，再用LLM生成对应的自然语言问题，经过LLM评审和人工验证后形成候选感知的SFT数据，并通过类条件模式提示、实体检索和LoRA推理提供服务。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "knowledge graph reasoning for work tickets",
+      "matched_requirement_id": "req-10",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2606.24965v1",
+      "source": "arxiv",
+      "title": "Project Auto-World: Towards Automated Benchmarking of Neural Relational Reasoners",
+      "abstract": "Reasoning about relational structures remains a significant challenge for neural models, particularly when they must systematically apply learned knowledge to problem instances that are harder than those seen in training. Progress is hampered by the difficulty of evaluating such generalization, since a priori, it is rarely clear what makes an instance hard. We study how this issue can be addressed by using large language models (LLMs) to automate benchmark generation, learning to produce increasingly challenging instances in an end-to-end manner. Concretely, given a world parametrized by Datalog rules, and an Edge Transformer as the reasoning evaluator, we use LLM-driven evolutionary search (based on FunSearch) and autonomous agentic search to discover sampling functions that yield hard problem instances. We also show that the Edge Transformer can be improved using this data such that it generalizes well to further data perturbations. Finally, we show that the same machinery can be applied to novel worlds proposed by LLMs, opening the door to autonomous research on neural relational reasoning.",
+      "authors": [
+        "Anirban Das",
+        "Joanne Boisson",
+        "Irtaza Khalid",
+        "Sumita Garai",
+        "Steven Schockaert"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI",
+        "cs.LG"
+      ],
+      "published": "2026-06-23T09:36:46+00:00",
+      "link": "https://arxiv.org/pdf/2606.24965v1",
+      "tags": [
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "uses LLM to generate benchmark instances for relational reasoning, relevant to graph structure learning",
+      "llm_evidence_cn": "利用LLM生成关系推理基准实例，与图结构学习相关",
+      "llm_evidence": "利用LLM生成关系推理基准实例，与图结构学习相关",
+      "canonical_evidence": "利用LLM生成关系推理基准实例，与图结构学习相关",
+      "llm_tldr_en": "Auto-World automates benchmark generation for neural relational reasoners using LLM-driven evolutionary search, producing increasingly challenging instances to evaluate systematic generalization.",
+      "llm_tldr_cn": "该论文提出Auto-World框架，利用大语言模型驱动的进化搜索自动生成神经关系推理器的基准测试实例，这些实例从简单逐步过渡到复杂，以评估模型在关系结构上的系统泛化能力。核心方法包括基于Datalog规则的世界参数化和Edge Transformer作为评估器。实验表明该方法能有效产生具有挑战性的实例，揭示现有模型的局限。",
+      "llm_tldr": "该论文提出Auto-World框架，利用大语言模型驱动的进化搜索自动生成神经关系推理器的基准测试实例，这些实例从简单逐步过渡到复杂，以评估模型在关系结构上的系统泛化能力。核心方法包括基于Datalog规则的世界参数化和Edge Transformer作为评估器。实验表明该方法能有效产生具有挑战性的实例，揭示现有模型的局限。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    }
+  ]
+}

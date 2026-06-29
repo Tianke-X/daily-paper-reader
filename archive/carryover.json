@@ -1,56 +1,15 @@
 {
-  "generated_at": "2026-06-28T21:29:45.648888+00:00",
-  "updated_date": "20260628",
+  "generated_at": "2026-06-29T21:54:27.095145+00:00",
+  "updated_date": "20260629",
   "carryover_days": 9,
   "tag_states": {
     "power-ticket": {
-      "updated_date": "20260628",
+      "updated_date": "20260629",
       "carryover_days": 9,
-      "items": [
-        {
-          "id": "biorxiv-10-64898-2026-06-21-733631-v1",
-          "source": "biorxiv",
-          "title": "Few-Shot Classification of C. elegans Developmental Stages via Explainable Hierarchical Hyperbolic Graph Embeddings",
-          "abstract": "Automated, accurate, and fast developmental-stage classification of C. elegans from microscopy-based morphological images is essential for aging research, drug screening, and disease modeling. However, it remains challenging due to morphological similarities between stages and the limited annotated data. In this work, we propose HyperDev, a hyperbolic few-shot learning framework that addresses these limitations by directly encoding developmental hierarchies in the embedding space, unlike conventional Euclidean approaches that treat stages as independent classes. HyperDev uses Poincare ball geometry, combined with a biologically informed developmental prior, to naturally represent stage relationships. We introduce our self-curated C. elegans dataset spanning seven developmental stages (Egg, L1-L4, Adult, Dauer) with extreme class imbalance (6-8 samples per minority class). HyperDev achieves competitive classification accuracy (76.9-88.3%) while providing intrinsic explainability across nine 7-way few-shot evaluation settings. The learned embeddings exhibited strong biological alignment (Pearson r = 0.669, p < 0.001), while significantly outperforming ProtoNet (r = 0.187), MatchingNet (r = 0.235), and RelationNet (r = 0.464). These results establish hyperbolic geometry as a principled approach to explainable few-shot learning in biological imaging, where understanding learned representations is as critical as predictive performance.\n\nClinical RelevanceBy enabling explainable, data-efficient developmental staging from scarce samples, HyperDev supports improved phenotype quantification for aging research, disease modeling, and drug screening.",
-          "authors": [
-            "Khalid, N.",
-            "Elliott, L.",
-            "Obafemi-Ajayi, T.",
-            "Wunsch, D.",
-            "Scharf, A."
-          ],
-          "primary_category": "bioinformatics",
-          "categories": [
-            "bioinformatics"
-          ],
-          "published": "2026-06-22T00:00:00+00:00",
-          "link": "https://www.biorxiv.org/content/10.64898/2026.06.21.733631v1.full.pdf",
-          "tags": [
-            "keyword:pwt",
-            "query:pwt"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "hyperbolic graph embeddings for few-shot classification",
-          "llm_evidence_cn": "双曲图嵌入用于少样本分类",
-          "llm_evidence": "双曲图嵌入用于少样本分类",
-          "canonical_evidence": "双曲图嵌入用于少样本分类",
-          "llm_tldr_en": "Proposes hyperbolic few-shot learning framework using Poincare ball geometry to embed developmental hierarchies for C. elegans stage classification.",
-          "llm_tldr_cn": "本文提出HyperDev，一个双曲少样本学习框架，利用庞加莱球几何在嵌入空间中直接编码发育层级关系，用于显微镜图像中秀丽隐杆线虫发育阶段的分类。相比传统欧氏方法，双曲嵌入自然表征阶段间的层次结构，在少样本场景下显著提高分类准确率，且具有可解释性。",
-          "llm_tldr": "本文提出HyperDev，一个双曲少样本学习框架，利用庞加莱球几何在嵌入空间中直接编码发育层级关系，用于显微镜图像中秀丽隐杆线虫发育阶段的分类。相比传统欧氏方法，双曲嵌入自然表征阶段间的层次结构，在少样本场景下显著提高分类准确率，且具有可解释性。",
-          "llm_tags": [
-            "query:power-ticket"
-          ],
-          "matched_query_tag": "query:power-ticket",
-          "matched_query_text": "graph embedding",
-          "matched_requirement_id": "req-5",
-          "selection_source": "carryover_cache",
-          "paper_id": "biorxiv-10-64898-2026-06-21-733631-v1",
-          "carry_days": 1
-        }
-      ]
+      "items": []
     },
     "pwt": {
-      "updated_date": "20260628",
+      "updated_date": "20260629",
       "carryover_days": 9,
       "items": []
     }

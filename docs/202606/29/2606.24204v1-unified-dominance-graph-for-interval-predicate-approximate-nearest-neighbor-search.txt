@@ -1,0 +1,1222 @@
+Title: Unified Dominance Graph for Interval-Predicate Approximate Nearest Neighbor Search
+
+URL Source: https://arxiv.org/pdf/2606.24204v1
+
+Published Time: Wed, 24 Jun 2026 00:39:31 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Unified Dominance Graph for Interval-Predicate Approximate Nearest Neighbor Search 
+
+Kwun Hang Lau 1, Ruiyuan Zhang 2, Elton Chun-Chai Li 1,Wun Yu Chan 1, Xiaojun Cheng 3, Xiaofang Zhou 1 
+
+> 1
+
+The Hong Kong University of Science and Technology; 2 Hong Kong Generative AI R&D Center;  
+
+> 3
+
+China Unicom (Hong Kong) Operation Ltd 
+
+{khlaube, cceli, wychanbu }@connect.ust.hk; zry@hkgai.org; chengxj31@chinaunicom.cn; zxf@cse.ust.hk 
+
+Abstract —Approximate Nearest Neighbor Search (ANNS) is a core primitive for unstructured data retrieval. Real-world appli-cations—such as temporal databases, financial data analysis, and retrieval-augmented generation—often require hybrid queries whose valid objects are constrained by continuous interval attributes, such as lifespans or price ranges. We study Interval-Predicate ANNS (IPANNS), where validity is determined by a predicate between an object interval and a query interval. Existing range-filtering ANNS (RFANNS) methods are designed for single-dimensional scalar filters, but interval predicates such as containment and overlap rely on two coupled endpoint constraints. Treating endpoints as independent scalar attributes can incur large intersection overhead, while containment-specific methods lack a generalized indexing abstraction. In this paper, we propose the Unified Dominance Graph (UDG), a graph-indexing framework for the closed two-bound conjunctive fragment of IPANNS. For a chosen interval predicate, UDG maps object and query endpoints into a normalized two-dimensional dominance space and builds a dominance-labeled graph over the transformed coordinates. Containment, overlap, and other supported endpoint-bound predicates therefore reuse the same construction and search algorithms after semantic mapping, while each UDG instance remains tied to its selected predicate. UDG compresses query-state-specific proximity graphs into one compact index. To improve graph search under re-strictive interval filters, we add validity-preserving patch edges that provide routing choices when few objects remain valid. Extensive evaluations on standard benchmarks and real-world datasets show that UDG achieves stable query performance across multiple interval relations and workloads, significantly outperforming existing hybrid search baselines while maintaining low indexing overhead. 
+
+Index Terms —high-dimensional data, approximate nearest neighbor search 
+
+I. I NTRODUCTION 
+
+The rapid adoption of approximate nearest neighbor search (ANNS) has made vector similarity search a core primitive for unstructured data retrieval. However, real-world database queries rarely rely on vector similarity alone. Users often issue hybrid queries that combine embedding similarity with structured metadata constraints. This requirement has moti-vated extensive research on range-filtering ANNS (RFANNS), which retrieves the top-k nearest vectors whose associated scalar attributes fall within a specified numeric range [1]– [6]. Although state-of-the-art RFANNS indexes achieve strong performance for one-dimensional scalar attributes, many real-world objects cannot be adequately represented by a single point-valued attribute. Interval attributes arise naturally in temporal databases, multimedia retrieval, financial data analysis, and temporal retrieval-augmented generation. For example, an event or video segment is described by a duration [si, t i]; a stock may fluctuate within a daily price range; and a document, fact, or subscription may be valid only during a specific time interval. Recent work Hi-PNG [7] has recognized the importance of interval-aware hybrid search, but it primarily focuses on containment, where a data interval must be fully contained in the query interval. Containment, however, is only one type of interval relation. In many applications, users need overlap queries, where an object is valid if its interval intersects the query interval. For example, a time-sensitive retrieval system may need to find events, documents, or active subscriptions that overlap a specified month. More generally, a broad class of interval predicates can be expressed as two closed endpoint inequal-ities. Containment requires si ≥ sq and ti ≤ tq , whereas overlap requires ti ≥ sq and si ≤ tq . These predicates differ in which endpoints are compared and in the directions of their inequalities, leading to different dominance geometries over the interval endpoint space. Despite this practical need, efficiently supporting multiple interval predicates is still challenging. Existing RFANNS methods exploit a single total order over scalar attributes. Interval predicates, in contrast, induce a two-dimensional endpoint space: sorting by the start endpoint ignores the end constraint, while sorting by the end endpoint ignores the start constraint. An alternative is to treat an interval [si, t i] as two independent scalar attributes and reduce interval filtering to two RFANNS problems. However, this approach separates two coupled endpoint constraints and can introduce substan-tial candidate-generation and intersection overhead. Similarly, containment-oriented interval indexes do not directly provide a general indexing abstraction for overlap and other closed two-bound relations. To address this gap, we study Interval-Predicate ANNS (IPANNS), where each query combines vector similarity with a predicate between an object interval and a query interval. We propose Unified Dominance Graph (UDG), a graph-indexing framework for the closed two-bound conjunctive fragment 
+
+> arXiv:2606.24204v1 [cs.DB] 23 Jun 2026
+
+of IPANNS. The key idea is to compile a chosen inter-val predicate into a normalized two-dimensional dominance predicate over transformed endpoint coordinates. Once this semantic mapping is fixed, UDG uses the same edge-labeling, construction, and search procedures regardless of whether the original predicate is containment, overlap, or another supported endpoint-bound predicate. This unifies the indexing principle across interval predicates while preserving interval-valid graph traversal. In summary, we make the following contributions.  
+
+> •
+
+We formulate Interval-Predicate ANNS for closed two-bound conjunctive interval predicates, covering contain-ment, overlap, and related endpoint-bound predicates under a unified problem setting.  
+
+> •
+
+We propose Unified Dominance Graph (UDG), a unified graph index that maps different interval predicates into a common transformed coordinate space and supports them with the same framework.  
+
+> •
+
+We prove that UDG provides a structural lossless com-pression of many query-specific proximity graphs into one labeled graph, and analyze its time and space com-plexity. We further design validity-preserving patch edges to improve navigability under restrictive interval filters.  
+
+> •
+
+Extensive experiments on benchmark and real-world datasets show that UDG achieves superior performance for containment, overlap, and additional interval relations, while maintaining low index cost. The source code is available at kwunhang/UDG.git. II. P RELIMINARY 
+
+A. Problem Definition 
+
+We first define Interval-Predicate Approximate Nearest Neighbor Search (IPANNS). Let Rd be a d-dimensional vector space equipped with a distance metric δ. Given two vectors 
+
+u, v ∈ Rd, δ(u, v ) measures their dissimilarity. When the distance function is clear from the context, we omit it from the notation. DEFINITION 1 (Nearest Neighbor Search) Given a query vector q ∈ Rd, an integer k > 0, and a set D of vectors in 
+
+Rd, the k nearest neighbors of q in D, denoted by kNN( q, D),is a subset R ⊆ D of k vectors such that for any u ∈ R and any v ∈ D \ R, δ(u, q ) ≤ δ(v, q ).
+
+In this paper, each data vector is associated with a closed interval attribute, and queries impose interval predicate con-straints during nearest neighbor search. An interval-attributed vector is represented as (vi, [si, t i]) , where vi ∈ Rd is the embedding vector and [si, t i] is its interval attribute with 
+
+si ≤ ti. A query is represented as Q = ( q, [sq , t q ], k, ρ ), where 
+
+q ∈ Rd is the query vector, [sq , t q ] is the query interval, k is the result size, and ρ specifies the interval predicate. IPANNS allows the validity of an object to depend on an interval predicate between the object interval and the query interval. This paper focuses on the predicate class supported by UDG: closed two-bound conjunctive relations. Each relation is the conjunction of two endpoint comparisons. Each comparison relates one data endpoint, either si or ti,to one query endpoint, either sq or tq , using ≥ or ≤. This scope excludes disjunctions, equality-only predicates, strict-only predicates, interval length or gap constraints, and relations requiring three or more endpoint inequalities. The two primary workloads evaluated in this paper are containment and overlap. For containment, a data interval must be fully contained in the query interval: ρcon ([ si, t i], [sq , t q ]) ≡
+
+(si ≥ sq )∧(ti ≤ tq ). For overlap, a data interval must intersect the query interval: ρovl ([ si, t i], [sq , t q ]) ≡ (ti ≥ sq )∧(si ≤ tq ).
+
+Example 1 (Interval predicate queries) . Consider four data intervals A = [1 , 5] , B = [3 , 7] , C = [6 , 9] , and D = [8 , 12] .For a containment query [2 , 10] , the valid objects are B and 
+
+C. For an overlap query [4 , 7] , the valid objects are A, B,and C.
+
+Given a predicate ρ, we denote by Dρ[sq , t q ] ≜ {vi |
+
+(vi, [si, t i]) ∈ D, ρ ([ si, t i], [sq , t q ]) } the subset of vectors whose intervals satisfy the query predicate. DEFINITION 2 (Interval-Predicate Nearest Neighbor Search) 
+
+Given a static dataset D of interval-attributed vectors, a query 
+
+Q = ( q, [sq , t q ], k, ρ ) returns kNN( q, Dρ[sq , t q ]) , i.e., the k
+
+vectors in Dρ[sq , t q ] with the smallest distances to q.
+
+For simplicity of presentation and evaluation, we assume that each generated query has at least k valid vectors in 
+
+Dρ[sq , t q ]. The selectivity of an interval-predicate query is defined as σ(Q) ≜ |D ρ[sq , t q ]|/|D| . Smaller σ(Q) means that fewer objects satisfy the interval predicate, so the query is more restrictive. Restrictive interval predicates induce small valid subgraphs, where graph-based ANNS methods may suffer from poor navigability. Due to the curse of dimensionality [8], following a large body of existing research on approximate nearest neighbor search, this paper studies the approximate version of this task. DEFINITION 3 (Interval-Predicate ANNS, IPANNS) Given a static set D of interval-attributed vectors and a query Q =(q, [sq , t q ], k, ρ ), where ρ is a supported interval predicate, IPANNS aims to return a set kANN( q, Dρ[sq , t q ]) ⊆ D ρ[sq , t q ]
+
+of k vectors, with recall |kANN( q, Dρ[sq ,t q ]) ∩kNN( q, Dρ[sq ,t q ]) | 
+
+> k
+
+.
+
+For ease of reference, the main notations and their meanings are summarized in Table I, which will be referred to through-out the rest of the paper. The key difficulty is that interval-predicate filtering is not a scalar range filter. Containment, overlap, and other closed two-bound conjunctive relations are determined by two coupled endpoint inequalities, so the valid set is not a contiguous slice over one ordered attribute. The next subsection introduces edge-labeled compression as a general way to represent many query-specific proximity graphs, before we show how to instantiate it for interval predicates. 
+
+B. Edge-Labeled Graph Compression for Filtered ANNS 
+
+A direct way to support query-efficient filtered ANNS is to build one ANNS index for every possible query filter condition. While this avoids the cost of evaluating invalid nodes during the search, the storage overhead is prohibitive. TABLE I SUMMARY OF SYMBOLS .Symbol Meaning                               
+
+> D, n Dataset and number of objects
+> viEmbedding vector of object i
+> [si, t i]Closed interval of object iQQuery (q, [sq, t q], k, ρ )
+> q, k Query vector and result size
+> [sq, t q]Query interval
+> δ(·,·)Distance in embedding space
+> ρSupported interval predicate
+> Dρ[sq, t q]Vectors satisfying ρσ(Q)Query selectivity
+> (Xi, Y i)Transformed data coordinates
+> (xq, y q)Transformed query coordinates
+> UX, U YDistinct transformed coordinates
+> (a, c ), V (a, c )Canonical dominance state and its valid object set
+
+Algorithm 1: PRUNE (o, ann, M )
+
+Input: o: a vector; ann : a set of o’s approximate nearest neighbors; M : the max number of neighbors to keep. 
+
+Output: neighbors ⊆ ann : o’s neighbors after pruning  
+
+> 1
+
+neighbors ← ∅ ; 
+
+> 2
+
+Sort ann in ascending order of δ(o, u ), with ties broken by object id;  
+
+> 3
+
+foreach u ∈ ann in sorted order do  
+
+> 4
+
+dominated ← false ; 
+
+> 5
+
+foreach w ∈ neighbors do  
+
+> 6
+
+if δ(o, w ) < δ (o, u ) and δ(w, u ) < δ (o, u ) then  
+
+> 7
+
+dominated ← true and break ; 
+
+> 8
+
+if dominated = false then add u to neighbors ; 
+
+> 9
+
+if |neighbors | ≥ M then break ; 
+
+> 10
+
+return neighbors ;For a dataset of size n, even a simple filtering attribute can induce O(n2) distinct valid subsets, making individual index materialization costly. To resolve this, recent approaches utilize edge-labeled prox-imity graphs [1], [2]. Instead of building multiple graphs, these methods compress them into a single unified structure. For each node u, its neighbor list contains tuples of the form (l, r, v, b, e ), where v is a neighboring vector. The tuple indicates that v is available from u for all range queries 
+
+[sq , t q ], with sq ∈ (l, r ] and tq ∈ [b, e ). For example, a tuple 
+
+(2 , 9, v, 11 , 15) is activated by query range [5 , 13] , but not by 
+
+[10 , 13] or [5 , 16] .The structural property desired of such a graph is lossless compression: for every filter condition, the active edge set should match the dedicated graph that would be built over the corresponding valid vectors. This guarantee assumes exact construction-time neighbor search, while query-time ANNS remains approximate in practice. Prior work established such compression for scalar range filters [1]. Interval filtering requires two coupled inequalities, and extending this guarantee to 2D cross-ordered domains demands a new formal proof. In Section IV-B, we define the exact construction setting used by UDG. III. U NIFIED DOMINANCE ABSTRACTION 
+
+Section II-A defines IPANNS using semantic interval predi-cates. This section introduces the abstraction that makes UDG relation-independent after a one-time semantic mapping step. The key observation is simple: each supported interval relation consists of two endpoint inequalities, and the direction of each inequality can be normalized by selecting and, when necessary, negating the corresponding endpoint coordinate. After this normalization, all supported relations are seen by the index as the same two-dimensional dominance predicate. 
+
+A. From Scalar Range Filtering to Interval Dominance 
+
+Existing RFANNS methods are designed around a single ordered scalar attribute. Graph-based methods such as SeRF, Dynamic RFANNS, and iRangeGraph compress or assemble proximity graphs whose validity is defined over scalar query ranges [1], [2], [6]; dynamic tree-based methods such as DIGRA and PQ-based methods such as RangePQ still organize filtering around the same scalar range semantics [4], [5]. Their common premise is that the filter can be described by one total order: a query selects a contiguous scalar range, and index states or edge labels can be maintained along that order. Interval filtering breaks this premise. The interval predicates targeted by UDG are defined by two coupled endpoint inequal-ities, so choosing the start order ignores the end constraint, choosing the end order ignores the start constraint, and the valid set becomes a two-dimensional dominance region rather than a one-dimensional scalar segment. This mismatch is why interval filtering cannot be obtained by a direct lift of scalar RFANNS. Running two scalar filters and intersecting their outputs separates the endpoint constraints before graph search; the intersection may iden-tify valid objects, but it does not provide the interval-valid proximity graph needed for navigable ANNS. Replacing the scalar range structure with an interval tree or another exact reporting structure can enumerate valid intervals, but the resulting decomposition may span multiple nodes or branches and does not provide the single monotone lifetime over which existing graph labels and compression proofs are defined. Therefore, UDG builds the graph around the native shape of interval predicates: after each supported relation is mapped to dominance coordinates, every query is a two-dimensional dominance state, and every graph edge is labeled by the set of dominance states in which that edge is valid. 
+
+B. Mapping Relations to Dominance 
+
+The physical predicate used by UDG is 
+
+Xi ≥ xq ∧ Yi ≤ yq . (1) Here (Xi, Y i) are transformed data coordinates, and (xq , y q )
+
+are transformed query coordinates. The transformation is ap-plied before index construction, so all later graph operations TABLE II REPRESENTATIVE MAPPINGS FROM INTERVAL SEMANTICS TO THE NORMALIZED DOMINANCE PREDICATE .Relation Original relation Xi xq Yi yq                                                       
+
+> Containment si≥sq∧ti≤tqsisqtitq
+> Overlap ti≥sq∧si≤tqtisqsitq
+> Query-within-data si≤sq∧ti≥tqtitqsisq
+> Both boundaries after si≥sq∧ti≥tqsisq−ti−tq
+> Both boundaries before si≤sq∧ti≤tq−si−sqtitq
+
+are defined over transformed coordinates rather than over relation-specific interval operators. Table II lists the mappings used in this paper for repre-sentative relations. Each row is a semantic mapping into the same dominance-indexing framework, not a separate graph algorithm. The mapping is not unique. It only needs to assign one endpoint comparison to the X axis and the other to the Y axis so that the transformed predicate becomes Eq. (1). Signs are chosen only to make the two assigned comparisons match the directions in Eq. (1). Once a relation is mapped, UDG fixes the transformed coordinates and all later construction and search steps operate only in this dominance space. The first two rows are the primary workloads evaluated in this paper. Using the running example from the previous sec-tion, a containment query [2 , 10] maps to (xq , y q ) = (2 , 10) ,so intervals B = [3 , 7] and C = [6 , 9] satisfy Xi ≥ xq and 
+
+Yi ≤ yq . For an overlap query [4 , 7] , the data coordinates become (Xi, Y i) = ( ti, s i) and the transformed query is again a dominance point; intervals A, B, and C satisfy Eq. (1). Axis assignment is part of the mapping. For example, query-within-data places ti ≥ tq on the X side and si ≤ sq on the Y side, so the index again sees only the normalized predicate. The signed rows are also handled by the same rule. 
+
+C. Canonical Query States 
+
+The transformed query point (xq , y q ) may lie between data endpoints. For indexing, UDG only needs to distinguish query boundaries that change the valid set. Let UX and UY
+
+be the sorted distinct values among {Xi}ni=1 and {Yi}ni=1 ,respectively. Since only these transformed data coordinates can change the truth of Xi ≥ xq or Yi ≤ yq , UDG snaps the raw transformed query to canonical boundaries: 
+
+x+ 
+
+> q
+
+= min {x ∈ UX | x ≥ xq },y− 
+
+> q
+
+= max {y ∈ UY | y ≤ yq }. (2) If either boundary is undefined, the valid set is empty. Other-wise, canonicalization is exact rather than approximate. 
+
+Lemma 1 (Canonical Query Equivalence) . For any supported relation mapped to Xi ≥ xq ∧ Yi ≤ yq , the raw transformed query (xq , y q ) and the canonical query (x+ 
+
+> q
+
+, y − 
+
+> q
+
+) induce the same valid set. Proof. By definition of x+ 
+
+> q
+
+, no transformed X-coordinate lies strictly between xq and x+ 
+
+> q
+
+. Thus Xi ≥ xq holds for an object if and only if Xi ≥ x+ 
+
+> q
+
+holds. Similarly, no transformed Y -coordinate lies strictly between y− 
+
+> q
+
+and yq , so Yi ≤ yq holds if and only if Yi ≤ y− 
+
+> q
+
+holds. The raw and canonical transformed queries therefore select the same objects. Canonicalization is performed after the semantic transfor-mation, so signed mappings need no special case. If Yi = −ti
+
+and yq = −tq , taking the predecessor of yq in transformed 
+
+Y order correctly corresponds to the required boundary in the original ti order. Consequently, the number of canonical states is at most |UX | · | UY | ≤ n2. Some states may be empty under a particular workload, but the product grid gives a clean contract for the index. The next section shows how UDG avoids materializing one proximity graph per canonical state by storing query-state ranges on graph edges. IV. U NIFIED DOMINANCE GRAPH 
+
+This section turns the dominance abstraction from Sec-tion III-B into a graph index. We fix one relation mapping and construct one UDG instance in the corresponding transformed dominance space. The following construction and search algo-rithms are relation-independent after this mapping step. Other relations are supported under the same algorithms with a different endpoint transformation. We first define this query-time contract, then describe UDGConstruction, and finally analyze the structural guarantee. 
+
+A. UDG Index and Query 
+
+For a mapped query, let (a, c ) = ( x+ 
+
+> q
+
+, y − 
+
+> q
+
+) be its canonical state, where a is the active X threshold and c is the active Y
+
+boundary. The valid set is V (a, c ) = {i | Xi ≥ a ∧ Yi ≤ c}.UDG uses a single dominance-search abstraction for the mapped relation. After the semantic mapping step, contain-ment, overlap, and signed-coordinate relations differ only in how their endpoints are mapped to (X, Y ); the graph-search semantics are identical. Each node represents a data vector. For a source node u,its adjacency list contains tuples (l, r, v, b, e ) ∈ G[u], where 
+
+v is a neighboring node. The tuple is active for (a, c ) iff a ∈
+
+[l, r ] and c ∈ [b, e ]. All label values are canonical transformed coordinates from UX and UY . Thus, for containment the labels are interpreted over (si, t i), for overlap over (ti, s i), and for signed mappings over values such as −si or −ti. The active subgraph for (a, c ) contains exactly the edges whose label rectangle contains that canonical state. Figure 1 gives a compact example under containment fil-tering. The query interval [4 , 13] maps to canonical state 
+
+(a, c ) = (4 , 13) , and the left panel shows the corresponding dominance region, where v8, v9, and v10 are valid. The right panel applies the same state to the labeled graph: solid edges are active because their label rectangles contain (a, c ),while dashed edges are inactive for this state. Thus UDG obtains the state-specific subgraph by label tests rather than by materializing a separate graph for each query state. UDG only requires a valid entry point for the canonical state (a, c ). In practice, entry points can be maintained by a 0 2 4 6 8 10 12 14 16 18              
+
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> 16
+> 18
+> X=si
+> Y=ti
+> (a,c) = (4, 13)
+> Xi4, Yi13
+> v6[0, 3]
+> v7[2, 5]
+> v8[4, 7]
+> v9[7, 10]
+> v10 [6, 13]
+> v11 [8, 15]
+> v12 [10, 17] (a) Dominance state. (0, 2, 7, 25)
+> (0, 4, 10, 25)
+> (0, 4, 13, 25)
+> (0, 6, 13, 25) (0, 7, 15, 25)
+> (0, 6, 15, 25)
+> v7
+> v8
+> v9
+> v10
+> v11 (b) Edge activation. Fig. 1. UDG query-state view for containment. Solid graph edges are active at (a, c ) = (4 ,13) ; dashed edges are inactive.
+
+compact auxiliary table. If no valid entry point exists, then 
+
+V (a, c ) is empty. Algorithm 2 shows the edge-filtered graph search used by UDG. For a user query, UDG first maps ρ and [sq , t q ] to raw transformed coordinates and canonicalizes them to (a, c ).The search then follows the standard graph-based ANNS procedure, except that an outgoing edge is explored only when its label contains (a, c ). The distance function δ(·, ·) is always computed on the original embedding vectors; coordinate trans-formation affects only filter coordinates and edge activation. 
+
+Algorithm 2: UDGS EARCH (G, q, a, c, ep, K )
+
+Input: G: UDG index; q: query vector; (a, c ):canonical state; ep : valid entry point; K:search-pool size 
+
+Output: ann : up to K approximate nearest-neighbor candidates of q in state (a, c ) 
+
+> 1
+
+Mark ep as visited;  
+
+> 2
+
+pool ← { ep }; 
+
+> 3
+
+ann ← { ep }; 
+
+> 4
+
+while pool is not empty do  
+
+> 5
+
+v ← the vector closest to q in pool , and pop pool ; 
+
+> 6
+
+u ← the vector farthest from q in ann ; 
+
+> 7
+
+if |ann | = K and δ(v, q ) > δ (u, q ) then break ; 
+
+> 8
+
+foreach unvisited o with (l, r, o, b, e ) ∈ G[v] do  
+
+> 9
+
+if a ∈ [l, r ] and c ∈ [b, e ] then  
+
+> 10
+
+Mark o as visited;  
+
+> 11
+
+u ← the vector farthest from q in ann ; 
+
+> 12
+
+if |ann | < K or δ(o, q ) < δ (u, q ) then  
+
+> 13
+
+push o to pool and ann ; 
+
+> 14
+
+if |ann | > K then pop the vector farthest from q in ann ; 
+
+> 15
+
+return ann ;The algorithm contains no relation-dependent step after canonicalization. The label-containment test is the only filter test performed during traversal. Section IV-B explains how UDG constructs labels so that every active edge connects valid objects in V (a, c ), making this test sufficient for enforcing the interval filter during graph search. 
+
+B. UDGConstruction 
+
+We next describe UDGC ONSTRUCTION , the construction procedure that creates dominance labels. The construction follows the insertion style of graph-based ANNS indexes: for each new object, it searches the current graph for candidate neighbors, prunes them to obtain diversified neighbors, and stores edges. The difference is that UDG attaches each emitted edge to a rectangle of canonical query states, so one labeled edge can represent its copies across many state-specific graphs. Fix a relation mapping and the transformed coordinates from Section III-B. Let DY = ( v1, . . . , v n) be the objects sorted by increasing transformed Y value with deterministic tie breaking. We use UX [i] to denote the i-th smallest canonical 
+
+X threshold in UX . UDGConstruction scans objects once in this transformed Y order. For any fixed Y boundary c, valid objects form a prefix of this order. When inserting vj , every object already in the current graph belongs to the previous 
+
+Y prefix, so the construction only needs to decide for which canonical X thresholds the new proximity edges should be active. Algorithm 3 constructs the compressed graph directly. For each inserted object vj , the inner loop starts from the current left endpoint xL and considers only thresholds with xL ≤
+
+X(vj ), because larger thresholds would exclude vj itself. At state (xL, Y (vj−1)) , UDG searches the current active graph for candidates of vj . The valid entry point is chosen from the current prefix, so the search starts from an already inserted object and never uses future nodes. After obtaining ann , UDG sets xR = min( {X(vj )} ∪ { X(u) | u ∈ ann }). For every threshold between xL and xR, the new object and all returned candidates still satisfy the transformed lower-bound condition. UDG therefore emits one X label interval [xL, x R] for the pruned neighbors selected from ann , and then sets the next 
+
+xL to the first canonical X value strictly larger than xR. This leap is the compression step: consecutive canonical states that share the same local construction candidates are represented by one labeled edge interval. Each emitted tuple has the label rectangle [xL, x R] ×
+
+[Y (vj ), Y (vn)] in the transformed canonical space. The X
+
+interval records the thresholds for which the current construc-tion candidates remain valid. The Y interval records when the insertion of vj becomes visible to a canonical state. If a query has canonical boundary c ≥ Y (vj ), then vj is included on the Y side; every linked previous object also satisfies 
+
+Y (u) ≤ Y (vj ) by the construction order. If c < Y (vj ), the edge is inactive, matching a graph state in which vj has not yet been inserted. All orders and labels are defined in transformed coordinates. Therefore signed mappings require no special handling. For example, when Yi = −ti, scanning by increasing Yi processes larger original end points first, which is exactly the order induced by the normalized condition Yi ≤ yq . Similarly, the sweep over UX is always a sweep toward more restrictive lower-bound thresholds, regardless of which original endpoint or sign produces Xi.Algorithm 3: UDGC ONSTRUCTION (DY , U X , M )
+
+Input: DY = ( v1, . . . , v n) sorted by increasing transformed Y ; UX sorted by increasing transformed X; M ; the max degree 
+
+Output: G: UDG index  
+
+> 1
+
+G ← empty labeled graph over D; 
+
+> 2
+
+for j ← 2 to n do  
+
+> 3
+
+i ← 1; 
+
+> 4
+
+while i ≤ | UX | do  
+
+> 5
+
+xL ← UX [i]; 
+
+> 6
+
+if xL > X (vj ) then break ; 
+
+> 7
+
+vep ← a valid entry point for state 
+
+(xL, Y (vj−1)) ; 
+
+> 8
+
+if vep = ∅ then break ; 
+
+> 9
+
+ann ← UDGS EARCH (G, v j , x L, Y (vj−1), v ep , M ); 
+
+> 10
+
+xR ← min( {X(vj )} ∪ { X(u) | u ∈ ann }); 
+
+> 11
+
+foreach u ∈ PRUNE (vj , ann, M ) do  
+
+> 12
+
+add (xL, x R, u, Y (vj ), Y (vn)) to G[vj ]; 
+
+> 13
+
+add (xL, x R, v j , Y (vj ), Y (vn)) to G[u]; 
+
+> 14
+
+Set i to the first index with UX [i] > x R; if none exists, break ; 
+
+> 15
+
+return G;
+
+C. Lossless Compression Analysis 
+
+We now state the structural lossless-emulation guarantee for UDGConstruction. For each canonical state (a, c ), the reference graph is the proximity graph that would be built directly on V (a, c ) using the same insertion order and pruning rule. The guarantee is edge-level: under the construction-time search condition stated in Theorem 1, the active UDG subgraph equals this reference graph. It does not assert exact query-time nearest-neighbor answers. For a canonical state (a, c ), let GUDG (a, c ) be the ac-tive subgraph obtained by keeping exactly the edge tuples 
+
+(l, r, v, b, e ) such that a ∈ [l, r ] and c ∈ [b, e ]. Let Gτ (a, c )
+
+denote the dedicated insertion-only graph built directly on 
+
+V (a, c ) = {i | Xi ≥ a ∧ Yi ≤ c}, using the same Y -ordered insertion sequence and the same deterministic P RUNE rule. 
+
+Lemma 2 (Edge Validity) . For any edge label emitted by Algorithm 3, if the edge is active for canonical state (a, c ),then both endpoints of the edge belong to V (a, c ).Proof. Consider a label emitted while inserting object vj at threshold xL. For each pruned neighbor u, UDG emits labels with X interval [xL, x R] and Y interval [Y (vj ), Y (vn)] , where 
+
+xR = min( {X(vj )} ∪ { X(w) | w ∈ ann }). If the edge is active for (a, c ), then xL ≤ a ≤ xR and Y (vj ) ≤ c. Since 
+
+xR ≤ X(vj ), object vj satisfies X(vj ) ≥ a and Y (vj ) ≤ c.Since u ∈ ann , we also have xR ≤ X(u), and hence X(u) ≥
+
+a. Moreover, u was inserted before vj , so Y (u) ≤ Y (vj )
+
+under the fixed order. Thus Y (u) ≤ c. Both endpoints satisfy the dominance predicate. The same argument applies to the reverse directed label. We analyze our algorithm under the Accurate Search As-sumption (ASA), i.e. during construction, each search returns the exact nearest neighbors for the queried canonical state. We make this assumption because if otherwise, we could not accurately assess the impact of the approximation of the nearest neighbor search to the index structure. The same assumption is used in prior works of range-filtering ANNS [1], [2], where the lossless-compression is also achieved under ASA assumption. 
+
+Theorem 1 (Structural Lossless Emulation) . Under ASA, for every canonical state (a, c ) ∈ UX × UY , the active UDG subgraph GUDG (a, c ) is edge-identical to the dedicated graph 
+
+Gτ (a, c ). In other words, the graph produced by Algorithm 3 is a structural lossless compression of the canonical graph family. Proof. Fix a canonical state (a, c ). We prove the claim by induction over the Y -ordered insertion sequence τ . After any processed prefix P , the active UDG subgraph at (a, c )
+
+induced by P is identical to the graph obtained by running the dedicated constructor on P ∩ V (a, c ).The base case is empty. Consider the next object v. If 
+
+v / ∈ V (a, c ), then the dedicated constructor skips v. UDG also creates no active edge for this state: if Y (v) > c , every label emitted for v starts after c on the Y dimension; if X(v) < a ,every emitted X interval ends no later than X(v) and therefore cannot contain a. Thus the invariant is unchanged. Now suppose v ∈ V (a, c ). The previous valid candidates for inserting v are exactly the earlier objects u with X(u) ≥
+
+a; the Y condition is automatic because all earlier objects have Y (u) ≤ Y (v) ≤ c. By the induction hypothesis, the active UDG subgraph before inserting v is the same as the corresponding dedicated graph over these candidates. Let [a0, x R] be the leap interval generated by UDG-Construction that contains a. The construction sets xR =min( {X(v)} ∪ { X(u) | u ∈ ann }), so every object in ann 
+
+remains valid for all thresholds in this interval. Moving the threshold from a0 to any a ∈ [a0, x R] can only remove objects outside ann and cannot introduce new candidates. Under ASA, the candidate set used for a0 is therefore the same candidate set that the dedicated constructor would use for a.Since P RUNE is deterministic, both constructions select the same neighbors of v. UDG labels the corresponding directed edges with a rectangle that contains (a, c ), so these edges are active for the fixed state. The leap intervals are disjoint and cover the canonical thresholds processed for v, so no additional active edge can appear for (a, c ).Thus the induction invariant holds after inserting v. After all objects are processed, GUDG (a, c ) and Gτ (a, c ) have the same directed edge set. Since (a, c ) was arbitrary, the theorem follows. The theorem gives the precise meaning of structural loss-less emulation in UDG: edge labels compress the canonical graph family without changing the active edge set for any canonical state. The proof uses transformed coordinates. Thus containment, overlap, and signed-coordinate mappings follow the same argument after the semantic mapping step. In the worst case, one inserted object can generate O(n)
+
+disjoint X-threshold intervals, each emitting at most O(M )
+
+directed labels after pruning. Thus construction has worst-case index size O(n2M ) and index time O(n2M 2) excluding the online search. 
+
+Theorem 2. Assuming interval coordinates are independent of vector-space neighbor selection, the expected total num-ber of rounds in Lines 4–14 of Algorithm 3 is O(n log n).Consequently, in the average case, UDG has index size 
+
+O(nM log n), makes O(n log n) calls to the online search in Algorithm 2, and takes O(nM 2 log n) indexing time excluding online search, assuming O(1) entry-point lookup. Proof. Consider the insertion of vj , and let zj be the number of rounds of the while loop for this insertion. Let Pj =
+
+{v1, . . . , v j } be the current prefix in the transformed Y order. Sort Pj by transformed X coordinate and write the order as 
+
+w1, . . . , w j . Let rj be the rank of vj , i.e., wrj = vj . The loop only considers thresholds no larger than X(vj ), and therefore only ranks p ≤ rj . For a rank p < r j , under the independence assumption, the transformed X order is independent of vector-space neighbor selection. Therefore, when there are t = j − p
+
+valid previously inserted objects under the current threshold, the boundary object wp is equally likely to appear at any position in the neighbor ranking and is contained in the candidate set returned by the online search with probability at most min {1, M/t }. Let Cp = {wq | q ≥ p, w q̸ = vj } be the valid previously inserted objects under the threshold starting at rank p. Then |Cp| = j − p. If the boundary object wp is not returned by the online search, the minimum X coordinate among vj and the returned candidates is larger than X(wp), so the update of the threshold skips rank p. Thus rank p can create an additional round only when wp appears in the returned candidate set. Let Ip be the indicator of this event. The final round, where the threshold reaches X(vj ), contributes at most one additional round. Hence zj ≤ 1 + Prj −1 
+
+> p=1
+
+Ip.By the argument above, Pr[ Ip = 1] ≤ min {1, M/ (j −
+
+p)}. Therefore, E[zj ] ≤ 1 + Prj −1 
+
+> p=1
+
+min {1, M/ (j − p)} ≤ 
+
+1 + Pj−1 
+
+> t=1
+
+min {1, M/t } ≤ 1 + M + M Pj−1  
+
+> t=M+1
+
+1/t =
+
+O(M log j). Since M is a fixed index parameter independent of n, E[zj ] = O(log j). Summing over all insertions gives 
+
+E[Pnj=2 zj ] = Pnj=2 O(log j) = O(n log n). Each round calls the online search once, performs one O(M 2) pruning step, and inserts at most O(M ) directed edge labels. Therefore, the expected number of online-search calls is O(n log n), the expected index size is O(nM log n), and the indexing time excluding online search is O(nM 2 log n). This completes the proof. V. P RACTICAL UNIFIED DOMINANCE GRAPH 
+
+A. Practical Construction Optimizations 
+
+The exact constructor in Algorithm 3 sweeps many canon-ical X thresholds for each inserted object v. At each new round, it performs a state-specific UDG search, computes the next sweep boundary from the returned candidate set, and then applies the HNSW-style pruning rule. Although the exact constructor provides the structural compression guarantee, running a state-specific search at every canonical threshold is expensive in practice. We therefore adopt construction optimizations, following recent RFANNS indexes [1], [2], to reduce the indexing cost of UDG. The first optimization reuses one construction candidate pool. We replace the excessive number of UDGS EARCH procedure with a single broad search UDGS EARCH (G, v t, − inf , inf , ep, Z ), for every new data point vt inserted. Z is a parameter to find a set ann of Z
+
+approximate nearest neighbors of vt. For the canonical X boundary xL, UDG scans ann in increasing distance to vt and keeps only candidates u satisfying X(u) ≥ xL. The filtered candidates are then passed to PRUNE . If no candidate exists in ann , we simply terminate the while condition and process the next insertion. The second optimization increases the leap size along the 
+
+X dimension. After pruning the valid candidates at threshold 
+
+a, practical UDG advances according to the pruned neighbor set rather than the full candidate pool. The conservative policy leaps to the leftmost pruned neighbor. This reduces the number of construction states while keeping a shared X-label interval valid for all emitted neighbors. The aggressive policy leaps toward the rightmost pruned neighbor, which further reduces construction time and index size but makes the construction more approximate. UDG further adopts a MaxLeap variant. Let N be the retained neighbor set after pruning. Instead of advancing to the smallest transformed X in N , MaxLeap advances the sweep to xleap = max u∈N X(u). To preserve interval validity, each edge (v, u ) is still labeled up to its own valid right boundary, 
+
+min {X(v), X (u), x leap }. This larger leap reduces both the number of construction rounds and the number of edges. These optimizations reduce index time and index size, but bring risk. The main risk is under-connected active subgraphs in small-valid-set states, where graph search has fewer routing choices. This motivates the patch edge mechanism below. 
+
+B. Validity-Preserving Patch Edges 
+
+The construction optimizations in Section V-A reduce index size and construction time by reusing candidate pools and taking larger leap steps. During this process, we observe a failure mode that is especially important for restrictive filters, i.e., queries that filter out most objects and leave only a small active valid subgraph. For an inserted object v, the sweep is likely to stop before v has sufficient neighbors for all valid canonical X thresholds. We call the remaining consecutive thresholds an uncovered range. Although the existing edges are still used only under their valid labels, the active graph in this uncovered range may become poorly connected, causing suboptimal search performance under restrictive filters. UDG addresses this issue with patch edges. Consider one uncovered range [aL, a R] after point v is inserted. UDG first builds a repair pool from previously inserted objects that are valid at the beginning of the range. In the transformed dominance space, this condition is simply Xu ≥ aL; under containment this follows the start-endpoint order, and under overlap it follows the end-endpoint order. Thus the repair pool is relation-independent after semantic mapping, while still selecting only candidates that can be active inside the uncovered range. The repair pool is capped by M · Kp, where Kp is a pa-rameter to control the patch candidate budget. UDG computes the vector distance from v to every candidate in the pool, but distance alone is not sufficient. A nearest candidate may expire quickly as the canonical X threshold increases, so using only nearest candidates can fail to repair the entire uncovered range. Therefore, UDG first reserves up to two lifetime anchors, chosen by the largest lifetime rank, ignoring the distance. These anchors preserve long-lived routing choices across the uncovered range. The remaining patch slots are filled from the non-anchor candidates in increasing distance to v. UDG applies the same HNSW-style diversity rule used in Lines 4–9 of Algorithm 1 to this metric part of the repair set. If there are fewer than M
+
+patch neighbors after pruning, UDG backfills with the nearest remaining candidates from the repair pool. Each selected neighbor u is attached to the uncovered range with right boundary r = min {Xv , X u, a R} and a Y label start-ing from Yv . UDG adds a patch edge (aL, r, u, Y v , Y (vn)) to v
+
+with a corresponding reverse edge. The patch edge is active for the canonical query state (a, c ), where min {Xv , X u} ≥ r ≥ a
+
+and Yv ≤ c. Since u is a previously inserted valid candidate, 
+
+Yu ≤ Yv ≤ c. Both endpoints belong to V (a, c ). Edge-filtered search still traverses only objects satisfying the mapped dominance predicate. Patch edges add routing choices for the uncovered range in the construction. In the implementation, each object has at most one remaining uncovered range per transformed relation instance, and each range adds at most M patch neighbors. The additional index time is bounded by the capped repair pool. Thus patch edges add O(nM ) directed edges, which does not change the average bound of UDG and is also dominated by the worst-case construction bound. VI. E XPERIMENT 
+
+This section evaluates UDG on standard ANNS benchmarks and interval-predicate workloads. 
+
+A. Experimental Setup 
+
+Datasets. We use public vector datasets from ANN bench-marks [9], including SIFT1M [10], DEEP1M [11], and DBpedia-OpenAI [12]. For these benchmark datasets, we assign synthetic closed intervals over a normalized endpoint domain of size T . For the main synthetic setting, we gen-erate Uniform interval metadata by sampling interval lengths uniformly up to a maximum of 0.01 T and sampling starts uniformly over the feasible range conditioned on the sampled length; all methods use the same generated interval files, query                   
+
+> TABLE III DATASET STATISTICS .Dataset Base Query Dim. SIFT1M 1,000,000 10,000 128 DEEP1M 990,000 10,000 96 DBpedia-OpenAI 990,000 10,000 1536 S&P 500 1,445,788 14,603 384 Nasdaq 350,466 10,000 768
+
+workloads are selected by exact-count selectivity buckets, and real-world intervals are left uncapped. We also include two real-world interval workloads: S&P 500 stock ranges [7] and an event-time workload extracted from Nasdaq news using an LLM [13], [14]. For these workloads, we keep the real embeddings and data intervals, sample query vectors from the test embeddings, and synthesize query intervals by target selectivity for fair comparison. Table III reports the dataset statistics. Euclidean distance is used to measure vector simi-larity. 
+
+Workloads and query generation. We evaluate two pri-mary interval predicates: containment, si ≥ sq ∧ ti ≤ tq , and overlap, ti ≥ sq ∧ si ≤ tq . For each query vector, we generate an interval whose valid-set ratio matches a target selectivity 
+
+σ. Controlling selectivity directly is important because the same interval width can produce very different valid-set sizes under different endpoint distributions. The main selectivity experiment sweeps σ ∈ {0.1% , 1% , 5% , 10% , 50% }; later experiments use focused selectivity settings for their specific purpose. 
+
+Baselines. We compare UDG with several hybrid-search ANNS methods. Hi-PNG [7] is included for containment queries because it is a containment-oriented interval index. PostFilter-HNSW first searches a global HNSW index and then removes candidates that do not satisfy the interval predi-cate [15]. PreFilter builds a range tree over interval attributes; at query time, it enumerates the exact valid set and scans the valid vectors. ACORN is a predicate-agnostic graph index for hybrid search, and we adapt it by treating each interval relation as the predicate during graph traversal [16]. We use γ = 12 
+
+as recommended for filtered search. 
+
+Metrics. We evaluate search quality by Recall@10, |R∩G||G| ,where R is the retrieved result set and G is the exact top-10 ground truth. Query efficiency is measured by Queries Per Second (QPS). For each method, we sweep its method-specific query-time parameters and report the resulting Pareto frontier. Points outside the displayed plotting window are omitted for readability. Thus, an absent method in a panel indicates that none of its evaluated configurations yields a comparable operating point within the shown recall–QPS range. 
+
+Environment. We implement the algorithms in C++ com-piled with g++ using the −Ofast optimization flag and OpenMP parallelism. All experiments are run on an Ubuntu server with four Intel Xeon Gold 6218 CPUs and 1.5 TB RAM, using 16 threads. Unless otherwise specified, graph indexes use M = 32 and construction width efconstruction =128 , following recent containment-oriented interval ANNS work [7]. 
+
+B. Experiment on Search Performance 
+
+Main Search Performance Figures 2 and 3 report query performance Pareto frontiers for containment and overlap under five target selectivities. Points outside the displayed plotting window are omitted for readability. Across SIFT1M, DEEP1M, and DBpedia-OpenAI, UDG consistently lies in the high-recall and high-throughput region of the frontier. In particular, UDG often approaches Recall@10 of 1.0 even at 
+
+σ = 0 .1% , where the active valid subgraph is extremely small. This small-σ setting is the most sensitive case for UDG be-cause any under-connected valid subgraph immediately hurts recall. For containment, Figure 2 shows that UDG usually provides the best or near-best QPS at high recall. Exact pre-filtering is competitive in the most restrictive cases, as expected, because the valid set is small and can be scanned cheaply. However, its cost grows with the valid-set size, while UDG keeps a navigable filtered graph and remains competitive across the full selectivity range. PostFilter-HNSW and ACORN degrade more sharply under restrictive filters because many graph visits or candidate expansions are spent on invalid objects. Hi-PNG is a strong containment-specific baseline, but UDG achieves comparable or higher throughput at high recall while using a dominance-search operator that also supports other interval predicates. For overlap, Figure 3 uses the same UDG implementation with a different endpoint mapping, (Xi, Y i) = ( ti, s i). UDG again maintains strong high-recall throughput across selectiv-ities, whereas PostFilter-HNSW and ACORN lose efficiency when the valid set is small. This result confirms that the gain does not come from a containment-only optimization, but from mapping different two-bound interval predicates into the same dominance-filtered graph search. 
+
+Real-world uncapped interval workloads. Figure 4a eval-uates UDG on two real-world interval workloads: Nasdaq event-time retrieval and S&P 500 stock ranges. Unlike the synthetic workloads, these experiments keep the original data intervals without imposing the 0.01 T length cap, while query intervals are still selected by selectivity buckets for controlled comparison. UDG remains effective across the real-world workloads. On both Nasdaq and S&P 500 datasets, UDG consistently lies on the strongest high-recall frontier for both predicates and selectivities. PreFilter reaches the highest-recall point, but with substantially lower throughput, while UDG still provides a stronger recall–QPS trade-off. These results show that UDG’s advantage is not tied to capped synthetic intervals, but extends to real-world interval distributions. 
+
+Generality beyond the Primary Predicates. Figure 4b evaluates three additional closed two-bound interval relations on SIFT1M. This experiment complements the multi-dataset containment and overlap evaluation by checking whether the semantic mapping layer can reuse the same dominance-search operator across different endpoint mappings. UDG keeps high-recall throughput on these relations, while PostFilter-HNSW                                                   
+
+> TABLE IV INDEX CONSTRUCTION COST
+> Dataset Metric PostF ACORN Hi-PNG UDG SIFT1M time (s) 32 238 337 195 size (MB) 167 394 1020 467 DEEP1M time (s) 30 183 327 177 size (MB) 175 389 1090 474 DBP time (s) 227 1273 1272 878 size (MB) 188 399 1223 498 S&P 500 time (s) 52 493 386 272 size (MB) 153 569 869 467 Nasdaq time (s) 28 225 80 152 size (MB) 51 138 81 151
+
+and ACORN are less stable when the valid set is small. The result supports the main abstraction claim that interval seman-tics can be handled by a shared dominance-search operator after semantic mapping. 
+
+Robustness to Interval Metadata Distributions. The main experiment uses Uniform interval metadata. We next vary the interval-attribute distribution on SIFT1M, using Normal, Skewed, Clustered, and Hollow distributions for containment and overlap at 1% and 10% selectivity. Figure 5 reports QPS normalized by the Uniform workload under the same predicate and selectivity. UDG remains close to the Uniform baseline across the tested distributions. Several containment settings are slightly faster than the Uniform workload, while the visible slowdowns are modest and occur mainly for overlap at 10% selectivity. Because selectivity is controlled, this comparison isolates the effect of interval-metadata shape. These results indicate that UDG’s efficiency is not an artifact of the Uniform interval distribution. 
+
+C. Experiments on Index Construction 
+
+Index Time and Space. Table IV reports construction time (s) and index size (MB) for interval containment on all five datasets; index size excludes raw vector storage. In the table, PostF denotes PostFilter-HNSW and DBP denotes DBpedia-OpenAI. Containment is used here because Hi-PNG is containment-specific and because different UDG relation mappings may induce slightly different transformed graph structures. PreFilter is omitted because its range-tree metadata is negligible relative to graph indexes, while its main cost appears during query-time valid-set enumeration. PostFilter-HNSW has the lowest index cost because it stores a single global graph, but its query performance degrades under restric-tive interval filters. UDG stores dominance labels and patch edges, yet its offline cost remains moderate: it builds faster than ACORN on all datasets and faster than Hi-PNG on the four larger workloads, while its size is comparable to ACORN and below Hi-PNG on the same four larger workloads. On Nasdaq, Hi-PNG builds faster and uses less memory because this workload has only 350,466 base objects (Table III). Hi-PNG recursively partitions the interval space until each leaf contains at most a leaf-size threshold and then builds proximity graphs for tree nodes; the smaller Nasdaq workload therefore reduces the amount of tree-node graph construction. 0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+> SIFT
+
+0.1% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+1% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+5% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+10% 
+
+0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+50% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+> DEEP
+
+0.1% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+1% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+5% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+10% 
+
+0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+50% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+> QPS
+> DBpedia-OpenAI
+
+0.1% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+> QPS
+
+1% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+5% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+10% 
+
+0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+50% 
+
+PostFilter-HNSW PreFilter Hi-PNG-HNSW ACORN UDG Fig. 2. Search performance for containment queries under different selectivities. 0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+> SIFT
+
+0.1% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+1% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+5% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+10% 
+
+0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+50% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+> DEEP
+
+0.1% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+1% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+5% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+10 5
+
+> QPS
+
+10% 
+
+0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+50% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+> QPS
+> DBpedia-OpenAI
+
+0.1% 
+
+0.70 0.80 0.90 1.00 
+
+Recall@10 
+
+10 2
+
+10 3
+
+10 4
+
+> QPS
+
+1% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+5% 
+
+0.85 0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+10 4
+
+> QPS
+
+10% 
+
+0.90 0.95 1.00 
+
+Recall@10 
+
+10 3
+
+> QPS
+
+50% 
+
+PostFilter-HNSW PreFilter ACORN UDG 
+
+Fig. 3. Search performance for overlap queries under different selectivities. 
+
+Scalability. Figure 6 evaluates UDG on DEEP prefixes from 100K to 10M base vectors under a fixed-selectivity workload. We fix the parameters M = 32 , Z = 800 , Kp = 8 , and efsearch = 512 , using 16 threads for both index construction and retrieval. The index size grows almost linearly with the number of vectors, from about 46MB at 100K vectors to about 4800MB at 10M vectors. Construction time increases substan-tially with scale, reflecting the offline cost of building the dominance-labeled graph. At query time, throughput decreases with scale, from roughly 10K QPS to about 400 QPS, but UDG maintains high Recall@10 > 0.997 for both containment and overlap. These results indicate that UDG preserves high search quality up to 10M vectors, with predictable storage growth and the main scalability cost concentrated in offline construction. 
+
+D. Impact of Patch Edges 
+
+Patch Edge ablation. Figure 7 evaluates the effectiveness of patch edges under restrictive interval filters, where only a small fraction of objects remain valid and the active subgraph can easily become disconnected. We compare four variants. 0.6 0.8 1.0               
+
+> Recall@10
+> 10 3
+> 10 4
+> QPS
+> Nasdaq
+> Overlap 1%
+> 0.6 0.8 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> Nasdaq
+> Overlap 10%
+> 0.6 0.8 1.0
+> Recall@10
+> 10 3
+> 10 4
+> Nasdaq
+> Containment 1%
+> 0.6 0.8 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> Nasdaq
+> Containment 10%
+> 0.6 0.8 1.0
+> Recall@10
+> 10 4
+> 10 5
+> S&P 500
+> Overlap 1%
+> 0.6 0.8 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> S&P 500
+> Overlap 10%
+> 0.6 0.8 1.0
+> Recall@10
+> 10 3
+> 10 4
+> S&P 500
+> Containment 1%
+> 0.6 0.8 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> S&P 500
+> Containment 10%
+
+PostFiltering PreFiltering Hi-PNG-HNSW ACORN UDG (a) Search performance under real-world interval workloads. 0.5 0.7 0.9 1.0                 
+
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> QPS
+> 1%
+> 0.7 0.8 0.9 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> 10 5
+> 10%
+> 0.5 0.7 0.9 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> 1%
+> 0.7 0.8 0.9 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> 10%
+> 0.5 0.7 0.9 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> 10 51%
+> 0.7 0.8 0.9 1.0
+> Recall@10
+> 10 2
+> 10 3
+> 10 4
+> 10%
+
+query-within-data both-after both-before 
+
+(b) Search performance on additional interval relations. Fig. 4. Search performance on real-world interval workloads and additional interval relations. Contain. 
+
+1% 
+
+Contain. 
+
+10% 
+
+Overlap 
+
+1% 
+
+Overlap 
+
+10% 
+
+0.25 
+
+0.5 
+
+1
+
+2
+
+4
+
+> Normalized QPS
+
+Normal 
+
+Clustered 
+
+Skewed 
+
+Hollow 
+
+Fig. 5. Normalized QPS under interval metadata distributions on SIFT1M (Recall@10 ≥ 0.95 ); dashed line: Uniform baseline. 10 5 3 × 10 5 10 6 3 × 10 6 10 7             
+
+> # of vectors
+> 10 2
+> 10 3
+> 10 4
+> Index size (MB)
+> 10 53 × 10 510 63 × 10 610 7
+> # of vectors
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+> Construction time (s)
+> 10 53 × 10 510 63 × 10 610 7
+> # of vectors
+> 10 2
+> 10 3
+> 10 4
+> QPS
+> 10 53 × 10 510 63 × 10 610 7
+> # of vectors
+> 0.98
+> 0.99
+> 1
+> Recall@10
+> UDG-containment UDG-overlap
+
+Fig. 6. Scalability of UDG on DEEP prefixes with containment and overlap queries. 
+
+NoPatch uses UDG construction without patch edges. Previ-ousPatch adds repair edges to previous inserted objects, but does not consider neighbor lifetime or distance. Lifetime-0.94 0.96 0.98 1.00 
+
+> Recall@10
+> 10 4
+> QPS
+
+selectivity = 0.1%   
+
+> 0.98 0.99 1.00
+> Recall@10
+> 10 4
+> QPS
+
+selectivity = 1%    
+
+> NoPatch PreviousPatch Lifetime-Patch UDG-Patch
+
+Fig. 7. Patch edge ablation with containment queries under different selec-tivities. 1 2 4 8 16 32 
+
+40000 
+
+50000 
+
+60000 
+
+70000 
+
+> QPS
+
+1 2 4 8 16 32 
+
+194 
+
+196 
+
+198 
+
+> Index time (s)
+
+Fig. 8. QPS (Recall@10 > 0.99 ) at 0.1% selectivity and index time when varying Kp.
+
+Patch selects repair candidates with longer valid lifetimes and applies distance-based diversity pruning, but does not reserve lifetime anchors. UDG-Patch is the full design, which combines lifetime anchors, lifetime-aware candidate selection, and distance-based pruning. For pool-based variants, we use the default pool factor Kp=8. The NoPatch variant reaches only 0.77 recall and is omitted from the 0.1% selectivity graph. This confirms that patch edges are critical for preserving navigability in small valid-set states. NoPatch degrades because the optimized construction leaves some canonical ranges with too few active routing edges. Pre-viousPatch improves connectivity, confirming that additional repair edges are useful, but its benefit is limited because many previous neighbors expire quickly as the query state admits fewer valid objects. Lifetime-Patch further improves the query performance frontier by favoring repair edges that remain active over longer ranges, but distance-based pruning can still discard important long-lived anchors, leaving some canonical ranges weakly connected. UDG-Patch achieves the best overall trade-off, showing that lifetime anchors provide stable routing choices and improve search quality in small valid-set states. We further study the patch pool factor Kp at 0.1% selectiv-ity. For each Kp, we report the best QPS among configurations satisfying Recall@10 ≥ 0.99 , together with the corresponding index time in Figure 8. Increasing Kp enlarges the repair candidate pool and improves high-recall throughput when the pool is small. The gain, however, saturates for larger pools, while index time increases due to the additional candidate evaluation. We therefore set Kp = 8 as the default, as it provides high-recall throughput with controlled indexing overhead. VII. R ELATED WORK 
+
+Approximate Nearest Neighbor Search. ANNS is a fun-damental primitive for high-dimensional vector retrieval. Due to the curse of dimensionality, exact nearest neighbor search is often too expensive at large scale, so ANNS aims to return high-recall results with much lower query latency [17]. Exist-ing ANNS indexes can be broadly categorized into hashing-based methods [18], [19], quantization or partition based methods [20]–[24], and graph-based methods [15], [25]–[27]. Among them, graph-based indexes have become widely used because greedy routing on a sparse proximity graph often provides a strong recall–efficiency trade-off. Representative methods include HNSW, which incrementally builds a hier-archical navigable small-world graph, NSG, which refines a candidate graph using a sparsified navigating structure, and DiskANN, which improves scalability for billion-scale vector search [15], [25], [26]. 
+
+Attributed-Filtered ANNS. Filtered ANNS (or hybrid vec-tor search) retrieves nearest neighbors satisfying structured predicates. Existing methods combine vector indexes with pre-filtering, post-filtering, or predicate-aware index [16], [28]– [31], are flexible for Boolean and categorical metadata but generally fail to guarantee graph navigability within query-dependent valid subsets. For numeric attributes, range-filtering ANNS exploits one-dimensional scalar ordering to construct range-specific index [1]–[4], [6], [32], [33]. While demon-strating the efficacy of filter-aware indexing, these methods are structurally bound to scalar attribute. Consequently, they are not applicable for interval predicates like containment and overlap, which couple two endpoints and induce two-dimensional dominance regions. Temporal and interval-aware ANNS has also received re-cent attention. TANNS optimizes point-in-time retrieval us-ing validity intervals and query timestamps [34], whereas Hi-PNG studies the containment instance where both data and queries are intervals [7]. Concurrent range-range ANNS work proposes a labeled multi-segment tree graph [35] for arbitrary range-range predicates. Separately, classical interval indexes [36] excel at exact low-dimensional enumeration, but they inherently lack the vector-space proximity structures strictly required for high-dimensional ANNS. In contrast, UDG targets closed two-bound conjunctive interval predicates and unifies them under a single edge-activation rule within a normalized dominance space. VIII. C ONCLUSION 
+
+This paper presented the Unified Dominance Graph (UDG), a cohesive graph indexing framework for Interval-Predicate ANNS. By mapping supported interval predicates into a nor-malized two-dimensional dominance space, UDG unifies con-tainment, overlap, and related endpoint-bound relations under a single graph-search abstraction. UDG achieves structural lossless compression of query-specific proximity graphs, while our proposed patch edge mechanism adds routing choices in restrictive filter states, where the active valid subgraph can become poorly connected. Extensive experiments show that UDG achieves superior recall throughput trade-offs across interval relations, while requiring substantially lower indexing cost than specialized interval-filtering indexes and remaining competitive with general hybrid-search baselines. UDG estab-lishes a versatile, effective foundation for database systems to jointly process ANNS and interval attributed metadata. IX. AI-GENERATED CONTENT ACKNOWLEDGEMENT The authors acknowledge the use of ChatGPT to assist with code implementation and language polishing. These tools were used for implementation support and editorial refinement, not for generating scientific claims, experimental results, or anal-ysis. All scientific content, code, experiments, and reported results were reviewed and verified by the authors. REFERENCES [1] C. Zuo, M. Qiao, W. Zhou, F. Li, and D. Deng, “Serf: Segment graph for range-filtering approximate nearest neighbor search,” Proc. ACM Manag. Data , vol. 2, no. 1, Mar. 2024. [Online]. Available: https://doi.org/10.1145/3639324 [2] Z. Peng, M. Qiao, W. Zhou, F. Li, and D. Deng, “Dynamic range-filtering approximate nearest neighbor search,” Proc. VLDB Endow. , vol. 18, no. 10, p. 3256–3268, Jun. 2025. [Online]. Available: https://doi.org/10.14778/3748191.3748193 [3] J. Engels, B. Landrum, S. Yu, L. Dhulipala, and J. Shun, “Approximate nearest neighbor search with window filters,” in Proceedings of the 41st International Conference on Machine Learning , ser. ICML’24. JMLR.org, 2024. [4] M. Jiang, Z. Yang, F. Zhang, G. Hou, J. Shi, W. Zhou, F. Li, and S. Wang, “Digra: A dynamic graph indexing for approximate nearest neighbor search with range filter,” Proc. ACM Manag. Data , vol. 3, no. 3, Jun. 2025. [Online]. Available: https://doi.org/10.1145/3725399 [5] F. Zhang, M. Jiang, G. Hou, J. Shi, H. Fan, W. Zhou, F. Li, and S. Wang, “Efficient dynamic indexing for range filtered approximate nearest neighbor search,” Proc. ACM Manag. Data , vol. 3, no. 3, Jun. 2025. [Online]. Available: https://doi.org/10.1145/3725401 [6] Y. Xu, J. Gao, Y. Gou, C. Long, and C. S. Jensen, “irangegraph: Improvising range-dedicated graphs for range-filtering nearest neighbor search,” Proc. ACM Manag. Data , vol. 2, no. 6, Dec. 2024. [Online]. Available: https://doi.org/10.1145/3698814 [7] M. Yang, Y. Cai, and W. Zheng, “Hi-png: Efficient interval-filtering anns via hierarchical interval partition navigating graph,” in Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.2 , ser. KDD ’25. New York, NY, USA: Association for Computing Machinery, 2025, p. 3518–3529. [Online]. Available: https://doi.org/10.1145/3711896.3736997 [8] P. Indyk and R. Motwani, “Approximate nearest neighbors: towards removing the curse of dimensionality,” in Proceedings of the Thirtieth Annual ACM Symposium on Theory of Computing , ser. STOC ’98. New York, NY, USA: Association for Computing Machinery, 1998, p. 604–613. [Online]. Available: https://doi.org/10.1145/276698.276876 [9] M. Aum¨ uller, E. Bernhardsson, and A. Faithfull, “Ann-benchmarks: A benchmarking tool for approximate nearest neighbor algorithms,” 
+
+Inf. Syst. , vol. 87, no. C, Jan. 2020. [Online]. Available: https: //doi.org/10.1016/j.is.2019.02.006 [10] H. J´ egou, M. Douze, and C. Schmid, “Product quantization for nearest neighbor search,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 33, no. 1, pp. 117–128, 2011. [11] A. B. Yandex and V. Lempitsky, “Efficient indexing of billion-scale datasets of deep descriptors,” in 2016 IEEE Conference on Computer Vision and Pattern Recognition (CVPR) , 2016, pp. 2055–2063. [12] Kumar Shivendu and Nirant Kasliwal, “dbpedia-entities-openai-1m,” 2023. [Online]. Available: https://huggingface.co/datasets/KShivendu/ dbpedia-entities-openai-1M [13] K. H. Lau, R. Zhang, W. Shi, X. Zhou, and X. Cheng, “Reading between the timelines: Rag for answering diachronic questions,” 2025. [Online]. Available: https://arxiv.org/abs/2507.22917 [14] Z. Dong, X. Fan, and Z. Peng, “Fnspid: A comprehensive financial news dataset in time series,” 2024. [15] Y. A. Malkov and D. A. Yashunin, “Efficient and robust approximate nearest neighbor search using hierarchical navigable small world graphs,” IEEE Trans. Pattern Anal. Mach. Intell. , vol. 42, no. 4, p. 824–836, Apr. 2020. [Online]. Available: https://doi.org/10.1109/ TPAMI.2018.2889473 [16] L. Patel, P. Kraft, C. Guestrin, and M. Zaharia, “Acorn: Performant and predicate-agnostic search over vector embeddings and structured data,” 
+
+Proc. ACM Manag. Data , vol. 2, no. 3, May 2024. [Online]. Available: https://doi.org/10.1145/3654923 [17] P. Indyk and R. Motwani, “Approximate nearest neighbors: towards removing the curse of dimensionality,” in Proceedings of the Thirtieth Annual ACM Symposium on Theory of Computing , ser. STOC ’98. New York, NY, USA: Association for Computing Machinery, 1998, p. 604–613. [Online]. Available: https://doi.org/10.1145/276698.276876 [18] A. Gionis, P. Indyk, and R. Motwani, “Similarity search in high dimen-sions via hashing,” in Proceedings of the 25th International Conference on Very Large Data Bases , ser. VLDB ’99. San Francisco, CA, USA: Morgan Kaufmann Publishers Inc., 1999, p. 518–529. [19] Q. Lv, W. Josephson, Z. Wang, M. Charikar, and K. Li, “Multi-probe lsh: efficient indexing for high-dimensional similarity search,” in 
+
+Proceedings of the 33rd International Conference on Very Large Data Bases , ser. VLDB ’07. VLDB Endowment, 2007, p. 950–961. [20] H. J´ egou, M. Douze, and C. Schmid, “Product quantization for nearest neighbor search,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 33, no. 1, pp. 117–128, 2011. [21] A. Babenko and V. Lempitsky, “The inverted multi-index,” in 2012 IEEE Conference on Computer Vision and Pattern Recognition , 2012, pp. 3069–3076. [22] T. Ge, K. He, Q. Ke, and J. Sun, “Optimized product quantization,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 36, no. 4, pp. 744–755, 2014. [23] M. Muja and D. G. Lowe, “Scalable nearest neighbor algorithms for high dimensional data,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 36, no. 11, pp. 2227–2240, 2014. [24] J. Johnson, M. Douze, and H. J´ egou, “Billion-scale similarity search with gpus,” IEEE Transactions on Big Data , vol. 7, no. 3, pp. 535–547, 2021. [25] C. Fu, C. Xiang, C. Wang, and D. Cai, “Fast approximate nearest neighbor search with the navigating spreading-out graph,” Proc. VLDB Endow. , vol. 12, no. 5, p. 461–474, Jan. 2019. [Online]. Available: https://doi.org/10.14778/3303753.3303754 [26] S. J. Subramanya, Devvrit, R. Kadekodi, R. Krishaswamy, and H. V. Simhadri, DiskANN: fast accurate billion-point nearest neighbor search on a single node . Red Hook, NY, USA: Curran Associates Inc., 2019. [27] M. Wang, X. Xu, Q. Yue, and Y. Wang, “A comprehensive survey and experimental comparison of graph-based approximate nearest neighbor search,” Proc. VLDB Endow. , vol. 14, no. 11, p. 1964–1978, Jul. 2021. [Online]. Available: https://doi.org/10.14778/3476249.3476255 [28] Q. Zhang, S. Xu, Q. Chen, G. Sui, J. Xie, Z. Cai, Y. Chen, Y. He, Y. Yang, F. Yang, M. Yang, and L. Zhou, “VBASE: Unifying online vector similarity search and relational queries via relaxed monotonicity,” in 17th USENIX Symposium on Operating Systems Design and Implementation (OSDI 23) . Boston, MA: USENIX Association, Jul. 2023, pp. 377–395. [Online]. Available: https://www.usenix.org/conference/osdi23/presentation/zhang-qianxi [29] S. Gollapudi, N. Karia, V. Sivashankar, R. Krishnaswamy, N. Begwani, S. Raz, Y. Lin, Y. Zhang, N. Mahapatro, P. Srinivasan, A. Singh, and H. V. Simhadri, “Filtered-diskann: Graph algorithms for approximate nearest neighbor search with filters,” in Proceedings of the ACM Web Conference 2023 , ser. WWW ’23. New York, NY, USA: Association for Computing Machinery, 2023, p. 3406–3416. [Online]. Available: https://doi.org/10.1145/3543507.3583552 [30] W. Wu, J. He, Y. Qiao, G. Fu, L. Liu, and J. Yu, “Hqann: Efficient and robust similarity search for hybrid queries with structured and unstructured constraints,” in Proceedings of the 31st ACM International Conference on Information & Knowledge Management , ser. CIKM ’22. New York, NY, USA: Association for Computing Machinery, 2022, p. 4580–4584. [Online]. Available: https://doi.org/10.1145/3511808.3557610 [31] Y. Cai, J. Shi, Y. Chen, and W. Zheng, “Navigating labels and vectors: A unified approach to filtered approximate nearest neighbor search,” 
+
+Proc. ACM Manag. Data , vol. 2, no. 6, Dec. 2024. [Online]. Available: https://doi.org/10.1145/3698822 [32] C. Zuo and D. Deng, “Arkgraph: All-range approximate k-nearest-neighbor graph,” Proc. VLDB Endow. , vol. 16, no. 10, p. 2645–2658, Jun. 2023. [Online]. Available: https://doi.org/10.14778/3603581.3603601 [33] A. Liang, P. Zhang, B. Yao, Z. Chen, Y. Song, and G. Cheng, “Unify: Unified index for range filtered approximate nearest neighbors search,” 
+
+Proc. VLDB Endow. , vol. 18, no. 4, p. 1118–1130, Dec. 2024. [Online]. Available: https://doi.org/10.14778/3717755.3717770 [34] Y. Wang, Z. He, Y. Tong, Z. Zhou, and Y. Zhong, “Timestamp approx-imate nearest neighbor search over high-dimensional vector data,” in 
+
+2025 IEEE 41st International Conference on Data Engineering (ICDE) ,2025, pp. 3043–3055. [35] Y. Liu, T. Wu, J. Xie, Y. Zhao, J. X. Yu, and J. Cui, “Generalized range filtering approximate nearest neighbor search: Containment and overlap [technical report],” 2026. [Online]. Available: https://arxiv.org/abs/2605.26474 [36] H.-P. Kriegel, M. P¨ otke, and T. Seidl, “Managing intervals efficiently in object-relational databases,” in Proceedings of the 26th International Conference on Very Large Data Bases , ser. VLDB ’00. San Francisco, CA, USA: Morgan Kaufmann Publishers Inc., 2000, p. 407–418.
