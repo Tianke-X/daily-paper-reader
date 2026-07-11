@@ -1,0 +1,609 @@
+Title: Risk-Constrained Freshness-Aware Semantic Caching for Open-Web Retrieval-Augmented LLMs
+
+URL Source: https://arxiv.org/pdf/2607.04281v1
+
+Published Time: Tue, 07 Jul 2026 02:10:29 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+## Risk-Constrained Freshness-Aware Semantic Caching for Open-Web Retrieval-Augmented LLMs 
+
+Muhammad Mansoor 1, Tahir Ahmad 1, Yeo-Chan Yoon 1*1Jeju National University, Jeju, Republic of Korea    
+
+> mmansoor7755@stu.jejunu.ac.kr ,tahirahmad@stu.jejunu.ac.kr ,ycyoon@jejunu.ac.kr
+> Correspondence: ycyoon@jejunu.ac.kr
+
+Abstract 
+
+Semantic caching reduces the latency and cost of retrieval-augmented generation (RAG) by serving cached answers to semantically simi-lar queries, but most existing methods do not model the time-varying freshness of open-web evidence. We present FreshCache, a three-tier semantic cache that treats cache reuse as a risk-constrained temporal inference problem: be-fore approving a cache hit, FreshCache esti-mates the probability that the cached result is stale using a fitted exponential decay model en-hanced by a learned MLP, and approves reuse only when that probability falls below a per-tier error budget across answers ( ε = 0 .10 ), URL lists ( ε = 0 .20 ), and page content ( ε = 0 .35 ). This allows the system to degrade gracefully as entries age rather than forcing a binary choice between a stale hit and a full pipeline execu-tion. We introduce FreshCache-Bench, a bench-mark of 8,072 base queries across five fresh-ness classes with ground truth staleness labels drawn from real web snapshots at 1, 12, 24 hours, and 7 days after a baseline crawl, ex-panded to 31,201 queries via paraphrase gen-eration. At the 24-hour evaluation window, FreshCache_MLP achieves 97% search API savings at 0.1% hash-based stale error, and an LLM-judge evaluation on 396 confirmed change pairs shows that only 34.3% of detected content changes actually affect answer correct-ness, placing true answer-affecting stale error at approximately 0.034%. The rule-based Fresh-Cache achieves 98% search savings at 3.3% stale error under a temporal holdout calibra-tion, outperforming SemanticTTL (14.9% stale, 72% saved), vCache (7.2% stale, 47% saved), and SCALM (5.2% stale, 96% saved). Ab-lations show the temporal risk gate accounts for an 11.6 point reduction in stale error over similarity-only reuse, and the learned MLP re-duces stale error a further 3.2 points over the rule-based model. 
+
+> *Corresponding author.
+
+1 Introduction 
+
+Retrieval-augmented generation grounds LLM out-puts in external knowledge (Lewis et al., 2020; Gao et al., 2023). In open-web RAG systems, each query triggers a search API call, HTTP fetches of the returned pages, and an LLM call that synthe-sizes an answer from the retrieved content. Latency routinely exceeds three seconds per query, and at scale the API and compute costs become substan-tial. Semantic caching reduces this overhead (Bang, 2023; Zhu and Zhu, 2024): if an incoming query is semantically similar to a previously answered one, the system serves the cached response instead of repeating the pipeline. Prior systems report search cost reductions of more than half on work-loads with recurring query patterns (Li et al., 2024; Schroeder et al., 2025). The problem is that existing semantic caches largely ignore a basic property of open-web content: it changes over time. A cached answer that was accurate when stored may be wrong by the time it is served, and how quickly this happens varies enormously by query type. A country capital can be reused for months; a live sports score is stale within minutes. Fixed TTL systems face an uncomfortable trade-off: too short and cache efficiency is lost, too long and stale answers erode user trust. We argue that reusing a cached answer is fun-damentally a risk-constrained temporal inference problem. Before serving a cached result, the right question is not only whether the query is similar enough, but also, given the content type, the entry’s age, and the retrieval tier, what is the probability that this response is stale, and is that probability within an acceptable error budget. Framing caching as staleness risk estimation rather than similarity thresholding is the central idea behind FreshCache. FreshCache is a three-tier semantic cache built for open-web RAG. The tiers mirror the pipeline’s 1
+
+> arXiv:2607.04281v1 [cs.CL] 5 Jul 2026
+
+natural stages: final answers (L1), retrieved URL lists (L2), and raw page content (L3). Each tier carries a configurable error budget. Before serving from any tier, FreshCache estimates staleness prob-ability using a calibrated risk model and approves reuse only when it falls within budget. When L1 risk is too high, the system degrades to L2, sav-ing the search cost while generating a fresh an-swer from re-fetched content; when even L2 is too risky, conditional GET validation at L3 confirms whether pages changed before an unconditional re-fetch. FreshCache therefore always operates at the highest safe tier rather than making a binary cache-or-miss decision. We evaluate FreshCache on FreshCache-Bench, 8,072 real web queries across five freshness classes (timeless, slow, medium, fast, real time), re-fetched at one, twelve, and twenty four hours and again at seven days to produce ground truth staleness labels, expanded to 31,201 queries via paraphrasing. We compare against three semantic caching baselines (SemanticTTL (Bang, 2023), vCache (Schroeder et al., 2025), SCALM (Li et al., 2024)), two class aware TTL baselines, a tiered fixed TTL ablation, and an oracle upper bound. All experiments use the BAAI/bge-m3 multilingual encoder. At the 24-hour window, FreshCache_MLP reaches 0.1% stale error and 97% search savings, beating every baseline on both axes. The gap be-tween the rule-based and MLP variants is explained by within-class discrimination: the MLP identifies stable queries inside volatile classes and approves L1 reuse for them, recovering savings the class-level rule is too conservative to capture. Our contributions are: (1) a formulation of open-web RAG caching as a risk-constrained temporal reuse problem, with an empirical case for why similarity alone is insufficient; (2) FreshCache, a three-tier architecture with per-tier staleness bud-gets, along with a negative finding that lightweight content validation is largely ineffective on the open web, which motivates risk-gated L1 and L2 reuse as the primary source of savings; (3) FreshCache-Bench, a temporally grounded benchmark with real snapshot based staleness labels; (4) a comprehen-sive evaluation against five baselines and an oracle, showing the risk gate and learned model each con-tribute a measurable reduction in stale error; and (5) validation of the hash-based stale proxy against an LLM judge, and a live-web microbenchmark confirming the simulation’s latency assumptions are conservative. Full details of several support-ing analyses appear in the appendix, cited at the relevant points below. 
+
+2 Related Work 
+
+Retrieval-augmented generation was introduced by Lewis et al. (Lewis et al., 2020), with Dense Pas-sage Retrieval (Karpukhin et al., 2020) providing a standard dense retrieval backbone. Nakano et al. (Nakano et al., 2021) extended this to live web browsing, and Lazaridou et al. (Lazaridou et al., 2022) and Mallen et al. (Mallen et al., 2023) show that fresh retrieval substantially improves accuracy on time-sensitive and long-tail queries. This line of work focuses on what is retrieved and how quickly; FreshCache instead asks whether a previous re-trieval result can be safely reused. Semantic caching for LLM services was popu-larized by GPTCache (Bang, 2023), formalized by Zhu and Zhu (Zhu and Zhu, 2024), and extended by SCALM (Li et al., 2024) through hierarchical clustering and by vCache (Schroeder et al., 2025) through per-embedding threshold learning with for-mal error guarantees. These systems model se-mantic match quality and cache-hit correctness, but none explicitly estimate open-web evidence staleness as a time dependent risk; a semantically correct hit can still return stale information if the underlying page has changed. FreshCache keeps the semantic lookup machinery from GPTCache and SCALM and the error budget framing from vCache, and adds tier-specific staleness-risk esti-mation as an independent gate on top of semantic relevance. Wang et al. (Wang et al., 2025) vary similar-ity thresholds and TTLs per query category, but assign a static per-category TTL on a single-tier cache. FreshCache instead estimates a calibrated probability at query time conditioned on freshness class, domain volatility, and query features, and applies a distinct risk budget across three tiers rather than one. RAGCache (Jin et al., 2024), CacheBlend (Yao et al., 2025), and CAG (Chan et al., 2025) accelerate generation by caching KV representations of a static corpus and never ask whether cached content remains correct; these are complementary to FreshCache rather than compet-ing with it. On the temporal knowledge side, Dhin-gra et al. (Dhingra et al., 2022), Tan et al. (Tan et al., 2023), and Kasai et al. (Kasai et al., 2023) docu-ment systematic LLM failures on time-scoped facts, and FreshLLMs (Vu et al., 2024) proposes a five-2class volatility taxonomy that directly motivates our freshness classes, though it re-fetches evidence unconditionally rather than gating reuse. Web change dynamics studied by Fetterly et al. (Fetterly et al., 2003), Cho and Garcia-Molina (Cho and Garcia-Molina, 2003), and Olston and Pandey (Ol-ston and Pandey, 2008) inform our decay model. All embeddings use BAAI/bge-m3 (Chen et al., 2024), a multilingual encoder building on Sentence-BERT (Reimers and Gurevych, 2019), chosen to support both English and Korean queries in our benchmark. Table 8 in Appendix A summarizes how FreshCache differs from each of these systems along six design dimensions. 
+
+3 Methodology 
+
+3.1 Problem Formulation 
+
+An open-web RAG pipeline processes queries 
+
+q1, q 2, . . . . For each query q, the pipeline runs a search call returning URLs U (q), an HTTP fetch producing content C(q), and an LLM call pro-ducing an answer A(q). A semantic cache stores records (q′, U ′, C ′, A ′, t ), where t is the population time. We define a cached entry as stale if any URL in U ′ has changed since t:stale (q′, t, t ′) = max   
+
+> u∈U′
+
+δ(u, t, t ′) (1) where δ is a binary change indicator. Given an error budget ετ per tier, the reuse decision is: 
+
+τ ∗(q) = arg max   
+
+> τ∈{ L1,L 2,L 3}
+
+1Cτ (q, q ′, t ) ,Cτ (q, q ′, t ) : sim (q, q ′) ≥ θτ
+
+∧ ˆP (stale | q′, τ, t now −t) ≤ ετ .
+
+(2) Reuse is therefore a conjunction of a semantic con-dition and a temporal condition; satisfying similar-ity alone is not sufficient. 
+
+3.2 Freshness Classification 
+
+We partition queries into five freshness classes, fol-lowing the taxonomy in FreshLLMs (Vu et al., 2024): TIMELESS (historical and definitional facts), SLOW (corporate and policy facts that change over weeks to months), MEDIUM (finan-cial and news facts that may change within days), FAST (live scores and prices that change within hours), and REAL_TIME (traffic, weather, and live streams that are stale within minutes; never cached). Each query is labeled at collection time and classified at inference by a lightweight text clas-sifier. Freshness class is the primary input to the risk model and determines which half-life governs staleness decay. 
+
+3.3 Staleness Risk Model 3.3.1 Rule-Based Exponential Decay 
+
+Content change rates follow an approximately ex-ponential distribution across web domains (Cho and Garcia-Molina, 2003; Fetterly et al., 2003). For each class f we fit a half-life hf from observed change rates, giving: 
+
+Pcontent (f, ∆t) = 1 − exp 
+
+
+
+− log 2 
+
+hf
+
+· ∆t
+
+
+
+(3) Answer- and URL-tier content are more abstract than raw page content and tend to go stale faster in aggregate, so we apply a tier multiplier mτ :
+
+ˆP (stale | f, τ, ∆t) = 1 −  1 − Pcontent (f, ∆t)mτ
+
+(4) with manswer = 1 .5, murl-list = 1 .2, mcontent = 1 .0.Section 3.8 briefly discusses the sensitivity of this choice; the full sweep is in Appendix C. Half-lives are fit by maximum likelihood from change counts across snapshot reruns at 1h, 12h, 24h, and 7 days, after filtering spurious changes from volatile CDN-served domains. The fitted val-ues are: 
+
+h =
+
+
+
+hTIMELESS = 22 d,hSLOW = 16 d,hMEDIUM = 15 h,hFAST = 3 h,hREAL-TIME = 30 s(5) The 7-day rerun was needed to stabilize the TIME-LESS and SLOW estimates, and it corrects an ear-lier inversion where FAST appeared less volatile than MEDIUM: the most volatile FAST pages, such as live scoreboards, return HTTP 403 to unauthen-ticated scrapers at short windows and produce no observable change records at 24h. This observabil-ity limitation still affects REAL_TIME, whose 30 second half-life is kept as a prior (Section 5.4). 
+
+3.3.2 Learned MLP Risk Model 
+
+The exponential model ignores domain-level volatility within a class and query-conditioned signals. We train a lightweight MLP on 25 in-put features spanning freshness class (one-hot), log-normalized cache age, per-domain empirical volatility, a 9-way answer type encoding and a 3Incoming query q                
+
+> Natural language
+> Open -web RAG
+> Query Understanding
+> BGE -M3 embedding
+> Freshness class ·answer
+> type spaCy entities ·
+> temporal kw
+> Similarity lookup
+> Cosine sim(q, q')
+> Top -1 candidate per tier
+> Staleness risk model
+> Rule: P = 1 −exp( −λΔ t)
+> MLP 25 -dim: domain vol ·
+> entity vol
+> Output: P̂( stale | f, τ, Δ t)
+> L1 hit?
+> L2 hit?
+> L1 cache ( ε₁=0.10)
+> Answer ·URL hashes ·
+> timestamp
+> L2 cache ( ε₂=0.20)
+> URL list ·timestamp
+> Answer served
+> L1 hit ~5ms ·LLM ~2500ms
+> Search API
+> Fresh URL List
+> Noise filter
+> Domain volatility ceiling
+> CDN / A/B test removal
+> L3 content cache
+> (ε₃=0.35)
+> P̂ ≤ε₃→direct reuse
+> P̂> ε₃→conditional GET /
+> re -fetch
+> Conditional GET
+> 304 → reuse cached
+> content
+> 200 → replace with fresh
+> Evidence set
+> Cached ·validated ·fresh
+> Update L1
+> always
+> Update L2
+> on miss only
+> Update L3
+> on miss only
+> LLM generation
+> Synthesise from evidence
+> →Answer served
+> L1 hit
+> miss
+> L2 hit —skip Search API
+> L2 miss
+> Populate
+> Real
+> Time?
+> REAL_TIME →bypass L1 and L2 caches
+> No
+
+Figure 1: FreshCache system architecture showing semantic lookup, risk-gated cache reuse, and fallback execution across the L1, L2, and L3 cache tiers. 
+
+temporal keyword indicator, and enrichment fea-tures including entity volatility scores, query-query cosine similarity, and lexical and entity overlap. These are passed through three hidden layers of widths [64, 32, 16] with LayerNorm, ReLU, and dropout 0.3, followed by a sigmoid output giving 
+
+ˆP (stale ) at the content tier, with Equation 4 applied at inference for the other tiers. Training uses binary cross-entropy with a posi-tive class weight of 8.14 for the 10.9% positive rate, on a single A6000 GPU for up to 500 epochs with early stopping on validation Brier score. Temper-ature scaling (Guo et al., 2017) with T = 1 .4672 
+
+improves calibration; the final model reaches a Brier score of 0.098 and ECE of 0.140 on a query-cluster-level 70/30 held-out split (2,086 train, 894 test clusters), which prevents leakage of change labels across semantically related queries. 
+
+3.4 Three-Tier Cache Architecture L1: Answer Cache (εL1 = 0 .10 ) stores the final answer, the URL hashes used to generate it, and a timestamp, and returns without touching the search API, the web, or the LLM. Matching uses BGE-M3 cosine similarity ( θL1 = 0 .40 ) plus a named-entity match check using spaCy: a candidate is rejected if either query contains an entity absent from the other, which guards against high similarity pairs that ask about different entities (for example, iPhone 16 versus iPhone 16 Pro pricing). On 20 adversarial pairs mined from the benchmark, cosine similarity alone would approve all 20 as hits; the entity filter blocks 15 of 20, with the misses coming from unusual phrasings where spaCy extracts no entity span (Appendix B). 
+
+L2: URL-List Cache (εL2 = 0 .20 , θL2 = 0 .35 )stores the ordered URL list from a search call. On a hit, the search API is bypassed but pages are still fetched and the LLM still generates a fresh answer, recovering the search cost while avoiding the risk of a different, lower quality URL set for a paraphrased query. No prior semantic cache sep-arates URL discovery from content fetching into distinct cacheable artifacts; this is most valuable at 24 hours, where many MEDIUM and FAST queries carry risk too high for L1 but whose URL sets have not changed even though some page content has shifted. 
+
+L3: Content Cache (εL3 = 0 .35 ) stores fetched content keyed by URL hash. The looser budget re-flects that partial freshness is acceptable here: even if one page in a result set changed, cached content from the others can still contribute useful context. When risk falls between εL3 and an upper thresh-old, FreshCache issues a conditional GET instead of serving stale content or re-fetching uncondition-ally. 4Algorithm 1 FreshCache Lookup                                                                                                                      
+
+> Require: Query q, freshness class f, caches (L1, L 2, L 3) ,time t0
+> Ensure: Answer A
+> 1: if f=REAL_TIME then return FULL PIPELINE (q)
+> 2: end if
+> 3: (q′, t )←NN (q, L 1)
+> 4: if sim( q, q ′)≥θL1and ˆP(stale |f, m a, t 0−t)≤εL1
+> then return L1[ q′].answer ▷L1 hit 5: end if
+> 6: (q′′ , t ′)←NN (q, L 2)
+> 7: if sim( q, q ′′ )≥θL2and ˆP(stale |f, m u, t 0−t′)≤
+> εL2then
+> 8: U←L2[ q′′ ].urls ▷L2 hit 9: else
+> 10: U←SEARCH API (q);L2[ q]←(U, t 0)
+> 11: end if
+> 12: C← ∅
+> 13: for each u∈Udo
+> 14: if u∈L3and ˆP(stale |f, m c, t 0−L3[ u].t )≤εL3
+> then
+> 15: C←C∪ { L3[ u].content }▷L3 hit 16: else if u∈L3and
+> ¬ConditionalGet( u, L 3[ u].etag) then
+> 17: C←C∪ { L3[ u].content }▷Validated reuse 18: else
+> 19: L3[ u]←FETCH (u);C←C∪{L3[ u].content }
+> 20: end if
+> 21: end for
+> 22: A←LLM (q, C );L1[ q]←(A, U, t 0);return A
+
+3.5 Cache Lookup Algorithm 
+
+Algorithm 1 implements the decision rule in Equation 2 with graceful degradation across tiers. Lookups are ordered from most to least aggressive: an L1 hit returns in 5ms; an L2 hit saves the search call while regenerating the answer; an L3 hit saves an individual fetch. In the best case every URL is an L3 hit and total latency is just the LLM call; in the worst case every URL misses and latency matches the NoCache baseline. 
+
+3.6 Lightweight Staleness Validation 
+
+When a cached URL’s risk exceeds εL3 but a full re-fetch would be wasteful, FreshCache issues a condi-tional GET using the stored ETag or Last-Modified header, converting a probabilistic estimate into a binary ground truth signal at the cost of one round trip. We model this at 150ms in simulation, but our live-web microbenchmark (Appendix G) finds real conditional GET requests average 565ms and only 11.3% of servers actually return 304. This means content-level validation is a weaker mech-anism in production than the simulation assumes, which is precisely why the L1 and L2 tiers, which avoid search and fetch entirely, carry most of Fresh-Cache’s value rather than depending on validation. 
+
+3.7 Encoder 
+
+All similarity lookups use cosine similarity be-tween BAAI/bge-m3 (Chen et al., 2024) embed-dings, chosen for multilingual support across our English and Korean queries and for stronger paraphrase detection than monolingual alterna-tives. Query embeddings are pre-computed into a 31 ,201 × 31 ,201 similarity matrix, so lookup dur-ing simulation is an O(1) array read; a production deployment would embed incoming queries on the fly with approximate nearest-neighbor search. 
+
+3.8 Design Choices 
+
+We use three tiers rather than one because a single answer-only cache discards search and fetch results that could be partially reused; at 24 hours, Fresh-Cache routes over 20,000 L2 hits for queries whose L1 risk is too high, savings a single-tier system would forfeit. We use separate per-tier error bud-gets because the answer tier is the most user-visible artifact and deserves the tightest guarantee, while content is an intermediate artifact re-processed by the LLM and tolerates more staleness. We start from a calibrated exponential decay model rather than a learned model because its parameters are in-terpretable and easy to audit, with the MLP layered on top as an enhancement rather than a replace-ment; the rule-based model remains available as a fallback when a learned checkpoint is unavail-able or out of distribution. The tier multipliers in Equation 4 are fixed constants; a sweep over 
+
+manswer shows search savings and stale error are stable across a wide range, so results are not an artifact of this specific choice (Appendix C). 
+
+4 Experimental Setup 
+
+4.1 FreshCache-Bench 
+
+We build FreshCache-Bench from SealQA (Pham et al., 2025), FreshQA (Vu et al., 2024), and Tempo-ralAlignQA (Zhao et al., 2024) for English queries, plus templated Korean queries generated from en-tity lists. The benchmark contains 8,072 base queries across five freshness classes, 6,012 English and 246 Korean, each expanded to up to four para-phrases for 31,201 total queries (Table 1). For each base query we issue a Serper search call and fetch the top URLs at a baseline run and four reruns at approximately 1h, 12h, 24h, and 7 days, hash-ing each page’s main content block after stripping boilerplate; a URL is marked changed if its hash differs from the baseline. After filtering domain-5Table 1: FreshCache-Bench dataset composition. URL Cov. = fraction of queries with at least one fetched URL; +Para. = total including paraphrases. Half-lives are calibrated from observed change rates via MLE using snapshot reruns at 1h, 12h, 24h, and 7 days.                             
+
+> Class Base URL Cov. +Para. Half-life
+> TIMELESS 2,000 84.6% 6,929 22d SLOW 2,000 83.1% 8,137 16d MEDIUM 2,000 80.5% 7,626 15h FAST 2,000 86.1% 8,155 3h REAL_TIME 72 98.3% 354 30s
+> Total 8,072 84.1% 31,201 —
+
+level noise, the benchmark contains 2,995 clean change records across 477 stale URLs at 1 hour, rising to 699 at 24 hours and 1,195 at 7 days, from which the half-lives in Equation 5 are fit. 
+
+4.2 Baselines 
+
+We compare against NoCache and ExactTTL as lower and upper bounds on staleness and cost; SemanticTTL (Bang, 2023), a GPTCache-style cosine match with per-class TTL; DomainTTL, a per-class TTL scaled by mean domain volatil-ity; TemporalKeywordTTL, which halves the TTL when the query contains a temporal keyword; L3Only and L3+ConditionalGet, which always search but cache content with and without vali-dation; vCache (Schroeder et al., 2025) with ε =0.10 ; SCALM (Li et al., 2024); TieredFixedTTL, which shares FreshCache’s tier structure but re-places the risk model with a binary TTL gate at the same half-lives, isolating the risk model’s con-tribution; and OracleFreshness, a non-deployable upper bound using ground-truth per-URL labels. We also report FreshCache_NoCalib, using naive prior half-lives instead of MLE-fit values, to isolate the calibration contribution. 
+
+4.3 Implementation and Metrics 
+
+All simulations run on a single CPU node over the pre-computed similarity matrix; embeddings are generated once with BAAI/bge-m3 across two A6000 GPUs. The MLP is trained on a single A6000 with AdamW at learning rate 10 −3. Key hyperparameters are listed in Appendix D. We report three metrics. Stale error rate is the fraction of cache hits whose underlying URL con-tent changed since population, using SHA-256 con-tent hash comparison as a reproducible, conser-vative proxy for answer-affecting staleness; Sec-tion 4.4 validates this proxy against an LLM judge. Search savings is the fraction of queries for which a fresh search call was avoided. Base query p50 la-tency saving is the reduction in median end-to-end latency on base queries only, reported separately because the overall p50 is dominated by paraphrase L1 hits at 5ms and would overstate production ben-efit by roughly a factor of four. All experiments run at t = 1 h and t = 24 h; 24 hours is our primary window and design target. 
+
+4.4 Metric Validation 
+
+Hash comparison counts any content change as staleness, which conflates genuine information up-dates with cosmetic changes such as rotating ban-ners or view counters. To quantify this, we ran an LLM judge (Llama-3.2-3B-Instruct, local) on all 396 fully evaluable URL-query pairs with a hash-detected change at 24 hours, asking whether the change would make a cached answer factu-ally wrong. Only 34.3% of hash-detected changes are answer-affecting (Appendix J for the per-class breakdown), which places FreshCache_MLP’s true answer-level stale error at approximately 0.034%, a factor of 2.9 below the reported hash-based fig-ure. A separate end-to-end grading experiment on 250 stratified queries, comparing answers gener-ated from baseline versus 24-hour rerun evidence, found 95.6% overall cache-hit answer accuracy and only 17.2% of hash-detected changes resulting in an actual answer error, corroborating the hash met-ric as a conservative upper bound. All comparison tables in this paper use the hash-based proxy for reproducibility across methods. 
+
+4.5 Live-Web and External Validation 
+
+The 800ms fetch and 150ms conditional GET laten-cies used in simulation are modelling constants. A live-web microbenchmark on 149 URLs finds me-dian cold-fetch latency of 915ms, close to the sim-ulated value, but p95 latency of 2,771ms, 3.5 times the constant, meaning the simulation understates FreshCache’s advantage at high percentiles (Ap-pendix G). We also evaluate cache-induced stale er-ror directly on two external QA benchmarks, Evolv-ingQA and DailyQA, neither used for calibration. FreshCache_MLP’s hit rate drops sharply on both, since its learned features are tuned to FreshCache-Bench’s domain volatility distribution rather than real-world event timing; the rule-based model de-grades more gracefully and remains the recom-mended fallback outside the training distribution 6(Appendix H). 
+
+5 Results and Discussion 
+
+5.1 Main Results 
+
+Table 2 reports results at t = 24 h with BGE-M3. FreshCache_MLP saves 97% of search calls at 0.1% stale error and is Pareto-dominant over every baseline (Figure 2): SemanticTTL reaches 14.9% stale at 72% saved, vCache 7.2% at 47%, and SCALM 5.2% at 96%. These savings hold on base queries alone: excluding all 24,943 para-phrases gives 97.3% saved at 0.0% stale error, so the headline result is not an artifact of paraphrases arriving at near-zero cache age. To confirm statistical reliability given the fi-nite evaluation set, we ran a nonparametric boot-strap (30 resamples, query records resampled with replacement, stale URL set fixed at 727 URLs, seed=42). FreshCache_MLP achieves a bootstrap 95% confidence interval of [0.08%, 0.16%] on over-all stale error and [0.05%, 0.20%] on the FAST class, the most volatile and most sensitive to work-load variation. The rule-based FreshCache shows a 95% CI of [2.68%, 5.34%] overall. The gap between the two methods is statistically robust: no bootstrap resample brought FreshCache_MLP above 0.20% stale error or FreshCache_Full below 2.68%. The rule-based half-life in Table 2 is fit under a temporal holdout, using rerun_1h observations only and evaluating on rerun_24h, which the fit never sees. Under this honest holdout, stale error is 3.3% at 98.4% saved, higher than the 1.4% ob-tained when the same snapshot is used for both fitting and evaluation, because a single exponen-tial rate cannot jointly capture short-term churn and slower long-term drift (Olston and Pandey, 2008). FreshCache_MLP uses a separate query-cluster holdout (Section 3.3) and is unaffected by this issue, remaining our primary deployable re-sult. A TTL sweep across four baselines and eight scale factors confirms no configuration simultane-ously beats FreshCache_Full on both stale error and search savings (Appendix F). 
+
+5.2 Per-Class Breakdown 
+
+Table 3 breaks stale error down by class. TIME-LESS and SLOW content rarely changes, and all methods stay under 9% except SemanticTTL and SCALM, which cannot separate stable from volatile entries within a class. MEDIUM is where 
+
+Table 2: Results at t = 24 h on all classes using BGE-M3 encoder (31,201 queries, 727 stale URLs). S/q = search calls per query; Stale = stale error rate; Saved = search savings. The primary deployable FreshCache result is shown in bold . † = oracle upper bound, not deployable. 
+
+Method S/q Stale Saved 
+
+SemanticTTL 0.28 14.9% 72% DomainTTL 0.52 13.5% 48% TempKeyTTL 0.37 14.9% 63% vCache 0.53 7.2% 47% SCALM 0.04 5.2% 96% TieredTTL 0.01 23.1% 99% FC_NoCalib 0.02 2.2% 98% FreshCache 0.02 3.3% 98% 
+
+FC_MLP 0.03 0.1% 97% 
+
+Oracle † 0.01 0.0% 99%    
+
+> TempKeyTTL = TemporalKeywordTTL; TieredTTL = TieredFixedTTL; FC_NoCalib = FreshCache_NoCalib; FC_MLP = FreshCache_MLP. Results at
+> t= 1 h follow the same ordering and appear in Appendix E. 0510 15 20 25
+> Stale Error Rate (%)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Search API Savings (%)
+> SemanticTTL (14.9%, 72%)
+> DomainTTL (13.5%, 48%)
+> TemporalKeywordTTL (14.9%, 63%)
+> TieredFixedTTL (23.1%, 99%)
+> vCache (7.2%, 47%)
+> SCALM (5.2%, 96%)
+> NoCache / ExactTTL / L3+CondGet
+> (0% stale, 0% saved)
+> FreshCache
+> (3.3%, 98%)
+> FC NoCalib
+> (2.2%, 98%)
+> FC MLP
+> (0.1%, 97%) Oracle
+> (0.0%, 99%)
+> better lower stale
+> Search Savings vs. Stale Error Rate at t = 24h (BGE-M3)
+> Trivial baselines
+> SemanticTTL
+> DomainTTL
+> TemporalKeywordTTL
+> vCache
+> SCALM
+> TieredFixedTTL
+> FC NoCalib / FC MLP
+> FreshCache (Ours)
+> OracleFreshness
+
+Figure 2: Search API savings versus stale error rate at 
+
+t = 24 h using BGE-M3. FreshCache_MLP achieves the best deployable freshness–efficiency trade-off, with 0.1% stale error and 97% search savings. OracleFresh-ness represents the non-deployable upper bound. 
+
+temporal risk estimation matters most: the rule-based model permits some reuse at 4.3% stale error under the holdout fit, while the MLP recovers 3,918 MEDIUM L1 hits at 0.0% stale error by condition-ing on answer type and entity volatility, though Appendix H shows this within-class discrimination does not transfer to out-of-distribution query sets. FAST shows the largest holdout penalty, rising to 5.4% stale error, since it has the shortest half-life and the least observation history at the 1-hour fit 7window. REAL_TIME is never cached by design and reports 0% stale error and 0% savings for every method. 
+
+5.3 Tier Activation 
+
+Table 4 shows per-class tier activation at both windows. At t = 1 h, TIMELESS, SLOW, and MEDIUM queries are served from L1, while FAST already shows zero L1 hits because its 3h half-life pushes risk above budget even at short ages. By 
+
+t = 24 h, MEDIUM joins FAST with zero L1 hits, but 7,582 MEDIUM queries route through L2, by-passing search while still regenerating the answer from fresh content; FAST falls through to a full search at both windows. This tier shift is not avail-able to single-tier answer caches, which must either approve reuse or fall back entirely. The behavior is grounded in a workload characterization showing that TIMELESS and SLOW query pairs with high semantic similarity reliably share URL sets, while MEDIUM and FAST pairs do not, which is why L2 reuse is selective rather than uniform (Appendix I). 
+
+5.4 Discussion 
+
+SCALM’s frequency-weighted selection tends to serve the most popular cached entry above a simi-larity threshold, and popular entries skew toward TIMELESS and SLOW clusters; when a MEDIUM query arrives with modest similarity to a TIME-LESS entry, SCALM serves a semantically plausi-ble but temporally stale answer. FreshCache avoids this by conditioning reuse on class-specific stal-eness probability rather than hit frequency. At 
+
+t = 1 h, the rule-based model shows only a small advantage over SemanticTTL on MEDIUM queries (4.1% versus 4.7% stale), because the 15-hour half-life implies low risk at short ages; the MLP re-solves this using query-conditioned features, and at t = 24 h the class-level rule already blocks all MEDIUM L1 reuse once the half-life has ex-pired. The reported p50 latency saving of roughly 99.8% is inflated by paraphrase L1 hits at 5ms; a more honest production estimate, applying the mea-sured fetch constants from Appendix G to Fresh-Cache_MLP’s actual hit and miss ratios, gives ap-proximately 80% median latency reduction, with true high-percentile savings larger than this simula-tion reports since real p95 fetch latency is 3.5 times the simulated constant. Finally, since only 34.3% of hash-flagged staleness is answer-affecting (Sec-tion 4.4), the absolute stale error numbers reported throughout this paper should be read as conserva-tive upper bounds rather than exact production er-ror rates, and the correction factor applies equally across methods so the relative ordering in every table is unaffected. 
+
+6 Ablation Study 
+
+6.1 Encoder Contribution 
+
+A concern with comparing systems on a stronger encoder is that encoder quality alone could explain better performance. Table 5 compares MiniLM-L6-v2 against BGE-M3 with all other components fixed, both calibrated under the same temporal hold-out. Upgrading the encoder hurts SemanticTTL, raising its stale error from 10.4% to 14.9%, since a stronger encoder finds more similar pairs but a fixed TTL cannot filter the additional hits by risk. vCache is essentially flat across encoders, 7.3% to 7.2%. FreshCache shows the opposite pattern entirely: stale error improves from 3.8% to 3.3% while search savings rise from 96% to 98%, and the MLP variant reaches 0.1% stale error at 97% saved regardless of encoder. This asymmetry is the key finding: a stronger encoder without temporal gating makes staleness meaningfully worse, while the same encoder with temporal gating holds stal-eness steady or improves it while adding search savings, confirming that FreshCache’s architecture, not encoder quality, drives its advantage over Se-manticTTL. BGE-M3 is also necessary for our multilingual setting: MiniLM effectively prevents cache hits on Korean queries. 
+
+6.2 Tier Contribution 
+
+Table 6 isolates each tier’s contribution. Tiered-FixedTTL adds the full L2 and L3 tiers to Se-manticTTL’s structure but keeps a fixed TTL gate, reaching 99% search savings at 23.1% stale error, the highest in the table despite having every tier active. This is the central result of this ablation: adding tiers reduces search cost, but only the risk model reduces stale error. L3Only, which always pays the search cost but risk-gates content, achieves 4.2% stale error at zero search savings, confirm-ing the L2 tier is what lets FreshCache bypass the search API without sacrificing freshness; it routes roughly 20,400 queries through L2 rather than L1 at 24 hours, producing answers current as of query time from re-fetched content. L3+ConditionalGet achieves zero stale error by construction but zero search savings, and FreshCache approximates this guarantee while adding 97 to 98% search savings 8Table 3: Stale error rate per freshness class at t = 24 h using BGE-M3. Search savings for FreshCache_MLP are shown for reference. ∗ = SemanticTTL TTL for FAST expired at 24h, making zero caching decisions. ‡ =oracle upper bound, not deployable. FreshCache values use half-lives fit under the temporal holdout described in Section 5.1.                                           
+
+> Method TIMELESS SLOW MEDIUM FAST ALL Search Saved
+> SemanticTTL 2.6% 9.5% 5.9% 0.0% ∗14.9% —vCache 2.3% 6.2% 8.4% 10.8% 7.2% —SCALM 1.6% 8.9% 5.8% 3.9% 5.2% —FreshCache 1.5% 2.9% 4.3% 5.4% 3.3% 95–99%
+> FC_MLP 0.0% 0.2% 0.0% 0.1% 0.1% 95–97%
+> Oracle ‡0.0% 0.0% 0.0% 0.0% 0.0% 99%
+> FC_MLP = FreshCache_MLP. Search Saved denotes search API savings. All methods use the BGE-M3 encoder.
+
+Table 4: FreshCache (rule-based) tier hits per freshness class using BGE-M3 on 31,201 queries. L1 = answer hits, L2 = URL-list hits, and L3 = content hits. Per-class rows are isolated single-class runs, each starting from an empty cache. † marks the Total row, which is measured from a single joint run over all 31,201 queries sharing one cache; because an L1 entry populated while serving one class can still be reused when a later query from another class arrives, this Total is not the arithmetic sum of the isolated per-class rows above it.                                              
+
+> Class t= 1 ht= 24 hL1 L2 L3 L1 L2 L3
+> TIMELESS 1,691 5,111 5,769 1,691 5,111 5,769 SLOW 3,238 4,838 5,205 3,238 4,838 5,205 MEDIUM 4,090 3,494 3,650 07,582 9,036 FAST 0010,206 009,021 REAL_TIME 000000
+> Total †5,072 25,562 29,455 10,182 20,400 21,453
+
+Table 5: Encoder effect on stale error at t = 24 h on all classes using rule-based FreshCache unless noted. ↑
+
+means the encoder upgrade helps; ↓ means it hurts. 
+
+Method MiniLM-L6 BGE-M3 Stale Saved Stale Saved 
+
+SemanticTTL 10.4% 69% 14.9% ↓ 72% vCache 7.3% 49% 7.2% 47% 
+
+FreshCache 3.8% 96% 3.3% ↑ 98% ↑
+
+> FreshCache_MLP with BGE-M3 reaches 0.1% stale error at 97% saved, not shown as a separate row since it uses BGE-M3 only.
+
+on top. 
+
+6.3 Temporal Risk Gate 
+
+SemanticTTL is effectively FreshCache with the risk gate removed and replaced by class-level TTLs, so comparing them isolates the gate’s effect. At 
+
+t = 1 h the gate provides little benefit, since fit-ted half-lives already predict low staleness at short ages and the risk model approves nearly the same L1 hits as SemanticTTL. At t = 24 h the gate be-comes decisive: overall stale error falls from 14.9% to 3.3%, an 11.6 point reduction, driven mainly by MEDIUM falling to 0.0% as the model blocks L1 
+
+Table 6: Tier contribution ablation at t = 24 h on all classes using BGE-M3. S/q = search calls per query; Stale = stale error rate; Saved = search savings. ⋆ = zero stale errors by construction. 
+
+Method Tiers S/q Stale Saved 
+
+NoCache None 1.00 0.0% 0% SemanticTTL L1+TTL 0.28 14.9% 72% TieredTTL L1–L3+TTL 0.01 23.1% 99% L3Only L3 1.00 4.2% 0% L3+CondGet L3+valid. 1.00 0.0% ⋆ 0% FreshCache L1–L3+risk 0.02 3.3% 98% 
+
+FC_MLP L1–L3+MLP 0.03 0.1% 97%   
+
+> TieredTTL = TieredFixedTTL; valid. = validation; FC_MLP = Fresh-Cache_MLP. L1–L3 means all three cache tiers are active.
+
+reuse once the 15h half-life has expired, and SLOW falling to 2.9% as content is routed through L2 and L3. TIMELESS keeps near-perfect search savings throughout, since its risk stays below the 10% bud-get at both windows. The full per-class comparison at both time windows is in Appendix K. 
+
+6.4 Learned MLP 
+
+The rule-based model gives identical risk to any two queries in the same class at the same age; the MLP’s answer type, entity volatility, and similarity 9Table 7: Rule-based vs. MLP risk model per freshness class at t = 24 h using BGE-M3. ∆L1 and ∆Stale show the change when switching from the rule-based model to the 25-dimensional MLP.                                       
+
+> Class Rule-based MLP Change L1 Stale L1 Stale ∆L1 ∆Stale
+> TIMELESS 1,691 1.5% 1,467 0.0% −224 −1.5
+> SLOW 3,238 2.9% 828 0.2% −2,410 −2.7
+> MEDIUM 04.3% 3,918 0.0% +3 ,918 −4.3
+> FAST 05.4% 956 0.1% +956 −5.3
+> ALL 10,182 3.3% 4,131 0.1% −6,051 −3.2
+
+features close this gap. Table 7 compares the two at 
+
+t = 24 h. The MLP approves 828 additional SLOW L1 hits (0.2% stale) on top of the 3,238 the rule-based model already allows, and opens L1 entirely for MEDIUM (3,918 hits, 0.0% stale) and FAST (956 hits, 0.1% stale), where the rule-based model routes both classes through L2 and L3 because class-level risk exceeds budget. TIMELESS is the one class where the MLP is more conservative, trading a small drop in L1 hit count for zero stale error. Overall the MLP reduces stale error from 3.3% to 0.1% at t = 24 h, and from 2.6% to 2.0% at t = 1 h, at a cost of roughly one point of search savings. 
+
+6.5 Summary 
+
+The four ablations establish a clear hierarchy: the temporal risk gate reduces stale error by 11.6 points over SemanticTTL; the L2 tier is what opens a search-saving path for SLOW, MEDIUM, and FAST queries once direct answer reuse becomes too risky; and the learned MLP reduces stale error a further 3.2 points through within-class discrimi-nation the rule-based model cannot express. 
+
+7 Conclusion 
+
+We argued that caching for open-web RAG is in-complete when framed only as similarity-based retrieval, since the right question before serving a cached result is whether the underlying evidence is still likely to be accurate. FreshCache operational-izes this as a risk-constrained temporal reuse deci-sion across three tiers, each with its own staleness budget, backed by a calibrated decay model and an optional learned MLP. On FreshCache-Bench, FreshCache_MLP reaches 0.1% stale error at 97% search savings at the 24-hour window, within 2 points of the oracle ceiling, and an LLM-judge correction places true answer-level stale error near 0.034%. Four ablations show this result depends jointly on the tier structure and the risk gate, neither of which is sufficient alone. Three limitations remain. The rule-based model offers limited improvement over SemanticTTL at 
+
+t = 1 h, which the MLP substantially addresses; our simulated p50 latency saving is inflated by para-phrase hits, with an honest production estimate closer to 80% (Section 5.4); and conditional GET, while part of the content tier design, proved largely ineffective on the live web, reinforcing that the L1 and L2 tiers should carry the majority of produc-tion savings rather than validation (Appendix G). Future work includes broader domain coverage for FreshCache-Bench, integration with authenticated data feeds to address the FAST observability bias, adaptive error budgets set from observed stale rates rather than fixed at deployment, and richer entity-level features to help the learned model generalize beyond its training distribution, as motivated by its limited transfer in Appendix H. 
+
+References 
+
+Fu Bang. 2023. GPTCache: An open-source semantic cache for LLM applications enabling faster answers and cost savings. In Proceedings of the 3rd Workshop for Natural Language Processing Open Source Soft-ware (NLP-OSS 2023) , pages 212–218, Singapore. Association for Computational Linguistics. Brian J. Chan et al. 2025. Don’t do RAG: When cache-augmented generation is all you need for knowledge tasks. Preprint , arXiv:2412.15605. Jianlv Chen, Shitao Xiao, Peitian Zhang, Kun Luo, Defu Lian, and Zheng Liu. 2024. BGE M3-embedding: Multi-lingual, multi-functionality, multi-granularity text embeddings through self-knowledge distillation. 
+
+Preprint , arXiv:2309.07597. Junghoo Cho and Hector Garcia-Molina. 2003. Esti-mating frequency of change. ACM Transactions on Internet Technology , 3(3):256–290. Bhuwan Dhingra, Jeremy R. Cole, Julian Martin Eisenschlos, Daniel Gillick, Jacob Eisenstein, and William W. Cohen. 2022. Time-aware language mod-els as temporal knowledge bases. Transactions of the 
+
+10 Association for Computational Linguistics , 10:257– 273. Dennis Fetterly, Mark Manasse, Marc Najork, and Janet Wiener. 2003. A large-scale study of the evolution of Web pages. In Proceedings of the 12th International Conference on World Wide Web , pages 669–678, Bu-dapest, Hungary. ACM Press. Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Jinliu Pan, Yuxi Bi, Yi Dai, Jiawei Sun, and Haofen Wang. 2023. Retrieval-augmented genera-tion for large language models: A survey. Preprint ,arXiv:2312.10997. Chuan Guo, Geoff Pleiss, Yu Sun, and Kilian Q. Wein-berger. 2017. On calibration of modern neural net-works. In Proceedings of the 34th International Conference on Machine Learning , pages 1321–1330. PMLR. Chao Jin et al. 2024. RAGCache: Efficient knowledge caching for retrieval-augmented generation. Preprint ,arXiv:2404.12457. Vladimir Karpukhin, Barlas O˘ guz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, and Wen-tau Yih. 2020. Dense passage retrieval for open-domain question answering. In Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing , pages 6769–6781, Online. As-sociation for Computational Linguistics. Jungo Kasai, Keisuke Sakaguchi, Yoichi Takahashi, Ronan Le Bras, Akari Asai, Xinyan Yu, Dragomir Radev, Noah A. Smith, Yejin Choi, and Kentaro Inui. 2023. RealTime QA: What’s the answer right now? In Advances in Neural Information Processing Sys-tems , volume 36. Curran Associates, Inc. Angeliki Lazaridou, Elena Gribovskaya, Wojciech Stokowiec, and Nikolai Grigorev. 2022. Internet-augmented language models through few-shot prompting for open-domain question answering. 
+
+Preprint , arXiv:2203.05115. Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Hein-rich Küttler, Mike Lewis, Wen-tau Yih, Tim Rock-täschel, Sebastian Riedel, and Douwe Kiela. 2020. Retrieval-augmented generation for knowledge-intensive NLP tasks. In Advances in Neural Infor-mation Processing Systems , volume 33, pages 9459– 9474. Curran Associates, Inc. Jiaxing Li, Chi Xu, Feng Wang, Isaac M. von Riede-mann, Cong Zhang, and Jiangchuan Liu. 2024. SCALM: Towards semantic caching for automated chat services with large language models. arXiv preprint arXiv:2406.00025 .Alex Mallen, Akari Asai, Victor Zhong, Rajarshi Das, Daniel Khashabi, and Hannaneh Hajishirzi. 2023. When not to trust language models: Investigating effectiveness of parametric and non-parametric mem-ories. In Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics , pages 9053–9070. Kevin Meng, David Bau, Alex Andonian, and Yonatan Belinkov. 2022. Locating and editing factual associ-ations in GPT. In Advances in Neural Information Processing Systems , volume 35, pages 17359–17372. Curran Associates, Inc. Reiichiro Nakano, Jacob Hilton, Avital Balwit, Jeff Wu, Long Ouyang, Christina Kim, Christopher Hesse, Shantanu Jain, Vineet Kosaraju, William Saunders, et al. 2021. WebGPT: Browser-assisted question-answering with human feedback. Preprint ,arXiv:2112.09332. Christopher Olston and Sandeep Pandey. 2008. Re-crawl scheduling based on information longevity. In 
+
+Proceedings of the 17th International Conference on World Wide Web , WWW ’08, pages 437–446. ACM. Thinh Pham, Phi Tran Anh Nguyen, Anh Tuan Nguyen, and Anh Tuan Luu. 2025. SealQA: Raising the bar for reasoning in search-augmented language models. 
+
+Preprint , arXiv:2506.01062. Nils Reimers and Iryna Gurevych. 2019. Sentence-BERT: Sentence embeddings using siamese BERT-networks. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing ,pages 3982–3992. Luis Gaspar Schroeder, Aditya Desai, Alejandro Cuadron, Kyle Chu, Shu Liu, Mark Zhao, Stephan Krusche, Alfons Kemper, Ion Stoica, Matei Zaharia, and Joseph E. Gonzalez. 2025. vCache: Verified se-mantic prompt caching. Preprint , arXiv:2502.03771. Qingyu Tan, Hwee Tou Ng, and Lidong Bing. 2023. Towards benchmarking and improving the temporal reasoning capability of large language models. In 
+
+Proceedings of the 61st Annual Meeting of the As-sociation for Computational Linguistics (Volume 1: Long Papers) , pages 14820–14835, Toronto, Canada. Association for Computational Linguistics. Tu Vu, Mohit Iyyer, Xuezhi Wang, Nick Constant, Jerry Wei, Jason Wei, Chris Tar, Yun-Hsuan Sung, Denny Zhou, Quoc V. Le, and Thang Luong. 2024. Fresh-LLMs: Refreshing large language model knowledge through search engine augmentation. In Findings of the Association for Computational Linguistics: EMNLP 2023 , pages 13697–13720. Chen Wang, Xunzhuo Liu, Yue Zhu, Alaa Youssef, Priya Nagpurkar, and Huamin Chen. 2025. Category-aware semantic caching for heterogeneous LLM workloads. Preprint , arXiv:2510.26835. Position paper. Jiayi Yao, Hanchen Li, Yuhan Liu, Siddhant Ray, Yihua Cheng, Qizheng Zhang, Kuntai Du, Shan Lu, and Ganesh Ananthanarayanan. 2025. CacheBlend: Fast large language model serving for RAG with cached knowledge fusion. In Proceedings of the Twentieth European Conference on Computer Systems , pages 94–109. 
+
+11 Bowen Zhao, Zander Brumbaugh, Yizhong Wang, Han-naneh Hajishirzi, and Noah A. Smith. 2024. Set the clock: Temporal alignment of pretrained language models. In Findings of the Association for Computa-tional Linguistics: ACL 2024 , pages 15010–15026, Bangkok, Thailand. Association for Computational Linguistics. Hanlin Zhu and Banghua Zhu. 2024. Efficient prompt caching via embedding similarity. Preprint ,arXiv:2402.01173. 
+
+A Comparison with Related Systems 
+
+Table 8 summarizes how FreshCache differs from prior semantic caching, RAG acceleration, and tem-poral knowledge systems along six dimensions: freshness awareness, open-web applicability, multi-tier structure, explicit stale risk modeling, temporal decay modeling, and the presence of a temporal benchmark. 
+
+B Adversarial Entity-Swap Evaluation 
+
+Table 9 lists the 20 adversarial query pairs refer-enced in Section 3.4, each with BGE-M3 cosine similarity at or above 0.40 but asking about differ-ent entities. Cosine similarity alone approves all 20 as L1 candidates; the entity match filter described in Section 3.4 blocks 15 of them. 
+
+C Tier Multiplier Sensitivity 
+
+The tier multipliers introduced in Equation 4 are fixed constants without a closed-form fitting pro-cedure. To confirm reported performance is not an artifact of this choice, we sweep manswer ∈{1.0, 1.25 , 1.5, 2.0} at t = 24 h while holding the other multipliers fixed. Search savings remain flat at 98.1% across this range, and stale error varies only between 1.5% and 1.7%, indicating Fresh-Cache’s reuse decisions are governed primarily by the calibrated half-lives and error budgets rather than by the specific value of manswer . We report 
+
+manswer = 1 .5 as the deployed value, motivated by the answer tier’s higher staleness sensitivity, but the system is robust to this choice within the tested range. 
+
+D Implementation Hyperparameters 
+
+Table 10 lists the hyperparameters used across all experiments in Section 4.3. 
+
+E Results at t = 1 Hour 
+
+Table 11 reports the same metrics as Table 2 at the one hour window, referenced in Section 5.1. 0 5 10 15 20 
+
+> Stale error rate (%)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> Search API savings (%)
+> TTL Pareto-optimal frontier sweep at t=24h
+> (faint dots = dominated points; filled markers = paper's single point)
+> SemanticTTL (frontier)
+> DomainTTL (frontier)
+> TemporalKeywordTTL (frontier)
+> TieredFixedTTL (frontier)
+> FreshCache_Full
+> FreshCache_MLP
+> OracleFreshness
+
+Figure 3: TTL Pareto frontier sweep at t = 24 h using BGE-M3. TTL-based baselines are evaluated across eight scale factors, from 0.01 × to 1.5 × their default TTLs. Filled markers denote the default operating points from Table 2, while faint dots denote dominated settings. FreshCache_Full and FreshCache_MLP are fixed refer-ence points. 
+
+F TTL Pareto Frontier Sweep 
+
+Figure 3 sweeps each TTL-based baseline across eight scale factors, from 0.01 × to 1.5 × its default TTL, referenced in Section 5.1. No configuration on any baseline frontier simultaneously achieves lower stale error and higher search savings than FreshCache_Full’s 3.3% stale, 98.4% saved operat-ing point. 
+
+G Live-Web Microbenchmark 
+
+Referenced in Sections 3.6, 4.5, and 5.4. We fetched 149 URLs directly from the live web, ap-proximately 30 per freshness class, and issued a conditional GET for the subset with a stored ETag or Last-Modified header. Table 12 reports the ag-gregate results. Median cold-fetch latency of 915ms is close to the assumed 800ms, but at p95 real latency reaches 2,771ms, 3.5 times the simulated constant, mean-ing every L1 or L2 hit served to a request that would otherwise fall at that percentile saves nearly 2,800ms rather than 800ms. Per-class cold-fetch medians range from 761ms to 915ms with no sta-tistically meaningful difference across classes, con-firming the single 800ms constant is a reasonable class-agnostic approximation. Only 11.3% of the 53 servers with caching headers honored the con-ditional request; the remaining 88.7% returned a full 200 response regardless of the If-None-Match or If-Modified-Since header, and average condi-12 Table 8: Comparison of FreshCache with related systems across key design dimensions. ✓ = fully addressed, ∼ =partially addressed, and × = not addressed. 
+
+System Fresh. Aware Web RAG Multi-tier Stale Risk Temp. Decay Temp. Bench. 
+
+GPTCache (Bang, 2023) × × × × ✓ ×
+
+SCALM (Li et al., 2024) × × × × ✓ ×
+
+vCache (Schroeder et al., 2025) × × × ∼ ✓ ×
+
+CAG (Chan et al., 2025) × × × × × ×
+
+RAGCache (Jin et al., 2024) × × ∼ × × ×
+
+CacheBlend (Yao et al., 2025) × × ∼ × × ×
+
+FreshLLMs (Vu et al., 2024) ∼ ✓ × × × ∼
+
+DPR (Karpukhin et al., 2020) × × × × ✓ ×
+
+ROME (Meng et al., 2022) ∼ × × × × ×
+
+Time-Aware LM (Dhingra et al., 2022) ∼ × × × × ∼
+
+RealTime QA (Kasai et al., 2023) ∼ ✓ × × × ✓
+
+Wang et al. (Wang et al., 2025) ∼ × × × ∼ ×
+
+Web Evolution (Fetterly et al., 2003) ∼ × × × ∼ ∼
+
+FreshCache (Ours) ✓ ✓ ✓ ✓ ✓ ✓
+
+Table 9: Adversarial entity-swap evaluation. Each pair has BGE-M3 cosine similarity ≥ 0.40 but asks about different entities. Cosine similarity alone approves all 20 pairs; the entity filter blocks 15. 
+
+Query 1 Query 2 Sim. Filter 
+
+Who did King Oedipus marry? Which Beatle produced Life of Brian? 0.948 pass Moon/Sun gravitational pull? Which Beatle produced Life of Brian? 0.946 block 
+
+Academy Awards household rating? Top goalscorer in Superettan? 0.946 block 
+
+Race time, Würth 400 winner? President of Harvard Crimson? 0.944 pass WWI Armistice rail car type? Island between North/South Uist? 0.940 block 
+
+Georgia rugby head coach? Big Ten women’s basketball venue? 0.925 pass Australian egg-laying mammal? Amateur Ryder Cup equivalent? 0.915 block 
+
+Governor of Turks & Caicos? Kerala Premier League champion? 0.901 pass KFC Uerdingen 05 division? CMA Male Vocalist winner? 0.893 block 
+
+Miss South Dakota hometown? Rally Guanajuato Mexico winner? 0.880 block 
+
+English motorway services? Zodiac sign of the ram? 0.871 block 
+
+Arnold Clavio latest show? California 47th district rep? 0.857 block 
+
+Lusitania sinking year? First data-processing machine? 0.836 block 
+
+Miss Michigan USA city? USA Gymnastics Championships venue? 0.831 block 
+
+Vic Sotto latest show? Latest Freeform series network? 0.828 pass Czech football champion? Connecticut Comptroller hometown? 0.824 block 
+
+U.S. Figure Skating venue? Guldpucken award recipient? 0.795 block 
+
+iPhone 16 price? iPhone 16 Pro price? 0.950 block 
+
+CEO of OpenAI? CEO of Google? 0.920 block 
+
+Champions League final score? Europa League final score? 0.910 block Total 20 pairs 15 blocked 
+
+tional GET latency at 565ms left little advantage over a cold fetch. This means L3+ConditionalGet is more expensive to operate in production than the simulation suggests, and reinforces why the L1 and L2 tiers, which avoid search, fetch, and valida-tion entirely, carry most of FreshCache’s practical value. 
+
+H Cache-Induced Stale Error on External Benchmarks 
+
+Referenced in Sections 5.2, 4.5, and 7. To mea-sure cache-induced stale error directly, defined as a cache hit serving a wrong answer that a fresh re-trieval would have answered correctly, we evaluate FreshCache on two external, publicly available QA benchmarks with verified answer-change labels, neither used to calibrate or train any FreshCache component. Freshness class for both benchmarks is assigned using the same lightweight classifier FreshCache uses at inference, not the benchmark’s own change label, to avoid leaking the evaluation outcome into the reuse decision. On 43,453 EvolvingQA question pairs (10,000 changed, 33,453 unchanged), FreshCache_MLP reuses only 15.6% of queries, reflecting that its fea-tures, calibrated on FreshCache-Bench’s web snap-shot domain volatility distribution, do not trans-fer cleanly to Wikipedia-style factual QA. Among cached queries, 29.2% result in a cache-induced stale error, with overall answer accuracy at 95.5%. On 43,456 DailyQA consecutive day answer pairs covering sports, finance, and current events, the do-13 Table 10: Key hyperparameters. Latency values marked 
+
+† are simulation model constants; Appendix G reports measured values from a 149-URL live-web microbench-mark.                     
+
+> Parameter Value
+> Similarity encoder BAAI/bge-m3 L1 similarity threshold 0.40 L2 similarity threshold 0.35 L1 error budget εL1 0.10 L2 error budget εL2 0.20 L3 error budget εL3 0.35 Tier multipliers (mL1 , m L2 , m L3 )1.5, 1.2, 1.0 MLP hidden layers [64, 32, 16] MLP dropout 0.30 Temperature T1.4672 Search API latency 500ms †
+> Web fetch latency 800ms †
+> Conditional GET latency 150ms †
+> LLM generation latency 2,000ms
+
+Table 11: Results at t = 1 h on all classes using BGE-M3 encoder (31,201 queries, 477 stale URLs). S/q = search calls per query; Stale = stale error rate; Saved = search savings. The primary deployable FreshCache result is shown in bold . † = oracle upper bound, not deployable.                                  
+
+> Method S/q Stale Saved
+> SemanticTTL 0.03 16.2% 97% DomainTTL 0.28 9.4% 72% TempKeyTTL 0.12 9.6% 88% vCache 0.52 4.4% 48% SCALM 0.04 3.6% 96% TieredTTL 0.01 16.0% 99% FC_NoCalib 0.02 8.2% 98% FreshCache 0.02 2.6% 98%
+> FC_MLP 0.02 2.0% 98%
+> Oracle †0.01 0.0% 99%
+
+main shift is more severe: FreshCache_MLP’s hit rate falls to effectively 0%, since nearly every query is treated as too risky under this benchmark’s real URL volatility and evidence count features. The rule-based model remains functional in both cases, achieving a 25.1% hit rate at 16.3% cache-induced stale error on DailyQA. Both results point to the same cause: the MLP’s features describe web page and domain context learned from FreshCache-Bench’s snapshot change distribution, not the real-world event timing that determines whether a specific fact changed on a specific day. This is a domain transfer limitation rather than an implementation defect, and it grows more pronounced as the target domain’s volatil-
+
+Table 12: Live-web microbenchmark on 149 URLs, with approximately 30 URLs per class. All latencies are in ms. Sim. = simulation constant; Meas. = measured value.                         
+
+> Metric Sim. Meas. Rel.
+> Cold fetch (n = 141 / 149)
+> Mean 800 1,148 +43.5% p50 800 915 ✓
+> p90 800 2,170 2.7 ×
+> p95 800 2,771 3.5 ×
+> p99 800 4,573 5.7 ×
+> Conditional GET (n = 53)
+> Mean 150 565 3.8 ×
+> 304 rate —11.3% —
+> Rel. = relative change compared with the simulation constant. The 304 rate shows that only 11.3% of conditional GET requests returned 304; most remain-ing responses were full 200 responses.
+
+ity profile diverges from the training distribution. The rule-based model, calibrated only on aggre-gate per-class change rates, degrades more grace-fully across both external domains and remains the recommended fallback when the learned model’s training distribution does not match the deployment workload. 
+
+I Workload Characterization 
+
+Referenced in Section 5.3. Figure 4 plots query-pair cosine similarity against URL-set Jaccard over-lap for base-to-paraphrase and cross-cluster pairs, colored by freshness class, validating the assump-tion behind the L2 tier that semantically similar queries tend to retrieve the same URLs. TIMELESS and SLOW pairs with high semantic similarity reliably share URL sets, making L2 reuse both safe and effective for these classes. MEDIUM and FAST pairs show high semantic similarity but substantially lower URL overlap, which is precisely why the risk gate blocks L2 reuse for these classes at 24 hours and falls back to a fresh search. 
+
+J LLM-Judge Per-Class Breakdown 
+
+Referenced in Section 4.4. Table 13 breaks the 396 evaluated pairs down by freshness class. The pattern across classes matches the freshness taxonomy: TIMELESS shows a very low answer-affecting change rate (4.5%), since its pages oc-casionally refresh layout or metadata but rarely change the underlying facts at a 24-hour timescale, while FAST and REAL_TIME change in ways that genuinely matter at 33.3% and 67.0%, consistent with treating these classes as high risk. 14 0.0 0.2 0.4 0.6 0.8 1.0  
+
+> Query Query Cosine Similarity (BGE-M3)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> URL-Set Jaccard Overlap
+> Semantic Similarity vs. URL-Set Overlap by Freshness Class
+> Freshness Class / Pair Type
+> Timeless
+> Slow
+> Medium
+> Fast
+> Real-Time
+> Base paraphrase pairs (overlap=1.0)
+> Cross-cluster pairs (overlap 0)
+> L2 sim. threshold (0.35)
+
+Figure 4: Workload characterization: cosine similarity between query pairs vs. Jaccard overlap of their top-returned URL sets, colored by freshness class. TIME-LESS and SLOW pairs with high semantic similarity consistently share URL sets, empirically validating the L2 URL-list cache for stable classes. MEDIUM and FAST pairs show substantially lower URL overlap at equivalent similarity, explaining why L2 reuse requires a stricter risk gate and why the tier shift from L1 to L2 is selective rather than uniform. Table 13: LLM-judge metric validation at t = 24 h. For each URL-query pair with a hash-detected content change, a local Llama-3.2-3B-Instruct model judged whether the change would make the cached answer fac-tually wrong. YES = answer would be wrong; NO = cosmetic or irrelevant change. 
+
+Class Pairs YES NO True Stale 
+
+TIMELESS 22 1 21 4.5% SLOW 53 11 42 20.8% MEDIUM 104 21 83 20.2% FAST 126 42 84 33.3% REAL_TIME 91 61 30 67.0% 
+
+ALL 396 136 260 34.3% 
+
+K Risk Gate Ablation, Full Per-Class Breakdown 
+
+Referenced in Section 6.3. Table 14 reports the class-by-class comparison between SemanticTTL and rule-based FreshCache at both evaluation win-dows. 15 Table 14: Risk gate ablation: SemanticTTL vs. rule-based FreshCache per freshness class using BGE-M3. Stale = stale error rate; Saved = search savings. ∗ = SemanticTTL TTL for FAST expired at 24h. ∆ = absolute reduction in stale error from SemanticTTL to FreshCache. 
+
+Class t = 1 h t = 24 h
+
+SemTTL FC ∆ Saved SemTTL FC ∆ Saved 
+
+TIMELESS 0.9% 1.0% −0.1 98% 2.6% 1.5% 1.1 98% SLOW 8.2% 1.5% 6.7 99% 9.5% 2.9% 6.6 99% MEDIUM 4.7% 4.1% 0.6 99% 5.9% 4.3% 1.6 0% FAST 3.1% 5.6% −2.5 0% 0.0% ∗ 5.4% — 0% 
+
+ALL 16.2% 2.6% 13.6 98% 14.9% 3.3% 11.6 98% SemTTL = SemanticTTL; FC = FreshCache. All results use the BGE-M3 encoder. 
+
+16

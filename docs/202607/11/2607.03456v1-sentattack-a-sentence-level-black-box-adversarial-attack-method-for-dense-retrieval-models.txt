@@ -1,0 +1,990 @@
+Title: SentAttack: A Sentence-Level Black-Box Adversarial Attack Method for Dense Retrieval Models
+
+URL Source: https://arxiv.org/pdf/2607.03456v1
+
+Published Time: Tue, 07 Jul 2026 01:09:39 GMT
+
+Number of Pages: 16
+
+Markdown Content:
+# SentAttack: A Sentence-Level Black-Box Adversarial Attack Method for Dense Retrieval Models 
+
+## Luping Wei , Yamin Hu , Sihan Shang , Shiyin Wang , Wenjian Luo ∗
+
+## School of Computer Science and Technology, Harbin Institute of Technology, Shenzhen, China 24s151067@stu.hit.edu.cn, huyamin@hit.edu.cn, shangsihan@stu.hit.edu.cn, 24s051011@stu.hit.edu.cn, luowenjian@hit.edu.cn 
+
+## Abstract 
+
+Retrieval-Augmented Generation (RAG) systems typically consist of a dense retrieval (DR) model for initial retrieval and a neural ranking model (NRM) for re-ranking. Existing robustness stud-ies in RAG mainly focus on NRMs, while adver-sarial attacks on DR models are mostly limited to word-level perturbations. For low-ranked target documents that are irrelevant to the query, simple word-level attacks are insufficient to mislead DR models into substantially promoting their rankings. To solve these problems, we propose SentAttack, a sentence-level black-box adversarial attack method for DR models. SentAttack is designed as a two-stage method. In the first stage, SentAttack inter-acts with the black-box RAG system via iterative retrieval to collect ranked documents and ranking information for training a surrogate DR model. In the second stage, SentAttack uses the surrogate DR model to encode and cluster documents relevant to the target query, yielding multiple cluster centroids. These centroids are concatenated with the target document at the sentence level to form an initial set of adversarial candidates. SentAttack then opti-mizes these candidates using a query- and centroid-guided objective combined with gradient-guided beam search. Extensive experiments demonstrate that SentAttack outperforms existing adversarial at-tacks on DR models, with especially strong perfor-mance on low-ranked target documents. 
+
+## 1 Introduction 
+
+A typical Retrieval-Augmented Generation (RAG) system consists of two stages: retrieval, which returns an initial top-
+
+K documents relevant to the query, and re-ranking, which further re-ranks these candidates [Oche et al. , 2025]. In the retrieval stage, documents are chunked and embedded into vectors for efficient semantic search using dense retrieval (DR) models, which independently encode queries and doc-uments and achieve high recall in large-scale corpora [Guo 
+
+> ∗
+
+Corresponding author. Normal Retrieval          
+
+> Hi -Line offers a comprehensive range
+> of fittings designed for aviation and
+> aerospace applications…
+> Satellite constellations operated by the
+> United States are deployed at different
+> orbital altitudes …
+> User Query :how many miles in altitude
+> is the united states satellite constellation?
+> Retrieval Model
+> Hi -Line provides a comprehensive
+> range of fittings designed for
+> aeronautical and aerospace …
+> Hi -Line provides a comprehensive
+> range of fittings designed for
+> aeronautical and aerospace …
+> Original Recalled C andidates Adversarial Recalled Candidates
+> Adversarial Retrieval
+> Corpus with target document Corpus with adversarial document
+
+Figure 1: An example of a word-level adversarial attack on a DR model. The original target document, “Hi-Line offers a compre-hensive range. . . ”, is initially not retrieved for the query. After ad-versarial perturbation (red text), it rises into the top-K candidates, effectively giving Hi-Line advertising. 
+
+et al. , 2022; Zhao et al. , 2024]. The re-ranking stage typ-ically employs neural ranking models (NRMs), which use interaction-focused architectures to jointly encode queries and documents, producing more precise relevance scores at a higher computational cost than DR models [Dai and Callan, 2019; Xiong et al. , 2017]. Although NRMs and DR mod-els substantially improve the retrieval effectiveness of RAG systems, they remain vulnerable to adversarial perturbations, where small textual changes can drastically alter retrieval or ranking outcomes [Oche et al. , 2025]. Studying adversarial attacks is therefore crucial for identifying potential vulnera-bilities in RAG systems and enhancing system robustness. Most existing adversarial research in RAG has focused on NRMs, which use interaction-focused architectures to jointly encode queries and documents [Liu et al. , 2022]. Compara-tively speaking, the adversarial robustness of DR models has received relatively little attention. Unlike interaction-centric NRMs, DR models adopt a dual-encoder architecture that independently encodes queries and documents into coarse-grained semantic embeddings [Fan et al. , 2022; Guo et al. ,2020; Yates et al. , 2021]. Consequently, existing NRM at-tack strategies cannot be directly transferred to DR models [Liu et al. , 2023b]. Moreover, current attacks on DR models often fail on low-ranked target documents, which have very low initial relevance to the query and lie far beyond the top-K
+
+candidate set. This problem is critical for adversarial attacks in RAG systems, since failure in the initial retrieval stage prevents adversarial documents from reaching the re-ranking 
+
+> arXiv:2607.03456v1 [cs.IR] 3 Jul 2026
+
+stage, causing the attack to fail entirely. Figure 1 illustrates a simple word-level adversarial attack as an example. Another problem of existing adversarial attack methods on DR models and NRMs is that they often assume an unrealis-tically large number of top-K candidates, such as K = 1000 
+
+[Liu et al. , 2023b; Wu et al. , 2023]. These setups implicitly assume access to an excessively large candidate pool, which is unrealistic in practice. In reality, DR models typically re-turn only a few top-K documents per query, with K ∈ [5 , 10] ,due to latency, memory, and LLM input-length constraints [tau Yih, 2020]. Consequently, only a few relevant documents reach the generator, limiting the information available for ad-versarial manipulation. To solve the above problems, we propose SentAttack, a sentence-level black-box adversarial attack method for DR models. SentAttack follows a two-stage design. In the first stage, SentAttack interacts with the target RAG system through iterative retrieval to collect multiple ranked docu-ments for each query, which are then used to construct train-ing data for learning a surrogate dense retrieval model. In the second stage, iterative retrieval is used to collect query-relevant documents, which are encoded by the surrogate model and clustered to obtain centroid documents. These centroids are concatenated with the target document at the sentence level to form an initial set of adversarial candidates, which are then optimized using a query- and centroid-guided objective combined with gradient-guided beam search. Our main contributions are summarized as follows. (1) We propose a surrogate DR model training strategy that allows the surrogate DR model to approximate the be-havior of a target DR model. This strategy obtains pos-itive and negative examples from the top-K documents returned by a black-box RAG system through iterative retrieval, and uses contrastive learning to teach the sur-rogate DR model to distinguish between these examples. (2) We propose a sentence-level black-box adversarial at-tack method that leverages the surrogate DR model to adversarially modify target documents, thereby substan-tially improving their retrieval rankings. (3) Experimental results on the MS-MARCO Document and MS-MARCO Passage Ranking Datasets demon-strate that our attack method outperforms state-of-the-art baselines, with especially strong performance on low-ranked target documents. 
+
+## 2 Related Work 
+
+Dense Retrieval. Existing dense retrieval (DR) models are broadly categorized into single-vector and multi-vector mod-els [Lin, 2022]. Single-vector models encode queries and documents into a single vector for efficient retrieval, but can-not provide fine-grained representations. Multi-vector mod-els represent documents using multiple vectors to achieve richer semantic representations with the cost of increased storage and computational overhead. Research on single-vector DR models has primarily focused on improving pre-training objectives [Gao and Callan, 2022; Ma et al. , 2022], refining training procedures [Karpukhin et al. , 2020; Khattab and Zaharia, 2020; Zhan et al. , 2021], and performing knowl-edge distillation [Qu et al. , 2021]. Our work investigates the adversarial robustness of representative single-vector dense retrieval models. 
+
+Adversarial Attacks in RAG. Existing adversarial attacks in RAG systems primarily target at the re-ranking and gener-ation stages [Liu et al. , 2024]. Re-ranking attacks typically rely on word-level substitutions to manipulate the retrieval ranking of target documents, e.g., PRADA [Wu et al. , 2023], which modifies target documents by optimizing a pairwise hinge loss between the document and the initial candidate set. Generation-stage attacks often depend on corpus poisoning, e.g., PoisonedRAG [Zou et al. , 2025], which injects adversar-ial content into the corpus to influence downstream retrieval and generation. Our work differs by focusing on attacking DR models in the retrieval stage. Unlike most retrieval-stage attacks, which assume full access to RAG system compo-nents or corpus-specific configurations [Liu et al. , 2023a], we consider a black-box setting with limited outputs and obtain query-relevant documents through iterative retrieval to con-struct training data, enabling effective attacks without privi-leged access. 
+
+Model Imitation. Model imitation is closely related to both model distillation and model extraction in the study of natural language models. Model distillation typically aims to com-press a teacher model by training a student to replicate its pre-dictions, and most distillation methods rely on access to the teacher’s logits, which are generally unavailable in black-box settings [Hinton et al. , 2015]. By contrast, model imitation (or extraction) does not rely on logits, training a surrogate model using the outputs of the target model [Pal et al. , 2019; Krishna et al. , 2020]. Thus, black-box adversarial attacks in RAG often adopt model imitation to recover gradients for op-timizing adversarial examples [Wallace et al. , 2020]. Inspired by hard negative sampling [Zhan et al. , 2021], we train a sur-rogate DR model using contrastive learning on the outputs from the RAG system. 
+
+## 3 Threat Model 
+
+System Overview. A typical RAG system consists of three core components: a dual-encoder retriever, a generator, and a corpus [Oche et al. , 2025]. In such systems, documents in the corpus are represented as vectors in a shared vector space [Oche et al. , 2025]. Let the corpus be C = {d1, . . . , d N },where each document di is encoded offline by the document encoder of the dual-encoder retriever as edi = Edoc (di) ∈
+
+Rm. During querying, a query q is encoded by the query encoder of the dual-encoder retriever as eq = Eqry (q),and the retriever ranks documents using a similarity func-tion s(eq , edi ), typically implemented as a dot product or co-sine similarity [Zhao et al. , 2024], such that s(eq , ed(1) ) ≥
+
+s(eq , ed(2) ) ≥ · · · ≥ s(eq , ed(K) ). The top-K ranked doc-uments, forming an ordered list R = {d(1) , . . . , d (K)}, are subsequently fed into the re-ranking stage. 
+
+Objective of the Adversary. The adversarial attack against retrievers aims to promote a target document dt (which is originally ranked outside the top-K) into the top-K ordered Target Text : NIO has           
+
+> recently become the top -
+> selling electric vehicle
+> brand worldwide.
+> Initial Adversarial
+> Candidate : NIO
+> has … Tesla produces
+> electric vehicle models.
+> Query …
+> Dense Retriever
+> as query
+> Iterative Retrieval Module (IRM)
+> IRM
+> Query : What is
+> the best -selling
+> electric vehicle...
+> concatenate
+> Target
+> Text
+> Document vector
+> Cluster centroid
+> Query
+> Surrogate
+> Model
+> Surrogate
+> Model
+> synonym substitution
+> NIO
+> has
+> recently
+> …
+> models
+> newly
+> lately
+> freshly
+> …
+> IRM
+> Positive
+> Documents
+> Negative
+> Documents
+> Query
+> InfoNCE Loss
+> Stage 1: Black -Box Retriever Imitation Stage 2: Gradient -guided Sentence -level Adversarial Text Generation
+> Query : What is the best -selling
+> electric vehicle brand worldwide?
+> Adversarial Text : NIO
+> has lately become …
+> Sen tAttack on RAG
+> 𝑇𝑜𝑝𝐾 𝑎𝑑𝑣 Generator
+> SentAttack
+> for Retriever
+> Dense Retriever
+> Surrogate Model
+> Query
+> Encode
+> Document
+> Encode
+> Train
+> Final Adversarial Text :
+> NIO has lately become
+> the best …Tesla makes
+> electric vehicle models.
+> embedding
+> clustering
+> Tesla produces
+> electric vehicle models.
+> Query -guided objective
+> Centroid -guided objective
+> substitute
+> Gradient
+
+Figure 2: Overview of SentAttack. For the query “What is the best-selling electric vehicle brand worldwide?” (the correct answer: Tesla), the original target document mentioning NIO is not retrieved by the dense retriever. After applying SentAttack to the target document, it becomes highly relevant to the query and is successfully retrieved within the top-K results. (NIO is used here only as an illustrative example.) 
+
+list R for a given query q. This is achieved by finding a perturbation p such that the resulting adversarial docu-ment dadv  
+
+> t
+
+= dt ⊕ p appears in R. The perturbation p is not required to be strictly imperceptible [Chen et al. , 2022; Li et al. , 2025]. Such attacks find applications in real-world scenarios (e.g., search engine advertising [Jafarzadeh et al. ,2015]) and are closely related to corpus poisoning attacks [Zou et al. , 2025]. What these scenarios share is that the ad-versarial or malicious documents are only required to be re-trieved and satisfy the adversarial objective, without the need to remain imperceptible. 
+
+Capabilities of the Adversary. We consider a black-box attack setting in which the adversary has no access to the architecture or training data of the retriever [Carlini et al. ,2021]. The adversary can input a query q to the black-box RAG system, and the system returns only a top-K ranked list (typically K = 10 ), a restricted level of access consis-tent with common RAG deployments [tau Yih, 2020]. In ad-dition, we assume that the adversary can inject adversarial documents into the corpus [Zou et al. , 2025]. For example, when the corpus is constructed from Wikipedia, the adver-sary may maliciously edit Wikipedia pages to insert attacker-chosen content. Prior work has shown that such malicious edits to Wikipedia articles are feasible in practice [Carlini et al. , 2024]. 
+
+Target Attack Model. Following Liu et al. [Liu et al. ,2023b], we perform our experiments on a black-box RAG system. The RAG system consists of the target retriever and a representative neural ranking model. The target retriever is implemented using coCondenser [Gao and Callan, 2022] and fine-tuned on the corresponding datasets with a two-stage hard-negative sampling strategy [Zhan et al. , 2021]. The neu-ral ranking model is realized by PROP [Ma et al. , 2021] and fine-tuned using relevance labels together with retrieval re-sults produced by the target retriever [Liu et al. , 2023b]. 
+
+## 4 Methodology 
+
+4.1 Overview 
+
+Figure 2 illustrates the overall attack method, which aims to improve the ranking of a target document. The proposed method consists of two stages. In the first stage, we interact with the target retriever through the Iterative Retrieval Module (IRM) to obtain ranked documents and sample triplets of positive, hard nega-tive, and random negative examples that capture relative rank-ing relationships among documents. Based on these triplets, we construct a training set and train a surrogate retriever using an InfoNCE-style contrastive loss without relying on human annotations. In the second stage, we perform sentence-level adversar-ial optimization on the target document in two steps. First, IRM is used to retrieve multiple documents relevant to the target query. These documents are encoded by the surrogate retriever and clustered using a density peak clustering algo-rithm to obtain a set of centroid documents. The target doc-ument is then concatenated with the centroid documents to form an initial set of adversarial candidates. Second, a query-and centroid-guided objective function is used to compute gradients, which guide synonym substitutions over the ini-tial adversarial candidates, resulting in the final adversarial documents. 
+
+4.2 Black-box Retriever Imitation 
+
+We first prepare a training query set Q. For each query q ∈ Q,we obtain the top-K documents {d1, . . . , d K } returned by the black-box system. To expand the set of documents associated with q, we perform IRM: each document in the top-K list is treated as a pseudo-query and fed back into the system, yield-ing an expanded output of K2 documents. We then construct triplets for training the surrogate retriever: positive examples 
+
+D+ are sampled from the top-K list for q, hard negative ex-amples D− 
+
+> h
+
+are sampled from the expanded IRM outputs, and random negative examples D− 
+
+> r
+
+are sampled from the retrieval results of other queries in Q.We train the surrogate retriever ˜f using contrastive learning on the constructed triplets, enabling the surrogate to distin-guish between positive, hard negative, and random negative examples [Ma et al. , 2022]. For the surrogate retriever ˜f , we adopt a vanilla BERT base as the backbone of a dual-encoder retrieval model [Devlin et al. , 2019]. The surrogate retriever 
+
+˜f consists of a query encoder ˜fq and a document encoder ˜fd,which encode the query and document into embeddings, re-spectively: 
+
+eq = ˜fq (q), ed = ˜fd(d). (1) We define the similarity between a query and a document em-bedding as 
+
+s(q, d ) := exp  (eq )⊤(ed)/τ , (2) where τ is a temperature hyperparameter. For a docu-ment set D, the set-level similarity is defined as s(q, D ) = P 
+
+> d∈D
+
+s(q, d ), which aggregates the similarity between the query and documents in the set. The InfoNCE-style contrastive loss [Ma et al. , 2022] over positive, hard negative, and random negative examples is for-mulated as 
+
+## L = − 1
+
+> |Q|
+
+## P 
+
+> q∈Q
+
+## log s(q,D +)  
+
+> s(q,D +)+ s(q,D −
+> h)+ s(q,D −
+> r)
+
+(3) This loss encourages the surrogate retriever to capture relative ranking relationships by contrasting top-K documents with lower-ranked documents obtained via IRM. 
+
+4.3 Gradient-guided Sentence-level Adversarial Attack 
+
+This stage is performed in two steps: (1) retrieving docu-ments relevant to the target query using the IRM, encoding them with the surrogate retriever, clustering them using a den-sity peak clustering algorithm to obtain centroid documents, and constructing an initial set of adversarial candidates; and (2) optimizing these candidates using a query- and centroid-guided objective combined with gradient-guided beam search to produce the final adversarial documents. 
+
+Initial Adversarial Candidates Generation 
+
+To ensure that the retrieved documents for the target query 
+
+qt are both relevant and diverse, we apply the Iterative Re-trieval Module. We begin by initializing the retrieved docu-ment set R(0) = {qt}, which contains only the target query itself. Submitting qt to the black-box system yields an initial top-K documents: R(1) = {d(1) 1 , . . . , d (1)  
+
+> K
+
+}.
+
+The iterative retrieval procedure proceeds as follows. At each iteration t = 1 , . . . , T − 1, each document in the cur-rent set R(t) is treated as a pseudo-query and submitted to the black-box system. The retrieved documents from all pseudo-queries are then merged to form the expanded set: 
+
+R(t+1) = ∪d∈R(t) R(d), (4) where R(d) denotes the set of documents returned by using a single document d as a query. This iterative process continues until a sufficient number of documents has been collected. We denote ˆR as the aggregated document set collected across all iterations. Each document d ∈ ˆR is then encoded by the surrogate retriever as ed = ˜fd(d). We apply the density peak clustering algorithm [Chen et al. , 2020] to {ed}d∈ ˆR to obtain n document representation centers {c1, . . . , c n}, each representing a distinct topic related to the query in the em-bedding space. Each center ci is identified as 
+
+ci = edci , {dc1 , . . . , d cn } = Top -nd∈ ˆR (ρd · δd) , (5) where ρd denotes the local density of ed and δd denotes its minimum distance to any embedding with higher density. 
+
+Top -n selects the n documents with the largest values of 
+
+ρd · δd, corresponding to embeddings that are locally dense and far from other higher-density embeddings. We denote Dc = {dc1 , . . . , d cn } as the centroid documents corresponding to the representation centers. To steer the tar-get document dt toward these representative center directions, we construct adversarial candidates by concatenating each centroid document dci with dt:
+
+˜di = dt ⊕ dci , i = 1 , . . . , n, (6) where ⊕ denotes concatenation. Each ˜di serves as an initial adversarial candidate for gradient-guided refinement. 
+
+Gradient-guided Optimization for Candidates 
+
+We optimize the initial adversarial candidates by performing gradient-guided synonym substitutions. Specifically, we de-fine a query- and centroid-guided attack objective in the em-bedding space: 
+
+O( ˜di, q t, c i) = λ Ocenter ( ˜di, c i) + (1 − λ) Oquery ( ˜di, q t),
+
+(7) where, for each ˜di, the weighting factor λ ∈ [0 , 1] balances the adversarial candidate’s semantic alignment with the cen-troid document dci and its relevance to the target query qt.
+
+Center-guided objective. For each initial adversarial can-didate ˜di, we define a center-guided objective that encour-ages semantic consistency between the adversarial candidate 
+
+˜di and the corresponding representation center ci. The center-guided objective is defined as: 
+
+Ocenter ( ˜di, c i) = ˜fd( ˜di) − ci
+
+> 22
+
+. (8) This objective mitigates semantic discontinuities caused by document concatenation and encourages alignment between the adversarial candidate and the corresponding centroid doc-ument in the embedding space. Query-guided objective. To further bias the adversarial candidate toward the target query qt, we define a query-guided objective based on the embedding similarity. The query-guided objective is defined as: 
+
+Oquery ( ˜di, q t) = 1 − ˜fd( ˜di)⊤ ˜fq (qt)
+
+∥ ˜fd( ˜di)∥ ∥ ˜fq (qt)∥ . (9) To promote a higher retrieval ranking of the adversarial candi-date for the target query, this objective encourages increased semantic relevance between the adversarial candidate and the target query in the embedding space. 
+
+Gradient-guided synonym substitution. We adopt the projected gradient descent [Madry et al. , 2018] to gener-ate gradient-based adversarial perturbations to the embedding space. Specifically, for each token ti in an adversarial candi-date ˜di, we calculate the gradient g ˜fti with respect to the em-bedding of each token ti in the surrogate retriever ˜f using the objective O:
+
+g ˜fti = ∂O( ˜di, q t, c i)
+
+∂e ˜fti
+
+. (10) where e ˜fti is the embedding of each token ti obtained by the surrogate model ˜f .Then, the gradient ℓ2 norm Iti = ∥g ˜fti ∥2 reflects the im-portance of each token ti for the attack objective [Chen et al. ,2023]. Let T = {t1 
+
+> i
+
+, t 2 
+
+> i
+
+, . . . , t mi } denote the top-m tokens with the highest importance. For each token tji ∈ T , we per-form substitution by greedily enumerating synonyms from a pre-collected synonym set Ctji
+
+. To select a synonym w ∈ C tji
+
+that better optimizes the attack objective, we compute the in-ner product between the embedding v ˜fw of the synonym and the gradient of token tji :
+
+s(w, t ji ) = ( g ˜ftji
+
+)⊤v ˜fw. (11) A larger inner product between the token gradient and the synonym embedding implies that substituting the synonym is expected to decrease the attack objective more effectively. We employ beam search [Liu et al. , 2022] to maintain mul-tiple optimal substitution trajectories for each adversarial can-didate ˜di. At iteration l, the beam is defined as 
+
+B(l−1)  
+
+> i
+
+=  ˜d(l−1,k ) 
+
+> i
+
+k = 1 , . . . , m , (12) where B(l−1)  
+
+> i
+
+denotes the top-m substitution trajectories re-tained from iteration l − 1, with ˜d(l−1,k ) 
+
+> i
+
+representing the k-th trajectory in the beam. Each trajectory in the beam undergoes synonym substitution on its top-m most important tokens, and the m new trajectories with the best objective value are retained to form the updated beam B(l) 
+
+> i
+
+. The process iterates until a predefined iteration limit is reached or the decrease in the objective value becomes negligible. The trajectory with the best objective among all explored trajectories is selected as the final adversarial document. 
+
+## 5 Experiments 
+
+5.1 Experimental Settings 
+
+Datasets. We evaluate our method on two widely used re-trieval benchmarks: the MS-MARCO Document Ranking Dataset (hereafter referred to as the Document Dataset )[Nguyen et al. , 2016], and the MS-MARCO Passage Rank-ing Dataset (hereafter referred to as the Passage Dataset )[Nguyen et al. , 2016]. Both datasets are collected using Bing search and reflect realistic web retrieval scenarios [Nguyen 
+
+et al. , 2016]. For each dataset, we randomly sample 300 de-velopment queries as target queries for evaluation. For each query, we sample 30 target documents that are initially ranked outside the top-K results of the target retriever, and catego-rize them into Easy, Middle, and Hard based on their original relevance score rankings with respect to the query. We further construct a Mixture set by randomly sampling 10 documents from the 30 targets to ensure diverse attack difficulty. 
+
+Implementation details. Following prior work [Chen et al. , 2023; Wu et al. , 2023], we define three levels of attack difficulty based on the original ranking positions of target documents. For the Document Dataset, Easy, Middle, and Hard documents are sampled from the rank ranges [101 , 200] ,
+
+[201 , 1000] , and outside the top 1000 , respectively. For the Passage Dataset, Easy, Middle, and Hard passages are sam-pled from the rank ranges [1000 , 2000] , [2000 , 10000] , and outside the top 10000 , respectively. We set the weighting factor of the attack objective to λ = 0 .4, set the number of cluster centers for constructing adversarial candidates to 
+
+n = 5 , and set the synonym substitution constraint threshold to ρ = 0 .8, which defines the minimum semantic similarity for substitutions and controls the size of the candidate syn-onym set to ensure fluency, and use a beam search with beam width m = 3 . We fix the size of the initial candidate set returned by the target retriever for all datasets (i.e., K=10). 
+
+Evaluation metrics. Following [Liu et al. , 2023b], we evaluate the performance of adversarial attacks using two au-tomatic metrics. (i) Success Recall Rate (SRR) @k (%) mea-sures the proportion of target documents that are successfully retrieved into the top-k results after adversarial attack. (ii) 
+
+Normalized Ranking Shifts (NRS) @k (%) quantifies the rel-ative ranking improvement of target documents after adver-sarial attack, conditioned on being successfully recalled into the top-k results, i.e., NRS @k = (Π d − Πdadv )/Πd × 100% ,where Πd and Πdadv denote the ranking positions of the orig-inal document d and the adversarial document dadv , respec-tively. If dadv does not appear in the top-k retrieved results, its NRS is set to 0. Note that smaller values of k correspond to a more challenging attack setting and a stricter evaluation criterion. 
+
+Baselines. We compare our method with several represen-tative attack approaches as follows. • Term Spamming (TS) [Gyongyi and Garcia-Molina, 2005]: an insertion-based attack method that randomly selects a starting position in the target document and re-places words with terms sampled from the target query. • TF-IDF [Ramos, 2003]: a synonym substitution method that replaces important words in the target document, Easy Middle Hard Mixture Dataset Method SRR NRS SRR NRS SRR NRS SRR NRS @10 @100 @100 @10 @100 @100 @10 @100 @100 @10 @100 @100 MS-MARCO Document TF-IDF 16.0 40.9 32.1 11.1 28.0 23.6 4.2 14.4 13.6 10.3 28.6 23.2 TS 37.8 88.1 67.5 27.2 58.0 60.3 15.1 35.8 33.5 23.0 58.0 53.8 PAT 26.5 70.2 52.2 13.7 36.0 32.0 7.9 27.1 26.4 12.7 44.5 37.8 PRADA 28.4 74.7 56.2 18.5 43.1 37.9 11.2 33.0 33.3 19.3 50.3 44.1 MCARA 43.5 92.3 73.1 28.1 66.5 61.4 24.4 50.2 51.3 32.0 72.0 62.0 SentAttack Concat 27.4 73.2 54.6 15.8 39.1 28.2 4.5 14.2 13.4 15.8 40.6 31.3 SentAttack Syn 47.2 90.6 82.4 32.8 75.7 71.2 15.6 37.4 35.3 29.8 60.3 54.3 SentAttack 55.4 93.7 85.6 51.9 84.1 82.3 34.9 57.5 55.7 36.1 75.4 72.8                                                                                                            
+
+> @100 @1000 @1000 @100 @1000 @1000 @100 @1000 @1000 @100 @1000 @1000 MS-MARCO Passage TF-IDF 10.2 35.2 25.1 6.4 19.8 18.3 2.1 10.5 10.3 6.1 21.6 17.8 TS 28.6 79.0 59.1 17.2 50.8 48.7 8.4 27.6 26.9 17.8 52.0 44.4 PAT 16.4 62.3 46.7 9.4 30.0 28.6 5.3 23.4 21.5 10.4 38.6 32.3 PRADA 28.4 68.2 51.0 13.8 39.9 39.6 10.6 31.5 30.1 14.7 46.4 40.2 MCARA 20.1 83.1 65.9 22.7 57.3 53.7 15.3 41.1 40.2 23.7 60.5 53.3 SentAttack Concat 18.1 65.9 53.9 10.7 37.4 31.5 2.2 12.1 11.6 9.7 37.9 28.4 SentAttack Syn 42.3 84.2 70.9 38.6 76.4 72.1 12.1 32.5 30.9 30.4 58.7 52.9 SentAttack 50.6 92.8 83.2 45.9 83.2 80.5 31.2 54.9 53.3 33.9 65.3 63.1
+
+Table 1: Comparison of adversarial attack methods and SentAttack variants on MS-MARCO Document and Passage Ranking Dataset under different difficulty levels. The best results in each column are highlighted in bold, while the second-best results are underlined. 
+
+identified by the highest TF-IDF scores with respect to the target query, with their synonyms. • PRADA [Wu et al. , 2023]: a decision-based black-box ranking attack method originally designed for neu-ral ranking models via word substitution, adapted to re-trieval models using the pairwise hinge loss between the target document and candidate documents. • PAT [Liu et al. , 2022]: an anchor-based ranking attack method originally designed for neural ranking models via trigger generation, adapted to retrieval models using the pairwise loss between the target document and the top-1 candidate document. • MCARA [Liu et al. , 2023b]: a contrastive learning-based adversarial attack method on retrieval models that generates perturbations by enforcing consistency be-tween multi-view representations of the target document and their viewers. 
+
+5.2 Comparison of Attack Performance 
+
+As shown in Table 1, we compare different adversarial attack methods on the Document Dataset and Passage Dataset un-der varying difficulty levels. The full SentAttack achieves the strongest attack effectiveness across all settings, with SRR@10 of 55.4/51.9/34.9 on the Document Dataset and SRR@100 of 50.6/45.9/31.2 on the Passage Dataset for Easy/Middle/Hard targets. MCARA has previously been re-garded as one of the strongest adversarial attacks against dense retrievers by leveraging multi-view representations; however, its attack effectiveness drops substantially on Hard targets. On the Document Dataset, SentAttack improves SRR@10 on Hard targets from 24.4 (MCARA) to 34.9. On the Passage Dataset, SRR@100 increases from 15.3 to 31.2, more than doubling MCARA’s performance. We further analyze the contributions of individual com-ponents in SentAttack by comparing two ablated variants. SentAttack Concat only performs centroid document concate-nation without applying synonym substitution. This variant is effective only on Easy targets, while its attack effective-ness drops sharply on Middle and Hard targets. On the Doc-ument Dataset, SRR@10 decreases from 27.4 on Easy tar-gets to 15.8 on Middle and further to 4.5 on Hard targets. SentAttack Syn removes centroid concatenation and relies solely on gradient-guided synonym substitution. It achieves strong attack performance on Easy and Middle targets, often ranking as the second most effective method. However, its effectiveness drops notably on Hard targets, with SRR@10 of 15.6 on the Document Dataset and SRR@100 of 12.1 on the Passage Dataset. These results indicate that the full Sen-tAttack improves the initial relevance between target docu-ments and queries through centroid concatenation, providing a stronger starting point for subsequent gradient-guided opti-mization. 
+
+5.3 Impact of Key Hyperparameters 
+
+Number of cluster centers. We analyze the impact of the number of cluster centers n. As shown in Figure 3 (left), in-creasing n improves attack performance by providing more diverse adversarial candidates. Specifically, SRR@1000 in-creases from 60.6% at n = 3 to 69.4% at n = 6 , while fur-ther increasing n leads to diminishing improvements, with less than a 4.5% absolute gain when n grows from 6 to 10. NRS@1000 exhibits a similar saturation trend, suggesting that using a large number of cluster centers mainly increases computational cost without clear performance benefits. 
+
+Synonym substitution constraint ρ. We analyze the impact of the synonym substitution constraint ρ, which defines the minimum semantic similarity threshold to control the size of the candidate synonym set. As shown in Figure 3 (right), relaxing the substitution constraint (i.e., using a smaller ρ)significantly enhances attack effectiveness by enlarging the pool of candidate synonyms. For example, SRR@1000 de-creases from 64.7% at ρ = 0 .80 to 38.4% at ρ = 0 .90 ,4 6 8 10     
+
+> Number of centers n
+> 30
+> 40
+> 50
+> 60
+> 70
+> Performance (\%)
+> (a) Effect of n
+> 0.6 0.7 0.8 0.9
+> Substitution constraint
+> 20
+> 40
+> 60
+> Performance (\%)
+> (b) Effect of
+> SRR@100 SRR@1000 NRS@1000
+
+Figure 3: Attack performance of SentAttack under varying hyperpa-rameters on Mixture level in MS-MARCO Passage Ranking Dataset. 0 1 2 3 4 5           
+
+> Fluency score
+> 4.32
+> 2.12
+> 2.01
+> 3.62
+> 3.1
+> 3.81
+> 3.77
+> (a) Fluency
+> 020 40 60 80 100 120
+> Perplexity
+> 43.1
+> 110.6
+> 111.5
+> 62.2
+> 86.3
+> 58.1
+> 61.3
+> (b) Perplexity
+> 040 80 120 160 200
+> Number of errors
+> 104
+> 198
+> 187
+> 147
+> 169
+> 138
+> 127
+> (c) Grammar errors
+> Original
+> TS
+> TF-IDF
+> PAT
+> PRADA
+> MCARA
+> SentAttack
+
+Figure 4: Naturalness comparison of adversarial examples generated by different attack on the MS-MARCO Document Ranking Dataset. 
+
+with NRS@1000 dropping from 59.8% to 31.2%. However, overly loose constraints may degrade text fluency, revealing a clear trade-off between attack effectiveness and text quality. 
+
+5.4 Naturalness Evaluation of Adversarial Examples 
+
+We evaluate the naturalness of Mixture-level adversarial ex-amples on the Document Dataset, with similar findings on Passage Dataset. Following prior work [Liu et al. , 2022], we randomly sample 32 examples per method and assess fluency [Holtzman et al. , 2020] , perplexity (PPL), and grammatical correctness. Fluency is rated by GPT-4o-mini (1–5 scale), PPL is measured using a language model, and grammatical errors are detected by Cheg. 1 and Gram. 2, aggregated across both tools. As shown in Figure 4, SentAttack achieves com-parable fluency to MCARA (3.77 vs. 3.81), moderate PPL (61.3 vs. 58.1), and fewer grammatical errors (127 vs. 138), indicating a favorable balance between naturalness and attack effectiveness. 
+
+5.5 Adversarial Examples Against DR Models during the Re-ranking Stage 
+
+We investigate whether adversarial examples generated by SentAttack against DR models remain highly ranked when processed by the neural re-ranker within the RAG pipeline. For each dataset, the candidate set returned by the target DR model, including successful adversarial examples, is directly 
+
+> 1
+
+https://www.chegg.com 
+
+> 2
+
+https://www.grammarly.com 
+
+Difficulty MS-MARCO Document MS-MARCO Passage Avg.rank T50% T10% Avg.rank T50% T10% Easy 63 .5 40 .1 13 .5 647 .6 37 .2 12 .4
+
+Middle 74 .8 28 .7 8.6 754 .1 24 .6 6.9
+
+Hard 89 .7 13 .4 4.9 860 .3 10 .7 2.3
+
+Mixture 75 .4 27 .6 8.2 742 .1 23 .5 7.4
+
+Table 2: Effectiveness of SentAttack adversarial examples against neural ranking models (NRMs). 
+
+fed into the re-ranker. The final re-ranked list size is fixed to 100 for MS-MARCO Document and 1000 for MS-MARCO Passage. Avg.rank denotes the average rank of adversarial examples, while T50% and T10% indicate the proportion of adversarial examples appearing in the top 50% and top 10% of the final list. As shown in Table 2, a noticeable fraction of adversarial examples remains highly ranked. In particular, up to 13.5% (Document Dataset) and 12.4% (Passage Dataset) of adversarial examples in the Easy setting appear in the top 10%, demonstrating that SentAttack adversarial examples re-main effective against the re-ranker. 
+
+5.6 Black-box vs. White-box Attacks 
+
+We compare SentAttack under black-box and white-box set-tings on Mixture-level targets (Table 3). MS-MARCO Document MS-MARCO Passage Method SRR NRS SRR NRS @10 @100 @100 @100 @1000 @1000 SentAttack 35 .2 74 .3 71 .5 32 .7 65 .3 63 .2
+
+SentAttack white 38 .8 77 .1 74 .2 34 .5 68 .1 65 .4
+
+Table 3: Comparison between black-box SentAttack and its white-box variant on Mixture-level targets in the MS-MARCO Document and Passage Ranking Dataset. 
+
+In the black-box setting, SentAttack trains a surro-gate model using the Iterative Retrieval Module (IRM), which iteratively retrieves relevant documents. In contrast, SentAttack white directly uses the target retriever to gen-erate adversarial examples in a white-box manner. Sen-tAttack achieves competitive performance: on the Doc-ument Dataset, it attains SRR@10/100 of 35.2/74.3 (vs. 38.8/77.1 for SentAttack white ), and on the Passage Dataset, SRR@100/1000 of 32.7/65.3 (vs. 34.5/68.1). These results demonstrate that IRM effectively trains a surrogate model even with limited top-K outputs from the target retriever. 
+
+## 6 Conclusion 
+
+In this paper, we propose SentAttack, a sentence-level black-box adversarial attack method for dense retrieval models in RAG systems. Extensive experiments on the MS-MARCO Document and Passage Datasets demonstrate that SentAttack consistently outperforms existing baselines, with particularly strong performance on hard target examples. Future work will explore adaptations of SentAttack to multi-turn and mul-timodal retrieval scenarios, as well as effective defense strate-gies against adversarial attacks. References 
+
+[Carlini et al. , 2021] Nicholas Carlini, Florian Tramer, Eric Wallace, Matthew Jagielski, Ariel Herbert-Voss, Kather-ine Lee, Adam Roberts, Tom Brown, Dawn Song, Ulfar Erlingsson, et al. Extracting training data from large lan-guage models. In Proceedings of the 30th USENIX Secu-rity Symposium (USENIX Security 21) , pages 2633–2650. USENIX Association, 2021. [Carlini et al. , 2024] Nicholas Carlini, Matthew Jagielski, Christopher A. Choquette-Choo, Florian Tramer, Milad Nasr, Katherine Lee, Andreas Terzis, Borja Balle, and Nicolas Papernot. Poisoning web-scale training datasets is practical. In Proceedings of the 2024 IEEE Symposium on Security and Privacy (SP) , pages 407–425. IEEE, 2024. [Chen et al. , 2020] Yong Chen, Xiaohui Hu, Wenjie Fan, and Ke Deng. Fast density peak clustering for large-scale data based on knn. Knowledge-Based Systems , 187:104824, 2020. [Chen et al. , 2022] Yangyi Chen, Hongcheng Gao, Ganqu Cui, Fanchao Qi, Longtao Huang, Zhiyuan Liu, and Maosong Sun. Why should adversarial perturbations be imperceptible? rethink the research paradigm in adversar-ial nlp. In Proceedings of the 2022 Conference on Empir-ical Methods in Natural Language Processing , 2022. [Chen et al. , 2023] Xuanang Chen, Ben He, Zheng Ye, Le Sun, and Yingfei Sun. Towards imperceptible doc-ument manipulations against neural ranking models. In 
+
+Proceedings of the 61st Annual Meeting of the Associa-tion for Computational Linguistics (ACL 2023) . Associa-tion for Computational Linguistics, 2023. [Dai and Callan, 2019] Zhuyun Dai and Jamie Callan. Deeper text understanding for ir with contextual neural language modeling. In Proceedings of the 42nd Interna-tional ACM SIGIR Conference on Research and Devel-opment in Information Retrieval , pages 985–988. ACM, 2019. [Devlin et al. , 2019] Jacob Devlin, Ming-Wei Chang, Ken-ton Lee, and Kristina Toutanova. Bert: Pre-training of deep bidirectional transformers for language understand-ing. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies , 2019. [Fan et al. , 2022] Yixing Fan, Xiaohui Xie, Yinqiong Cai, Jia Chen, Xinyu Ma, Xiangsheng Li, Ruqing Zhang, Ji-afeng Guo, et al. Pre-training methods in information re-trieval. Foundations and Trends in Information Retrieval ,16(3):178–317, 2022. [Finocchiaro et al. , 2019] Jessica Finocchiaro, Rafael Frongillo, and Bo Waggoner. An embedding framework for consistent polyhedral surrogates. In Advances in Neural Information Processing Systems , 2019. [Gao and Callan, 2022] Luyu Gao and Jamie Callan. Un-supervised corpus aware language model pre-training for dense passage retrieval. In Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (ACL) , pages 2843–2853. ACL, 2022. [Guo et al. , 2020] Jiafeng Guo, Yixing Fan, Liang Pang, Liu Yang, Qingyao Ai, Hamed Zamani, Chen Wu, W. Bruce Croft, and Xueqi Cheng. A deep look into neural ranking models for information retrieval. Information Processing & Management , 57(6):102067, 2020. [Guo et al. , 2022] Jiafeng Guo, Yinqiong Cai, Yixing Fan, Fei Sun, Ruqing Zhang, and Xueqi Cheng. Semantic mod-els for the first-stage retrieval: A comprehensive review. 
+
+ACM Transactions on Information Systems , 40(4):1–42, 2022. [Gyongyi and Garcia-Molina, 2005] Zoltan Gyongyi and Hector Garcia-Molina. Web spam taxonomy. In Proceed-ings of the First International Workshop on Adversarial Information Retrieval on the Web (AIRWeb) , 2005. [Hinton et al. , 2015] Geoffrey Hinton, Oriol Vinyals, and Jeff Dean. Distilling the knowledge in a neural network. 
+
+arXiv preprint arXiv:1503.02531 , 2015. [Holtzman et al. , 2020] Ari Holtzman, Jan Buys, Li Du, Maxwell Forbes, and Yejin Choi. The curious case of neural text degeneration. In International Conference on Learning Representations , 2020. [Jafarzadeh et al. , 2015] Hamed Jafarzadeh, Ayb¨ uke Aurum, John D’Ambra, and Mehdi Ghazinoory. A systematic re-view on search engine advertising. Pacific Asia Journal of the Association for Information Systems , 7(3):2, 2015. [Karpukhin et al. , 2020] Vladimir Karpukhin, Barlas Oguz, Sewon Min, Patrick Lewis, Ledell Wu, Sergey Edunov, Danqi Chen, and Wen tau Yih. Dense passage retrieval for open-domain question answering. In Proceedings of the 2020 Conference on Empirical Methods in Natural Lan-guage Processing (EMNLP) . ACL, 2020. [Khattab and Zaharia, 2020] Omar Khattab and Matei A. Za-haria. Colbert: Efficient and effective passage search via contextualized late interaction over bert. In Proceedings of the 43rd International ACM SIGIR Conference on Re-search and Development in Information Retrieval , pages 39–48, 2020. [Krishna et al. , 2020] Kalpesh Krishna, Gaurav Singh Tomar, Ankur P. Parikh, Nicolas Papernot, and Mohit Iyyer. Thieves on sesame street! model extraction of bert-based apis. In Proceedings of the 8th International Conference on Learning Representations (ICLR) , Addis Ababa, Ethiopia, 2020. [Li et al. , 2025] Yue Li, Panagiotis Eustratiadis, Simon Lu-part, Nicola Tonellotto, and Maarten de Rijke. Unsuper-vised corpus poisoning attacks in continuous space for dense retrieval. In Proceedings of the 48th International ACM SIGIR Conference on Research and Development in Information Retrieval , pages 2452–2462. ACM, 2025. [Lin, 2022] Jimmy Lin. A proposed conceptual framework for a representational approach to information retrieval. 
+
+ACM SIGIR Forum , 55, 2022. [Liu et al. , 2022] Jiawei Liu, Yangyang Kang, Di Tang, Kaisong Song, Changlong Sun, Xiaofeng Wang, Wei Lu, and Xiaozhong Liu. Order-disorder: Imitation adversarial attacks for black-box neural ranking models. In Proceed-ings of the 2022 ACM SIGSAC Conference on Computer and Communications Security (CCS) , pages 2025–2039. ACM, 2022. [Liu et al. , 2023a] Yu-An Liu, Ruqing Zhang, Jiafeng Guo, Maarten de Rijke, Wei Chen, Yixing Fan, and Xueqi Cheng. Topic-oriented adversarial attacks against black-box neural ranking models. In Proceedings of the 46th In-ternational ACM SIGIR Conference on Research and De-velopment in Information Retrieval . ACM, 2023. [Liu et al. , 2023b] Yu-An Liu, Ruqing Zhang, Jiafeng Guo, et al. Black-box adversarial attacks against dense retrieval models: A multi-view contrastive learning method. In Pro-ceedings of the 32nd ACM International Conference on Information and Knowledge Management (CIKM) , pages 1647–1656. ACM, 2023. [Liu et al. , 2024] Yu-An Liu, Rui Zhang, Jiafeng Guo, and Maarten de Rijke. Multi-granular adversarial attacks against black-box neural ranking models. In Proceedings of the 47th International ACM SIGIR Conference on Re-search and Development in Information Retrieval , pages 1391–1400. ACM, 2024. [Ma et al. , 2021] Xinyu Ma, Jiafeng Guo, Rui Zhang, Yix-ing Fan, Xiang Ji, and Xueqi Cheng. Prop: Pre-training with representative words prediction for ad-hoc retrieval. In Proceedings of the 14th ACM International Conference on Web Search and Data Mining , pages 283–291. ACM, 2021. [Ma et al. , 2022] Xinyu Ma, Ruqing Zhang, Jiafeng Guo, Yixing Fan, and Xueqi Cheng. A contrastive pre-training approach to discriminative autoencoder for dense retrieval. In Proceedings of the 31st ACM International Conference on Information and Knowledge Management (CIKM) ,pages 4314–4318. ACM, 2022. [Madry et al. , 2018] Aleksander Madry, Aleksandar Makelov, Ludwig Schmidt, Dimitris Tsipras, and Adrian Vladu. Towards deep learning models resistant to adversarial attacks. In International Conference on Learning Representations , 2018. [Mitchell and Lapata, 2010] Jeff Mitchell and Mirella Lap-ata. Composition in distributional models of semantics. 
+
+Cognitive Science , 34(8):1388–1429, 2010. [Nguyen et al. , 2016] Tri Nguyen, Mir Rosenberg, Xia Song, Jianfeng Gao, Saurabh Tiwary, Rangan Majumder, and Li Deng. Ms marco: A human generated machine reading comprehension dataset. In CoCo@NeurIPS 2016 ,2016. [Oche et al. , 2025] A. J. Oche, A. G. Folashade, T. Ghosal, et al. A systematic review of key retrieval-augmented gen-eration (rag) systems: Progress, gaps, and future direc-tions. arXiv preprint arXiv:2507.18910 , 2025. [Pal et al. , 2019] Soham Pal, Yash Gupta, Aditya Shukla, Aditya Kanade, Shirish Shevade, and Vinod Ganapathy. A framework for the extraction of deep neural networks by leveraging public data. arXiv preprint arXiv:1905.09165 ,2019. [Qu et al. , 2021] Yingqi Qu, Yuchen Ding, Jing Liu, Kai Liu, Ruiyang Ren, Wayne Xin Zhao, Daxiang Dong, Hua Wu, and Haifeng Wang. Rocketqa: An optimized training ap-proach to dense passage retrieval for open-domain ques-tion answering. In Proceedings of the 2021 Conference of the North American Chapter of the Association for Com-putational Linguistics (NAACL) . ACL, 2021. [Ramos, 2003] Juan Ramos. Using tf-idf to determine word relevance in document queries. In Proceedings of the First Instructional Conference on Machine Learning , 2003. [tau Yih, 2020] Scott Wen tau Yih. Retrieval-augmented generation for knowledge-intensive nlp tasks. In Pro-ceedings of the 34th Conference on Neural Information Processing Systems (NeurIPS 2020) , Vancouver, Canada, 2020. Curran Associates, Inc. [Wallace et al. , 2020] Eric Wallace, Mitchell Stern, and Dawn Song. Imitation attacks and defenses for black-box machine translation systems. In Proceedings of the 2020 Conference on Empirical Methods in Natural Lan-guage Processing (EMNLP) , pages 5531–5546, Online, 2020. Association for Computational Linguistics. [Wu et al. , 2023] Chen Wu, Ruqing Zhang, Jiafeng Guo, Maarten de Rijke, Yixing Fan, and Xueqi Cheng. Prada: Practical black-box adversarial attacks against neural rank-ing models. ACM Transactions on Information Systems (TOIS) , 41(4):Article 89, 2023. [Xiong et al. , 2017] Chenyan Xiong, Zhuyun Dai, Jamie Callan, Zhiyuan Liu, and Russell Power. End-to-end neu-ral ad-hoc ranking with kernel pooling. In Proceedings of the 40th International ACM SIGIR Conference on Re-search and Development in Information Retrieval , pages 55–64. ACM, 2017. [Yates et al. , 2021] Andrew Yates, Rodrigo Nogueira, and Jimmy Lin. Pretrained transformers for text ranking: Bert and beyond. In Proceedings of the 14th ACM International Conference on Web Search and Data Mining (WSDM) ,pages 1154–1156. ACM, 2021. [Zhan et al. , 2021] Jingtao Zhan, Jiaxin Mao, Yiqun Liu, Ji-afeng Guo, Min Zhang, and Shaoping Ma. Optimizing dense retrieval model training with hard negatives. In Pro-ceedings of the 44th International ACM SIGIR Conference on Research and Development in Information Retrieval ,pages 1503–1512, 2021. [Zhao et al. , 2024] Wayne Xin Zhao, Jin Liu, Rui Ren, Jun Xu, and Ji-Rong Wen. Dense text retrieval based on pre-trained language models: A survey. ACM Transactions on Information Systems , 42(4):1–60, 2024. [Zou et al. , 2025] Wei Zou, Xinyu Zhang, Yihan Cao, Yu Zhao, Jiazhao Zhang, Zhiyuan Liu, Maosong Sun, and Yang Liu. Poisonedrag: Knowledge corruption attacks to retrieval-augmented generation of large language models. In Proceedings of the 34th USENIX Security Symposium (USENIX Security 2025) . USENIX Association, 2025. A GPT-based Fluency Evaluation Prompt The prompt designed to guide the LLM in assessing the fluency of the text 
+
+> You are a language evaluation assistant.
+> Please rate the fluency of the following text on a scale from 1 to 5, where:
+> 1 = Very hard to read; contains multiple grammatical or structural errors that make it almost
+> incomprehensible.
+> 2 = Difficult to read; noticeable grammatical or structural errors that hinder understanding.
+> 3 = Understandable but somewhat awkward; minor grammatical or stylistic errors.
+> 4 = Mostly fluent; minor errors that do not affect readability.
+> 5 = Perfectly fluent; reads naturally with no noticeable errors.
+> Focus only on the fluency and readability of the text. Do not consider the content, meaning, or whether it
+> is an adversarial attack.
+> Text to evaluate:
+> """
+> {adversarial text}
+> """
+> Your response should be a single integer from 1 to 5 indicating the fluency score.
+
+## B NSP Score Analysis of Adversarial vs. Natural Texts 
+
+Centroid documents that are semantically distant from the tar-get document are more likely to be detected. To enhance the stealthiness of the concatenation operation, we incorporate a center-guided score into the optimization objective and assess semantic coherence using a Next Sentence Prediction (NSP) model. We report NSP scores of adversarial and natural texts across four difficulty levels (Easy, Middle, Hard, and Mix-ture). Natural sentences are randomly sampled from the cor-pus as reference baselines, while adversarial texts are gener-ated by our method. The average NSP scores are computed and visualized in Figure 5. As shown in Figure 5, although the NSP scores of adver-sarial texts decrease as the difficulty increases, they remain highly comparable to those of natural texts. For instance, on the MS-MARCO Document dataset, natural documents achieve an NSP score of 0.82, while adversarial documents at the Mixture level obtain a score of 0.81, exhibiting only a marginal difference. These results indicate that the NSP model continues to regard the concatenated centroid docu-ments as valid subsequent sentences, suggesting that the con-catenation operation is not detected by NSP-based coherence checks. 
+
+## C Evaluation of Surrogate Model Training Strategies 
+
+We evaluate the effectiveness of different surrogate model training strategies on Mixture-level targets (Table 4). Dur-ing training, the Iterative Retrieval Module (IRM) con-structs the training dataset by iteratively retrieving relevant documents. SentAttack random does not use IRM and re-lies solely on documents from other queries as negatives. As shown in Table 4, SentAttack consistently outperforms SentAttack random (SRR@10 35.2 vs. 32.1; SRR@100 32.7 vs. 29.4) and approaches the performance of SentAttack white .SentAttack random , which does not leverage IRM, fails to gather sufficient retrieval information from the limited out-puts of the black-box RAG system, resulting in lower perfor-mance compared to SentAttack. MS-MARCO Document MS-MARCO Passage Method SRR NRS SRR NRS @10 @100 @100 @100 @1000 @1000 SentAttack 35 .2 74 .3 71 .5 32 .7 65 .3 63 .2
+
+SentAttack random 32 .1 72 .5 68 .8 29 .4 63 .7 62 .1
+
+SentAttack white 38 .8 77 .1 74 .2 34 .5 68 .1 65 .4
+
+Table 4: Effectiveness of different surrogate model training strate-gies on Mixture-level targets in MS-MARCO Document and Pas-sage Ranking Dataset. 
+
+## D Impact of Retrieval Depth on Attack Performance 
+
+D.1 Retrieval Depth in RAG Systems 
+
+RAG systems rely on a dense retriever to return a compact set of highly relevant documents per query. The number of re-trieved documents, K, directly affects retrieval accuracy and downstream generation quality. In practice, K is often small (K ∈ [5 , 10] ) due to latency, memory, and LLM input-length constraints [tau Yih, 2020]. Consequently, only a concise evidence set reaches the generator, limiting the information available for adversarial manipulation. These retrieval depths align with common experimental settings in both RAG and recent RAG-attack studies. For instance, retrieves top-K = 5 documents using Contriever and GPT-4o-mini, while [Zou et al. , 2025] retrieves top-5
+
+documents from NQ with Contriever. Classical RAG stud-ies [tau Yih, 2020] also adopt K ∈ { 5, 10 }, reflecting prac-tical deployment constraints and serving as a standard setting for evaluating dense retriever robustness. 
+
+D.2 Retrieval Depths in Existing Attack Baselines 
+
+Many adversarial attacks on dense retrievers or neural rank-ing models adopt retrieval settings that deviate from practical RAG deployments. While real-world RAG systems typically retrieve only a small number of documents ( K ∈ [5 , 10] ), some state-of-the-art attacks use substantially larger retrieval depths, such as K = 100 for MS-MARCO Document and 
+
+K = 1000 for MS-MARCO Passage [Liu et al. , 2023b; Wu et al. , 2023]. These settings implicitly assume access to excessively large candidate pools, which may overesti-mate attack effectiveness under realistic RAG deployment constraints. While such configurations are useful for analyz-ing upper-bound attack capabilities, they do not reflect the re-trieval limitations faced by deployed RAG systems. To better reflect practical conditions, we adopt a constrained retrieval depth of K = 10 , enabling a more realistic and reliable as-sessment of adversarial attack effectiveness. 
+
+D.3 Effectiveness Under Small-K Retrieval 
+
+Most existing adversarial attacks on dense retrievers assume access to a large and fixed top-K candidate pool (e.g., K =100 for MS-MARCO Document and K = 1000 for MS-MARCO Passage). To reproduce these settings, our evalu-ation includes a variant, SentAttack noit , which directly per-forms the attack under these large-K configurations without Easy Middle Hard Mixture Dataset Method SRR NRS SRR NRS SRR NRS SRR NRS @10 @100 @100 @10 @100 @100 @10 @100 @100 @10 @100 @100 MS-MARCO Document TF-IDF 16.0 40.9 32.1 11.1 28.0 23.6 4.2 14.4 13.6 10.3 28.6 23.2 TS 37.8 88.1 67.5 27.2 58.0 60.3 15.1 35.8 33.5 23.0 58.0 53.8 PAT 26.5 70.2 52.2 13.7 36.0 32.0 7.9 27.1 26.4 12.7 44.5 37.8 PRADA 28.4 74.7 56.2 18.5 43.1 37.9 11.2 33.0 33.3 19.3 50.3 44.1 MCARA 43.5 92.3 73.1 28.1 66.5 61.4 24.4 50.2 51.3 32.0 72.0 62.0 SentAttack noit 55.8 93.2 85.4 50.7 83.5 81.8 33.5 56.2 54.6 36.0 74.8 72.1 SentAttack 55.4 93.7 85.6 51.9 84.1 82.3 34.9 57.5 55.7 36.1 75.4 72.8 
+
+@100 @1000 @1000 @100 @1000 @1000 @100 @1000 @1000 @100 @1000 @1000 MS-MARCO Passage TF-IDF 10.2 35.2 25.1 6.4 19.8 18.3 2.1 10.5 10.3 6.1 21.6 17.8 TS 28.6 79.0 59.1 17.2 50.8 48.7 8.4 27.6 26.9 17.8 52.0 44.4 PAT 16.4 62.3 46.7 9.4 30.0 28.6 5.3 23.4 21.5 10.4 38.6 32.3 PRADA 28.4 68.2 51.0 13.8 39.9 39.6 10.6 31.5 30.1 14.7 46.4 40.2 MCARA 20.1 83.1 65.9 22.7 57.3 53.7 15.3 41.1 40.2 23.7 60.5 53.3 SentAttack noit 51.0 92.3 83.0 46.2 82.5 80.0 30.8 54.2 52.7 34.5 64.8 62.4 SentAttack 50.6 92.8 83.2 45.9 83.2 80.5 31.2 54.9 53.3 33.9 65.3 63.1 
+
+Table 5: Performance comparison of different adversarial attack methods on MS-MARCO Document and Passage datasets. Best results in each column are highlighted in bold . SentAttack noit denotes the variant without iterative retrieval. Natural       
+
+> Adv-Easy
+> Adv-Middle
+> Adv-Hard
+> Adv-Mixture
+> 0.82
+> 0.82
+> 0.81
+> 0.79
+> 0.81
+> (a) Document NSP Scores
+> 0.76 0.78 0.80 0.82 0.84 0.86 0.88
+> Average NSP Score
+> Natural
+> Adv-Easy
+> Adv-Middle
+> Adv-Hard
+> Adv-Mixture
+> 0.86
+> 0.85
+> 0.84
+> 0.82
+> 0.83
+> (b) Passage NSP Scores
+
+Figure 5: NSP scores of natural and adversarial texts across dif-ficulty levels. The figure reports the average NSP scores on the MS-MARCO benchmarks, where the top panel corresponds to the Document dataset and the bottom panel corresponds to the Passage dataset. 
+
+iterative retrieval module (IRM). That is, SentAttack noit de-notes a variant of SentAttack without the iterative retrieval mechanism. Table 5 presents a systematic comparison of different at-tack methods on the MS-MARCO Document and Passage datasets. The results show that SentAttack noit and the full SentAttack model achieve comparable overall performance. This indicates that the iterative retrieval mechanism in Sen-tAttack can effectively simulate large candidate pool configu-rations, allowing the attack to accumulate large-scale retrieval information starting from a realistic small-K setting. 
+
+D.4 Effect of Iteratively Retrieved Document Count on Attack Performance 
+
+Figure 6 examines the impact of the number of iteratively retrieved relevant texts on attack performance. Specifically, 50  
+
+> 100
+> 150
+> 200
+> 250
+> 300
+> 350
+> 400
+> 450
+> 500
+> 550
+> 600
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80 SRR@10
+> SRR@100
+> NRS@100
+
+(a) MARCO Document 100  
+
+> 200
+> 300
+> 400
+> 500
+> 600
+> 700
+> 800
+> 900
+> 1000
+> 1100
+> 1200
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> SRR@100
+> SRR@1000
+> NRS@1000
+
+(b) MARCO Passage Figure 6: SentAttack performance with varying numbers of retrieved relevant texts. Each curve shows one evaluation metric. 
+
+we evaluate the effectiveness of Mixture-level adversarial texts under varying amounts of retrieved texts on both MS-MARCO Document and Passage datasets. As shown in the figure, the attack performance generally improves as more relevant texts are obtained through itera-tive retrieval. When the number of retrieved documents ap-proaches dataset-specific saturation points (around 500 for MS-MARCO Document and 900–1000 for MS-MARCO Passage), performance reaches its peak and then stabilizes or slightly declines, indicating diminishing returns from intro-ducing additional documents. These results demonstrate that the iterative retrieval mechanism can effectively approximate direct access to large top-K candidate sets, and is a key fac-tor enabling SentAttack to achieve strong performance under realistic RAG constraints. 
+
+## E Theoretical proof 
+
+We provide a theoretical proof for why SenAttack remains ef-fective under a surrogate-to-target setting, where the attacker optimizes adversarial documents against a surrogate retrirver that only approximates the target retriever. Let dt denote the target document and dci a centroid document, whose surro-gate embedding is ci = Es(dci ). Here, Es(·) denotes the document encoder of the surrogate model, while Et(·) de-notes the document encoder of the target model. 
+
+E.1 Assumptions 
+
+Assumption 1: Embedding Discrepancy Bound. For any query or document x, the embeddings of the target model and surrogate model satisfy 
+
+∥Et(x) − Es(x)∥2 ≤ δ, (13) ensuring that the surrogate embedding is a δ-close approxi-mation of the target embedding (as assumed in [Finocchiaro 
+
+et al. , 2019]). 
+
+Proposition 1: Surrogate–Target Similarity Score Trans-fer. Under assumption 1, the similarity score between a query q and a document d under the target model is close to that under the surrogate model: 
+
+⟨Et(q), E t(d)⟩ − ⟨ Es(q), E s(d)⟩
+
+≤ δ∥Et(d)∥2 + δ∥Es(q)∥2. (14) 
+
+Proof. 
+
+⟨Et(q), E t(d)⟩ − ⟨ Es(q), E s(d)⟩
+
+= ⟨Et(q) − Es(q), E t(d)⟩
+
++ ⟨Es(q), E t(d) − Es(d)⟩
+
+≤ ∥ Et(q) − Es(q)∥2 ∥Et(d)∥2
+
++ ∥Es(q)∥2 ∥Et(d) − Es(d)∥2
+
+≤ δ∥Et(d)∥2 + δ∥Es(q)∥2
+
+(15) If the query and document embeddings are L2-normalized (∥Es(q)∥2 = ∥Et(d)∥2 = 1 ), the bound simplifies to 
+
+⟨Et(q), E t(d)⟩ − ⟨ Es(q), E s(d)⟩ ≤ 2δ. (16) 
+
+Assumption 2: Compositionality of the Surrogate En-coder. For text concatenation u ⊕ v, the surrogate encoder satisfies 
+
+Es(u ⊕ v) = αuEs(u) + αv Es(v) + ϵcomp ,αu, α v ≥ 0, α u + αv = 1 . (17) This reflects the empirical observation that the embedding of the concatenated text u ⊕ v can be approximated by a convex combination of the embeddings of u and v, where αu and αv
+
+correspond to the proportion of words in u and v relative to the total length. We assume that the approximation error is bounded, i.e., ∥ϵcomp ∥2 ≤ ηcomp . Following [Mitchell and Lapata, 2010], we use the embeddings produced by the re-trieval model to represent the semantic content of the text seg-ments, so that the semantic embedding of the concatenated text can be expressed as a combination of the embeddings of its components, with ϵcomp and ηcomp quantifying the ap-proximation error. 
+
+E.2 Concatenated Initialization 
+
+Define the concatenated initial document 
+
+˜d(0)  
+
+> i
+
+:= dt ⊕ dci , (18) with embeddings 
+
+e(s)˜d(0) 
+
+> i
+
+:= Es( ˜d(0)  
+
+> i
+
+), e(s) 
+
+> dt
+
+:= Es(dt). (19) Here ˜d(0)  
+
+> i
+
+denotes the initialization formed by appending the centroid document dci to the target document dt.
+
+Deriving the Concatenated Representation. Applying Assumption 2 for u = dt and v = dci , we obtain 
+
+e(s)˜d(0) 
+
+> i
+
+= (1 − αi)e(s) 
+
+> dt
+
++ αici + ϵcomp , (20) where ci := Es(dci ) and αi := αdci . Intuitively, αi measures the contribution of the centroid document to the overall rep-resentation in the surrogate embedding space. This expresses the concatenated embedding as an approximate convex com-bination of the target-document embedding and the centroid-document embedding, with the approximation error explicitly given by ϵcomp , which is bounded by ηcomp .
+
+E.3 Initial Gain from Concatenation 
+
+Define the similarity score gain under the surrogate encoder: 
+
+G(0)  
+
+> i
+
+= ⟨e(s) 
+
+> q
+
+, e(s)˜d(0) 
+
+> i
+
+− e(s) 
+
+> dt
+
+⟩. (21) This quantity measures how much the surrogate-model simi-larity score for dt increases immediately after concatenating centroid document dci .
+
+Derivation. Substituting the compositional form: 
+
+G(0)  
+
+> i
+
+= αi⟨e(s) 
+
+> q
+
+, c i − e(s) 
+
+> dt
+
+⟩ + ⟨e(s) 
+
+> q
+
+, ϵ comp ⟩. (22) The first term captures alignment-driven gain, proportional to 
+
+αi, while the second term is the composition error contribu-tion. Bounding the error term using Cauchy–Schwarz yields 
+
+⟨e(s) 
+
+> q
+
+, ϵ comp ⟩ ≤ ∥ e(s) 
+
+> q
+
+∥2ηcomp , (23) which implies the lower bound 
+
+G(0)  
+
+> i
+
+≥ αi⟨e(s) 
+
+> q
+
+, c i − e(s) 
+
+> dt
+
+⟩ − ∥ e(s) 
+
+> q
+
+∥2ηcomp . (24) Thus, under the standard assumption that all query and docu-ment embeddings are L2-normalized, i.e., ∥e(s) 
+
+> q
+
+∥2 = ∥ci∥2 =
+
+∥e(s) 
+
+> dt
+
+∥2 = 1 , the lower bound simplifies to 
+
+G(0)  
+
+> i
+
+≥ αi
+
+D
+
+e(s) 
+
+> q
+
+, c i − e(s)
+
+> dt
+
+E
+
+− ηcomp . (25) Each centroid document ci is more aligned with the target query than the original document dt in the surrogate embed-ding space, which implies ⟨e(s) 
+
+> q
+
+, c i⟩ ≥ ⟨ e(s) 
+
+> q
+
+, e(s) 
+
+> dt
+
+⟩. There-fore, the first term is non-negative. As a result, in the worst case, the initial surrogate gain introduced by concatenation is lower bounded by the composition error ηcomp , indicating that the concatenation operation does not introduce detrimen-tal effects beyond a bounded composition noise. 
+
+E.4 Effect of Adversarial Perturbation (synonym substituting) 
+
+After concatenation we add a discrete perturbation p to fur-ther optimize the adversarial document: 
+
+˜dbi = ˜d(0)  
+
+> i
+
+⊕ p, (26) where ˜dbi denotes the adversarial document after discrete per-turbation, and p is constrained by a budget (e.g., edit count or norm). Query-guided surrogate objective. Recall that in our method the query-guided component of the surrogate objec-tive is 
+
+Oquery ( ˜di, q ) = e(s)⊤ 
+
+> q
+
+Es( ˜di)
+
+∥e(s) 
+
+> q
+
+∥2 ∥Es( ˜di)∥2
+
+. (27) The perturbation p is selected to maximize this objective within the allowed budget: 
+
+˜dbi = arg max  
+
+> ˜d∈B ( ˜d(0)
+> i)
+
+Oquery ( ˜d, q ), (28) where B( ˜d(0)  
+
+> i
+
+) denotes the set of documents reachable from 
+
+˜d(0)  
+
+> i
+
+under the allowed perturbation. 
+
+Derivation of a Lower Bound on the Perturbation Gain. 
+
+Let the surrogate-model similarity score gain due to p be 
+
+∆ss(p) := ⟨e(s) 
+
+> q
+
+, E s( ˜dbi ) − Es( ˜d(0)  
+
+> i
+
+)⟩. (29) By construction, each token-level edit in p is accepted only if it does not decrease the query-guided objective. Therefore, we have 
+
+∆ss(p) ≥ 0, (30) providing a positive lower bound for the gain in the surrogate embedding space. 
+
+Total Surrogate Gain. The total gain obtained by the ad-versarial document ˜dbi in the surrogate model is 
+
+∆stotal  
+
+> s
+
+= G(0)  
+
+> i
+
++ ∆ ss(p), (31) where G(0)  
+
+> i
+
+is the initial gain from concatenating the centroid document to dt, and ∆ss(p) is the additional gain obtained by discrete perturbation. Thus, the total surrogate-model gain satisfies 
+
+∆stotal  
+
+> s
+
+≥ G(0)  
+
+> i
+
+, (32) showing that the total surrogate-model similarity gain result-ing from the concatenation-plus-perturbation procedure is al-ways greater than or equal to the gain induced by concatena-tion alone. 
+
+E.5 Lower Bound on Target-Model Improvement 
+
+We now transfer the gain guarantee from the surrogate model to the target model. By proposition 1, the similarity score un-der the target model is lower bounded by its surrogate coun-terpart up to a bounded discrepancy: 
+
+∆st = Et(q), E t( ˜dbi ) − Et(dt)
+
+≥ Es(q), E s( ˜dbi ) − Es(dt) − 2δ
+
+= ∆ stotal  
+
+> s
+
+− 2δ, 
+
+(33) where ˜dbi denotes the optimized adversarial document and δ
+
+is the surrogate-to-target discrepancy bound. Recall that the total surrogate-model gain decomposes as 
+
+∆stotal  
+
+> s
+
+= G(0)  
+
+> i
+
++ ∆ ss(p), (34) where ∆ss(p) ≥ 0 due to the query-guided optimization. From the analysis of the concatenated initialization, we have 
+
+G(0)  
+
+> i
+
+≥ αi e(s) 
+
+> q
+
+, c i − e(s) 
+
+> dt
+
+− ηcomp . (35) Combining the above results yields the final lower bound: 
+
+∆st ≥ αi e(s) 
+
+> q
+
+, c i − e(s)
+
+> dt
+
+− ηcomp − 2δ. (36) 
+
+Analysis of the lower bound. The derived lower bound shows that the dominant contribution to the target-model gain comes from the term αi⟨e(s) 
+
+> q
+
+, c i − e(s) 
+
+> dt
+
+⟩. This term quantifies the semantic advantage of the centroid document ci over the original document dt with respect to the query in the surro-gate embedding space, scaled by the effective contribution αi
+
+of the concatenated centroid. When the selected centroid is more query-aligned than the original document, ⟨e(s) 
+
+> q
+
+, c i − e(s) 
+
+> dt
+
+⟩ is positive, and a non-negligible αi ensures that this advantage is preserved after concatenation. In this case, the lower bound remains positive up to the composition error ηcomp and the surrogate–target discrepancy 2δ.
+
+## F Case Study 
+
+To demonstrate how SentAttack constructs adversarial docu-ments in practice, we present three case studies from the MS-MARCO Passage dev set for the query “hillsborough com-munity college president” , covering easy, middle, and hard target documents. The difficulty levels are defined based on the initial ranking of the target document: easy cases corre-spond to documents initially ranked in the range of [1000, 2000], middle cases are ranked in [2000, 10000], and hard cases are ranked outside the top 10000. For all three target documents, the same query is used. To improve experimental efficiency, the iterative retrieval step is performed only once per query. As a result, the three case studies share the same set of retrieved documents and the same centroid documents, even though their target docu-ments differ. These centroid documents typically consist of dictionary-style or definitional passages (e.g., explanations of the verb “linger”). When concatenated with the centroid documents, these original target documents immediately shift the document representation toward the semantic region of the query, lead-ing to substantial ranking changes. Building on this concate-nation, SentAttack further applies minimal word-level syn-onym substitutions to generate the final adversarial document. In Tables 6, 7, and 8, the concatenated centroid documents are highlighted in red, while synonym substitutions are high-lighted in green. Stage Content Rank Original Target Document 
+
+What does GRIP stand for? Note: We have 100 other definitions for GRIP in our Acronym Attic. new search; suggest new definition; Search for GRIP in Online Dictionary Encyclo-pedia. 1025 
+
+Stage 1: Concatenation of Target Document with Different Centroid Documents (highlighted in red) Centroid 1 What does GRIP stand for? Note: We have 100 other definitions for GRIP in our Acronym Attic. new search; suggest new definition; Search for GRIP in Online Dictionary Encyclo-pedia. linger – definition and synonyms This is the British English definition of linger. View American English definition of linger. Change your default dictionary to American English. View the pronunciation for linger. 2
+
+Centroid 2 What does GRIP stand for? Note: We have 100 other definitions for GRIP in our Acronym Attic. new search; suggest new definition; Search for GRIP in Online Dictionary Encyclo-pedia. linger linger. 1 to remain or stay in a place longer than usual. 2 to remain alive or persist. 6662 
+
+Centroid 3 What does GRIP stand for? Note: We have 100 other definitions for GRIP in our Acronym Attic. new search; suggest new definition; Search for GRIP in Online Dictionary Encyclope-dia. imposed imposed refers to something unwelcome or unpleasant that must be endured. 1339 
+
+Stage 2: Optimized Adversarial Document (synonym substitutions highlighted in green) Final Adversarial Document 
+
+what does grasping stand for? note: we have 100 other definitions for grip in our acronym attic. new search; suggest new definition; search for grip in online dictionary encyclope-dia. linger – definition and synonyms This is the British English definition of linger. View American English definition of linger. Change your default vocabulary to American En-glish. View the pronunciation for linger. 18   
+
+> Table 6: Easy-level case study for the query “hillsborough community college president.” The target document “What does GRIP stand for? Note: We have 100 other definitions for GRIP in our Acronym Attic; new search; suggest new definition; Search for GRIP in Online Dictionary Encyclopedia” is initially ranked 1025. After concatenation with centroid documents, the initial candidate rankings vary widely (2, 6662, 1339), and the best candidate is further refined through synonym substitutions, resulting in a final ranking of 18.
+
+Stage Content Rank Original Target Document 
+
+Information provided about Plaza: Plaza meaning in Hindi: Get detailed meaning of PLAZA in Hindi language. This page shows Plaza meaning in Hindi with Plaza definition, translation and usage. This page provides translation and definition of Plaza in Hindi language along with grammar, synonyms and antonyms. 8067 
+
+Stage 1: Concatenation of Target Document with Different Centroid Documents (highlighted in red) Centroid 1 Information provided about Plaza: Plaza meaning in Hindi: Get detailed meaning of PLAZA in Hindi language. This page shows Plaza meaning in Hindi with Plaza definition, translation and usage. This page provides translation and definition of Plaza in Hindi language along with grammar, synonyms and antonyms. linger – definition and synonyms This is the British English definition of linger. View American English definition of linger. Change your default dictionary to American English. View the pronunciation for linger. 243 
+
+Centroid 2 Information provided about Plaza: Plaza meaning in Hindi: Get detailed meaning of PLAZA in Hindi language. This page shows Plaza meaning in Hindi with Plaza definition, translation and usage. This page provides translation and definition of Plaza in Hindi language along with grammar, synonyms and antonyms. linger linger. 1 to remain or stay in a place longer than usual. 2 to remain alive or persist. 
+
+> 10000 
+
+Centroid 3 Information provided about Plaza: Plaza meaning in Hindi: Get detailed meaning of PLAZA in Hindi language. This page shows Plaza meaning in Hindi with Plaza definition, translation and usage. This page provides translation and definition of Plaza in Hindi language along with grammar, synonyms and antonyms. imposed imposed refers to something unwelcome or unpleasant that must be endured. 4503 
+
+Stage 2: Optimized Adversarial Document (synonym substitutions highlighted in green) Final Adversarial Document 
+
+Information provided about Plaza: Plaza meaning in Minneapolis: Get detailed meaning of Plaza in Asian language. This page shows Plaza meaning in Maha with Plaza definition, translation and usage. This page provides translation and definition of Plaza in Kumar language along with grammar, synonyms and antonyms. linger – definition and synonyms This is the British English definition of linger. View American English definition of linger. Change your default vocabulary to American English. View the spelled for linger. 1  
+
+> Table 7: Middle-level case study for the query “hillsborough community college president.” The target document “Information provided about Plaza: Plaza meaning in Hindi: Get detailed meaning of PLAZA in Hindi language. This page shows Plaza meaning in Hindi with Plaza definition, translation and usage. This page provides translation and definition of Plaza in Hindi language along with grammar, synonyms and antonyms” is initially ranked 8067. After concatenation with centroid documents, the initial candidate rankings vary widely (243, outside top-10000 , 4503), and the best candidate is further refined through synonym substitutions, resulting in a final ranking of 1.
+
+Stage Content Rank Original Target Document 
+
+There is a reason why it makes sense to use 12 am for midnight: because it’s before noon of the same day. This reinforces the idea that the stroke of midnight begins the new day. As for 12 pm, it’s true that it’s at noon, not after it, but wait! 
+
+>10000 
+
+Stage 1: Concatenation of Target Document with Different Centroid Documents (highlighted in red) Centroid 1 There is a reason why it makes sense to use 12 am for midnight: because it’s before noon of the same day. This reinforces the idea that the stroke of midnight begins the new day. As for 12 pm, it’s true that it’s at noon, not after it, but wait! linger – definition and synonyms This is the British English definition of linger. View American English definition of linger. Change your default dictionary to American English. View the pronunciation for linger. 243 
+
+Centroid 2 There is a reason why it makes sense to use 12 am for midnight: because it’s before noon of the same day. This reinforces the idea that the stroke of midnight begins the new day. As for 12 pm, it’s true that it’s at noon, not after it, but wait! linger linger. 1 to remain or stay in a place longer than usual. 2 to remain alive or persist. 
+
+>10000 
+
+Centroid 3 There is a reason why it makes sense to use 12 am for midnight: because it’s before noon of the same day. This reinforces the idea that the stroke of midnight begins the new day. As for 12 pm, it’s true that it’s at noon, not after it, but wait! imposed imposed refers to something unwelcome or unpleasant that must be endured. 
+
+>10000 
+
+Stage 2: Optimized Adversarial Document (word-level substitutions highlighted in green) Final Adversarial Document 
+
+There is a reason why it makes sense to use 12 am for midnight: because it’s before noon of the same day. This reinforces the idea that the stroking of midnight begins the new day. As for 12 pm, it’s true that it’s at noon, not after it, but wait! linger – definition and nouns This is the British English definition of linger. View American English definition of linger. Change your default vocabulary to American English. View the vowels for linger. 1

@@ -6,85 +6,83 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-06
-- 运行时间：2026-07-06 21:39:23 UTC
+- 最新运行日期：2026-07-11
+- 运行时间：2026-07-11 20:08:06 UTC
 - 运行状态：成功
 - 本次总论文数：21
 - 精读区：8
 - 速读区：13
 
 ### 今日简报（AI）
-今日推荐21篇论文，精读两篇9分重磅：长程搜索的上下文腐烂诊断与智能体记忆评估的隐藏混杂问题。  
-最值得关注的方向是Context Rot对长程搜索质量的威胁，以及MemDelta揭示的智能体记忆评估中的基线失控与混杂偏差。  
-后续可深入阅读CAT的自适应推理机制和DART-VLN的记忆衰减防循环策略，以拓宽对长期任务中动态失效与鲁棒性设计的理解。
-- 详情：[/202607/06/README](/202607/06/README)
+今日共收录21篇论文，精读8篇，其中两篇高分论文聚焦长上下文与AI记忆机制。最值得关注的是《Hierarchical Sparse Attention》突破无限上下文建模，以及《SelfMem》实现AI代理自优化记忆。建议优先阅读这两篇高分论文，了解长上下文处理和智能体记忆的核心优化思路。
+- 详情：[/202607/11/README](/202607/11/README)
 
 ### 精读区论文标签
-1. [Diagnosing and Mitigating Context Rot in Long-horizon Search](/202607/06/2606.29718v1-diagnosing-and-mitigating-context-rot-in-long-horizon-search)  
+1. [Hierarchical Sparse Attention Done Right: Toward Infinite Context Modeling](/202607/11/2607.02980v1-hierarchical-sparse-attention-done-right-toward-infinite-context-modeling)  
    标签：评分：9.0/10、query:llm-memory
-   evidence：长上下文推理中上下文腐烂的诊断与缓解
-2. [MemDelta: Controlled Baselines and Hidden Confounds in Agent Memory Evaluation](/202607/06/2606.29914v1-memdelta-controlled-baselines-and-hidden-confounds-in-agent-memory-evaluation)  
+   evidence：提出通过分层稀疏检索实现长上下文建模的HiLS注意力机制
+2. [SelfMem: Self-Optimizing Memory for AI Agents](/202607/11/2607.03726v1-selfmem-self-optimizing-memory-for-ai-agents)  
    标签：评分：9.0/10、query:pwt
-   evidence：智能体记忆的受控评估
-3. [AGE: Adaptive-masking for Graph Embedding in Graph Retrieval-Augmented Generation](/202607/06/2607.00052v1-age-adaptive-masking-for-graph-embedding-in-graph-retrieval-augmented-generation)  
+   evidence：自优化记忆框架，通过记忆探索提升推理能力
+3. [Memory-Orchestrated Semantic System (MOSS): An Auditable Agentic Memory Architecture](/202607/11/2607.04391v1-memory-orchestrated-semantic-system-moss-an-auditable-agentic-memory-architecture)  
+   标签：评分：9.0/10、query:pwt
+   evidence：提出MOSS，一种使用符号检索的关系数据库代理记忆架构
+4. [MRMS: A Multi-Resolution Memory Substrate for Long-Lived AI Agents](/202607/11/2607.04617v1-mrms-a-multi-resolution-memory-substrate-for-long-lived-ai-agents)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：面向长寿AI代理的多分辨率记忆基础，包括图关系
+5. [Memory in the Loop: In-Process Retrieval as ExtendedWorking Memory for Language Agents](/202607/11/2607.05690v1-memory-in-the-loop-in-process-retrieval-as-extendedworking-memory-for-language-agents)  
+   标签：评分：9.0/10、query:pwt
+   evidence：代理记忆作为扩展工作记忆用于推理改进
+6. [Akashic: A Low-Overhead LLM Inference Service with MemAttention](/202607/11/2607.05708v1-akashic-a-low-overhead-llm-inference-service-with-memattention)  
+   标签：评分：9.0/10、query:pwt
+   evidence：具有MemAttention的代理记忆系统用于推理改进
+7. [MemDefrag: Latent Memory Defragmentation for Large Language Models](/202607/11/2607.05969v1-memdefrag-latent-memory-defragmentation-for-large-language-models)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：训练无关的潜在记忆碎片整理
+8. [PolyUQuest: Verifiable Structure-Aware Web RAG over Heterogeneous Graphs](/202607/11/2607.08269v1-polyuquest-verifiable-structure-aware-web-rag-over-heterogeneous-graphs)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：针对图检索增强生成的图嵌入方法
-4. [Experience Graphs: The Data Foundation for Self-Improving Agents](/202607/06/2606.29823v1-experience-graphs-the-data-foundation-for-self-improving-agents)  
-   标签：评分：8.0/10、query:pwt
-   evidence：经验图作为自改进代理的记忆
-5. [Dynamo: Dynamic Skill-Tool Evolution for Vision-Language Agents](/202607/06/2606.30185v1-dynamo-dynamic-skill-tool-evolution-for-vision-language-agents)  
-   标签：评分：8.0/10、query:pwt
-   evidence：无需训练的动态技能-工具演化框架，使用持久记忆提升推理
-6. [What Memory Do GUI Agents Really Need? From Passive Records to Active Task-Driving States](/202607/06/2606.31612v1-what-memory-do-gui-agents-really-need-from-passive-records-to-active-task-driving-states)  
-   标签：评分：8.0/10、query:pwt
-   evidence：主动任务驱动记忆提升智能体推理能力
-7. [TRACE: State-Aware Query Processing over Temporal Evidence Graphs for Conversational Data](/202607/06/2607.00339v1-trace-state-aware-query-processing-over-temporal-evidence-graphs-for-conversational-data)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：基于图的时间证据图RAG用于对话数据
-8. [A Hippocampus for Linear Attention: An Exact Memory for What the Recurrent State Forgets](/202607/06/2607.02303v1-a-hippocampus-for-linear-attention-an-exact-memory-for-what-the-recurrent-state-forgets)  
-   标签：评分：8.0/10、query:llm-memory
-   evidence：通过海马体精确缓存增强语言模型记忆
+   evidence：基于图的检索增强生成框架
 
 ### 速读区论文标签
-1. [CAT: Confidence-Adaptive Thinking for Efficient Reasoning of Large Reasoning Models](/202607/06/2607.00862v1-cat-confidence-adaptive-thinking-for-efficient-reasoning-of-large-reasoning-models)  
+1. [MABLE: Masked Autoencoding with Bi-Lipschitz Decoding for Embeddings and Graph Metric Learning](/202607/11/2607.02990v1-mable-masked-autoencoding-with-bi-lipschitz-decoding-for-embeddings-and-graph-metric-learning)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：自监督图嵌入框架，直接对应图嵌入需求
+2. [TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation](/202607/11/2607.03447v1-triage-trustworthy-retrieval-instrumentation-and-graph-evaluation)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：面向基于图的RAG的阶段感知评估框架
+3. [PLACEMEM: Toward a Compute-Aware Memory Plane for Lifelong Agents](/202607/11/2607.04089v1-placemem-toward-a-compute-aware-memory-plane-for-lifelong-agents)  
    标签：评分：8.0/10、query:pwt
-   evidence：置信度自适应思维作为思维链的替代方案
-2. [DART-VLN: Test-Time Memory Decay and Anti-Loop Regularization for Discrete Vision-Language Navigation](/202607/06/2607.01043v1-dart-vln-test-time-memory-decay-and-anti-loop-regularization-for-discrete-vision-language-navigation)  
+   evidence：提出面向终身代理的计算感知记忆平面，通过版本化胶囊统一语义、来源和运行时状态以提升推理能力
+4. [Exploiting Structural Properties for Efficient Constraint-Aware HNSW Hyperparameter Tuning](/202607/11/2607.04630v1-exploiting-structural-properties-for-efficient-constraint-aware-hnsw-hyperparameter-tuning)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：利用HNSW图结构特性优化RAG索引调优
+5. [From Passive Retrieval to Active Memory Navigation: Learning to Use Memory as a Structured Action Space](/202607/11/2607.05794v1-from-passive-retrieval-to-active-memory-navigation-learning-to-use-memory-as-a-structured-action-space)  
    标签：评分：8.0/10、query:pwt
-   evidence：无需训练的测试时记忆衰减与反循环正则化
-3. [From Extraction to Navigation: Progressive Retrieval with Indirectly Infinite Depth](/202607/06/2606.29970v1-from-extraction-to-navigation-progressive-retrieval-with-indirectly-infinite-depth)  
+   evidence：学习将长期记忆用作智能体推理的结构化动作空间
+6. [Distill Where the Student Goes: Teacher-Regularized RL for English-Evidence Cross-Lingual RAG](/202607/11/2607.02966v1-distill-where-the-student-goes-teacher-regularized-rl-for-english-evidence-cross-lingual-rag)  
+   标签：评分：7.0/10、query:llm-memory
+   evidence：利用教师正则化强化学习改善跨语言RAG的证据利用
+7. [SHiPPO: Recurrent Memory with Transported Polynomial Projections](/202607/11/2607.03055v1-shippo-recurrent-memory-with-transported-polynomial-projections)  
+   标签：评分：7.0/10、query:llm-memory
+   evidence：利用传输多项式投影实现语言模型中的循环记忆增强
+8. [KARMA: Knowledge graph-based Automated Reasoning Materialization and Alignment](/202607/11/2607.03166v1-karma-knowledge-graph-based-automated-reasoning-materialization-and-alignment)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：图遍历作为一种图结构学习方法用于渐进式检索
-4. [One Retrieval to Cover Them All: Co-occurrence-Aware Knowledge Base Reorganization for Session-Level RAG](/202607/06/2606.31156v1-one-retrieval-to-cover-them-all-co-occurrence-aware-knowledge-base-reorganization-for-session-level-rag)  
-   标签：评分：7.0/10、query:llm-memory
-   evidence：会话级RAG与记忆重组织
-5. [When Classic Cache Policies Fail: Learning-Augmented Replacement for Semantic Retrieval Buffers](/202607/06/2607.00394v1-when-classic-cache-policies-fail-learning-augmented-replacement-for-semantic-retrieval-buffers)  
-   标签：评分：7.0/10、query:llm-memory
-   evidence：LLM记忆的学习增强缓存替换
-6. [When RAG Meets Query Planning: Logical Query Trees for Resolving Exploratory Reasoning Problems](/202607/06/2607.00508v2-when-rag-meets-query-planning-logical-query-trees-for-resolving-exploratory-reasoning-problems)  
+   evidence：基于知识图的对比候选生成，利用图结构
+9. [SentAttack: A Sentence-Level Black-Box Adversarial Attack Method for Dense Retrieval Models](/202607/11/2607.03456v1-sentattack-a-sentence-level-black-box-adversarial-attack-method-for-dense-retrieval-models)  
    标签：评分：7.0/10、query:power-ticket
-   evidence：RAG查询规划的逻辑查询树
-7. [Dual-Confidence Contrastive Decoding for Retrieval-Augmented Generation](/202607/06/2607.00570v1-dual-confidence-contrastive-decoding-for-retrieval-augmented-generation)  
-   标签：评分：7.0/10、query:llm-memory
-   evidence：多文档RAG中对比解码处理内部记忆与检索上下文的冲突
-8. [Auditing Forgetting in Limited Memory Language Models](/202607/06/2607.00605v1-auditing-forgetting-in-limited-memory-language-models)  
-   标签：评分：7.0/10、query:llm-memory
-   evidence：外部记忆RAG中的遗忘审计
-9. [M2Note: Continual Evolution of Vision Language Models via Mistake Notebook Learning](/202607/06/2607.00685v1-m2note-continual-evolution-of-vision-language-models-via-mistake-notebook-learning)  
-   标签：评分：7.0/10、query:pwt
-   evidence：无需训练的记忆外部化，通过错误笔记本
-10. [Hybrid Retriever Evolution for Multimodal Document Reasoning Agents](/202607/06/2606.29648v1-hybrid-retriever-evolution-for-multimodal-document-reasoning-agents)  
-   标签：评分：6.0/10、query:llm-memory
-   evidence：通过智能体协调检索器实现带记忆的检索增强生成
-11. [Neural Subspace Reallocation: Continual Learning as Retrieval-Based Subspace Memory Management](/202607/06/2606.30067v1-neural-subspace-reallocation-continual-learning-as-retrieval-based-subspace-memory-management)  
+   evidence：针对RAG中密集检索模型的句子级对抗攻击，与RAG安全性相关
+10. [ProLaViT: Learning Progressive Latent Visual Thoughts in Structured Latent Space](/202607/11/2607.02907v1-prolavit-learning-progressive-latent-visual-thoughts-in-structured-latent-space)  
    标签：评分：6.0/10、query:pwt
-   evidence：通过检索子空间管理实现智能体记忆增强推理
-12. [MemSyco-Bench: Benchmarking Sycophancy in Agent Memory](/202607/06/2607.01071v2-memsyco-bench-benchmarking-sycophancy-in-agent-memory)  
+   evidence：作为显式思维链替代的潜在视觉推理
+11. [Amortising Bayesian Experimental Design for Sequential Information Gathering in LLMs](/202607/11/2607.03426v1-amortising-bayesian-experimental-design-for-sequential-information-gathering-in-llms)  
    标签：评分：6.0/10、query:pwt
-   evidence：基准测试智能体内存引起的谄媚行为，关联内存与推理改进
-13. [Cache Merging as a Convergent Replicated State for Multi-Agent Latent Reasoning](/202607/06/2607.01308v1-cache-merging-as-a-convergent-replicated-state-for-multi-agent-latent-reasoning)  
-   标签：评分：6.0/10、query:llm-memory
-   evidence：多智能体潜推理的缓存合并，顺序不变的规范化合并
+   evidence：摊销式序贯信息收集用于罕见/未见案例
+12. [Risk-Constrained Freshness-Aware Semantic Caching for Open-Web Retrieval-Augmented LLMs](/202607/11/2607.04281v1-risk-constrained-freshness-aware-semantic-caching-for-open-web-retrieval-augmented-llms)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：FreshCache提出风险约束的RAG语义缓存，建模新鲜度衰减提高缓存命中可靠性，可应用于工作票RAG系统
+13. [Hierarchical Evidence-Driven Reasoning for Long Document Understanding](/202607/11/2607.04625v1-hierarchical-evidence-driven-reasoning-for-long-document-understanding)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：HIEVI-RAG提出分层证据驱动推理用于长文档理解，解决多页检索失败问题，可直接应用于电力系统文档检索与生成
 
 
 <div class="dpr-home-promo-card">

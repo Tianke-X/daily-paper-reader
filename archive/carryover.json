@@ -1,22 +1,472 @@
 {
-  "generated_at": "2026-07-06T21:29:47.394583+00:00",
-  "updated_date": "20260706",
+  "generated_at": "2026-07-11T19:53:24.396780+00:00",
+  "updated_date": "20260711",
   "carryover_days": 9,
   "tag_states": {
     "power-ticket": {
-      "updated_date": "20260706",
+      "updated_date": "20260711",
       "carryover_days": 9,
-      "items": []
+      "items": [
+        {
+          "id": "2607.06507v1",
+          "source": "arxiv",
+          "title": "DynaKRAG: A Unified Framework for Learnable Evidence Control in Multi-Hop Retrieval-Augmented Generation",
+          "abstract": "Multi-hop retrieval-augmented generation (RAG) acquires evidence sequentially, with each new document potentially revealing missing facts, bridge entities, query defects, or sufficient support for answering. Existing methods provide useful operations such as iterative retrieval, query reformulation, evidence critique, and sufficiency judging, but typically organize them within method-specific pipelines or predefined control topologies. This leaves underexplored how to learn a shared state-conditioned policy that chooses among currently valid evidence operations. We introduce DynaKRAG, which formulates multi-hop evidence acquisition as state-conditioned control over atomic evidence operations. At each step, a validity layer constructs the executable action set, and a learned controller selects the next operation. The resulting transition updates the evidence state and may enable new operations at subsequent steps. With Qwen2.5-7B-Instruct, DynaKRAG achieves F1 scores of 0.5998 on HotpotQA, 0.5340 on 2Wiki, and 0.3061 on MuSiQue, outperforming the strongest controlled baseline on all three benchmarks. Replacing the learned controller with a uniform-valid policy reduces F1 by 3.96--5.78 points, while removing sufficiency feedback hurts all three datasets. Controlled retrieval-cap experiments further show that additional retrieval is not uniformly beneficial. Together, these results demonstrate the benefit of coordinating retrieval, diagnosis, and gap-directed acquisition under an evolving evidence state.",
+          "authors": [
+            "Yaqi Wu",
+            "Xiaolei Guo",
+            "Chenyu Zhou",
+            "Jiaqi Huang",
+            "Xianfa Zhang",
+            "Junxu Zhang",
+            "Zhuo Yu",
+            "Zhubo Shi",
+            "Jianghao Lin",
+            "Dongdong Ge"
+          ],
+          "primary_category": "cs.CL",
+          "categories": [
+            "cs.CL",
+            "cs.IR"
+          ],
+          "published": "2026-07-07T17:09:36+00:00",
+          "link": "https://arxiv.org/pdf/2607.06507v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "learnable evidence control for multi-hop retrieval-augmented generation",
+          "llm_evidence_cn": "用于多跳检索增强生成的可学习证据控制",
+          "llm_evidence": "用于多跳检索增强生成的可学习证据控制",
+          "canonical_evidence": "用于多跳检索增强生成的可学习证据控制",
+          "llm_tldr_en": "DynaKRAG learns a shared state-conditioned policy to choose among atomic evidence operations (retrieve, reformulate, critique, judge) for multi-hop RAG, improving evidence acquisition.",
+          "llm_tldr_cn": "该论文提出DynaKRAG框架，将多跳证据获取建模为状态条件控制，通过学习一个共享策略在原子证据操作（检索、重构、批评、充分性判断）间选择。避免了预定义流水线的僵化，使模型能够根据当前证据状态动态调整策略。实验在多跳QA数据集上显示，DynaKRAG相比固定管道方法在证据全面性和最终答案准确性上有显著提升。",
+          "llm_tldr": "该论文提出DynaKRAG框架，将多跳证据获取建模为状态条件控制，通过学习一个共享策略在原子证据操作（检索、重构、批评、充分性判断）间选择。避免了预定义流水线的僵化，使模型能够根据当前证据状态动态调整策略。实验在多跳QA数据集上显示，DynaKRAG相比固定管道方法在证据全面性和最终答案准确性上有显著提升。",
+          "llm_tags": [
+            "query:power-ticket"
+          ],
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "retrieval augmented generation for work tickets",
+          "matched_requirement_id": "req-2",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.06507v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.07721v1",
+          "source": "arxiv",
+          "title": "Context Graphs for Proactive Enterprise Agents",
+          "abstract": "Retrieval-Augmented Generation (RAG) and agentic frameworks have advanced enterprise AI considerably, yet agents remain fundamentally reactive: they wait for a human query before acting. This paper argues that genuine enterprise productivity gains require proactive agents: systems that surface relevant, actionable information to workers before they ask. We propose the Context Graph, a live relational data structure that models enterprise entities, their relationships, and state transitions over time. Built on this graph, we define a Delta Detection Engine that continuously monitors state changes, a Proactivity Scorer that ranks candidate insights by urgency, relevance, and persona-fit, and a Surfacing Layer powered by an LLM that delivers ranked notifications with grounded explanations. We formalize each component, derive a unified Proactivity Score function, and provide a complete end-to-end Python implementation using NetworkX and the Anthropic Claude API. Evaluation across three generic enterprise case studies (contract lifecycle management, engineering incident response, and sales pipeline hygiene) demonstrates that context-graph-driven proactivity achieves Precision@5 of 0.83, a false positive rate of 0.11, and reduces mean time to surface from 47 minutes (reactive baseline) to under 30 second.",
+          "authors": [
+            "Avinash Kumar"
+          ],
+          "primary_category": "cs.AI",
+          "categories": [
+            "cs.AI",
+            "cs.LG"
+          ],
+          "published": "2026-07-04T14:37:23+00:00",
+          "link": "https://arxiv.org/pdf/2607.07721v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "proposes Context Graph, a graph structure for RAG in proactive agents",
+          "llm_evidence_cn": "提出上下文图，一种用于主动代理RAG的图结构",
+          "llm_evidence": "提出上下文图，一种用于主动代理RAG的图结构",
+          "canonical_evidence": "提出上下文图，一种用于主动代理RAG的图结构",
+          "llm_tldr_en": "Context Graphs for Proactive Enterprise Agents introduces a graph-based RAG approach that models entities and relationships to proactively surface information, matching the requirement for graph-based retrieval augmented generation.",
+          "llm_tldr_cn": "该论文针对企业代理的被动性问题，提出上下文图（Context Graph），一种实时关系数据结构，用于建模实体、关系及状态变化。基于此构建增量检测引擎、主动性评分器和LLM驱动的展示层，实现主动信息推送。实验表明该方法能有效提升代理的主动性和相关性。其图结构RAG的思想与基于图的检索增强生成需求高度吻合。",
+          "llm_tldr": "该论文针对企业代理的被动性问题，提出上下文图（Context Graph），一种实时关系数据结构，用于建模实体、关系及状态变化。基于此构建增量检测引擎、主动性评分器和LLM驱动的展示层，实现主动信息推送。实验表明该方法能有效提升代理的主动性和相关性。其图结构RAG的思想与基于图的检索增强生成需求高度吻合。",
+          "llm_tags": [
+            "query:power-ticket"
+          ],
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "graph based retrieval augmented generation",
+          "matched_requirement_id": "req-7",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07721v1",
+          "carry_days": 1
+        }
+      ]
     },
     "pwt": {
-      "updated_date": "20260706",
+      "updated_date": "20260711",
       "carryover_days": 9,
-      "items": []
+      "items": [
+        {
+          "id": "2607.07388v1",
+          "source": "arxiv",
+          "title": "TF-Engram: A Train-Free Engram with SSD-Backed Memory for Large Language Models",
+          "abstract": "Large Language Models (LLMs) store factual knowledge and domain-specific patterns implicitly in dense Transformer parameters, making knowledge expansion costly through pretraining, fine-tuning, retrieval augmentation, or longer contexts. Engram-style memory offers a compact hidden-state injection pathway, but existing GPU-resident designs often rely on hash-based compression, causing unrelated phrases to collide in shared slots and weakening phrase-level semantic fidelity. We present TF-Engram, a train-free Engram system that constructs phrase-specific semantic memory offline from external corpora, stores large memory tables across a GPU--DRAM--SSD hierarchy, and uses Early-Exit Guided Predictive Prefetching to hide external-memory latency during autoregressive decoding. On Qwen3-0.6B, TF-Engram improves the average downstream score from 57.6 to 59.4, outperforming both the frozen backbone and a parameter-matched LoRA baseline. System evaluation shows that large TF-Engram tables can be built with moderate offline cost, SSD-backed storage substantially reduces GPU memory demand, and predictive prefetching recovers much of the throughput loss caused by external memory access. These results demonstrate that static phrase memory can be integrated into LLM inference as a scalable, train-free, and low-overhead system component.",
+          "authors": [
+            "Yutang Ma",
+            "Kecheng Huang",
+            "Xikun Jiang",
+            "Zili Shao"
+          ],
+          "primary_category": "cs.CL",
+          "categories": [
+            "cs.CL",
+            "cs.LG"
+          ],
+          "published": "2026-07-08T13:19:52+00:00",
+          "link": "https://arxiv.org/pdf/2607.07388v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "train-free memory augmented reasoning",
+          "llm_evidence_cn": "无需训练的记忆增强推理",
+          "llm_evidence": "无需训练的记忆增强推理",
+          "canonical_evidence": "无需训练的记忆增强推理",
+          "llm_tldr_en": "Proposes TF-Engram, a train-free Engram system with SSD-backed memory for LLMs, enabling phrase-specific semantic memory without training, reducing collision and improving fidelity.",
+          "llm_tldr_cn": "大型语言模型的知识扩展通常依赖预训练或微调，成本高昂。本文提出TF-Engram，一种无需训练的英格拉姆系统，通过离线构建短语级语义记忆并利用GPU-DRAM-SSD层次存储，结合早退引导预测预取技术隐藏外部内存延迟。该系统无需模型训练即可注入事实知识，有效避免哈希压缩导致的语义冲突，提升了短语级语义保真度。实验表明TF-Engram在知识密集型任务中显著优于基线方法，为无训练记忆增强推理提供了高效方案。",
+          "llm_tldr": "大型语言模型的知识扩展通常依赖预训练或微调，成本高昂。本文提出TF-Engram，一种无需训练的英格拉姆系统，通过离线构建短语级语义记忆并利用GPU-DRAM-SSD层次存储，结合早退引导预测预取技术隐藏外部内存延迟。该系统无需模型训练即可注入事实知识，有效避免哈希压缩导致的语义冲突，提升了短语级语义保真度。实验表明TF-Engram在知识密集型任务中显著优于基线方法，为无训练记忆增强推理提供了高效方案。",
+          "llm_tags": [
+            "query:pwt"
+          ],
+          "matched_query_tag": "query:pwt",
+          "matched_query_text": "memory augmented reasoning without training",
+          "matched_requirement_id": "req-17",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07388v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.08572v1",
+          "source": "arxiv",
+          "title": "Switch-Reasoner: Learn When to Think in Multitask Mixtures via Reinforcement Learning",
+          "abstract": "Multimodal Large Language Models (MLLMs) often follow a fixed Think-then-Answer paradigm, which is inefficient in heterogeneous multitask settings because simple inputs may not require explicit reasoning while difficult ones can benefit substantially from it. Learning when to think is also unstable during post-training, where imbalanced rollouts can drive the model toward always-thinking or always-direct behavior. We propose Switch-Reasoner, a GRPO-based framework that learns to adaptively select reasoning modes for MLLMs. It treats thinking as a virtual tool invocation and allows the model to either answer directly or invoke explicit reasoning before answering. To stabilize this decision, we introduce a dual-level regulation mechanism that balances the overall use of Thinking Mode and Direct Mode while providing sample-level supervision based on the relative benefit of the two choices. Experiments on 11 multimodal tasks show that Switch-Reasoner reduces unnecessary reasoning while maintaining strong performance, achieving a better accuracy-efficiency trade-off.",
+          "authors": [
+            "Yiyang Fang",
+            "Pei Fu",
+            "Jinjie Li",
+            "Jian Liang",
+            "Wenke Huang",
+            "Ruijie Luo",
+            "Shaojie Zhang",
+            "Jian Luan",
+            "Yi R. Fung",
+            "Mang Ye"
+          ],
+          "primary_category": "cs.CV",
+          "categories": [
+            "cs.CV"
+          ],
+          "published": "2026-07-09T15:04:05+00:00",
+          "link": "https://arxiv.org/pdf/2607.08572v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "proposes learning when to think as alternative to fixed CoT",
+          "llm_evidence_cn": "提出学习何时思考作为固定思维链的替代",
+          "llm_evidence": "提出学习何时思考作为固定思维链的替代",
+          "canonical_evidence": "提出学习何时思考作为固定思维链的替代",
+          "llm_tldr_en": "Switch-Reasoner uses GRPO to learn when to invoke reasoning instead of always following a fixed chain-of-thought, providing an adaptive alternative to CoT for multitask MLLMs.",
+          "llm_tldr_cn": "多模态大语言模型通常采用固定的先思考再回答范式，在异质多任务场景中效率低下。本文提出Switch-Reasoner，通过GRPO强化学习框架训练模型学会何时调用显式推理、何时直接回答。该框架将思考视为虚拟工具调用，并引入双层调控机制稳定决策。实验表明该自适应推理模式在保持性能的同时显著提升推理效率。",
+          "llm_tldr": "多模态大语言模型通常采用固定的先思考再回答范式，在异质多任务场景中效率低下。本文提出Switch-Reasoner，通过GRPO强化学习框架训练模型学会何时调用显式推理、何时直接回答。该框架将思考视为虚拟工具调用，并引入双层调控机制稳定决策。实验表明该自适应推理模式在保持性能的同时显著提升推理效率。",
+          "llm_tags": [
+            "query:pwt"
+          ],
+          "matched_query_tag": "query:pwt",
+          "matched_query_text": "alternative to chain of thought reasoning",
+          "matched_requirement_id": "req-13",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.08572v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.07422v1",
+          "source": "arxiv",
+          "title": "InductWave: Inductive Multi-Hop Logical Query Answering on Knowledge Graphs",
+          "abstract": "Logical Multi-Hop Query Answering over Knowledge Graphs (KGs) can be formulated as querying, with an implicit completeness assumption. Current works mainly focus on Existential First Order Logic (EFO) queries. These EFO queries contain conjunction, disjunction, and negation operators. Most existing works employ transductive reasoning, meaning they are not capable of reasoning over entities unseen during training. In the real world, there is a resource scarcity, and we cannot train a model with all the nodes of a large KG. Hence, we propose InductWave, a wavelet-based inductive embedding method for logical query answering on large KGs. Here, the training graph consists of fewer nodes than the test graph. Our model performs on par with the baseline models while having half the number of message-passing layers. It outperforms all of them in most cases, with 75% of the layers. These fewer resource requirements enable us to evaluate InductWave on massive graphs, such as Wiki-KG. We test our model using extensive experiments across varying train-test graph proportions of the FB15k-(237) dataset, comparing it with the state-of-the-art models. The code and datasets for the model are available at https://github.com/kracr/inductwave/.",
+          "authors": [
+            "Mayank Kharbanda",
+            "Michael Cochez",
+            "Rajiv Ratn Shah",
+            "Raghava Mutharaju"
+          ],
+          "primary_category": "cs.AI",
+          "categories": [
+            "cs.AI",
+            "cs.IR"
+          ],
+          "published": "2026-07-08T13:49:44+00:00",
+          "link": "https://arxiv.org/pdf/2607.07422v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "inductive multi-hop logical query answering on KGs; directly applicable to work ticket reasoning",
+          "llm_evidence_cn": "归纳式多跳逻辑查询回答，直接可用于工作票知识图谱推理",
+          "llm_evidence": "归纳式多跳逻辑查询回答，直接可用于工作票知识图谱推理",
+          "canonical_evidence": "归纳式多跳逻辑查询回答，直接可用于工作票知识图谱推理",
+          "llm_tldr_en": "Proposes InductWave, a wavelet-based inductive embedding method for logical multi-hop query answering on large KGs. Handles unseen entities at test time, achieving on-par performance with transductive baselines.",
+          "llm_tldr_cn": "该论文针对知识图谱上多跳逻辑查询回答的归纳推理难题，提出基于小波的归纳式嵌入方法InductWave。该方法在小训练图上学习表示，泛化到未见实体。实验表明与传导式基线性能相当，解决了资源稀缺场景下的推理需求。该方法可直接迁移至电力工作票知识图谱的多跳推理任务。",
+          "llm_tldr": "该论文针对知识图谱上多跳逻辑查询回答的归纳推理难题，提出基于小波的归纳式嵌入方法InductWave。该方法在小训练图上学习表示，泛化到未见实体。实验表明与传导式基线性能相当，解决了资源稀缺场景下的推理需求。该方法可直接迁移至电力工作票知识图谱的多跳推理任务。",
+          "llm_tags": [
+            "query:pwt"
+          ],
+          "matched_query_tag": "query:pwt",
+          "matched_query_text": "knowledge graph reasoning for work tickets",
+          "matched_requirement_id": "req-10",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07422v1",
+          "carry_days": 1
+        }
+      ]
     },
     "llm-memory": {
-      "updated_date": "20260706",
+      "updated_date": "20260711",
       "carryover_days": 9,
-      "items": []
+      "items": [
+        {
+          "id": "2607.07740v1",
+          "source": "arxiv",
+          "title": "Jet-Long: Efficient Long-Context Extension with Dynamic Bifocal RoPE",
+          "abstract": "Modern LLMs are increasingly deployed in long-context applications such as retrieval-augmented generation, repository-level coding, and agentic workflows whose accumulated reasoning and tool traces routinely push the input an order of magnitude past the pretraining window, making zero-shot context extension the dominant deployment path for open-weight checkpoints. Most existing zero-shot methods fix a single rescaling factor up front, so an aggressive factor sacrifices short-context fidelity while a conservative one breaks down at long contexts. We propose Jet-Long, a tuning-free zero-shot method that pairs a local RoPE-faithful window with a long-range window whose rescaling factor adapts dynamically to the current sequence length, recovering the base model exactly at short inputs while extrapolating cleanly at long ones. An inclusion-exclusion attention merge and an on-the-fly RoPE correction rotation make the bifocal construction essentially free at inference; fused into a single CuTe kernel, long-context prefill reaches up to $1.39\\times$ FA2 throughput on H100 (approaching the Hopper-only FA4), and single-batch generation incurs $\\le 4\\%$ overhead at every length. On Qwen3-1.7B/4B/8B up to 128K context, Jet-Long leads RULER by $+4.79$/$+2.18$/$+2.03$~pp over the strongest baseline at 1.7B/4B/8B, achieves the best overall accuracy on HELMET-RAG (a benchmark identified by HELMET as the most efficient predictor of downstream long-context performance) and attains the lowest PG-19 perplexity. Jet-Long also generalizes to hybrid attention architectures such as Jet-Nemotron for further long-context improvement without retraining, and remains hyperparameter-resilient for ease of deployment.",
+          "authors": [
+            "Haozhan Tang",
+            "Zerui Wang",
+            "Yuxian Gu",
+            "Song Han",
+            "Han Cai"
+          ],
+          "primary_category": "cs.LG",
+          "categories": [
+            "cs.LG",
+            "cs.AI"
+          ],
+          "published": "2026-07-08T06:23:42+00:00",
+          "link": "https://arxiv.org/pdf/2607.07740v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "Zero-shot long-context extension technique for LLMs",
+          "llm_evidence_cn": "零样本长上下文扩展技术",
+          "llm_evidence": "零样本长上下文扩展技术",
+          "canonical_evidence": "零样本长上下文扩展技术",
+          "llm_tldr_en": "Jet-Long proposes a tuning-free zero-shot method with dynamic bifocal RoPE that adaptively rescales for long contexts without sacrificing short-context fidelity.",
+          "llm_tldr_cn": "现有零样本长上下文扩展方法使用固定缩放因子，导致短上下文保真度下降或长上下文失效。Jet-Long提出无训练零样本方法，通过局部RoPE保持窗口和自适应缩放因子的长程窗口配对，动态适应序列长度，恢复基础模型在长上下文上的性能，同时保持短上下文质量。在多个长上下文基准测试中表现优异。",
+          "llm_tldr": "现有零样本长上下文扩展方法使用固定缩放因子，导致短上下文保真度下降或长上下文失效。Jet-Long提出无训练零样本方法，通过局部RoPE保持窗口和自适应缩放因子的长程窗口配对，动态适应序列长度，恢复基础模型在长上下文上的性能，同时保持短上下文质量。在多个长上下文基准测试中表现优异。",
+          "llm_tags": [
+            "query:llm-memory"
+          ],
+          "matched_query_tag": "query:llm-memory",
+          "matched_query_text": "Long context reasoning techniques in large language models",
+          "matched_requirement_id": "req-19",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07740v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.07386v1",
+          "source": "arxiv",
+          "title": "Sparse Delta Memory: Scaling the State of Linear RNNs through Sparsity",
+          "abstract": "Linear attention models allow a fixed state size and a fixed amount of compute per token. However, due to their limited state size, linear attention models fall behind in long-context recall compared to softmax-attention-based transformer architectures. Increasing the state size of linear attention improves recall performance but at the cost of higher FLOPs. In this work, we introduce Sparse Delta Memory (SDM), an architecture that scales the hidden state of gated linear RNNs to orders of magnitude higher capacity using a sparse addressing scheme. SDM extends the Gated DeltaNet architecture by replacing the dense key-value outer product with sparse reads and writes to a large explicit memory. We show that, under an isoFLOP constraint and with an identical number of parameters, a higher state memory capacity significantly improves performance on in-context learning and long-context retrieval tasks. Moreover, by learning the initial state of the SDM memory and therefore using it as a parametric memory, we show that the model further improves on a wide range of common-knowledge and reasoning tasks.",
+          "authors": [
+            "Loïc Cabannes",
+            "Pierre-Emmanuel Mazaré",
+            "Gergely Szilvasy",
+            "Matthijs Douze",
+            "Maria Lomeli",
+            "Ilze Amanda Auzina",
+            "Justin Carpentier",
+            "Gabriel Synnaeve",
+            "Hervé Jégou"
+          ],
+          "primary_category": "cs.LG",
+          "categories": [
+            "cs.LG"
+          ],
+          "published": "2026-07-08T13:17:19+00:00",
+          "link": "https://arxiv.org/pdf/2607.07386v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "scales hidden state of linear RNNs via sparse memory for long-context recall",
+          "llm_evidence_cn": "通过稀疏记忆扩展线性RNN隐藏状态大小以提升长上下文召回",
+          "llm_evidence": "通过稀疏记忆扩展线性RNN隐藏状态大小以提升长上下文召回",
+          "canonical_evidence": "通过稀疏记忆扩展线性RNN隐藏状态大小以提升长上下文召回",
+          "llm_tldr_en": "Sparse Delta Memory (SDM) adds a large explicit memory to gated linear RNNs using sparse reads/writes, achieving better long-context recall under isoFLOP constraints.",
+          "llm_tldr_cn": "线性注意力模型因固定状态大小在长上下文召回上落后于Transformer。SDM通过稀疏寻址机制为门控线性RNN引入显式大容量记忆，在不增加FLOPs的前提下显著提升长序列召回能力。实验表明在等FLOPs约束下SDM比基线模型在长上下文任务上取得更优性能，为大模型记忆扩展提供了有效方案。",
+          "llm_tldr": "线性注意力模型因固定状态大小在长上下文召回上落后于Transformer。SDM通过稀疏寻址机制为门控线性RNN引入显式大容量记忆，在不增加FLOPs的前提下显著提升长序列召回能力。实验表明在等FLOPs约束下SDM比基线模型在长上下文任务上取得更优性能，为大模型记忆扩展提供了有效方案。",
+          "llm_tags": [
+            "query:llm-memory"
+          ],
+          "matched_query_tag": "query:llm-memory",
+          "matched_query_text": "methods for incorporating long term memory into large language models",
+          "matched_requirement_id": "req-24",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07386v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.07666v1",
+          "source": "arxiv",
+          "title": "A hierarchical memory architecture overcomes context limits in long-horizon multi-agent computational modeling",
+          "abstract": "Large language models (LLMs) demonstrate remarkable reasoning capabilities, yet their stateless architecture fundamentally limits deployment in long-horizon research workflows requiring multi-session continuity and quantitative rigor. Here we present Ensemble QSP, a multi-agent framework featuring a three-layer hierarchical memory architecture that keeps injected context bounded and constant in project duration (mid-term project state: median 301 tokens, max 4,050, across 104 runs) by capping each state category and evicting completed work, enabling continuous autonomous operation without context degradation. The system orchestrates five specialist worker agents under domain-expert principal investigators, enforcing physical constraints through physics-based checklists and structured-domain knowledge. Comprehensive benchmarking demonstrates robust autonomous pharmacokinetic-pharmacodynamic model selection without human intervention, consistent result quality across both lower-cost and frontier LLMs, improved PK parameter recovery relative to single-agent baselines, and stable model selection across linguistically diverse prompts of the same task. Feature-level ablation across physiologically based pharmacokinetic (PBPK) models spanning a broad complexity range shows that PI-agent oversight improves debugging efficiency while preserving final accuracy across conditions. The architecture is structurally domain-agnostic, adding a new scientific domain requires only a new PI agent configuration.",
+          "authors": [
+            "Shivendra G. Tewari",
+            "Holly Kimko"
+          ],
+          "primary_category": "q-bio.QM",
+          "categories": [
+            "q-bio.QM",
+            "cs.MA"
+          ],
+          "published": "2026-07-08T17:22:28+00:00",
+          "link": "https://arxiv.org/pdf/2607.07666v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "hierarchical memory architecture for long-horizon multi-agent scenarios",
+          "llm_evidence_cn": "用于长程多智能体场景的分层记忆架构",
+          "llm_evidence": "用于长程多智能体场景的分层记忆架构",
+          "canonical_evidence": "用于长程多智能体场景的分层记忆架构",
+          "llm_tldr_en": "Ensemble QSP uses a three-layer hierarchical memory to keep context bounded and constant, enabling continuous autonomous operation for long-horizon multi-agent tasks without context degradation.",
+          "llm_tldr_cn": "该论文针对大语言模型在长程多智能体任务中因无状态架构导致的上下文退化问题，提出了Ensemble QSP框架，采用三层层次化记忆架构，通过限制每一状态类别的最大令牌数并驱逐已完成工作，使得注入的上下文在整个项目周期内保持有界且恒定。实验表明该方法在104次运行中中位项目状态仅301个令牌，支持持续自主运行。该工作为将长期记忆有效融入LLM代理提供了一种实用的架构方案，直接服务于长上下文记忆增强的研究需求。",
+          "llm_tldr": "该论文针对大语言模型在长程多智能体任务中因无状态架构导致的上下文退化问题，提出了Ensemble QSP框架，采用三层层次化记忆架构，通过限制每一状态类别的最大令牌数并驱逐已完成工作，使得注入的上下文在整个项目周期内保持有界且恒定。实验表明该方法在104次运行中中位项目状态仅301个令牌，支持持续自主运行。该工作为将长期记忆有效融入LLM代理提供了一种实用的架构方案，直接服务于长上下文记忆增强的研究需求。",
+          "llm_tags": [
+            "query:llm-memory"
+          ],
+          "matched_query_tag": "query:llm-memory",
+          "matched_query_text": "methods for incorporating long term memory into large language models",
+          "matched_requirement_id": "req-24",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07666v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.07707v1",
+          "source": "arxiv",
+          "title": "Co-LMLM: Continuous-Query Limited Memory Language Models",
+          "abstract": "Limited memory language models (LMLMs) externalize factual knowledge during pretraining to a knowledge base (KB), rather than memorizing it in their weights. During generation, the model then fetches knowledge from the KB as needed. This recently introduced paradigm provides multiple advantages, including knowledge control capabilities that remain beyond conventional LLMs. We propose continuous-query LMLM (CO-LMLM), where the KB pairs continuous keys with textual knowledge values, a significant departure from prior reliance on relational KB and queries. CO-LMLM generates flexible vector queries at minimal cost, while still integrating human-readable and attributable retrieved knowledge into its generation. We pair this design with an annotation pipeline that tags free-form factual spans in arbitrary text, removing prior work's restriction to Wikipedia. Across pretraining on Wikipedia and FineWeb-Edu and at multiple model scales, CO-LMLM outperforms prior LMLMs and vanilla LLMs in both perplexity and factual precision. At 360M scale, this includes lower perplexity than models pretrained on 40x more data, and SimpleQA-verified performance that is in line with gpt-4o-mini and higher than Claude Sonnet 4.5.",
+          "authors": [
+            "Yair Feldman",
+            "Linxi Zhao",
+            "Nathan Godey",
+            "Dongyoung Go",
+            "Yilun Hua",
+            "Kilian Q. Weinberger",
+            "Jennifer J. Sun",
+            "Yoav Artzi"
+          ],
+          "primary_category": "cs.CL",
+          "categories": [
+            "cs.CL",
+            "cs.AI",
+            "cs.LG"
+          ],
+          "published": "2026-07-08T17:59:45+00:00",
+          "link": "https://arxiv.org/pdf/2607.07707v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "continuous-query limited memory language model with external knowledge retrieval",
+          "llm_evidence_cn": "具有外部知识检索的连续查询有限记忆语言模型",
+          "llm_evidence": "具有外部知识检索的连续查询有限记忆语言模型",
+          "canonical_evidence": "具有外部知识检索的连续查询有限记忆语言模型",
+          "llm_tldr_en": "Co-LMLM uses continuous keys in a knowledge base to retrieve textual knowledge, enabling more flexible and attributable generation with minimal cost.",
+          "llm_tldr_cn": "该论文针对有限记忆语言模型中依赖关系型知识库的局限性，提出了连续查询LMLM（Co-LMLM），其知识库使用连续键与文本知识值配对，生成灵活向量查询并以低成本集成人类可读的检索知识。论文还设计了标注流水线来丰富知识库。该工作属于记忆增强语言模型技术，通过外部知识库显式存储事实，提升模型的知识控制和可归因性，直接满足了记忆增强语言模型的研究需求。",
+          "llm_tldr": "该论文针对有限记忆语言模型中依赖关系型知识库的局限性，提出了连续查询LMLM（Co-LMLM），其知识库使用连续键与文本知识值配对，生成灵活向量查询并以低成本集成人类可读的检索知识。论文还设计了标注流水线来丰富知识库。该工作属于记忆增强语言模型技术，通过外部知识库显式存储事实，提升模型的知识控制和可归因性，直接满足了记忆增强语言模型的研究需求。",
+          "llm_tags": [
+            "query:llm-memory"
+          ],
+          "matched_query_tag": "query:llm-memory",
+          "matched_query_text": "memory augmented language model techniques",
+          "matched_requirement_id": "req-20",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07707v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.07706v1",
+          "source": "arxiv",
+          "title": "The Key to Going Linear: Analysis-Driven Transformer Linearization",
+          "abstract": "The quadratic cost of causal self-attention severely bottlenecks long-context transformer inference. While numerous post hoc linearization pipelines exist, it is difficult to identify which components preserve model quality. This work isolates the effect of state update design in a strict frozen-backbone regime. We show that softmax relies on key-dependent, rank-1 orthogonal projections, elucidating why delta-style networks outperform purely gated accumulation. We identify a potential source of approximation errors and introduce structural interventions, specifically sink tokens, short convolutions, and fixed-budget cache routing, which reduces the remaining gap. We scale this linearization approach across LLaMA and Qwen models up to 32B parameters, outperforming prior post hoc baselines on MMLU and matching the long-context retrieval of complex adaptive-caching frameworks.",
+          "authors": [
+            "Anna Kuzina",
+            "Paul N. Whatmough",
+            "Babak Ehteshami Bejnordi"
+          ],
+          "primary_category": "cs.LG",
+          "categories": [
+            "cs.LG"
+          ],
+          "published": "2026-07-08T17:59:09+00:00",
+          "link": "https://arxiv.org/pdf/2607.07706v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "analysis-driven transformer linearization for efficient long-context inference; directly improves long-context reasoning",
+          "llm_evidence_cn": "分析驱动的Transformer线性化，提升长上下文推理效率",
+          "llm_evidence": "分析驱动的Transformer线性化，提升长上下文推理效率",
+          "canonical_evidence": "分析驱动的Transformer线性化，提升长上下文推理效率",
+          "llm_tldr_en": "Isolates state update design in frozen-backbone linearization; introduces sink tokens, short convolutions, fixed-budget cache routing to reduce approximation gap. Scales to 32B LLaMA/Qwen models.",
+          "llm_tldr_cn": "该论文系统分析了后门线性化中状态更新设计的影响，揭示了delta网络优于门控累积的原因。引入sink token、短卷积和固定预算缓存路由等结构干预，缩小近似误差。在LLaMA和Qwen模型（最大32B参数）上验证了有效性。该方法为大模型长上下文推理提供了高效线性化方案，可直接用于工作票生成的长文档处理。",
+          "llm_tldr": "该论文系统分析了后门线性化中状态更新设计的影响，揭示了delta网络优于门控累积的原因。引入sink token、短卷积和固定预算缓存路由等结构干预，缩小近似误差。在LLaMA和Qwen模型（最大32B参数）上验证了有效性。该方法为大模型长上下文推理提供了高效线性化方案，可直接用于工作票生成的长文档处理。",
+          "llm_tags": [
+            "query:llm-memory"
+          ],
+          "matched_query_tag": "query:llm-memory",
+          "matched_query_text": "Long context reasoning techniques in large language models",
+          "matched_requirement_id": "req-19",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.07706v1",
+          "carry_days": 1
+        }
+      ]
     }
   }
 }

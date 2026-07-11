@@ -1,0 +1,956 @@
+Title: TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation
+
+URL Source: https://arxiv.org/pdf/2607.03447v1
+
+Published Time: Tue, 07 Jul 2026 01:09:11 GMT
+
+Number of Pages: 49
+
+Markdown Content:
+# TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 
+
+Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+IRT-SystemX 
+
+a.tahmasebimoradi@irt-systemx.fr, lucas.schott@irt-systemx.fr, martin.royer@irt-systemx.fr 
+
+Abstract. Knowledge graphs (KGs) that underpin Graph-based Retrieval-Augmented Generation (Graph-RAG) are increasingly built automati-cally by LLM-driven extraction rather than curated by experts. Proper evaluation would require instrumenting all pertinent stages: extraction, graph construction, and inference, coherently enough to localize failures, so that a failure at one stage is not discovered as a wrong answer at the end. We introduce TRIAGE , a stage-aware instrumentation frame-work for automated, document-grounded graph-RAG that asks not only whether the underlying graph can be trusted but at what cost it can be queried. TRIAGE attaches stage-specific, independently interpretable metrics to three stages: the KG Implementation (triple confidence, source coverage, and schema and canonicalization checks), the KG Validation 
+
+by expert (graph-level structural quality, with correctness and complete-ness computed only as offline calibration when a reference is available), and the KG Usage (retrieval coverage, faithfulness, and retrieval cost); the deployed metrics need no gold annotations, the gold-requiring ones serving only as offline calibration. At usage time these metrics form a diagnostic chain of necessary conditions whose first broken link localizes the failure, and the diagnosis maps to the stage levers that can remedy it: extraction, graph and schema, or retrieval. TRIAGE is a theoret-ical framework with a proof of concept and a reproducible evaluation protocol. 
+
+Keywords: Knowledge Graphs · Graph RAG · Trustworthiness · Trust Metrics · Knowledge Graph Evaluation · Automated Knowledge Graph Construction 
+
+# 1 Introduction 
+
+Context and motivation. Large language models (LLMs) have transformed in-formation access by enabling fluent, query-driven generation over vast document collections. Yet their most persistent failure mode remains hallucination: the gen-eration of plausible but unsupported statements [28,42]. Retrieval-Augmented Generation (RAG) was introduced precisely to mitigate this risk by ground-ing generation in externally retrieved evidence [35]. However, when retrieval  
+
+> arXiv:2607.03447v1 [cs.IR] 3 Jul 2026 2Axel TahmasebiMoradi, Lucas Schott, Martin Royer
+
+operates over flat vector indexes, it recovers semantically similar passages with-out capturing the relational structure that multi-hop or entity-centric questions demand [13,9]. Knowledge graphs (KGs) offer a principled alternative: by rep-resenting factual knowledge as typed, directed triples ( s, p, o ) [23], they make relationships explicit and support structured, traceable reasoning paths. Graph-based RAG systems exploit this structure to improve retrieval precision and an-swer faithfulness [13,20,9]. Yet the KG itself is increasingly built automatically by LLM-driven pipelines rather than curated by experts, introducing a new layer of uncertainty, even as we continue to judge such systems only by whether the final answer looks right. The central question of this paper is therefore twofold: 
+
+when and how much we can trust the graph that underpins retrieval, and at what cost , in pathfinding time, retrieval latency, and compute, it can be queried. A graph that is trustworthy but too costly to traverse is no more deployable than one that is cheap but wrong, so an end-to-end account of graph-RAG quality must speak to both. 
+
+The gap we are filling. Recent work on trustworthy KG engineering, in par-ticular the TKG methodology [2], provides a rigorous lifecycle framework cov-ering construction, validation, deployment, and governance of KGs in safety-critical settings, and defines formal effectiveness metrics for correctness, com-pleteness, and logical consistency. However, TKG and related approaches assume largely expert-driven knowledge elicitation and do not address the automated, LLM-driven extraction pipelines that underpin modern graph-RAG systems. Conversely, graph-RAG systems such as GraphRAG [13], LightRAG [20], and PathRAG [9] are engineered for accuracy and efficiency, but provide no stage-specific trustworthiness instrumentation: failures in extraction, graph structure, or retrieval are invisible until they surface as wrong answers [21,65]. Recent evalu-ation benchmarks have begun to characterize when graph structure helps [62,57], and faithfulness-oriented work has studied whether answers are grounded in re-trieved evidence [33,70]. Yet none of these efforts instruments the pipeline at the level of individual stages (extraction, graph validation, and retrieval) with observable, ground-truth-free metrics that can localize failures and trigger princi-pled remediation. TRIAGE fills this gap: it instruments the entire construction, validation, and use pipeline with gold-free, stage-localized trust and cost metrics, turning an opaque end-to-end failure into a diagnosis that pinpoints its stage and the levers that can fix it. We focus on automated, LLM-driven construction be-cause that is how KGs are increasingly built, while evaluation has not kept up; the instrumentation, however, is not specific to it: the KG Implementation met-rics apply to any extracted KG artifact, whether produced by LLM extraction or a conventional, non-AI pipeline. TRIAGE is deployment-first: its core trust and cost signals need no gold annotations, so they are computed on every live query, not only on a labeled benchmark. 
+
+Contributions. The contribution of TRIAGE is not any single metric but a usable system: it locates where trust breaks across the pipeline, acts on each breach through the stage lever it implicates, surfaces which signals remain com-TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 3
+
+putable in a given deployment, and catches failures before the answer is gen-erated. Many of these metrics are individually simple, and several are adapted from prior work; what is new, and what makes them useful, is their organiza-tion into a stage-localized, deployment-ready instrument. This paper makes the following contributions: 1. Framework. Informed by the TKG methodology [2], we define TRIAGE 
+
+as a three-stage trustworthy engineering process for automated graph-RAG pipelines: KG Implementation , KG Validation (with expert review), and 
+
+KG Usage . Rather than following TKG prescriptively, TRIAGE adapts its phase structure and makes independent design choices suited to automated extraction, each stage instrumented with stage-specific confidence metrics (section 3). 2. Metrics. We define a suite of stage-specific, independently interpretable metrics (overview in table 2), most of which are gold-free : computable at deployment without any reference answer or graph. We further characterize them by two computability dimensions: what external reference each needs (none, an ontology, or a gold standard), and whether the extraction is ob-servable to us (white-box) or only the final graph is given (black-box). At 
+
+KG Implementation : Triple Confidence Score (TCS), Source Coverage Ratio (SCR), Extraction Consistency (EC), Cross-Source Corroboration (CSC), Schema Compliance (SC), Constraint Violation Rate (CVR), Canonical-ization Success Rate (CSR link ), and Evidence Attribution Rate (EAR). At 
+
+KG Validation : the graph-level, ground-truth-free Ontology Coverage (OC), Dead Node Ratio (DNR), Semantic Redundancy Rate (SRR), and Logical Consistency (LC), alongside correctness (COR) and completeness (CMP) imported from [2] for benchmark settings. At KG Usage : Query Grounding Rate (QGR), Entity Retrieval Coverage (ERC), Entity Retrieval Precision (ERP), Reasoning Readiness Score (RRS), Answer Grounding Rate (AGR), Answer Utilization Rate (AUR), Answer Reasoning Faithfulness (ARF), Re-trieval Path Cost (RPC), and Reasoning Hop Depth (RHD). Where gold paths or answers are available, Gold Path Coverage (GPC) and Retrieval Path Precision/Recall (RPP/RPR) serve as offline checks, and the imported outcome metrics (Context Coverage, Reasoning Failure Rate, KG Net Im-pact, and Hard Hits Rate) as the dependent variables against which the gold-free metrics are validated (section 4). 3. Diagnosis, remediation, and validation. The usage-stage metrics form a chain of necessary conditions whose first broken link localizes a failure to a single condition, and that diagnosis maps to the stage levers that can rem-edy it: KG Implementation metrics to extraction levers (prompt refinement, temperature reduction, re-chunking), KG Validation metrics to graph-and-schema levers (entity resolution, ontology fixes), and KG Usage metrics to retrieval levers, with aggregate metric drops triggering a new KG Update 
+
+cycle that closes the loop toward continuous, monitored KG evolution (sec-tion 6). We assume no universal cost order across these levers: which is cheap-est is deployment-specific and is what our protocol measures (section 5). As 4 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+a proof of concept we instantiate the usage metrics on a multi-hop KGQA probe and find that a capable reader can still answer from its parametric knowledge when retrieval misses the needed evidence, so the answer can look correct while retrieval has in fact failed; this motivates scoring retrieval before and independently of the answer, and a pre-specified, reproducible protocol then specifies the full validation (section 5). 
+
+Paper structure. Section 2 surveys related work. Section 3 presents the TRIAGE 
+
+architecture and the remediation map. Section 4 defines the metric suite. Sec-tion 5 presents the proof of concept and the evaluation protocol. Section 6 con-cludes and outlines future work. 
+
+# 2 Related Work 
+
+Trustworthiness in a graph-RAG pipeline is not a single property but a layered one: it must hold at the level of individual triples (is each extracted fact correct and grounded?), at the level of the graph they form (is the assembled KG com-plete, consistent, and well-structured?), and at the level of usage (does retrieval surface the right subgraph, and does the generated answer faithfully reflect it?). Prior work has addressed each level largely in isolation. We organize this section accordingly. We first review triple-level evaluation, distinguishing the assessment of extracted triples independently of the graph (triple quality and trustworthi-ness) from their assessment as part of the graph (knowledge graph completion). We then review graph-based RAG methods, their evaluation protocols, and the related work on faithful and grounded reasoning over knowledge graphs. Fi-nally, we discuss trustworthy KG engineering methodologies and connect them to broader trustworthy AI principles, positioning TRIAGE as a framework that instruments all three levels within a single, stage-aware methodology. 
+
+2.1 Triple-centric related work: trustworthiness vs completion 
+
+Knowledge graphs represent structured factual knowledge as directed labeled edges, commonly written as triples ( s, p, o ), and a large body of work evaluates models and pipelines by how well they recover or validate such triples [6,55,25]. We distinguish two evaluation objectives that differ in both their assumptions and their metrics, and that correspond to two successive moments in the con-struction of a KG: first assessing whether an extracted triple is trustworthy at all, and only then assessing how well a set of trusted triples completes a graph. 
+
+Triple Quality / Trustworthiness. The first question is whether a candi-date triple, freshly proposed for insertion into a KG, is correct and well-formed. Such triples may be produced by rule-based information extraction, neural rela-tion extraction, Open Information Extraction (OpenIE), or, increasingly, LLM prompting. Assessing them is a validation problem: given a complete, already-formed triple ( s, p, o ), decide whether it is true and admissible, a per-triple yes/no judgment rather than an ordering of alternatives. This judgment must account TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 5
+
+for three distinct concerns: evidence grounding (is the triple supported by the source text, or hallucinated?), schema compliance (does it respect the ontology’s predicate vocabulary and type constraints?), and logical consistency (does it avoid contradicting other triples or ontology axioms?) [51,5,24]. Ensuring consis-tency with ontology constraints and type restrictions is central here, as violations (domain and range mismatches, type incompatibilities, or logical inconsistencies) often signal structural or semantic errors in extracted knowledge [44,46]. 
+
+Knowledge Graph Completion (KGC). Once a body of trusted triples exists, a second question arises: given the graph they form, which missing edges can be inferred? This is Knowledge Graph Completion, also known as link pre-diction, and unlike triple validation it is fundamentally a ranking problem. For a query of the form ( s, p, ?) or (? , p, o ), where the relation is given and a missing 
+
+entity is sought, a model scores every candidate entity in the KG and ranks them, with success measured by how highly the correct entity is ranked [6,12,52,25]. The distinction matters: validation asks “is this triple true?” and returns a judg-ment about a single, complete triple; completion asks “ which entity best com-pletes this gap?” and returns an ordering over many candidates. Accordingly, KGC relies on rank-based metrics such as Mean Reciprocal Rank (MRR) and Hits@K, computed over both head- and tail-prediction tasks [6,55,12]. Standard KGC evaluation further distinguishes raw from filtered settings, the latter re-moving other known true triples from the candidate set so that a model is not penalized for ranking a different correct answer above the target [6]. A recurring methodological pitfall in KGC evaluation is benchmark contam-ination through inverse relations. In early benchmarks such as FB15k, many re-lations have near-inverse counterparts: for instance, a /film/directed by edge and a /film/director of edge encode the same fact in opposite directions. A model can then achieve high test scores not by learning meaningful relational structure, but by memorizing that one relation is the inverse of another: hav-ing seen ( A, directed by , B ) at training time, predicting ( B, director of , A ) at test time is trivial. This inflates reported performance without reflecting genuine inference ability. Corrected benchmarks such as FB15k-237 remove these redun-dant inverse and duplicate relations precisely so that the evaluation measures inference rather than memorization [12,54]. 
+
+2.1.1 LLM-based triple extraction Before the adoption of LLMs, triple extraction relied on classical information-extraction methods (rule-based and dependency-pattern systems, and Open Information Extraction), which are de-terministic and structurally consistent but brittle under linguistic variability and limited in implicit or cross-sentence reasoning [51,3]. For the open-domain, paraphrase-rich setting that graph-RAG pipelines operate in, these approaches have been largely superseded by LLM-based extraction, which we focus on here. LLM-based extraction uses generative models to map natural language directly into structured triples. Compared to classical pipelines, LLMs are more effective at handling paraphrases, implicit relations, long-context dependencies, and some forms of multi-sentence reasoning [8,60]. They are highly adaptable across do-6 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+mains with minimal feature engineering and can capture synonymy and nuanced language. Crucially for trustworthiness, LLMs can be prompted to emit, along-side each triple, the source span from which it was derived, a natural-language justification or character offset into the input. This provenance enables three things downstream: verification of the triple against its cited evidence, confi-dence estimation based on the strength of that evidence, and human audit of contested facts [24,63]. We operationalize exactly this signal later as the Evidence Attribution Rate (EAR, section 4.1.2). However, these advantages introduce new challenges. LLMs may hallucinate plausible but unsupported facts [28,42], and their outputs can vary depending on prompting and decoding strategies [59]. This leads to issues such as schema drift, non-deterministic formatting, and inconsistencies across runs. The two standard prompting regimes trade one failure mode for another. In zero-shot extraction, the model relies solely on instructions and input text, providing strong general-ization but increasing the risk of hallucination and structural inconsistency [8]. Few-shot extraction augments prompts with demonstrations, improving preci-sion and format control [43,69], but the demonstrations themselves introduce 
+
+demonstration bias : the model tends to over-produce relation types and struc-tures resembling the examples, while under-extracting valid triples that do not match the demonstrated patterns. Neither regime is free of failure modes, which is precisely why dedicated trustworthiness metrics are needed rather than re-liance on extraction accuracy alone. The diversity of failure modes introduced by LLM-based extraction, such as hallucination, schema drift, demonstration bias, and output variability, exposes the limitations of evaluation metrics that rely solely on aggregate accuracy or exact matching. In trustworthy graph construction, it is essential to quantify not only correctness but also confidence, coverage, and stability of extracted knowledge. This motivates dedicated trustworthiness metrics such as the Triple Confidence Score (TCS), which we operationalize here for extraction-level relia-bility within end-to-end graph-based RAG pipelines. 
+
+2.2 Graph-based RAG 
+
+Graph-based RAG [13,20,9] addresses a limitation of classical text RAG, namely its inability to capture structured dependencies across a document corpus. In-stead of indexing flat text chunks, these methods first construct an indexing graph G = ( V, E ) whose nodes v ∈ V represent entities extracted from the docu-ments and whose edges ( u, ρ, v ) ∈ E encode their typed relations ρ. At retrieval time, the graph structure is exploited to assemble a query-relevant subgraph that is verbalized as context for the generator. Three landmark systems define the current design space, and the cleanest way to contrast them is by their retrieval primitive , the granularity at which evidence is extracted from G in response to a query q.
+
+GraphRAG [13] retrieves whole community summaries . A hierarchical com-munity detection (Leiden clustering) partitions the graph into {C1, . . . , C m}, and TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 7
+
+an LLM produces a textual summary s(Ci) for each community. The retrieved context for a query q is the set of summaries deemed most relevant to q:
+
+RGraphRAG (q) =  s(Ci) : Ci ∈ top-K i rel( q, s (Ci)) ,
+
+where rel( ·, ·) is an LLM-rated relevance score. Pros: the community primitive excels at global, dataset-spanning summarization queries where the answer draws on a whole topic region. Cons: it produces verbose, redundant outputs when-ever only a sub-region of a community is pertinent, and the offline community-summarization step is computationally heavy to build and to refresh as the graph changes. 
+
+LightRAG [20] retrieves the ego-networks of cosine-matched entity nodes. An LLM extracts a keyword set Kq from q that is then matched against entity embeddings via dense vector similarity: 
+
+Vq = [
+
+> k∈Kq
+
+top-N v∈V cos  e(k), e (v),
+
+where e(·) denotes the embedding function, and the retrieved subgraph is the 1-hop neighborhood of Vq . Pros: it is substantially lighter and faster than GraphRAG, with no offline community-summarization cost, and its dual-level design adapts to both specific and abstract queries. Cons: the ego-network of any query-related node still contains many edges that are not on the reasoning chain linking the query’s entities, introducing structural noise that can mislead the generator. 
+
+PathRAG [9] argues that the principal limitation of GraphRAG and Ligh-tRAG is the redundancy of the retrieved subgraph rather than its insufficiency, and instead returns sparse multi-hop relational paths between anchors. The an-chor set Vq is computed by dense matching as in LightRAG; for each anchor a unit resource is propagated through the graph, decaying by α ∈ (0 , 1) at ev-ery hop, and each path is scored by its average resource, with the top-K paths forming the retrieved context. Pros: the path primitive is more compact than ego-networks and more directly aligned with the multi-step structure of the query, reducing the surface area over which the generator can hallucinate. Cons: 
+
+path enumeration is expensive on dense graphs, where the number of candidate paths grows combinatorially; the resource-propagation scoring adds retrieval-time latency; and a sparse-path primitive can miss answers that require a fuller neighborhood rather than a single chain. In short, the three systems trace a trade-off axis rather than a strict rank-ing: GraphRAG maximizes coverage at the cost of verbosity and offline expense, LightRAG minimizes cost at the risk of structural noise, and PathRAG maxi-mizes precision at the cost of path-search latency. Which point on this axis is appropriate depends on the query distribution and the available compute bud-get, a dependence that motivates measuring retrieval cost explicitly, as TRIAGE 
+
+does at KG Usage (section 4.3). 
+
+2.2.1 Evaluation of graph-based RAG Because these systems target open-ended generation tasks for which no canonical ground-truth answer exists, the 8 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+dominant evaluation protocol is LLM-as-judge pairwise comparison along a small set of qualitative dimensions, introduced by GraphRAG and adopted, with mi-nor variation, by LightRAG and PathRAG. GraphRAG scores answers on Com-prehensiveness, Diversity, and Empowerment, later extended with a Directness dimension [13]; LightRAG uses Comprehensiveness, Diversity, and Empower-ment together with an aggregate Overall judgment [20]; PathRAG follows the same protocol [9]. For each (query, baseline, candidate) triplet, an LLM selects a winner per dimension, and aggregate win-rates are reported. This protocol is appropriate when no ground truth is available, but it has several limitations relevant to trustworthiness. Judgments are stochastic and order-sensitive; the judge and the system under test often share the same under-lying model family, raising self-preference concerns; and a win-rate is a coarse, black-box end-to-end signal. The deeper problem is one of locus : these pro-tocols score only the generated answer , never the retrieved subgraph . In plain terms, they check whether the final answer looks well-supported, but never check whether the retrieved subgraph actually contained the facts needed to answer the question. When retrieval misses something, the LLM can quietly fill the gap from its own parametric memory and still produce a fluent, plausible answer, so a genuine retrieval failure looks identical to a genuine retrieval success. Answer-level scores therefore cannot separate a sound reasoning path through the graph from a lucky guess by the model, which is exactly the distinction a trustworthy pipeline needs to make. Beyond per-system judging, a first wave of recent benchmarks asks when 
+
+graph structure helps at all, but still scores only the end task [21,62]. Wild-GraphBench [57] stresses the same task-level metrics under noisy, heteroge-neous wild-source corpora, and [16] adds a system-level dimension (accuracy, cost, latency, and stability) for graph-RAG versus dense RAG in agentic search. Across this line, evaluation remains task-dependent and exposes no graph-aware signal: failures cannot be attributed to extraction, retrieval, or generation. A second, faithfulness-oriented wave begins to open the black box, but its signals are still computed on the generated answer rather than on the retrieved subgraph. [65] introduce a reasoning failure rate alongside context coverage and token-F1 on multi-hop QA; FinReflectKG-HalluBench [33], a financial-QA benchmark, frames groundedness as binary hallucination detection, where an answer counts as grounded only if supported by both text snippets and KG triples; the tripartite RAG-Eval framework [1] aggregates query relevance, fac-tual accuracy, coverage, coherence, and fluency into an overall confidence score; and [70] probes robustness under incomplete KGs with Hits@Hard and the Hard Hits Rate. These works diagnose whether an answer is grounded, but none in-struments the structural adequacy of the retrieved subgraph itself, leaving the retrieval failure described above invisible. 
+
+TRIAGE addresses this gap by attaching observable, ground-truth-free met-rics directly at KG Usage : QGR measures whether a query is on-topic for the KG; ERC, ERP, and RRS characterize the structural quality of the retrieved subgraph independently of the downstream generation step; AGR, AUR, and TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 9
+
+ARF measure the alignment between the generated answer and the retrieved evidence; and RPC measures the computational cost of retrieval itself. These metrics complement the existing answer-level qualitative dimensions rather than replacing them: they isolate retrieval-stage failures from generation-stage failures with deterministic, structural signals that can trigger a KG Update cycle in a principled way. 
+
+2.2.2 Faithful reasoning on KGs A complementary line of work studies 
+
+faithful reasoning over knowledge graphs: whether a system’s answer can be traced, step by step, to explicit graph evidence rather than to parametric knowl-edge in model weights. Graph-Constrained Reasoning (GCR) [39] operationalizes this directly by restricting the LLM’s decoding to paths that exist in the KG, so that every reasoning step corresponds to a verifiable graph edge. This substan-tially reduces hallucination on multi-hop questions, but it also exposes a new failure mode: when the KG itself is incomplete or incorrectly extracted, graph-constrained decoding fails silently, producing no answer, or a wrong one, with no signal indicating whether the fault lies in the graph or in the model. A second, scale-related failure mode is equally important. On large KGs, the number of candidate reasoning paths grows combinatorially with hop depth, so practical systems impose cutoffs: a maximum number of hops, a top-K beam over paths, or a bounded expansion budget. These cutoffs keep retrieval tractable, but they are double-edged: when the true reasoning path is longer than the hop limit, or is pruned by the beam, the correct answer becomes unreachable even though it is present in the graph. This is a failure of traversal budget , not of knowledge, and it is entirely invisible to answer-level metrics, directly motivating the Rea-soning Hop Depth (RHD) and Retrieval Path Cost (RPC) metrics introduced in section 4.3. The same path primitive underlies earlier multi-hop KGQA systems [71,68], which address faithfulness from the retrieval side: restricting context to sparse relational paths between query-relevant entities shrinks the surface over which hallucination can occur, the property PathRAG (above) brings to graph-RAG retrieval. Evaluation on PathQuestion [71] and MetaQA [68] has shown that path coverage, whether the gold reasoning path lies in the retrieved subgraph, is a strong predictor of answer correctness on multi-hop questions. This observation directly motivates the TRIAGE Reasoning Readiness Score (RRS) and Entity Retrieval Coverage (ERC), which operationalize path coverage as observable, pre-inference metrics that do not require gold answers. Faithfulness has also been studied at the answer level, measuring whether generated statements are entailed by the retrieved evidence [24,42]. As with the answer-level evaluation protocols above, such metrics require a generated answer and cannot separate insufficient retrieval from faulty reasoning; the TRIAGE 
+
+subgraph-level signals RRS and ERC precede generation, enabling proactive triage rather than post-hoc auditing. 10 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+2.3 Trustworthy KG engineering and trustworthy AI 
+
+The TKG methodology [2] is the closest work to our framework in spirit. It proposes an end-to-end trustworthy engineering methodology for KG-based sys-tems, structured along three complementary dimensions: a methodology dimen-sion (construction phases per KG version), a lifecycle dimension (continuous evo-lution and updates), and a transverse trustworthiness dimension covering gov-ernance, provenance, and quality assessment across all phases. Crucially, TKG 
+
+defines a formal suite of effectiveness metrics , correctness ( μcorrect ), complete-ness ( μcomplete ), logical consistency ( μLC ), representativeness, and timeliness, which we directly import into the TRIAGE KG Validation stage (see section 4). However, TKG was designed for expert-driven knowledge elicitation in safety-critical industrial settings and does not address automated, LLM-driven extrac-tion pipelines or the KG Usage phase. TRIAGE is informed by its methodology and extends it to fill both gaps, while making independent design choices appro-priate to automated graph-RAG. Beyond TKG , broader trustworthy AI frameworks, establishing principles of transparency, accountability, and robustness for AI systems, motivate the need for end-to-end, stage-aware evaluation rather than single-point quality checks [22,45,53,18]. Recent surveys on KG quality further consolidate the re-quirements for correctness, completeness, and consistency that TRIAGE oper-ationalizes for the graph-RAG setting [66,17,40,34,46]. To the best of our knowl-edge, TRIAGE is among the first frameworks to operationalize these princi-ples end-to-end for automated, document-grounded graph-RAG pipelines, in-strumenting extraction, validation, and usage within a single methodology. 
+
+# 3 The TRIAGE Framework 
+
+TRIAGE instruments a graph-RAG pipeline so that a failure can be read off its metrics rather than guessed at. The payoff, developed in section 4.5, is twofold. At usage time the metrics form a diagnostic chain of necessary conditions for a correct answer, and the first one that fails localizes the failure to a single condition. That diagnosis then points to the stage levers that can remedy it: ex-traction, graph and schema, or retrieval. The rest of this section sets up the three phases that carry these metrics, and section 4 defines the metrics themselves; fig. 4 threads one query through all three. 
+
+TRIAGE is informed by the TKG engineering methodology [2] and adapts it to automated, document-grounded graph-RAG pipelines. We take from TKG 
+
+its phase-structured view of KG engineering and its trustworthiness dimension, but we do not follow it prescriptively: the automated, LLM-driven setting calls for independent design choices that TKG , conceived for expert-driven elicita-tion, does not address, notably the KG Usage phase and the remediation map developed in section 4.5. Adapting the TKG methodology dimension , TRIAGE covers three phases of a single KG version cycle: KG Implementation (automated extraction and con-struction), KG Validation (expert review supported by ground-truth-free quality TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 11 Documents Phase 1: KG Implementation 
+
+> extraction + grounding
+
+KG v
+
+Phase 2: KG Validation 
+
+> expert review
+
+KG validated 
+
+Phase 3: KG Usage 
+
+> graph-based inference
+
+answer query   
+
+> Implementation metrics see fig. 2
+> Validation metrics OC §, DNR, SRR, LC §
+> Usage metrics see fig. 3
+> KG Update new cycle
+
+Fig. 1: The TRIAGE framework organized into three phases. Each phase pro-duces distinct knowledge artifacts together with stage-specific confidence metrics (gray). Low aggregate metric values may trigger a new KG Update cycle; the stage of the failing metric points to the levers that can remedy it (section 4.5). metrics), and KG Usage (graph-based inference). Each phase produces both a 
+
+knowledge artifact and a set of stage-specific confidence metrics. The metrics do not flow between stages; rather, they are each independently observable qual-ity signals that together provide an end-to-end trustworthiness picture of the pipeline. Figure 1 illustrates this structure. The TKG trustworthiness dimension op-erates transversally: aggregate metric results may trigger a KG Update cycle, and the stage at which a metric drops points to the levers that can remedy it (section 4.5). 
+
+3.1 Phase 1: Document-to-Triple Extraction 
+
+To make the metrics concrete we describe a representative extraction pipeline (fig. 2); TRIAGE instruments any pipeline of this shape rather than prescrib-ing this one. It turns document structure into candidate triples through an au-tomated process of segmentation, extraction, grounding, canonicalization, and trust scoring, described step by step below. 
+
+Chunking and passage segmentation. The pipeline performs hierarchical segmen-tation before extraction: 12 Axel TahmasebiMoradi, Lucas Schott, Martin Royer Documents Segmenter 
+
+> hierarchical chunking
+
+Chunk tree 
+
+> sec / para / sentence spans
+
+Extractor 
+
+> sentence-wise LLM
+
+candidate triple (s, p, o )
+
+> ⟨doc 7, sent 12 ⟩, TCS=0 .94
+
+Canonicalize 
+
+> entity resolution
+
+Canonical entity + predicate map Graph builder KG v          
+
+> ontology O
+> (§, optional)
+> SCR
+> TCS, EAR, EC, CSC, TFI †
+> CSR link ,SC §, CVR §
+> versioned artifact trail raw |canon |dedup |EL (JSON / GraphML)
+
+Fig. 2: White-box instrumentation blueprint of the KG Implementation stage. The vertical spine is a representative construction pipeline (documents → seg-mentation → extraction → canonicalization → graph); each magnifier probe (right) taps one observable artifact: the chunk tree yields SCR; each candidate triple, carrying a provenance pointer and confidence, yields TCS, EAR, EC, CSC, and TFI ( †, gold); and the canonical map yields CSR link together with the schema checks SC and CVR ( §, requiring the ontology O, supplied as an optional side input). The persisted, versioned artifact trail (left) is what makes provenance auditable. Markers match table 2: † needs a gold reference, § needs an ontology. TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 13 
+
+1. document into sections and subsections, 2. subsection text into paragraphs, 3. paragraph into sentence-like spans. The segmentation strategy determines which textual units are presented to the extractor, directly influencing the coverage and recall of the resulting KG. 
+
+ML-based triple extraction. Triple extraction is performed sentence-wise. The ex-traction model follows an explicit instruction policy: emit only triples in subject / predicate / object format; preserve adverbs, modals, and negation in the predicate; and decompose conjunction-heavy clauses into multiple atomic triples. This sentence-level granularity ensures that every extracted triple carries a pre-cise provenance pointer and that confidence scores are computed at the finest possible resolution. Each extracted triple is stored with provenance fields (docu-ment, section, subsection, paragraph index, sentence index, and sentence text), enabling passage-level traceability and downstream confidence scoring. 
+
+Canonicalization. Canonicalization keeps the graph coherent by ensuring that the same real-world entity or relation is represented by a single node or predicate, regardless of surface-form variation across source documents. TRIAGE applies it in one of two regimes, depending on whether a reference ontology is available: 1. Ontology-grounded canonicalization (when a schema is available): pred-icates and entities are normalized against the ontology; this enables schema checks and the Schema Compliance (SC) and Constraint Violation Rate (CVR) metrics. 2. Resolution-based canonicalization (when no suitable ontology exists): rule-based or embedding-based entity resolution, alias and coreference merg-ing, and deduplication act as the fallback that keeps the KG connected and reduces dead nodes (DNR) without a schema. This two-regime design reflects a broader property of TRIAGE : it operates with or without a reference ontology, degrading gracefully from schema-driven to resolution-driven coherence. The implications of ontology availability for mea-surement , in particular which trustworthiness metrics remain computable with-out a schema, are discussed in section 4. 
+
+Ontology grounding. When an ontology is available, extracted triples are ad-ditionally aligned to it through predicate canonicalization against the target predicate inventory and optional schema checks evaluating predicate, domain, and range validity. These checks produce a per-triple trust signal feeding SC and CVR (section 4.1.2). The conceptual model is provided as input rather than constructed from scratch; how the relevant subset of the ontology is delineated in practice is an operational choice discussed in section 3.2. 14 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Confidence scoring. A Triple Confidence Score (TCS) is assigned to each ex-tracted triple as a proxy for extraction reliability. The formal definition of TCS and its role in the full metric suite are presented in section 4. At the pipeline level, TCS feeds document-level confidence aggregation and serves as an early-warning signal: triples whose TCS indicates low confidence can be flagged for expert review during KG Validation (Phase 2) rather than silently entering the graph. 
+
+Post-processing and artifact persistence. After extraction, the pipeline persists intermediate artifacts per stage (raw, canonicalized, deduplicated, and NER/EL-enriched) in JSON and GraphML format. This versioned artifact trail directly supports the TKG trustworthiness dimension : every triple in the final KG can be traced back to its source sentence and to the confidence score assigned at extraction time, which is what makes the Evidence Attribution Rate (EAR, section 4.1.2) computable and the pipeline auditable. 
+
+3.2 Phase 2: KG Validation, Expert Review and Effectiveness Assessment 
+
+Adapting the TKG KG Validation phase [2], the produced KG is reviewed by a domain expert before use. TRIAGE acts here as a methodological bridge : it connects the automated extraction of Phase 1 to a human checkpoint, and makes that checkpoint actionable by surfacing interpretable, graph-level quality metrics as decision support. Crucially, the core metrics of this phase require no ground-truth KG , making them operational in any deployment setting; their formal definitions are given in section 4.2. When a reference KG is available (e.g., in benchmark settings), correctness (COR) and completeness (CMP) from [2] can additionally be computed to calibrate the ground-truth-free metrics. 
+
+3.3 Phase 3: KG Usage, Graph-Based Inference 
+
+The KG Usage phase is identified in TKG [2] as a gap in prior KG engineering methodologies. TRIAGE operationalizes it for graph-RAG systems via graph-based retrieval and inference: a query is grounded to the KG, a query-relevant subgraph is retrieved, and that subgraph conditions answer generation. Graph-constrained decoding [39] is one such inference method, but the usage-specific metrics introduced here are agnostic to the choice of retriever and reader; they characterize the structural adequacy of the retrieved subgraph, the faithfulness of the generated answer, and the computational cost of retrieval (section 4.3). 
+
+Inference pipeline. Given a validated KG and a natural language query q, the 
+
+TRIAGE inference layer proceeds in three steps (fig. 3). First, query grounding maps q to a set of anchor entities in the KG via entity linking and embedding-based similarity. Second, subgraph retrieval extracts a query-relevant subgraph from the full KG; the specific retrieval strategy (ego-network, path-based, or community-based) is configurable and does not affect metric computation. Third, TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 15 query q
+
+Entity Extraction 
+
+> NER / noun-chunk
+
+surface mentions Mq
+
+Grounding γq : Mq → V ∪ ⊥ 
+
+> entity linking
+
+grounded query nodes V g
+
+> q
+
+Retriever R(K, V g 
+
+> q
+
+) 
+
+> ego / path / community
+> retrieved subgraph KS
+
+Verbalize & Reader LLM answer      
+
+> QGR
+> RPC, RHD
+> ERC, ERP, RRS GPC †
+> AGR, AUR, ARF
+> pre-inference triage ERC or RRS < θ →reroute / warn
+> black-box fallback: LLM-as-judge (uses q, answer only)
+
+Fig. 3: White-box instrumentation blueprint of the KG Usage stage. The vertical spine is the inference path; each magnifier probe (right) taps one observable 
+
+artifact and lists the metrics computable from it: the surface mentions Mq and grounded query nodes V gq yield QGR; the retrieved subgraph KS yields ERC, ERP, and RRS (and GPC when gold paths are available, †); the retrieval trace yields the cost metrics RPC and RHD; and the answer, compared against KS ,yields AGR, AUR, and ARF (of these ARF and AGR are the chain’s answer-side links, AUR their utilization complement). The chain heads QGR, ERC, RRS are read before the reader runs, enabling pre-inference triage (left). A black-box evaluator (bottom left) sees only the query and the answer, so it cannot localize a retrieval failure. Inside KS , filled nodes are anchors and the bold edge is the reasoning path connecting them. 16 Axel TahmasebiMoradi, Lucas Schott, Martin Royer                       
+
+> Worked example (end to end, on MetaQA / WikiMovies; illustrative values). Query (2-hop): “Did the director of Inception also direct Interstellar ?”
+> Implementation (already completed). Extraction had produced the bridging triples (Inception ,directed by ,Christopher Nolan ) and ( Interstellar ,directed by ,Chris Nolan ), both with high confidence (TCS ≈0.94), and SCR = 0 .91 over the source passages, so extraction was not the weak link.
+> Validation (already completed). On the assembled graph DNR = 0 .18 was mildly elevated because the surface form Chris Nolan had resolved to its own near-isolated node.
+> Usage (at inference). For this query QGR = 1 .0 (both films are nodes) and ERC = 1.0 (both films, the query entities, are retrieved), yet RRS = 0: the two films sit in the retrieved subgraph with no path between them, because their shared director is split across two unmerged nodes.
+> Diagnosis and remediation. Reading the chain (fig. 5), the first broken link is RRS, a connectivity gap ; the indicated remediation is a graph-and-schema lever, improved entity resolution to merge Chris Nolan into Christopher Nolan , which restores the two-hop path.
+
+Fig. 4: A single query threaded through the three TRIAGE phases. Each phase reports one headline metric; the earlier phases ran offline, while the chain is read at inference. The first broken link (fig. 5) localizes the failure to a single condition, here a connectivity gap, which then indicates the stage lever that can fix it. Values are illustrative (MetaQA / WikiMovies). the retrieved subgraph is verbalized and supplied to an LLM to generate the final answer, for example via graph-constrained decoding [39]. 
+
+Pre-inference triage. A key design principle of the TRIAGE KG Usage phase is that structural quality signals are computed before generation, enabling proac-tive triage rather than post-hoc diagnosis. ERC measures whether the entities required to answer q are present in the retrieved subgraph, and RRS measures whether those entities are connected by a valid reasoning path within it. Queries for which ERC or RRS fall below a configurable threshold can be flagged before the LLM is invoked, routed to a fallback retrieval strategy or returned with a low-confidence warning, avoiding the silent failure mode in which the LLM com-pensates with parametric knowledge and produces a plausible but unsupported answer. 
+
+Takeaways. Four practical points summarize the framework. First, localize a failure to a stage and act on it with that stage’s levers, rather than only ob-serving it at the answer. Second, do not wait for gold labels: the core signals are computable in deployment on the artifacts a pipeline already has. Third, measure the retrieved subgraph, not only the generated answer, so a retrieval failure cannot hide behind a fluent response. Fourth, triage before generation, since the first three chain links are available before the LLM runs. If only a handful of signals can be monitored, we suggest TCS (extraction confidence), TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 17 
+
+Table 1: Shared notation used throughout section 4. 
+
+Symbol Meaning 
+
+ˆt = ( s, p, o ) an extracted triple (hat denotes extracted, vs. gold t)
+
+E = {ˆtj } set of extracted triples for a document or corpus 
+
+G = {ti} set of gold triples (when available) 
+
+K triple set of the assembled TRIAGE-KG (assessed graph) 
+
+K∗ triple set of the reference KG (benchmark setting) 
+
+V vertex (entity) set of the assembled KG KO, Orel reference ontology and its query-relevant subset 
+
+f (·) text-embedding function sim( x, y ) = cos( f (x), f (y)) component-level similarity built from f
+
+P = {p1, . . . , p n} set of input passages 
+
+KS , V S retrieved subgraph: triples KS ⊆ K , vertices VS ⊆ VMq surface mentions extracted from query qγq grounding function Mq → V ∪ {⊥} 
+
+V gq grounded query-node set {γq (m) : m ∈ Mq , γ q (m)̸ = ⊥} ⊆ VMa surface mentions extracted from generated answer Aγa grounding function Ma → V ∪ {⊥} 
+
+V ga grounded answer-node set {γa(m) : m ∈ Ma, γ a(m)̸ = ⊥} ⊆ V
+
+deg( v) degree of node vτ, θ confidence / decision thresholds 
+
+DNR (graph connectivity), and the chain heads QGR, ERC, and RRS (scope, retrieval, connectivity). 
+
+# 4 Trust Metrics 
+
+This section formally defines the TRIAGE metric suite, summarized by phase in table 2. We first fix a shared notation (table 1), then introduce the two axes that govern which metrics are computable in a given setting, and finally present the metrics phase by phase, each followed by a short note on the remediation it triggers. Metrics marked [TRIAGE] are defined or operationalized in this work for the TRIAGE framework; several instantiate standard measurement ideas, such as coverage, consistency, schema violation, precision/recall, or path connectivity, in a stage-localized graph-RAG setting; the contribution is their joint organization into a deployable diagnostic chain and remediation map. All others are imported using their original definitions and cite their source, whether the TKG methodology [2] or an external graph-RAG benchmark. The suite is generated by crossing three trust questions, namely whether each triple is sound, whether the assembled graph is sound, and whether usage 
+
+succeeds, with the two computability axes introduced next. A metric earns its place by occupying a cell with a distinct failure mode and a distinct remediation, which is also why we report no single composite score: graph quality for retrieval is multi-objective, with trade-offs such as connectivity against parsimony that a 18 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+scalar would hide. Most of the metrics are individually simple and several are adapted from prior work; what is new is their organization into a stage-localized instrument whose core signals need no gold annotations at deployment. Two orthogonal axes determine which metrics can be computed in a given setting, and we use them to organize the suite. 
+
+Reference requirement. The first axis is the external reference a metric needs, which is what governs its availability in a given setting. Most metrics need none : they are gold-free and schema-free, computed on any KG from the artifacts the pipeline already produces (TCS, EC, CSR link , DNR at construction; QGR, ERC, RRS at usage). A second group needs a reference ontology (marked 
+
+§: OC, SC, CVR, LC, and ontology-constrained ranking MRR type ); since an ontology can be supplied at deployment, these stay live wherever a schema is on hand and become undefined otherwise, the measurement-side counterpart of the two canonicalization regimes of section 3.1. A third group needs a gold standard 
+
+(marked †, e.g. TFI, COR, CMP, GPC, and the imported outcome metrics CC, RFR, HHR); gold is never available at inference, so these are computable only offline and sit below the dashed line in each phase of table 2, acting as yardsticks for the gold-free metrics (for example GPC against ERC and RRS) rather than as deployment signals. 
+
+Visibility: white-box vs black-box. TRIAGE is a white-box instrument: each phase’s metrics require observing that phase’s internal artifact, and with only black-box (input and output) access they are unavailable (table 3). At KG Implementation , white-box access means observing the extraction process, its source text, token log-probabilities, and run variance, which enables TCS, SCR, EC, CSC, EAR, CSR link , and the fidelity metrics; a black-box graph supplied by a third party exposes none of these, and link prediction (MRR, MRR type ,ECE) becomes the completeness probe instead (section 4.1.3). At KG Usage ,white-box access means observing the retrieved subgraph, the mapped query entities, and the connecting paths, which is what makes QGR, ERC, RRS, and the answer-side metrics computable; with only the query and the final answer, one is back to answer correctness (Hits@1/F1) and LLM-as-judge answer-level dimensions. KG Validation always observes the assembled graph, so its metrics do not depend on visibility. Table 2 marks ontology-dependent metrics with §
+
+and sets off the gold-dependent ones ( †) below a dashed line within each phase; table 3 summarizes the per-phase visibility requirements, and table 4 separates primary signals from derived ones. A first reading can follow the primary signals that form the spine of the suite (table 4) and treat the derived, aggregate, and imported metrics as optional diagnostic detail. 
+
+4.1 KG Implementation Metrics 
+
+The KG Implementation phase produces a set of extracted triples E = {ˆtj },each ˆ t = ( s, p, o ) a candidate fact from the source documents. Evaluating them requires three complementary perspectives. Triple fidelity metrics assess correct-ness relative to gold triples or source evidence (and so require G or source text TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 19 
+
+Table 2: Overview of the TRIAGE confidence metric suite by TKG phase. 
+
+[TRIAGE] : defined or operationalized here for the TRIAGE framework; im-ported metrics cite their source. ( §) requires an ontology; ( †) requires a gold reference. Within each phase, the metrics above the dashed line are gold-free and form the deployable instrument; those below ( †) need a gold reference and are used only offline, to calibrate and validate the gold-free metrics. The link-prediction rows (MRR, Hits@K, MRR type , ECE) are a black-box completeness probe requiring held-out triples, not gold-free deployment signals. 
+
+Phase Metric Symbol Origin 
+
+KG Implementation Triple Confidence Score TCS [TRIAGE] Source Coverage Ratio SCR [TRIAGE] Extraction Consistency EC [TRIAGE] Cross-Source Corroboration CSC [TRIAGE] Entailment Ratio EntRatio [24] Schema Compliance Rate § SC [TRIAGE] Constraint Violation Rate § CVR [TRIAGE] Canonicalization Success Rate CSR link [TRIAGE] Evidence Attribution Rate EAR [TRIAGE] Aggregated Trustworthiness Index TRIAGE-TI [TRIAGE] Mean Rank / MRR / Hits@K MRR [6] Ontology-constrained ranking § MRR type [TRIAGE] Calibration of completion conf. ECE [19] Embedding Similarity † cos(ˆ t, t ) [47] Soft-F1 † Soft-F1 [5] Triple Fidelity Index † TFI [TRIAGE] KG Validation Logical Consistency § LC [2] Ontology Coverage § OC [TRIAGE] Dead Node Ratio DNR [TRIAGE] Semantic Redundancy Rate SRR [TRIAGE] Correctness † COR [2] Completeness † CMP [2] KG Usage Query Grounding Rate QGR [TRIAGE] Entity Retrieval Coverage ERC [TRIAGE] Entity Retrieval Precision ERP [TRIAGE] Reasoning Readiness Score RRS [TRIAGE] Retrieval Path Cost RPC [TRIAGE] Answer Grounding Rate AGR [TRIAGE] Answer Utilization Rate AUR [TRIAGE] Answer Reasoning Faithfulness ARF [TRIAGE] Reasoning Hop Depth RHD [TRIAGE] KG Net Impact KNI [33] Gold Path Coverage † GPC [TRIAGE] Retrieval Path Precision/Recall † RPP /RPR [TRIAGE] Answer Correctness † Hits@1 /F1 [64] Context Coverage † CC [65] Reasoning Failure Rate † RFR [65] Hard Hits Rate † HHR [70] 20 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Table 3: TRIAGE is a white-box instrument: each phase’s metrics require ob-serving that phase’s internal artifact. With only black-box access (the phase’s inputs and outputs) those metrics are unavailable, and one falls back to the right-hand column. Visibility is independent per phase, and is separate from ontology-dependence, marked § in table 2.                            
+
+> Phase White-box artifact (metrics it enables) Black-box fallback
+> Implementation extraction process: source text, to-ken log-probabilities, run variance (⇒TCS, SCR, EC, CSC, EAR, fi-delity) only the output triples: link prediction (MRR, Hits@K, MRR type , ECE) Validation the assembled graph (⇒DNR, SRR, LC, OC) the graph is the artifact un-der review, so it is observed by construction Usage the retrieved subgraph, mapped query entities, and connecting paths ( ⇒QGR, ERC, ERP, RRS, AGR, AUR, ARF, RHD, RPC) only the query and the answer: answer correct-ness (Hits@1/F1) and LLM-as-judge answer-level dimensions
+
+P ). Trustworthiness metrics are intrinsic signals computable without gold anno-tations. KG completion metrics characterize the structural quality of the graph and contextualize why trustworthiness signals are needed alongside accuracy. 
+
+Core question: is each extracted triple trustworthy? The signal to watch first is the Triple Confidence Score (TCS); the other Implementation metrics refine and complement it. 
+
+4.1.1 Triple Fidelity Metrics Triple fidelity metrics measure how well ex-tracted triples match gold knowledge or source evidence; they are benchmark-setting metrics, applicable when a reference set G or source text P is available. The encoder f is a free parameter: sentence-transformer encoders are a fast, inexpensive default well suited to short triple strings, while LLM-based embed-ders capture relational nuance at higher cost and latency. The metric is only as reliable as the encoder’s ability to place semantically equivalent triples near one another. 
+
+Embedding similarity. Given the embedding function f , the cosine similarity between an extracted triple ˆ t and a gold triple t is [47,49] cos(ˆ t, t ) = f (ˆ t) · f (t)
+
+∥f (ˆ t)∥ ∥ f (t)∥ . (1) Each triple is linearized into a string (e.g., s p o ) before embedding, capturing semantic relatedness even when triples differ lexically. TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 21 
+
+Table 4: Dependency/redundancy analysis. Primary metrics are independent signals worth triggering remediation on; derived metrics are definitional com-plements, aggregates, or expected correlates of a primary metric, and serve as diagnostic detail. No claim of statistical independence is made; relationships are definitional or hypothesized (section 4.4). 
+
+Metric Role Relationship 
+
+TCS primary extraction confidence SCR primary source coverage EC primary run-to-run stability CSC primary cross-source agreement SC primary schema validity CVR derived per-constraint refinement of SC CSR link primary grounding success TRIAGE-TI, TFI derived weighted aggregates of the above LC primary graph-level consistency OC primary schema coverage DNR primary structural inertia SRR primary structural redundancy CMP derived gold-anchored counterpart of OC QGR primary query in-scope for KG ERC primary retrieval recall of grounded query nodes ERP derived precision complement of ERC RRS primary subgraph connectivity AGR primary answer grounding AUR derived recall complement of AGR ARF primary relational faithfulness RPC primary retrieval cost RHD derived path-length distribution behind RRS 22 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Soft matching and Soft-F1. Exact matching is too strict for LLM outputs. Us-ing the shared component similarity sim( x, y ) = cos( f (x), f (y)) from table 1, component-wise triple similarity is [5,51] Score(ˆ t, t ) = 13
+
+ sim( sˆt, s t) + sim( pˆt, p t) + sim( oˆt, o t). (2) Set-level Soft-Precision and Soft-Recall are computed via maximum-weight bi-partite matching M between E and G [32]: Soft-P = 1
+
+|E|
+
+X
+
+> (ˆ t,t )∈M
+
+Score(ˆ t, t ), Soft-R = 1
+
+|G|
+
+X
+
+> (ˆ t,t )∈M
+
+Score(ˆ t, t ), (3) Soft-F1 = 2 Soft-P · Soft-R Soft-P + Soft-R . (4) 
+
+Entailment-based verification. To measure grounding in source evidence, triple validation is reframed as Natural Language Inference (NLI). NLI classifies a (premise, hypothesis) pair into one of three labels: entailment (the premise sup-ports the hypothesis), contradiction (the premise refutes it), or neutral (neither). Here the premise is the source passage p(ˆ t) from which ˆ t was extracted (its recorded provenance from section 3.1, not the whole corpus), and the hypothesis 
+
+H(ˆ t) is a natural-language verbalization of the triple (e.g., ( s, p, o ) 7 → “s p o ”). Writing PNLI (ent | p(ˆ t), H ) for the probability mass an NLI model assigns to the entailment label, the corpus-level entailment ratio is [7,61,24] EntRatio( E) = 1
+
+|E|
+
+X
+
+> ˆt∈E
+
+PNLI 
+
+ ent | p(ˆ t), H (ˆ t). (5) Triples with low entailment and high contradiction probability are flagged as unsupported, a grounding signal complementary to Soft-F1. 
+
+Triple Fidelity Index ( TFI ) [TRIAGE] , benchmark-only. To summarize the three fidelity signals into a single [0 , 1] score, paralleling the trustworthiness aggregate TRIAGE-TI below: TFI( E) = λ1 cos + λ2 Soft-F1 + λ3 EntRatio , P 
+
+> i
+
+λi = 1 , (6) where cos is the mean best-match cosine over E and the weights λi reflect the relative importance of semantic match, set-level agreement, and source ground-ing. Because two of its three components (cos and Soft-F1) require the gold set 
+
+G, TFI is a benchmark-setting aggregate and is not computable in gold-free deployment, even though its third component, EntRatio, needs only the source passages P .
+
+4.1.2 TRIAGE Trustworthiness Metrics Unlike fidelity metrics, trust-worthiness metrics are intrinsic : they require neither gold triples nor source alignment, and so are operational in any deployment. They capture extraction confidence (TCS), source coverage (SCR), run-to-run stability (EC), cross-source agreement (CSC), structural validity (SC, CVR), and grounding to canonical identifiers (CSR link ). TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 23 
+
+Triple Confidence Score ( TCS ) [TRIAGE] . LLM token probabilities provide an intrinsic proxy for extraction confidence [4,30,29]. Treating the emitted triple as its token sequence w1, . . . , w |ˆt|, where wk is the k-th token and w<k its pre-decessors, and writing PLLM (wk | w<k ) for the model’s next-token probability, we define TCS as the geometric mean token probability, equivalently the expo-nentiated mean token log-probability: TCS(ˆ t) = exp 
+
+ 1
+
+|ˆt|
+
+> |ˆt|
+
+X
+
+> k=1
+
+log PLLM (wk | w<k )
+
+
+
+=
+
+ Q|ˆt| 
+
+> k=1
+
+PLLM (wk | w<k )
+
+1/|ˆt|
+
+∈ (0 , 1] .
+
+(7) Under this convention higher TCS is better (the model was more confident), the score is length-normalized and bounded, and a triple is flagged when TCS(ˆ t) < τ 
+
+for a threshold τ . Being already in (0 , 1], TCS enters the aggregate index below directly, with no rescaling. TCS requires access to token log-probabilities from the extracting LLM (white-box setting); it is undefined for a black-box graph. 
+
+Source Coverage Ratio ( SCR ) [TRIAGE] . Correctness does not imply com-pleteness. SCR measures how broadly the input yields at least one confident triple. With passages P = {p1, . . . , p n} and threshold τ :SCR = {pi ∈ P : ∃ ˆt ∈ E(pi) s.t. TCS(ˆ t) ≥ τ }
+
+|P| ∈ [0 , 1] . (8) Low SCR indicates that large portions of the input fail to yield confident triples, mapping to the Knowledge Elicitation coverage notion of [2]. 
+
+Extraction Consistency ( EC ) [TRIAGE] . LLM extraction is sensitive to stochas-tic decoding [59]. Given k independent extractions E(1) , . . . , E (k) of the same input, EC is the average pairwise Jaccard similarity [26]: EC = 2
+
+k(k − 1) 
+
+X
+
+> i<j
+
+|E(i) ∩ E(j)||E(i) ∪ E(j)| ∈ [0 , 1] . (9) A semantic variant replaces set overlap with Soft-F1 matching to absorb para-phrastic variation across runs. 
+
+Cross-Source Corroboration ( CSC ) [TRIAGE] . Whereas EC measures agree-ment across runs of the same input, CSC measures agreement across independent sources : a triple extracted independently from two or more documents is far more likely to be true. Let src(ˆ t) be the set of distinct source documents from which a (canonicalized) triple ˆ t is extracted. Then CSC( E) = |{ ˆt ∈ E : |src(ˆ t)| ≥ 2}| |E| ∈ [0 , 1] . (10) A higher CSC indicates a graph whose facts are corroborated across the corpus rather than resting on single, possibly idiosyncratic, mentions. CSC requires multi-document provenance and therefore applies in the white-box setting. 24 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Schema Compliance Rate ( SC ) [TRIAGE] . Schema compliance measures con-formance to the ontology’s relation vocabulary and type constraints [44,46]. With predicate set R, domain/range constraints dom( p), rng( p), and inferred type type( x): valid O (ˆ t) = I[pˆt ∈ R ] · I[type( sˆt) ∈ dom( pˆt)] · I[type( oˆt) ∈ rng( pˆt)] , (11) SC( E) = 1
+
+|E|
+
+X
+
+> ˆt∈E
+
+valid O (ˆ t) ∈ [0 , 1] . (12) SC requires an ontology and is undefined without one. 
+
+Constraint Violation Rate ( CVR ) [TRIAGE] . Where SC is a per-triple pass/fail signal, CVR quantifies how frequently each constraint type is violated. The con-straint set is exactly the three checks composing SC in eq. (11), C = {pred , dom , rng }
+
+(predicate membership, domain, and range), with viol c(ˆ t) = 1 −Ic(ˆ t), where Ic(ˆ t)denotes the c-th indicator composing valid O (ˆ t), so that CVR decomposes SC by constraint type rather than introducing new checks: CVR( E) = 1
+
+|E|
+
+X
+
+> ˆt∈E
+
+ 1
+
+|C| 
+
+X
+
+> c∈C
+
+viol c(ˆ t)
+
+
+
+∈ [0 , 1] . (13) CVR can be reported per constraint type (e.g., CVR dom , CVR rng ) to localize systematic schema drift; it too requires an ontology. 
+
+Canonicalization Success Rate ( CSR link ) [TRIAGE] . A triple may be correct at the string level yet unusable if its entities cannot be grounded to canonical identifiers [50,27]. Let C(·) map surface forms to canonical identifiers, returning 
+
+⊥ when no link is found: CSR link (E) = 1
+
+|E|
+
+X
+
+> ˆt∈E
+
+I[C(sˆt)̸ = ⊥] · I[C(oˆt)̸ = ⊥] ∈ [0 , 1] . (14) The meaning of “canonical” depends on the regime of section 3.1. In the ontology-grounded regime, C maps to schema or KB identifiers and CSR link measures ex-ternal grounding success. In the resolution-based regime (no ontology), C maps to the internally induced canonical set produced by entity resolution, and CSR link 
+
+measures internal consistency rather than external grounding. This is the point at which the no-ontology consequence becomes concrete: when OC, SC, LC, and CMP are undefined for lack of a schema, the trustworthiness load shifts onto CSR link , DNR, EC, and TCS. 
+
+Evidence Attribution Rate ( EAR ) [TRIAGE] , optional. For auditability, EAR measures how often a provenance evidence span is available for a triple, enabling the verification motivated in section 2. With span(ˆ t) the (possibly empty) evi-dence set: EAR( E) = 1
+
+|E|
+
+X
+
+> ˆt∈E
+
+I[span(ˆ t)̸ = ∅] ∈ [0 , 1] . (15) TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 25 
+
+Aggregated Trustworthiness Index ( TRIAGE -TI ) [TRIAGE] , optional. To sum-marize complementary trustworthiness signals into one indicator (all terms al-ready lie in [0 , 1] and increase with quality): TRIAGE-TI( E) = ω1T CS + ω2SCR + ω3EC 
+
++ ω4CSC + ω5SC + ω6CSR link , X
+
+> i
+
+ωi = 1 . (16) where weights ωi reflect application risk (e.g., higher ω5 in ontology-critical do-mains). Because TCS is now bounded in (0 , 1], it enters the sum directly with no rescaling, so TRIAGE-TI is comparable across datasets and runs. Each com-ponent remains independently interpretable. TRIAGE-TI is gold-free but not schema-free: its SC term is undefined without an ontology. When no ontology is available, SC is dropped and the remaining weights are renormalized to sum to one, so TRIAGE-TI stays computable and comparable on the schema-free subset. 
+
+Remediation note (Implementation). Low Implementation metrics call for ex-traction levers , which leave graph structure and retrieval untouched: refine the extraction prompt, lower decoding temperature, add or rebalance few-shot demon-strations, or re-chunk the input. For example, low SCR or CSC points to under-extraction or single-source fragility (acquire or re-process documents); low EC points to decoding instability (reduce temperature, self-consistency voting); low SC/CVR points to schema drift (tighten the prompt or predicate inventory). These are the extraction levers of the remediation map (section 4.5). 
+
+4.1.3 KG Completion (KGC) Metrics Knowledge Graph Completion (KGC), or link prediction, evaluates a model’s ability to predict missing en-tities in an existing graph: given ( s, p, ?) or (? , p, o ), the relation fixed, it ranks candidate entities so the correct one appears near the top [6]. (The related task of relation prediction ( s, ?, o ) exists but is not the setup these rank-based metrics target.) As discussed above, KGC is primarily relevant in the black-box regime: when a graph arrives without source text, log-probabilities, or extraction prove-nance, the extraction-oriented trustworthiness metrics are undefined, and the meaningful question shifts from “was this graph extracted well?” to “is this graph complete?”, which is precisely what link prediction probes. Reporting is in the filtered setting [6]: 
+
+– Mean Rank : MR = 1
+
+> |Q|
+
+P 
+
+> q
+
+rank q ;
+
+– MRR [55]: MRR = 1
+
+> |Q|
+
+P  
+
+> q1rank q
+
+;
+
+– Hits@K [52]: Hits@K = 1
+
+> |Q|
+
+P 
+
+> q
+
+I[rank q ≤ K], with rank q the rank of the correct entity and K ∈ { 1, 3, 10 }.26 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Ontology-constrained ranking ( MRR type ) [TRIAGE] . Standard KGC ranks the correct entity against all candidates, including type-incompatible ones that the schema already rules out. When an ontology is available, TRIAGE restricts the candidate set to the type-valid entities for the relation, so that completion is judged on semantically plausible candidates rather than trivially excluded ones. Let Etype (p) be the set of entities compatible with the domain or range of relation 
+
+p under the ontology, and let rank type  
+
+> q
+
+be the rank of the correct entity within 
+
+Etype (p): MRR type = 1
+
+|Q|
+
+X
+
+> q∈Q
+
+1rank type 
+
+> q
+
+. (17) MRR type ties link prediction to the same schema axis as SC and CVR: it rewards a model for placing the correct entity ahead of other type-valid alternatives, not merely ahead of entities the ontology would reject anyway. It requires an ontology and is undefined without one. 
+
+Calibration of completion confidence ( ECE ), adopted. A black-box graph is sometimes accompanied by per-edge confidence scores, or a completion model produces them; their usefulness depends on whether they reflect true correctness likelihood. We adopt the Expected Calibration Error [19] to assess this, binning predictions into B1, . . . , B M by confidence and comparing per-bin accuracy with confidence: ECE = 
+
+> M
+
+X
+
+> m=1
+
+|Bm|
+
+n acc( Bm) − conf( Bm) . (18) ECE is a standard metric rather than a contribution of this work; what TRIAGE 
+
+adds is its role in the framework: a low ECE licenses using a graph’s confidence scores as a trust signal at KG Validation , while a high ECE warns that those scores cannot be trusted and the schema-free structural metrics (DNR, SRR) should carry the assessment instead. This mirrors, on the black-box side, the calibration concern that affects TCS on the white-box side (section 4.1.2). 
+
+Limitations. Three limitations motivate caution: rank metrics depend on candidate-set size, hampering cross-dataset comparison [25,48]; closed-world evaluation treats unobserved triples as negatives [6]; and benchmark artifacts such as inverse-relation leakage inflate scores [12,54]. TRIAGE therefore complements KGC re-porting with the intrinsic trustworthiness metrics above rather than relying on rank metrics alone. 
+
+4.2 KG Validation Metrics 
+
+The KG Validation phase assesses the assembled KG before use. A key shift from section 4.1 is one of level : where Implementation metrics are computed per triple, Validation metrics are computed over the whole graph K. Logical consistency is the clearest example: here it is a global property of K under ontology axioms, detected by a reasoner over the entire graph, not a per-triple schema check. TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 27 
+
+Validation metrics fall into two groups: ground-truth-free metrics, computable in any deployment, and benchmark metrics requiring a reference KG K∗.
+
+Core question: does the assembled graph hold together well enough to query? The schema-free signal to watch first is the Dead Node Ratio (DNR), with Logical Consistency (LC) and Ontology Coverage (OC) adding schema-based checks when an ontology is available. 
+
+Ground-truth-free metrics. 
+
+Logical Consistency ( LC , μLC ). Absence of internal contradictions in K, detected by OWL reasoning against the ontology [2]. Let Conf( K) ⊆ K be the set of triples that participate in at least one violated ontology axiom; defining the numerator as this triple count (rather than the number of violation instances , which can exceed |K| ) keeps the score in [0 , 1]: 
+
+μLC = 1 − |Conf( K)||K| ∈ [0 , 1] , (19) where a triple is in Conf( K) if it occurs in some triple set violating an ontology axiom (disjointness, functionality, cardinality), as found by a reasoner such as HermiT over the full graph. LC requires an ontology. 
+
+Ontology Coverage ( OC ) [TRIAGE] . OC measures what fraction of the query-relevant ontology is instantiated in K:OC = |{ c ∈ O rel : ∃ t ∈ K instantiating c}| |O rel | ∈ [0 , 1] . (20) OC is the structural-completeness signal of this phase: not whether triples are correct (that is COR) but whether the graph covers the domain as defined by the ontology. Low OC on a class suggests either missing source content or extraction failure for that class, both actionable. 
+
+Dead Node Ratio ( DNR ) [TRIAGE] . A dead node has degree ≤ 1: isolated (degree 0) or a dangling leaf (degree 1). Such nodes cannot serve as intermediate bridges in multi-hop reasoning: a degree-1 node may still be a valid path endpoint (e.g. an answer entity), but it cannot connect two other entities along a reasoning chain. With node set V of K:DNR = |{ v ∈ V : deg( v) ≤ 1}| |V | ∈ [0 , 1] . (21) High DNR signals disconnected entities: surface-form variants, over-segmented mentions, or hallucinated entities with no relational context. It complements LC (contradictions) and OC (missing concepts) by detecting structurally inert 
+
+content, and is computable without an ontology. 28 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Semantic Redundancy Rate ( SRR ) [TRIAGE] . Where DNR detects too little connectivity, SRR detects too much duplication: triples that are semantically equivalent or subsumed by others, inflating the graph without adding infor-mation. Using the component similarity sim and a threshold δ, call two triples 
+
+redundant if all three components match above δ; let Red( K) be the set of triples that duplicate or are subsumed by another: SRR = |Red( K)||K| ∈ [0 , 1] . (22) High SRR indicates a bloated graph that raises retrieval cost (RPC, section 4.3) without improving coverage; it is computable without an ontology. 
+
+Benchmark metrics (require K∗). 
+
+When a reference KG K∗ is available (e.g., PathQuestion [71], MetaQA [68]), the following metrics from [2] provide gold-anchored evaluation and calibrate the ground-truth-free metrics above. Let Kcrt = ( K ∩ K ∗)|ΠK be the correct subset of K and Kcpt = ( K ∩ K ∗)|ΠK∗ the covered subset of K∗.
+
+Correctness ( COR , μcorrect ) [2]. 
+
+μcorrect = 1 − |K \ K crt ||K| ∈ [0 , 1] . (23) 
+
+Completeness ( CMP , μcomplete ) [2]. 
+
+μcomplete = 1 − |K ∗ \ K cpt ||K ∗| ∈ [0 , 1] . (24) Low CMP is the gold-anchored counterpart of low OC: both signal structural incompleteness, but CMP is measured against gold triples and OC against the ontology schema. In the TKG lifecycle [2], low CMP is a direct trigger for a KG Update .
+
+Remediation note (Validation). Low Validation metrics call for graph-and-schema levers that touch the graph and its schema but not the retrieval algorithm: im-prove entity resolution and canonicalization (high DNR), prune or merge du-plicates (high SRR), repair contradicting triples or axioms (low LC), and, im-portantly, refine, loosen, or extend the ontology, or acquire targeted documents, when OC or CMP is low. Ontology refinement is the natural Validation-stage lever, available only when a schema exists; without one, the resolution-based fixes above carry the load. These are the graph-and-schema levers of the remediation map (section 4.5). 
+
+4.3 KG Usage Metrics 
+
+The KG Usage phase queries the validated KG via graph-based retrieval and inference. We first fix the object these metrics operate on. For a query q over TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 29 
+
+the validated KG K with vertex set V , the retrieval function induces a retrieved subgraph KS ⊆ K with vertex set VS ⊆ V . A path “in the subgraph” uses only edges in KS . All intrinsic metrics below are ground-truth-free and computable before or during generation; gold-requiring metrics are collected at the end. 
+
+Core question: does retrieval set up a correct answer? The signal to watch first is Entity Retrieval Coverage (ERC), with Reasoning Readiness (RRS) close behind; the answer-side metrics then check faithfulness. We sort the usage metrics into two roles and label each group below ac-cordingly. A per-query predictor takes a graded value on a single query, so it can flag or triage that query before the answer is judged, and it can also be aggregated as the averaged score over a set of queries. A global outcome metric 
+
+instead summarizes end-task success over a set of queries, as a rate or ratio, and serves as an indicator. This predictor/outcome split is orthogonal to the primary/derived distinction of table 4: the former concerns what a metric mea-sures (a single query versus a set), the latter whether it is an independent signal or a definitional complement. 
+
+4.3.1 Query and Answer Entity Resolution Usage metrics compare en-tities of the query or answer against KS . Resolution proceeds in two stages: an 
+
+extraction step turns free text into candidate entity mentions (an NER model or a noun-chunk tokenizer), and a matching step resolves each mention to a graph node by significant-token overlap against node labels. Let Mq be the set of surface mentions extracted from query q, and let γq : Mq → V ∪ {⊥} be the grounding function, where ⊥ denotes an unresolved mention. We define the grounded query-node set as 
+
+V gq = {γq (m) : m ∈ Mq , γ q (m)̸ = ⊥} ⊆ V. 
+
+The query-side denominator remains the number of extracted surface mentions 
+
+|Mq |, so that missing or unresolved mentions are penalized. Thus QGR, ERC, and RRS measure, respectively, the fraction of surface mentions grounded to the KG, the fraction whose grounded nodes are retrieved into the subgraph, and the fraction of query-mention pairs whose grounded nodes are connected there. The retrieved subgraph has node set VS ⊆ V . All intersections such as V gq ∩ VS are therefore intersections between KG node identifiers, not between text mentions and graph nodes. Over-segmented multi-word mentions are then coalesced into the largest matched entity, so each real-world entity contributes a single node. All query-side metrics are measured over the same mention universe Mq : QGR and ERC use |Mq | directly, while RRS uses query-mention pairs through  |Mq |
+
+> 2
+
+.Thus unresolved or unretrieved mentions are penalized consistently across scope, coverage, and connectivity. 
+
+Convention for degenerate inputs. Throughout this section, a ratio with an empty denominator is reported as N/A rather than assigned a numeric value: QGR, ERC, and RRS are N/A when |Mq | = 0 (no entity mention could be extracted from the query); ERP and AUR are N/A when |VS | = 0 (empty re-trieval); and AGR is N/A when |Ma| = 0 (no entity mention could be extracted 30 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+from the answer). For RHD, queries whose grounded entities are disconnected in KS (no finite ℓ(q)) are collected in a separate ℓ = ∞ bucket, so the reported distribution sums to one over {0, 1, 2, . . . , ∞} . These degenerate cases are them-selves diagnostic (an empty V g 
+
+> q
+
+or VS signals an out-of-scope query or a retrieval miss) and are reported as counts alongside the metric. 
+
+4.3.2 Retrieval-time Metrics These characterize the retrieved subgraph 
+
+before the LLM is invoked. They are all per-query predictors. 
+
+Query Grounding Rate ( QGR ) [TRIAGE] . Fraction of extracted query men-tions that exist as graph nodes at all, a KG-coverage signal distinct from retrieval quality: QGR = |V g 
+
+> q
+
+||Mq | ∈ [0 , 1] . (25) 
+
+Entity Retrieval Coverage ( ERC ) [TRIAGE] . Fraction of all extracted query mentions whose grounded nodes are present in the retrieved subgraph: ERC = |V g 
+
+> q
+
+∩ VS ||Mq | ∈ [0 , 1] . (26) Sharing the denominator |Mq | with QGR gives ERC ≤ QGR always; the gap QGR − ERC is exactly the retrieval failure (grounded entities not fetched). Be-cause Mq is extracted from the query surface, ERC never inspects the answer: it is disjoint from answer-side outcomes such as CC, so using ERC to predict them is not circular by construction. 
+
+Entity Retrieval Precision ( ERP ) [TRIAGE] . The precision complement of ERC: are retrieved nodes mostly query-relevant, or bloated by neighborhood expansion? ERP = |V g 
+
+> q
+
+∩ VS ||VS | ∈ [0 , 1] . (27) Because the denominator |VS | counts all retrieved nodes, typically far larger than the handful of query anchors, ERP is low in absolute terms by construction; it is therefore read relatively , comparing retrieval strategies or configurations on the same queries rather than against a fixed threshold. Low ERP alongside high ERC indicates over-retrieval: a large context with few anchors to the question. 
+
+Reasoning Readiness Score ( RRS ) [TRIAGE] . Whether the subgraph is con-nected enough to support reasoning across the query’s entities: the fraction of query-entity pairs joined by a path in KS , with a convention for the single-entity case where the pair count is zero: RRS = 
+
+
+
+|{{ ei, e j } ⊆ V g 
+
+> q
+
+: ∃ path( ei, e j ) in KS }| 
+
+ |Mq |
+
+> 2
+
+ , |Mq | ≥ 2,
+
+IV g 
+
+> q
+
+∩ VS̸ = ∅, |Mq | = 1 ,
+
+(28) TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 31 
+
+By construction, RRS ∈ [0 , 1]. The denominator counts pairs over all extracted query mentions, so an off-graph entity is penalized. For a single-entity query, readiness reduces to whether that entity is grounded and retrieved (RRS = 1) or not (RRS = 0). Because this denominator also charges RRS for entities that were never grounded or retrieved, a low RRS can reflect a grounding or retrieval gap rather than a genuine connectivity failure. RRS is therefore read as a pure 
+
+connectivity signal only conditional on high ERC: the diagnostic “high ERC, low RRS” connectivity gap of section 4.5 is exactly the regime in which the entities are present yet disconnected. A more localized variant could replace the denominator by the number of grounded, retrieved query-entity pairs, e.g., pairs in V gq ∩ VS , but we keep the global denominator over Mq because RRS is used in the diagnostic chain as an end-to-end readiness signal: it should decrease not only when retrieved entities are disconnected, but also when grounding or retrieval has already failed. 
+
+Retrieval Path Cost ( RPC ) [TRIAGE] . The intrinsic metrics above say noth-ing about cost , yet the central question of section 1 includes the price of traversal. RPC captures it as the retrieval effort expended per query, measured as the num-ber of nodes expanded during subgraph construction (a hardware-independent proxy) and, optionally, wall-clock path-search time: RPC( q) = |{ v ∈ V : v expanded during retrieval for q}| . (29) RPC makes the coverage/cost trade-off observable: a retrieval strategy may raise ERC and RRS only by expanding far more of the graph, and RPC exposes that price. It connects directly to SRR (section 4.2), since a redundant graph inflates expansion, and to the traversal-budget failure mode of section 2. 
+
+4.3.3 Answer-time Metrics These measure faithfulness of the generated answer to the retrieved subgraph. Let Ma be the set of surface mentions extracted from the generated answer A, and let γa : Ma → V ∪{⊥} be the answer grounding function. We define 
+
+V ga = {γa(m) : m ∈ Ma, γ a(m)̸ = ⊥} .
+
+AGR, AUR, and ARF are per-query predictors; RHD is a set-level metric and so reads as a diagnostic rather than a single-query signal. 
+
+Answer Grounding Rate ( AGR ) [TRIAGE] . Fraction of answer entities present in the retrieved context, detecting hallucinated entities never retrieved: AGR = |V ga ∩ VS ||Ma| ∈ [0 , 1] . (30) 
+
+Answer Utilization Rate ( AUR ) [TRIAGE] . The recall complement of AGR, how much of the retrieved context the answer actually used: AUR = |V ga ∩ VS ||VS | ∈ [0 , 1] . (31) 32 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+As with ERP, the denominator |VS | makes AUR structurally low in absolute terms, so it is interpreted relatively across queries or configurations rather than against a fixed threshold. High AGR with low AUR suggests a correct answer drawn from a narrow slice of available evidence. 
+
+Answer Reasoning Faithfulness ( ARF ) [TRIAGE] . ARF measures relational 
+
+faithfulness: when the answer discusses two entities the KG connects, does it state their relationship correctly? This isolates relational hallucination, which entity-level AGR cannot see. Rather than parsing the answer for explicit rela-tional claims (unreliable, because extracting relations from generated text prop-agates the same errors that afflict any extractor and compounds them at each stage [11,37]), ARF uses the retrieved triples as the reference set of relations the answer could assert. Let Cq be the retrieved co-mentioned triples whose end-points are both grounded in the answer; ARF is the fraction whose relation also appears in the answer text A:ARF = |{ (s, p, o ) ∈ Cq : p ⊆ A}| |Cq | , C q = {(s, p, o ) ∈ K S : s ∈ V ga ∩VS ∧o ∈ V ga ∩VS },
+
+(32) where p ⊆ A tests lexically whether the relation label appears in A. ARF is reported as N/A when |Cq | = 0 (no connected pair co-mentioned). 
+
+Reasoning Hop Depth ( RHD ) [TRIAGE] , diagnostic. RHD characterizes the structural complexity actually exploited, as the distribution of shortest-path lengths ℓ(q) connecting the grounded query entities in KS , with ℓ(q) = 0 for single-entity queries whose grounded entity is retrieved, and ℓ(q) = ∞ when the grounded query mentions are not connected in KS or cannot be evaluated because grounding/retrieval failed. RHD( k) = |{ q ∈ Q : ℓ(q) = k}| |Q| , k ∈ { 0, 1, 2, . . . , ∞} , (33) so that P 
+
+> k
+
+RHD( k) = 1 including the disconnected ( ∞) bucket. Mass con-centrated at k ≤ 1 indicates the pipeline rarely exploits multi-hop structure, suggesting the KG adds little over flat retrieval for that query class, while mass at ∞ flags queries the subgraph cannot connect at all. RHD is reported as a distribution to preserve diagnostic detail. 
+
+4.3.4 Gold-requiring Usage Metrics When gold reasoning paths or gold answers are available (as in PathQuestion and MetaQA), the Usage phase admits gold-anchored metrics that give it the same two-regime treatment as the earlier phases. GPC and Answer Correctness (Hits@1/F1) are global outcome metrics; RPP/RPR are per-query but, unlike the predictors above, need a gold path. TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 33 
+
+Gold Path Coverage ( GPC ) [TRIAGE] . Fraction of queries whose gold rea-soning path P ∗ 
+
+> q
+
+is fully contained in the retrieved subgraph: GPC = |{ q ∈ Q : P ∗ 
+
+> q
+
+⊆ K S }| |Q| ∈ [0 , 1] . (34) GPC is the gold-anchored counterpart of RRS/ERC. 
+
+Retrieval Path Precision / Recall (RPP / RPR) [TRIAGE] . Of the retrieved-subgraph edges, the fraction lying on the gold path (precision), and of the gold-path edges, the fraction retrieved (recall): RPP = |K S ∩ P ∗ 
+
+> q
+
+||K S | , RPR = |K S ∩ P ∗ 
+
+> q
+
+||P ∗ 
+
+> q
+
+| . (35) 
+
+Answer Correctness. The ultimate gold-anchored outcome, Hits@1 and F1 over answer sets [64], used in section 5 as the dependent variable the intrinsic metrics are designed to predict. 
+
+4.3.5 Imported Outcome Metrics To validate the intrinsic metrics and close the KG Update loop, we import four outcome metrics from recent graph-RAG benchmarks. They are not TRIAGE contributions; we adopt them as dependent variables. Unlike the intrinsic usage metrics above, three of these (CC, RFR, HHR) require a gold answer or correctness label, not live gold-free signals monitored at deployment; only KNI, built from grounding alone, is gold-free. All four are global outcome metrics: CC and KNI average a per-query label into a rate, whereas RFR and HHR are population-level ratios with no single-query value. 
+
+KG Net Impact ( KNI ) [33]. Counterfactual contribution of the KG: answer grounding with the retrieved triples minus that without them. A drift toward KNI ≤ 0 across a query class signals stale or irrelevant KG content. 
+
+Context Coverage ( CC ) [65]. Fraction of queries whose gold answer is present in the retrieved context, the answer-string analogue of ERC. 
+
+Reasoning Failure Rate ( RFR ) [65]. Fraction of queries where the answer is in context yet the model still answers wrongly, isolating the generation-stage residual from retrieval failure. 
+
+Hard Hits Rate ( HHR ) [70]. HHR = Hits@Hard /Hits@Any, robustness under an incomplete KG; complements CMP by exposing, at usage time, the queries that KG incompleteness breaks. 34 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Remediation note (Usage). Only Usage -stage breaches implicate the retrieval algorithm itself. Concretely, the signature selects the lever: a retrieval gap (high QGR, low ERC) calls for a wider seed set or traversal budget; a connectivity gap (high ERC, low RRS) calls for a retrieval primitive that recovers the con-necting path, such as backward or path-based traversal; and high RPC calls for pruning redundant expansion or a sparser primitive. A retrieval or con-nectivity gap that persists once extraction and graph health are adequate, or high RPC, motivates architectural changes to retrieval and reasoning, for ex-ample super-relation reasoning that adds backward traversal and aggregates re-lational paths [58], logic-aware multi-hop traversal [38], GNN-based structural retrieval [41], RL-optimized graph indexing [56], agentic restructuring [36], or cross-document construction that adds connective structure [67]. A low QGR instead marks an out-of-scope query (no KG answer to retrieve), and a genera-tion gap (an ungrounded answer despite adequate RRS) points to the generator itself, for example prompting it to cite the retrieved evidence or constraining decoding to it. These are the retrieval levers, not a prescription; the remediation map is described next. 
+
+4.4 Metric Dependencies and Redundancy 
+
+The suite is deliberately broad, and several metrics are related by construction. We make these relationships explicit (table 4) so that a practitioner can dis-tinguish primary signals, worth monitoring and triggering remediation on, from 
+
+derived ones that add diagnostic detail. We do not claim statistical indepen-dence, which can only be established empirically (section 5); the relationships below are definitional or hypothesized. We group them into three kinds. Defini-tional complements : precision/recall pairs over the same sets, where one is the dual of the other (ERC and ERP, AGR and AUR), and QGR, which fixes the query-mention scope underlying ERC and RRS. Aggregates : TRIAGE-TI and TFI are weighted functions of other metrics, and CVR is a per-constraint re-finement of SC. Expected empirical correlations (to be tested, not assumed): low TCS is expected to lower SCR, since SCR counts confident triples; high DNR is expected to lower RRS, since dead nodes cannot form connecting paths; high SRR is expected to raise RPC, since redundant structure inflates expansion. For remediation, the primary metrics are the triggers; the derived metrics help localize why a primary metric moved. 
+
+4.5 From Metrics to Remediation 
+
+The usage-stage diagnostic chain. At inference time, a correct graph-grounded answer requires a chain of conditions to hold in sequence (fig. 5), each one nec-essary for the next, and each observable without gold annotations. The query entities must exist in the KG (QGR), be retrieved into the subgraph (ERC), be connected there by a path (RRS), have their relation stated correctly by the answer (ARF), and appear in an answer grounded on the retrieved evidence (AGR). Each condition presupposes the previous one: a query entity cannot be TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 35 QGR < θ ? out-of-scope/grounding failure :entities not grounded in the KG ERC < θ ? retrieval gap : in KG, not retrieved RRS < θ ? connectivity gap : retrieved, not connected ARF < θ ? relational gap : connected, relation wrong AGR < θ ? generation gap : answer not grounded answer supported yes yes yes yes yes no no no no no 
+
+Fig. 5: The usage-stage diagnostic chain as a decision cascade. Reading the met-rics in order, the first one below its threshold θ names the failure’s signature ; if all pass, the answer is structurally supported. Each signature then maps to the levers that can remedy it; the chain localizes the failing condition , whose root cause may lie upstream. retrieved unless it is in the KG, cannot be connected unless it is retrieved, and so on. For the first two links this is exact, ERC ≤ QGR by construction; for the later links it is a logical precondition rather than a numeric bound. This ordering is what makes the chain diagnostic: reading the metrics in sequence, the first link that falls below its threshold θ localizes the failure to a single condition. We call the resulting label the failure’s signature : out-of-scope or grounding failure (low QGR), retrieval gap (high QGR, low ERC), connectivity gap (high ERC, low RRS), relational gap (high RRS, low ARF), and generation gap (high ARF, low AGR). The first three links are computable before the LLM is invoked, enabling pre-generation triage; the last two require the produced answer and so apply post hoc. Each link is a necessary, observable proxy rather than a guarantee: a satisfied link is required for success but does not certify it, since a structural signal such as RRS cannot distinguish a correct connecting path from a spuri-ous one. The thresholds θ separating “low” from “adequate” are not assumed; section 5 specifies how to estimate them empirically. 
+
+What the chain does and does not claim. The chain is a usage-stage detector: it operates on a query and the validated KG, and it localizes which condition failed, not why . The cause of a broken link may lie upstream, in extraction or graph construction, so the build- and validation-time metrics (section 4.1, section 4.2) are the candidate explanations, and the localization test in Section 5.2 examines whether they co-move with chain failures. 36 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+From a signature to remediation. Diagnosis is the contribution; what to do about a signature is a map from the failing stage to the levers that can act on it, not a fixed order. Each stage has characteristic levers: 1. Extraction levers. Low TCS, SCR, EC, CSC, or SC/CVR points to ex-traction, addressable by prompt refinement, lower decoding temperature, rebalanced few-shot demonstrations, re-chunking, or targeted re-extraction of low-coverage regions, with no change to graph structure or retrieval. 2. Graph and schema levers. Low OC, high DNR, high SRR, low μLC , or low μcomplete points to the assembled graph or its schema, addressable by improved entity resolution and canonicalization, duplicate pruning, contra-diction repair, ontology refinement or extension, and document acquisition, all of which touch the KG but not the retrieval algorithm. 3. Retrieval levers. A retrieval or connectivity gap, or high RPC, that persists once extraction and graph health are adequate points to the retrieval and reasoning algorithm; example directions are given in the Usage remediation note above. We deliberately do not rank these levers by cost: re-extraction reprocesses the whole corpus, a graph fix reprocesses the assembled graph, and a retrieval change may be a configuration swap or a new method, so their relative cost is deployment-specific rather than universal. Which lever is cheapest and most effective for a class of failures is an empirical question for the validation proto-col in Section 5.2 and future remediation studies. What TRIAGE adds over a lifecycle that triggers an undifferentiated update is this targeting: the diagnosis names the stage and the levers that can address it. 
+
+Closing the loop. Each lever set corresponds to re-entering a KG Update cycle at a different depth: extraction levers re-run extraction, graph-and-schema levers revise the assembled graph or ontology, and retrieval levers alter the retrieval algorithm. A KG Update modifies the shared graph, so it must be justified by population behavior rather than a single query: the build- and validation-time metrics are already graph-level, whereas the usage-stage metrics are per-query and must be aggregated before they can trigger an update. For a per-query metric m and a query window W , an update fires when agg q∈W m(q) < θ , with agg a mean, a low quantile, or the rate of queries failing the threshold; a single low m(q) drives only per-query triage, a fallback or a warning, not a change to the graph. A persistent aggregate breach then triggers an update targeted at the diagnosed stage, which operationalizes the TKG lifecycle dimension [2] as a control loop for automated graph-RAG deployments. 
+
+# 5 Recommended Evaluation Protocol 
+
+This section makes one empirical point and frames the rest. Because TRIAGE ’s deployed instrument is gold-free, its evaluation is a question of construct validity TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 37 
+
+resting on three claims: that the suite is computable gold-free on real graphs, pre-dictive of downstream failure, and localizing of where a failure originates. Two of these we establish here, on the usage metrics. Computability we show by con-struction, computing the full gold-free usage suite across five retrievers and 480 query-by-retriever observations on a real KG with no gold annotation at scoring time (section 5.1). The proof of concept provides preliminary evidence of predic-tive validity: the structural metrics indicate whether a faithful answer’s evidence is present in the retrieved subgraph, when the reader may often produce an an-swer that seems correct from parametric memory, although retrieval has failed. In that case end-answer accuracy would certify a graph our metrics correctly flag as deficient; this silent-success residual is a concrete case for TRIAGE ’s design, scoring each stage gold-free and before the answer rather than trusting end-to-end accuracy. The localizing claim and threshold calibration need larger, more varied benchmarks; rather than run them here we specify them as a falsification protocol (section 5.2) that a later instantiation can execute to test, not assume, them. The extraction metrics, which need a document-grounded corpus, are left to that protocol’s extensions. 
+
+5.1 Proof of concept 
+
+We instantiate the usage stage on PathQuestion [71] over its 3-hop knowledge base (PQ-3H: 1,836 entities, 2,839 triples). Because natural PathQuestion items name a single topic entity, leaving ERC and RRS saturated at 1, we build a 
+
+distance-controlled probe set : 108 synthetic questions (12 per category) naming two or more KB entities at controlled distances. Each category stresses one link of the diagnostic chain: off-topic questions contain only non-KB entities, semi questions contain one KB entity and one fictional entity, pair-k questions contain two entities at undirected distance k = 1,...,4, disc questions contain two entities in different components, and triple/quad questions contain three or four entities on a connected path. The 108 questions are designed for diagnostic coverage rather than as a nat-ural query distribution. The 12 off-topic questions test the out-of-scope link of the chain, but they are excluded from the predictive-validity analysis because their gold answers are undefined with respect to the KG. The predictive analy-sis therefore uses 96 distinct questions. Since each question is run through five retrievers, the pooled analysis contains 480 question-by-retriever observations. These 480 observations should not be read as 480 independent questions; they are five retrieval views of the same 96-question probe. Entities are sampled at the target structure, verbalized into a fixed template (“how are X and Y related?”), and re-extracted into Mq and grounded into V gq by the deployment pipeline; an-swers come from an LLM reader ( mistral-small-3.2 ). The structural metrics need no gold answer, and the probe is reproducible from the KB alone. 
+
+Retrieval configurations used as a diagnostic testbed. We do not eval-uate these retrievers as systems in their own right. Instead, we use five retrieval configurations as a representative diagnostic testbed: they induce different cov-erage, connectivity, and cost profiles, allowing us to test whether the proposed 38 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+structural metrics track evidence availability. Each configuration is a lightweight re-implementation following an existing approach’s core principle rather than an exact reproduction. The first four share a common n-hop beam expansion and differ only in their seed entities: gold-entity (the gold topic entity, an ora-cle upper bound on linking), extracted-entity (its deployable counterpart, from LLM-extracted, graph-linked entities), and, following LightRAG’s dual-level re-trieval [20], light-entity (local mode: top-k entities most similar to the question) and light-relation (global mode: endpoints of the top-k most similar triples). The fifth, path , follows PathRAG [9]: it forgoes beam expansion and extracts flow-pruned relational paths between anchors. 
+
+Predictive validity: structural metrics track context coverage. On the PQ-3H probe set we ask whether the structural metrics are associated with the frame-work’s two gold-anchored outcome metrics (section 4). For each question-retriever pair, we store the retrieved subgraph and the generated answer once. We then compute CC and Hits@1 offline from these stored outputs, without rerunning re-trieval or generation: we pool all five retrieval configurations into one population of 480 question-by-retriever observations (off-topic excluded), and for each we score two outcomes against the probe’s gold answers: Context Coverage (CC: all gold-answer entities lie in the retrieved subgraph, a reader-free outcome) and An-swer Correctness (Hits@1: a gold answer appears in the generated answer). The predictors ERC and RRS are computed without gold annotations; gold answers are used only afterwards to compute CC and Hits@1 as validation outcomes. We then stratify the population by entity coverage (ERC) and by connectivity (RRS). Table 5 reports both outcomes per stratum. 
+
+Example: why answer correctness can hide a retrieval failure. 
+
+Consider a query “How are X and Y related?”, whose gold answer requires an intermediate entity Z. A retriever may return both query entities X
+
+and Y , giving ERC = 1, but fail to retrieve a connecting path between them, giving RRS = 0. If Z is absent from the retrieved subgraph, then 
+
+CC = 0, because the evidence needed for a faithful answer is missing. A strong reader may nevertheless answer with Z from parametric memory, yielding Hits @1 = 1. In such a case, answer correctness marks the run as successful, whereas the structural metrics flag that the retrieved evidence was insufficient. 
+
+In this controlled probe, the structural metrics strongly separate cases where the gold evidence is present from cases where it is missing. 
+
+Reader-free CC rises with ERC and jumps sharply once retrieval is complete, from 44 .3% when ERC < 0.5 (and a near-flat 45 .5% for partial coverage) to 
+
+98 .4% at ERC = 1 (a 54-point gap), and the Youden-optimal operating point for predicting low CC sits at θERC =0 .67 (Youden J=0 .67). Connectivity tells the same story on its own axis: a disconnected retrieval (RRS=0) covers the gold answer only 54 .8% of the time against 93 .2% when RRS > 0. This suggests, on the PQ-3H probe and across retrieval configurations, that the structural metrics can indicate whether the evidence a faithful answer needs is present. TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 39 
+
+The reader masks the gap, which is why the structural metrics are scored independently. Reader Answer Correctness (Hits@1) tracks the same metrics but far more weakly: it climbs only from 77 .1% at ERC < 0.5 to 91 .4%at full coverage (a 14-point gap), and stays near 80% even where retrieval is structurally inadequate. The reader is answering many low-coverage questions from parametric memory rather than from the retrieved subgraph, the silent-success residual of section 2, here measured directly: a correct answer co-occurs with broken retrieval, so end-answer accuracy alone would certify a graph the structural metrics correctly flag as deficient. This is the concrete motivation for 
+
+TRIAGE scoring retrieval adequacy before and independently of the answer. It also bounds what this probe can show: because the reader floor is high, a clean Hits@1 threshold needs harder questions and a weaker-prior reader, and a calibrated θ with significance testing is deferred to the larger benchmarks of the protocol below. Two construct caveats accompany this probe. The predictor and outcome are disjoint by construction: ERC scores grounded query mentions while CC scores gold-answer entities, so the separation is not tautological, though the same extraction-and-linking pipeline builds Mq , V gq , and the retrieval, which can inflate ERC independently of graph quality (a coupling the gold-entity oracle retriever isolates). The threshold θERC is fit in-sample on these 480 pooled, non-independent observations (five retrievers per question), so it is descriptive rather than a validated operating point, with calibrated thresholds and clustered confidence intervals deferred to the protocol below. 40 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+Table 5: Predictive validity on the PQ-3H probe set, pooling all five retriev-ers (480 question-by-retriever observations, off-topic excluded). Context Cov-erage (CC) is reader-free (all gold-answer entities in the retrieved subgraph); Answer Correctness (Hits@1) is the reader outcome. Both rise with entity cov-erage (ERC) and connectivity (RRS), but CC separates far more sharply: the structural metrics indicate whether the evidence is present in this controlled probe, while the strong reader partly masks the gap at answer time (the para-metric silent-success residual). The Youden-optimal threshold for predicting low CC is θERC =0 .67. Boldface marks the values discussed in the text. The table is descriptive: confidence intervals are not reported here because the pooled obser-vations are not independent, with each question appearing under five retrievers; calibrated clustered uncertainty estimates are deferred to the full protocol in Section 5.2.                             
+
+> Stratum nCC (%) Hits@1 (%)
+> by entity coverage (ERC) ERC <0.570 44.3 77.1
+> 0.5≤ERC <1165 45.5 84.2 ERC = 1 245 98.4 91.4
+> by connectivity (RRS) RRS = 0 261 54.8 82.8 RRS >0219 93.2 91.8
+
+5.2 A falsification protocol for trust metrics 
+
+The proof of concept above is deliberately small and structurally controlled. It is sufficient to show that the usage metrics are computable and that, in one setting, they separate evidence-present from evidence-missing cases. It is not sufficient to validate thresholds, prove localization, or demonstrate operational triage util-ity. We therefore treat the remaining claims as hypotheses and specify, for each one, the expected effect, the concrete test, and the outcome that would refute 
+
+it, so that a later instantiation tests the claim rather than searching for support. All comparisons share one reader; answer quality uses Hits@1 and answer-set F1; confidence intervals use BCa bootstrap resampling [14,15] and paired com-parisons a paired bootstrap, and a claim holds only when its effect lies in the predicted direction with a confidence interval excluding the null. 
+
+Predictive validity (full study). Expected: Hits@1 increases monotonically across ERC (and separately RRS) quartiles, with a sharp drop below a threshold θ.
+
+Test: stratify queries by quartile on WebQSP [64] (4,737 natural questions over Freebase, 1–2 hop) and report per-quartile Hits@1 with paired-bootstrap signif-icance for the Q4–Q1 gap; estimate θ by the Youden index for predicting answer failure; repeat per hop depth on PathQuestion [71] ( ≈2.6K synthetic multi-hop questions with gold reasoning paths) and MetaQA [68]. Falsified if the Q4–Q1 gap is null or the ordering is non-monotone; passing extends the proof of con-TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 41 
+
+cept to natural questions and measures the parametric silent-success residual of section 2, where the reader succeeds despite low ERC. 
+
+Localization. Expected: low upstream graph-health metrics (e.g. TCS at Imple-mentation, CMP at Validation) co-move with low downstream ERC/RRS, and the five diagnostic signatures of section 4.5 (out-of-scope, retrieval gap, con-nectivity gap, relational gap, generation gap) are mutually distinguishable by their metric profiles. Test: report per-query Spearman ρ between each upstream metric and ERC/RRS, with confidence bands and stratification by query type, together with the fraction of failures in each signature; this is an alignment study, not a causal-propagation claim. Falsified if the correlations are null or the signatures are not separable, in particular if the relational and generation gaps fail to isolate failures that survive the structural links (high ERC/RRS). 
+
+Utility. Expected: routing low-ERC/RRS queries before generation, to a fallback retrieval strategy or a low-confidence warning, improves end-task reliability over no triage. Test: compare the same reader over the same KG with and without ERC/RRS pre-inference triage, reporting Hits@1/F1 and the fraction of silent failures averted. Falsified if triage yields no reliability gain at any operating point. Two threads are left to future work. Triple-level metrics that depend on human judgment (e.g. fidelity calibration) require double annotation against the source, labelling each triple Supported , Unsupported , or Contradicted with a third annotator adjudicating, and reporting Cohen’s κ [10] and Krippendorff’s 
+
+α [31]. Three validations also remain open: the extraction metrics on a document-grounded corpus (white-box construction with source text), whether ontology grounding raises structural quality (OC up, DNR and SRR down), and the remediation map, namely that the lever indicated by a diagnosed stage resolves a substantial share of failures at a measurable, deployment-specific cost. 
+
+# 6 Conclusion 
+
+We presented TRIAGE , a stage-aware instrumentation framework that instru-ments automated, document-grounded graph-RAG pipelines end to end, with construction-stage metrics that apply to any extracted KG, automated or not. Informed by the TKG engineering methodology [2] and adapted to the au-tomated setting, TRIAGE attaches stage-specific, independently interpretable confidence metrics to three phases ( KG Implementation , KG Validation , and 
+
+KG Usage ) without requiring a single composite score and without relying on gold annotations at deployment time. Its central question is deliberately twofold: not only whether the graph underpinning retrieval can be trusted, but at what retrieval and computational cost it can be used. 
+
+Summary of contributions. Three ideas distinguish TRIAGE beyond the metric definitions themselves. First, it organizes metrics by two computability axes, the 42 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+external reference each needs (none, an ontology, or a gold standard) and the visibility of the extraction (white-box or black-box), making explicit which sig-nals survive in gold-free, schema-free, or black-box settings and showing that the core assessment degrades gracefully rather than failing when conditions are not ideal; the gold-requiring metrics sit apart as offline calibration yardsticks rather than deployment signals. Second, it separates primary signals from derived ones through a dependency analysis, yielding a minimal set worth monitoring. Third, and most distinctively, it shows that the usage-stage metrics form a diagnostic chain whose first broken link localizes a failure, and that this localization maps to the stage levers that can remedy it: extraction, graph-and-schema, or retrieval. Targeting the update to the diagnosed stage is what separates TRIAGE from a lifecycle that triggers an undifferentiated update; the relative cost of the levers is deployment-specific and left to empirical measurement (section 5). A usage-stage proof of concept gives preliminary, single-probe evidence for this diagnostic claim: a capable reader can answer from its parametric knowledge when retrieval has missed the needed evidence, so retrieval adequacy must be scored before and independently of the answer (section 5). 
+
+TRIAGE as one iteration of the TKG lifecycle. TRIAGE covers the method-ology dimension of TKG for one KG version. Metric breaches, such as a rising DNR or low aggregate ERC/RRS over a query class, or rising RPC, provide prin-cipled triggers for a new KG Update cycle, targeted at the diagnosed stage. This closes the loop with the TKG lifecycle dimension and points toward continuous, monitored KG evolution in operational deployments. 
+
+Limitations. Several limitations should be acknowledged. First, validation is still partial: a usage-stage proof of concept exercises the predictive claim, but the full suite, the remediation map, and the cross-stage links are specified rather than tested at scale; section 5 gives the protocol for the remaining validation. Sec-ond, TCS relies on LLM token log-probabilities as a confidence proxy, which are known to be imperfectly calibrated for factual correctness [30,29]; a mis-calibrated TCS may flag correct triples or pass incorrect ones. Third, the KG Validation expert step is specified methodologically but its cost and reliability at scale remain open. Fourth, the schema-dependent metrics (OC, SC, LC, CMP) assume an available ontology; without one, assessment relies on the schema-free subset, as section 4 makes explicit. Fifth, ARF uses lexical relation matching, which may miss paraphrased or implicit relational claims. Sixth, the separation of primary from derived metrics is definitional rather than statistical: genuine non-redundancy can only be established empirically (section 5), and some primaries may prove correlated in practice. Seventh, the usage-stage links are necessary but not sufficient conditions: a structural signal such as RRS cannot distinguish a correct connecting path from a spurious one, so a satisfied chain certifies re-trievability, not answer correctness. Eighth, the usage metrics depend on reliable query- and answer-entity extraction, so errors in Mq , Ma, or their grounding into 
+
+V gq and V ga propagate into QGR, ERC, RRS, AGR, AUR, and ARF, and the TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 43 
+
+decision thresholds θ estimated on a benchmark may not transfer unchanged to deployment. 
+
+Future work. Beyond empirical validation, TRIAGE opens several directions: (i) extending to multi-hop, multi-entity query decomposition; (ii) automating 
+
+KG Update triggers from metric thresholds over a rolling query window, with the diagnosis selecting the levers; (iii) formalizing the KG Validation expert step with active learning to reduce annotation cost; (iv) replacing lexical ARF with an NLI-based relational-faithfulness check; and (v) surfacing the stage-localized metrics in a per-phase diagnostic interface that maps metric drifts onto the remediation map, enabling continuous, cost-aware KG health monitoring in operational deployments. 
+
+# Acknowledgments 
+
+The authors thank Sabrina Chaouche and Emna Amdouni for their help and remarks. 44 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+# References 
+
+1. Akindele, O.K., Mishra, B.K., Wertheim, K.Y.: A knowledge graph and a tripartite evaluation framework make retrieval-augmented generation scalable and transpar-ent. arXiv preprint arXiv:2509.19209 (2025) 2. Amdouni, E., Mattioli, L., Adjed, F., Awadid, A., Gonzalez, M., Cantat, L., Mat-tioli, J.: An end-to-end trustworthy knowledge graph engineering methodology. In: 16th International Conference on Performance, Safety and Robustness in Complex Systems and Applications (PESARO) (2026) 3. Banko, M., Cafarella, M.J., Soderland, S., Broadhead, M., Etzioni, O.: Open in-formation extraction from the web. In: Proceedings of the 20th International Joint Conference on Artificial Intelligence (IJCAI). pp. 2670–2676 (2007) 4. Bengio, Y., Ducharme, R., Vincent, P., Jauvin, C.: A neural probabilistic language model. Journal of Machine Learning Research 3, 1137–1155 (2003), http://www. jmlr.org/papers/v3/bengio03a.html 
+
+5. Bhardwaj, S., Aggarwal, S., Mausam: CaRB: A crowdsourced benchmark for open IE. In: Proceedings of the 2019 Conference on Empirical Methods in Natural Lan-guage Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP). pp. 6262–6267. Association for Computational Linguistics, Hong Kong, China (2019). https://doi.org/10.18653/v1/D19-1651 ,
+
+https://aclanthology.org/D19-1651/ 
+
+6. Bordes, A., Usunier, N., Garcia-Duran, A., Weston, J., Yakhnenko, O.: Trans-lating embeddings for modeling multi-relational data. In: Advances in Neural Information Processing Systems (2013), https://papers.nips.cc/paper/2013/ hash/1cecc7a77928ca8133fa24680a88d2f9-Abstract.html , introduces the stan-dard link prediction evaluation by ranking corrupted head/tail entities and reports MR and Hits@10. 7. Bowman, S.R., Angeli, G., Potts, C., Manning, C.D.: A large annotated corpus for learning natural language inference. In: Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing. pp. 632–642. Association for Computational Linguistics, Lisbon, Portugal (2015). https://doi.org/10.18653/ v1/D15-1075 , https://aclanthology.org/D15-1075/ 
+
+8. Brown, T.B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., Neelakantan, A., Shyam, P., Sastry, G., Askell, A., et al.: Language models are few-shot learners. In: Advances in Neural Information Processing Systems. vol. 33, pp. 1877–1901 (2020), https://proceedings.neurips.cc/paper/2020/ hash/1457c0d6bfcb4967418bfb8ac142f64a-Abstract.html 
+
+9. Chen, B., Guo, Z., Yang, Z., Chen, Y., Chen, J., Liu, Z., Shi, C., Yang, C.: Pathrag: Pruning graph-based retrieval augmented generation with relational paths. In: Pro-ceedings of the AAAI conference on artificial intelligence. vol. 40, pp. 30183–30191 (2026) 10. Cohen, J.: A coefficient of agreement for nominal scales. Educational and Psychological Measurement 20 (1), 37–46 (1960). https://doi.org/10.1177/ 001316446002000104 
+
+11. Cui, L., Wei, F., Zhou, M.: Neural open information extraction. In: Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (ACL). pp. 407–413 (2018). https://doi.org/10.18653/v1/P18-2065 
+
+12. Dettmers, T., Minervini, P., Stenetorp, P., Riedel, S.: Convolutional 2d knowledge graph embeddings. In: Proceedings of the AAAI Conference on Artificial Intel-ligence. vol. 32, pp. 1811–1818 (2018). https://doi.org/10.1609/aaai.v32i1. TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 45 
+
+11573 , https://ojs.aaai.org/index.php/AAAI/article/view/11573 , uses the standard ranking protocol for link prediction and reports MRR and Hits@K (com-monly Hits@1/3/10). 13. Edge, D., Trinh, H., Cheng, N., Bradley, J., Chao, A., Mody, A., Truitt, S., Metropolitansky, D., Ness, R.O., Larson, J.: From local to global: A graph RAG approach to query-focused summarization. arXiv preprint arXiv:2404.16130 (2024) 14. Efron, B.: Better bootstrap confidence intervals. Journal of the American Statis-tical Association 82 (397), 171–185 (1987). https://doi.org/10.1080/01621459. 1987.10478410 , https://www.jstor.org/stable/2289144 
+
+15. Efron, B., Tibshirani, R.J.: An Introduction to the Bootstrap. Chapman and Hall/CRC, New York, NY, USA (1994). https://doi.org/10.1201/ 9780429246593 , https://www.taylorfrancis.com/books/mono/10.1201/ 9780429246593/introduction-bootstrap-bradley-efron-tibshirani 
+
+16. Fan, D., Xue, Z., Liu, S., Tan, Q.: Do we still need graphrag? benchmarking rag and graphrag for agentic search systems. arXiv preprint arXiv:2604.09666 (2026) 17. F¨ arber, M., Bartscherer, F., Menne, C., Rettinger, A.: Linked data quality of DB-pedia, Freebase, OpenCyc, Wikidata, and YAGO. Semantic Web 9(1), 77–129 (2018). https://doi.org/10.3233/SW-170275 
+
+18. Gelin, R.: Confiance.ai program: Software engineering for a trustworthy AI. In: Producing Artificial Intelligent Systems, pp. 11–29. Studies in Computational In-telligence, Springer (2024). https://doi.org/10.1007/978-3-031-55817-7_2 
+
+19. Guo, C., Pleiss, G., Sun, Y., Weinberger, K.Q.: On calibration of modern neural networks. In: Proceedings of the 34th International Conference on Machine Learn-ing (ICML). vol. 70, pp. 1321–1330 (2017), https://arxiv.org/abs/1706.04599 
+
+20. Guo, Z., Xia, L., Yu, Y., Ao, T., Huang, C.: Lightrag: Simple and fast retrieval-augmented generation. arXiv preprint arXiv:2410.05779 2(3) (2024) 21. Han, H., Ma, L., Wang, Y., Shomer, H., Lei, Y., Qi, Z., Guo, K., Hua, Z., Long, B., Liu, H., et al.: Rag vs. graphrag: A systematic evaluation and key insights. arXiv preprint arXiv:2502.11371 (2025) 22. High-Level Expert Group on Artificial Intelligence (AI HLEG): Ethics guidelines for trustworthy AI. Tech. rep., European Commission, Brus-sels (2019), https://digital-strategy.ec.europa.eu/en/library/ ethics-guidelines-trustworthy-ai 
+
+23. Hogan, A., Blomqvist, E., Cochez, M., d’Amato, C., de Melo, G., Gutierrez, C., Kirrane, S., Gayo, J.E.L., Navigli, R., Neumaier, S., et al.: Knowledge graphs. ACM Computing Surveys 54 (4), 1–37 (2021). https://doi.org/10.1145/3447772 
+
+24. Honovich, O., Aharoni, R., Herzig, J., Taitelbaum, H., Kukliansy, D., Cohen, V., Scialom, T., Szpektor, I., Hassidim, A., Matias, Y.: TRUE: Re-evaluating factual consistency evaluation. In: Proceedings of the 2022 Conference of the North Amer-ican Chapter of the Association for Computational Linguistics: Human Language Technologies. pp. 3905–3920. Association for Computational Linguistics, Seat-tle, United States (2022). https://doi.org/10.18653/v1/2022.naacl-main.287 ,
+
+https://aclanthology.org/2022.naacl-main.287/ 
+
+25. Hoyt, C.T., Berrendorf, M., Galkin, M., Tresp, V., Gyori, B.M.: A unified frame-work for rank-based evaluation metrics for link prediction in knowledge graphs. arXiv preprint (2022), https://arxiv.org/pdf/2203.07544 , surveys and formal-izes rank-based metrics for KG link prediction, motivating their use in the absence of explicit negatives. 26. Jaccard, P.: ´Etude comparative de la distribution florale dans une portion des alpes et du jura. Bulletin de la Soci´ et´ e Vaudoise des Sciences Naturelles 37 , 547–579 46 Axel TahmasebiMoradi, Lucas Schott, Martin Royer (1901), https://commons.wikimedia.org/wiki/File:%C3%89tude_comparative_ de_la_distribution_florale_dans_une_portion_des_Alpes_et_du_Jura.pdf 
+
+27. Ji, H., Nothman, J., Hachey, B.: Overview of TAC-KBP2014 entity discovery and linking tasks. In: Proceedings of the Text Analysis Conference (TAC) (2014), http: //blender.cs.illinois.edu/paper/edl2014overview.pdf 
+
+28. Ji, Z., Lee, N., Frieske, R., et al.: Survey of hallucination in natural language generation. ACM Computing Surveys 55 (12), 1–38 (2023). https://doi.org/10. 1145/3571730 
+
+29. Jiang, Z., Araki, J., Ding, H., Neubig, G.: How can we know when lan-guage models know? on the calibration of language models for ques-tion answering. Transactions of the Association for Computational Lin-guistics 9, 962–977 (2021). https://doi.org/10.1162/tacl_a_00407 ,
+
+https://direct.mit.edu/tacl/article/doi/10.1162/tacl_a_00407/107277/ How-Can-We-Know-When-Language-Models-Know-On-the 
+
+30. Kadavath, S., Conerly, T., Askell, A., Henighan, T., Drain, D., Perez, E., Schiefer, N., Hatfield-Dodds, Z., DasSarma, N., Tran-Johnson, E., et al.: Language models (mostly) know what they know (2022). https://doi.org/10.48550/arXiv.2207. 05221 , https://arxiv.org/abs/2207.05221 
+
+31. Krippendorff, K.: Content Analysis: An Introduction to Its Methodology. SAGE Publications, Thousand Oaks, CA, 2 edn. (2004) 32. Kuhn, H.W.: The hungarian method for the assignment problem. Naval Re-search Logistics Quarterly 2(1–2), 83–97 (1955). https://doi.org/10.1002/nav. 3800020109 
+
+33. Kumar, M., Sarmah, B., Pasquali, S.: Finreflectkg–hallubench: Graphrag hal-lucination benchmark for financial question answering systems. arXiv preprint arXiv:2603.20252 (2026) 34. Laudy, C., Alonso, V., Reverdy, C., Dreo, J.: First high-level information fusion competition: Feedback and lessons learned. In: Proceedings of the 28th Interna-tional Conference on Information Fusion (FUSION) (2025) 35. Lewis, P., Perez, E., Piktus, A., Petroni, F., Karpukhin, V., Goyal, N., K¨ uttler, H., Lewis, M., Yih, W.t., Rockt¨ aschel, T., Riedel, S., Kiela, D.: Retrieval-augmented generation for knowledge-intensive NLP tasks. In: Advances in Neural Information Processing Systems. vol. 33, pp. 9459–9474 (2020) 36. Lin, J., Liu, S., Song, J., Wang, S., Shun, J., Zhu, Y.: Efficient and transfer-able agentic knowledge graph RAG via reinforcement learning. arXiv preprint arXiv:2509.26383 (2025) 37. Ling, C., Zhao, X., Zhang, X., Cheng, W., Liu, Y., Sun, Y., Oishi, M., Osaki, T., Matsuda, K., Chen, J., Bo, X., Zhang, T., et al.: Improving open information extraction with large language models: A study on demonstration uncertainty. arXiv preprint arXiv:2309.03433 (2023) 38. Liu, H., et al.: HopRAG: Multi-hop reasoning for logic-aware retrieval-augmented generation. arXiv preprint arXiv:2502.12442 (2025) 39. Luo, L., Zhao, Z., Haffari, G., Li, Y.F., Gong, C., Pan, S.: Graph-constrained reasoning: Faithful reasoning on knowledge graphs with large language models. arXiv preprint arXiv:2410.13080 (2024) 40. Mattioli, J., Mattioli, L., Gonzalez, M.: A brief overview of key quality metrics for knowledge graph solution: Illustration on digital NOTAMs. Proceedings of the AAAI Symposium Series 7(1), 206–213 (2025). https://doi.org/10.1609/ aaaiss.v7i1.36888 
+
+41. Mavromatis, C., Karypis, G.: Gnn-rag: Graph neural retrieval for large language model reasoning. arXiv preprint arXiv:2405.20139 (2024) TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 47 42. Maynez, J., Narayan, S., Bohnet, B., McDonald, R.: On faithfulness and factuality in abstractive summarization. In: Proceedings of ACL (2020) 43. Min, S., Lyu, X., Holtzman, A., Artetxe, M., Lewis, M., Hajishirzi, H., Zettlemoyer, L.: Rethinking the role of demonstrations: What makes in-context learning work? In: Proceedings of EMNLP (2022) 44. Nickel, M., Murphy, K., Tresp, V., Gabrilovich, E.: A review of relational machine learning for knowledge graphs. Proceedings of the IEEE 104 (1), 11–33 (2015). 
+
+https://doi.org/10.1109/JPROC.2015.2483592 
+
+45. OECD: Recommendation of the council on artificial intelligence. OECD Legal In-struments, OECD/LEGAL/0449 (2019), https://legalinstruments.oecd.org/ en/instruments/OECD-LEGAL-0449 
+
+46. Paulheim, H.: Knowledge graph refinement: A survey of approaches and evalua-tion methods. Semantic Web 8(3), 489–508 (2017). https://doi.org/10.3233/ SW-160218 
+
+47. Reimers, N., Gurevych, I.: Sentence-bert: Sentence embeddings using siamese bert-networks. In: Proceedings of the 2019 Conference on Empirical Methods in Nat-ural Language Processing and the 9th International Joint Conference on Natural Language Processing (EMNLP-IJCNLP). pp. 3980–3990. Association for Compu-tational Linguistics, Hong Kong, China (2019). https://doi.org/10.18653/v1/ D19-1410 , https://aclanthology.org/D19-1410/ 
+
+48. Ruffinelli, D., Broscheit, S., Gemulla, R.: You can teach an old dog new tricks! on training knowledge graph embeddings. In: International Conference on Learning Representations (ICLR) (2020), https://openreview.net/forum?id=BkxSmlBFvr 
+
+49. Salton, G., McGill, M.J.: Introduction to Modern Information Retrieval. McGraw-Hill, New York, NY, USA (1983) 50. Shen, W., Wang, J., Han, J.: Entity linking with a knowledge base: Issues, techniques, and solutions. IEEE Transactions on Knowledge and Data Engi-neering 27 (2), 443–460 (2015). https://doi.org/10.1109/TKDE.2014.2327028 ,
+
+https://www.bibsonomy.org/bibtex/27bedb76858c3a0d0094aa8f9392ce270 
+
+51. Stanovsky, G., Dagan, I.: Creating a large benchmark for open information ex-traction. In: Proceedings of the 2016 Conference on Empirical Methods in Nat-ural Language Processing. pp. 2300–2305. Association for Computational Lin-guistics, Austin, Texas (2016). https://doi.org/10.18653/v1/D16-1252 , https: //aclanthology.org/D16-1252/ 
+
+52. Sun, Z., Deng, Z.H., Nie, J.Y., Tang, J.: Rotate: Knowledge graph embedding by relational rotation in complex space. In: International Conference on Learning Representations (ICLR) (2019), https://openreview.net/forum?id=HkgEQnRqYQ ,a standard KGE paper evaluating link prediction with rank-based metrics such as MRR and Hits@K. 53. Tabassi, E.: Artificial intelligence risk management framework (AI RMF 1.0). Tech. Rep. NIST AI 100-1, National Institute of Standards and Technology (2023). 
+
+https://doi.org/10.6028/NIST.AI.100-1 
+
+54. Toutanova, K., Chen, D.: Observed versus latent features for knowledge base and text inference. In: Proceedings of the 3rd Workshop on Continuous Vector Space Models and their Compositionality (CVSC). pp. 57–66. Association for Computational Linguistics, Beijing, China (2015). https://doi.org/10.18653/ v1/W15-4007 , https://aclanthology.org/W15-4007/ 
+
+55. Trouillon, T., Welbl, J., Riedel, S., Gaussier, E., Bouchard, G.: Complex em-beddings for simple link prediction. In: Proceedings of the 33rd International Conference on Machine Learning (ICML). Proceedings of Machine Learning Re-search, vol. 48, pp. 2071–2080. PMLR (2016), https://proceedings.mlr.press/ 48 Axel TahmasebiMoradi, Lucas Schott, Martin Royer 
+
+v48/trouillon16.html , reports standard link prediction metrics including MRR and Hits@K on common benchmarks. 56. Tsang, H.T., Bai, J., Huang, H., Xiao, Q., Zheng, T., Xu, B., Liu, S., Song, Y.: AutoGraph-R1: End-to-end reinforcement learning for knowledge graph construc-tion. arXiv preprint arXiv:2510.15339 (2025) 57. Wang, P., Xu, B., Zhang, L., Wang, S., Du, M., Zhu, C., Mao, Z.: Wildgraphbench: Benchmarking graphrag with wild-source corpora. arXiv preprint arXiv:2602.02053 (2026) 58. Wang, S., et al.: Reasoning of large language models over knowledge graphs with super-relations. In: International Conference on Learning Representations (ICLR) (2025), arXiv:2503.22166 59. Wang, X., Wei, J., Schuurmans, D., Le, Q.V., Chi, E.H., Narang, S., Chowdhery, A., Zhou, D.: Self-consistency improves chain of thought reasoning in language models. In: International Conference on Learning Representations (ICLR) (2023). https: //doi.org/10.48550/arXiv.2203.11171 , https://arxiv.org/abs/2203.11171 
+
+60. Wei, J., Wang, X., Schuurmans, D., Bosma, M., et al.: Chain-of-thought prompting elicits reasoning in large language models. In: Advances in Neural Information Processing Systems (2022) 61. Williams, A., Nangia, N., Bowman, S.: A broad-coverage challenge corpus for sen-tence understanding through inference. In: Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational Linguis-tics: Human Language Technologies, Volume 1 (Long Papers). pp. 1112–1122. As-sociation for Computational Linguistics, New Orleans, Louisiana (2018). https: //doi.org/10.18653/v1/N18-1101 , https://aclanthology.org/N18-1101/ 
+
+62. Xiang, Z., Wu, C., Zhang, Q., Chen, S., Hong, Z., Huang, X., Su, J.: When to use graphs in rag: A comprehensive analysis for graph retrieval-augmented generation. arXiv preprint arXiv:2506.05690 (2025) 63. Yao, S., Zhao, J., Yu, D., et al.: React: Synergizing reasoning and acting in language models. In: International Conference on Learning Representations (2023) 64. Yih, W.t., Richardson, M., Meek, C., Chang, M.W., Suh, J.: The value of semantic parse labeling for knowledge base question answering. In: Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics (ACL). pp. 201– 206 (2016). https://doi.org/10.18653/v1/P16-2033 
+
+65. Zarrinkia, Y., Srinivasan, V., Thomo, A.: The reasoning bottleneck in graph-rag: Structured prompting and context compression for multi-hop qa. arXiv preprint arXiv:2603.14045 (2026) 66. Zaveri, A., Rula, A., Maurino, A., Pietrobon, R., Lehmann, J., Auer, S.: Quality assessment for linked data: A survey. Semantic Web 7(1), 63–93 (2016). https: //doi.org/10.3233/SW-150175 
+
+67. Zhang, H., Si, J., Yan, G., Qi, B., Cai, P., Mao, S., Wang, D., Shi, B.: RAKG: Document-level retrieval augmented knowledge graph construction. arXiv preprint arXiv:2504.09823 (2025) 68. Zhang, Y., Dai, H., Kozareva, Z., Smola, A., Song, L.: Variational reasoning for question answering with knowledge graph. In: Proceedings of the AAAI conference on artificial intelligence. vol. 32 (2018) 69. Zhao, T., Wallace, E., Feng, S., Klein, D., Singh, S.: Calibrate before use: Improving few-shot performance of language models. In: Proceedings of ICML (2021) 70. Zhou, D., Zhu, Y., Wang, X., Zhou, H., He, Y., Chen, J., Staab, S., Kharlamov, E.: What breaks knowledge graph based rag? benchmarking and empirical insights into reasoning under incomplete knowledge. arXiv preprint arXiv:2508.08344 (2025) TRIAGE: Trustworthy Retrieval Instrumentation And Graph Evaluation 49 71. Zhou, M., Huang, M., Zhu, X.: An interpretable reasoning network for multi-relation question answering. In: Proceedings of the 27th international conference on computational linguistics. pp. 2010–2022 (2018)
