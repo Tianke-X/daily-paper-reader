@@ -1,0 +1,299 @@
+Title: Graph Classification via Network Usable Information: From Representation Evaluation to Structure Selection
+
+URL Source: https://arxiv.org/pdf/2607.03587v1
+
+Published Time: Tue, 07 Jul 2026 01:18:02 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# GRAPH CLASSIFICATION VIA NETWORK USABLE INFORMATION :FROM REPRESENTATION EVALUATION TO STRUCTURE 
+
+# SELECTION 
+
+Abdullah Shaik 
+
+Cyber Security Consultant Regulatory Risk & Forensic Deloitte Transaction and Business LLP Nashville, 37076 TN 
+
+sabdullah@deloitte.com 
+
+Anwar Said 
+
+Research Scientist Vanderbilt University Nashville, 37212 TN 
+
+anwar.said@vanderbilt.edu 
+
+July 7, 2026 
+
+# ABSTRACT 
+
+We propose N ETINFO GC, a framework for graph classification that extends the Network Usable Information (NUI) paradigm to graph-level learning. Unlike conventional graph neural network approaches that rely on end-to-end training of black-box embeddings, N ETINFO GC constructs a family of permutation-invariant graph representations derived from propagation-based mechanisms and classical structural descriptors, including graph centrality measures. To evaluate representation quality, we introduce a training-free NUI estimation procedure based on clustering consistency with ground-truth labels, providing a proxy for task-relevant information without supervised learning. We further exploit the same representations using sparse-group LASSO regularization, enabling automatic selection of informative structural descriptors while suppressing redundant ones. Experiments on benchmark datasets show that classical centrality measures are highly competitive with learned propagation-based representations, and in several cases yield superior performance. Moreover, we observe a strong correlation between estimated NUI and downstream classification accuracy, validating NUI as an effective measure of representation utility. Overall, N ETINFO GC provides a unified and interpretable framework for evaluating and exploiting graph representations without requiring end-to-end neural training. 
+
+Keywords Network Usable Information · Graph Machine Learning · Graph Classification 
+
+# 1 Introduction 
+
+Graph classification is a fundamental problem in graph machine learning, where the objective is to assign labels to entire graphs based on their structural and attribute information. It arises in a wide range of applications, including molecular property prediction, program analysis, malware detection, and network security. In recent years, graph neural networks (GNNs) have become the dominant paradigm for this task due to their ability to learn expressive representations through message passing mechanisms (Kipf and Welling, 2016; Hamilton et al., 2017; Veliˇ ckovi´ c et al., 2017). Despite their success, the expressive power of GNNs is known to be theoretically bounded by the Weisfeiler–Lehman hierarchy (Xu et al., 2018), and their performance often depends heavily on architectural design and training stability. A key limitation of existing GNN-based approaches is that they rely on end-to-end learning of graph embeddings, which are typically treated as black-box representations. This makes it difficult to interpret what structural information is being utilized and whether the learned representations are inherently informative for the downstream task. Furthermore, training deep graph models can be computationally expensive and sensitive to hyperparameter choices, especially on large-scale or heterogeneous graph datasets. 
+
+> arXiv:2607.03587v1 [cs.LG] 3 Jul 2026
+
+A PREPRINT - J ULY 7, 2026 To mitigate these challenges, several pooling and hierarchical representation methods have been proposed, aiming to construct graph-level embeddings from node representations in a permutation-invariant manner (Vinyals et al., 2015; Zaheer et al., 2017; Ying et al., 2018). While these approaches improve aggregation, they still inherit the limitations of learned embeddings and do not provide explicit mechanisms to evaluate representation quality prior to training. From a data perspective, benchmark datasets such as TUDataset and Open Graph Benchmark have played a central role in evaluating graph learning methods (Morris et al., 2020; Hu et al., 2020). However, performance comparisons on these benchmarks often focus solely on predictive accuracy, without providing insight into the intrinsic informational content of different graph representations. Recently, the concept of Network Usable Information (NUI) was introduced in N ET INFO F (Lee et al., 2024), providing a principled framework for quantifying the amount of task-relevant information contained in learned representations for node-level and link-level tasks. However, extending this notion to graph-level classification remains challenging due to the absence of a unified representation space across graphs with varying sizes and structures. In this work, we propose N ETINFO GC, a framework that extends NUI to graph classification. Our approach constructs a family of permutation-invariant graph representations derived from both propagation-based mechanisms and classical structural descriptors. In particular, we incorporate graph centrality measures as complementary structural signals alongside the original N ET INFO F components, enabling a richer characterization of graph topology. Beyond representation construction, N ETINFO GC introduces a two-stage pipeline. First, we estimate NUI using an unsupervised clustering-based procedure that measures alignment between induced structure and ground-truth labels. Second, we exploit the same representations using sparse-group LASSO regularization (Simon et al., 2013), which enables automatic selection of informative structural descriptors while suppressing redundant ones. Graph-based learning has been widely studied in security-related applications such as malware classification (Malhotra et al., 2024), smart contract vulnerability detection (Zhou et al., 2020), botnet detection (Zhou et al., 2020), and adversarial robustness analysis (Pendlebury et al., 2019). These settings further motivate the need for interpretable and efficient representation evaluation mechanisms, as graph structures evolve dynamically and retraining large models may be impractical. 
+
+Contributions. Concretely, this paper makes the following contributions: • We adapt the NUI framework from node/link-level tasks to graph classification, resolving the representation-space mismatch that arises when graphs vary in size and structure. • We augment the propagation-based descriptors from NETINFOF with five classical centrality measures, and show empirically that these two families capture complementary structural information rather than redundant signal. • We design a training-free, clustering-based procedure for estimating NUI at the graph level, giving a label-aware but model-free proxy for representation quality. • Empirically, we find that degree centrality is a consistently strong - sometimes the strongest - representation across both benchmarks, and that NUI tracks downstream accuracy closely enough to serve as a pre-training screening criterion. 
+
+# 2 NetinfoGC for Graph Classification 
+
+This section introduces N ETINFO GC, a graph classification framework that extends the Network Usable Information (NUI) paradigm of N ET INFO F (Lee et al., 2024) to graph-level learning. While the underlying principles of N ET INFO Fremain unchanged, graph classification requires representations that operate on entire graphs rather than individual nodes or edges. This introduces the need for permutation-invariant, fixed-dimensional graph embeddings that can be compared across graphs of varying sizes and structures. 
+
+2.1 Problem Definition 
+
+Let 
+
+G = {(Gi, y i)}Ni=1 
+
+denote a dataset of N attributed graphs, where each graph 
+
+Gi = ( Vi, E i, X i)
+
+consists of a node set Vi, an edge set Ei, and a node feature matrix 
+
+Xi ∈ R|Vi|× f .
+
+2A PREPRINT - J ULY 7, 2026 Each graph is associated with a label 
+
+yi ∈ { 1, . . . , c },
+
+where c denotes the number of classes. The objective of graph classification is to learn a function 
+
+f : G → { 1, . . . , c }
+
+that maps unseen graphs to their correct labels. Unlike node-level tasks, graph classification requires learning from heterogeneous graph instances with varying sizes, requiring invariant and fixed-dimensional representations. NETINFO GC addresses this by first constructing graph-level representations from multiple structural descriptors, and then measuring and exploiting their Network Usable Information in a unified framework. 
+
+2.2 Graph-level Representation Learning 
+
+NETINFO GC constructs graph representations from a unified set of structural descriptors that capture complementary aspects of topology, feature propagation, and vertex importance. 
+
+Unified descriptor family. We define a set of representation functions: 
+
+M = {U, R, F, P, S, Deg, Bet, Close, P R, Eig },
+
+where each m ∈ M denotes either a propagation-based descriptor from N ET INFO F or a classical centrality measure. For each graph Gi, each descriptor induces a node-level representation: 
+
+Z(m) 
+
+> i
+
+∈ R|Vi|× d.
+
+Graph-level aggregation. To obtain permutation-invariant representations, we apply a READOUT function: 
+
+h(m) 
+
+> i
+
+= READOUT( Z(m) 
+
+> i
+
+) ∈ Rd.
+
+We use mean pooling as the default READOUT operator, ensuring invariance to node ordering and robustness across graphs of varying size. 
+
+Centrality-based representations. In addition to propagation-based descriptors, we incorporate classical centrality measures to capture structural importance from a complementary perspective. For each node v ∈ Vi, we compute: 
+
+cdeg (v), cbet (v), cclose (v), cpr (v), ceig (v).
+
+Each centrality measure produces a vector: 
+
+c(m) 
+
+> i
+
+∈ R|Vi|.
+
+We treat this vector as a node-level feature: 
+
+Z(m) 
+
+> i
+
+= c(m) 
+
+> i
+
+,
+
+which is then aggregated using the same READOUT operator: 
+
+h(m) 
+
+> i
+
+= READOUT( Z(m) 
+
+> i
+
+).
+
+Unified graph representation. Each graph is represented by the set: 
+
+Hi = {h(m) 
+
+> i
+
+| m ∈ M} .
+
+The final representation used for downstream tasks is constructed via concatenation: 
+
+xi = m∈M h(m) 
+
+> i
+
+∈ R|M|· d.
+
+This representation integrates propagation-based, feature-based, and centrality-based structural information into a single unified embedding space. 3A PREPRINT - J ULY 7, 2026 
+
+2.3 NetinfoGC for NUI Measurement 
+
+To estimate Network Usable Information (NUI), we evaluate whether a graph representation induces structure that is aligned with the true class labels. We consider the dataset of graph embeddings: 
+
+X = {xi}Ni=1 .
+
+Unsupervised clustering. We apply k-means clustering to X to obtain pseudo-labels: 
+
+ˆyi = Cluster( xi),
+
+where k ≥ c. Before clustering, embeddings are ℓ2-normalized. 
+
+NUI estimation. We define the conditional entropy: 
+
+H(Y | ˆY ) = − X
+
+> y, ˆy
+
+p(y, ˆy) log p(y | ˆy).
+
+The N ETINFO GC score is defined as: 
+
+NetinfoGC = 2 −H(Y | ˆY ).
+
+Lower entropy indicates stronger alignment between clustering structure and ground-truth labels, implying higher usable information. 
+
+2.4 NetinfoGC for NUI Exploitation 
+
+For classification, we concatenate all graph representations: 
+
+xi = m∈M h(m) 
+
+> i
+
+.
+
+We use a logistic regression model with sparse-group LASSO regularization. Let β(m) denote parameters associated with descriptor m. The optimization problem is: 
+
+min  
+
+> β
+
+L(β) + λ1
+
+X
+
+> m∈M
+
+∥β(m)∥2 + λ2∥β∥1.
+
+This induces: - group-level sparsity (removal of entire descriptors), - feature-level sparsity (within descriptors). Descriptors with low Network Usable Information are automatically suppressed, while informative ones are retained. Prediction is performed as: 
+
+ˆyi = arg max  
+
+> y
+
+σ(x⊤ 
+
+> i
+
+β).
+
+2.5 Computational Complexity 
+
+Representation construction is dominated by propagation operations: 
+
+O(k¯ed ),
+
+and READOUT: 
+
+O(¯ nd ).
+
+Centrality computation varies: - degree: O(¯ e) - betweenness/closeness: O(¯ n¯e) - PageRank/eigenvector: O(T ¯e)
+
+NUI measurement via k-means: 
+
+O(TkN |M| d).
+
+Sparse-group LASSO training scales linearly: 
+
+O(N |M| d).
+
+Overall complexity remains linear in graph size for sparse graphs. 4A PREPRINT - J ULY 7, 2026 
+
+2.6 Applications 
+
+NETINFO GC applies to any domain involving graph classification, including molecular property prediction, cybersecu-rity, program analysis, and communication networks. A key advantage is that it enables estimation of representation quality before training complex graph models. In cybersecurity, graphs representing program execution or network traffic can be analyzed to determine whether structural descriptors contain sufficient discriminative information. In molecular learning, it allows evaluation of whether structural or centrality-based representations are informative before training GNNs. Overall, N ETINFO GC provides a principled framework for evaluating and exploiting graph representations through Network Usable Information. 
+
+# 3 Numerical Evaluation 
+
+We evaluate N ETINFO GC on standard graph classification benchmarks to study (i) the effectiveness of graph-level Network Usable Information (NUI) as a predictor of downstream performance, and (ii) the contribution of different structural descriptors, including both the original N ET INFO F components and classical graph centrality measures. 
+
+3.1 Experimental Setup 
+
+We conduct experiments on the IMDB-BINARY and IMDB-MULTI datasets from the TU benchmark suite (Morris et al., 2020). Each graph is converted into a set of graph-level embeddings using the READOUT-based construction described in Section 2.2. We evaluate representations derived from both the original N ET INFO F components and five centrality-based descriptors: degree, betweenness, closeness, PageRank, and eigenvector centrality. Unless otherwise specified, we use an embedding dimension of d = 32 , 50 histogram bins, propagation depth k = 32 
+
+for propagation-based descriptors, learning rate 10 −3, and train all models for 500 epochs using sparse-group LASSO regularization. All results are reported as mean ± standard deviation over multiple independent runs, including NUI score, validation accuracy, and test accuracy. 
+
+3.2 Results 
+
+Table 1 summarizes the performance of different graph representations across both datasets. Overall, we observe that structural descriptors exhibit varying degrees of usefulness, and no single representation is universally optimal across datasets. 
+
+Effectiveness of centrality-based representations. A key observation is that classical centrality measures provide competitive and in some cases superior graph classification performance compared to propagation-based representations. In particular, degree centrality consistently achieves the strongest performance across both datasets, reaching 70 .54% 
+
+test accuracy on IMDB-BINARY and 55 .08% on IMDB-MULTI . This is also reflected in its high NUI score, suggesting a strong alignment between the amount of usable structural information and downstream predictive performance. Other centrality measures show dataset-dependent behavior. PageRank achieves competitive performance on 
+
+IMDB-BINARY , while betweenness and closeness centralities provide moderate improvements in specific settings. In contrast, eigenvector centrality performs less consistently, particularly on IMDB-MULTI , indicating that global spectral influence alone may not sufficiently capture discriminative graph-level information. 
+
+Comparison with N ET INFO F components. Among the original N ET INFO F descriptors, propagation-based and neighborhood-based representations remain competitive but are generally outperformed by the most informative centrality-based representations. This suggests that classical structural measures capture complementary information not fully encoded by propagation-based mechanisms. 
+
+Combination of representations. We further evaluate a combined representation that aggregates all descriptors. Interestingly, this full combination does not consistently outperform the best individual descriptor. This indicates that simply increasing representation dimensionality does not guarantee improved performance, and may introduce redundancy that dilutes discriminative structure. This observation further motivates the role of NUI as a principled criterion for evaluating representation usefulness prior to model construction. 5A PREPRINT - J ULY 7, 2026 Table 1: Performance of different graph representations on graph classification benchmarks. Results are reported as mean ± standard deviation (%). The best test accuracy for each dataset is shown in bold.                                                                                                                                                                       
+
+> Dataset Representation Mean NUI Validation Accuracy Test Accuracy IMDB-BINARY Structure 61 .14 ±0.83 62 .67 ±1.42 68 .43 ±1.41
+> Neighborhood 60 .89 ±1.67 68 .33 ±2.39 66 .70 ±1.84
+> Propagation (Control) 63 .54 ±1.20 64 .48 ±1.07 68 .42 ±1.84
+> Degree Centrality 68 .29 ±1.31 75 .34 ±1.08 70 .54 ±1.62
+> Betweenness Centrality 60 .27 ±0.83 67 .05 ±1.49 69 .14 ±0.83
+> Closeness Centrality 59 .79 ±1.20 66 .38 ±2.01 62 .03 ±2.39
+> PageRank Centrality 63 .82 ±1.65 62 .85 ±4.51 70 .76 ±3.50
+> Eigenvector Centrality 60 .32 ±1.15 55 .53 ±2.86 62 .03 ±1.38
+> All Components 55 .42 ±1.67 66 .30 ±2.53 65 .74 ±0.98
+> IMDB-MULTI Structure 40 .38 ±0.34 43 .03 ±6.93 40 .30 ±0.80
+> Neighborhood 40 .99 ±0.53 49 .41 ±0.44 37 .44 ±1.55
+> Propagation (Control) 41 .30 ±0.59 51 .50 ±0.73 40 .63 ±5.71
+> Degree Centrality 42 .85 ±0.34 57 .03 ±1.30 55 .08 ±6.38
+> Betweenness Centrality 41 .71 ±0.74 50 .46 ±1.45 42 .51 ±2.64
+> Closeness Centrality 40 .57 ±1.00 44 .99 ±9.25 48 .50 ±4.61
+> PageRank Centrality 40 .32 ±0.54 45 .18 ±7.22 45 .05 ±4.79
+> Eigenvector Centrality 41 .22 ±0.54 40 .63 ±5.21 36 .20 ±3.07
+> All Components 38 .61 ±0.64 46 .55 ±3.18 41 .41 ±5.79
+
+NUI–performance relationship. Across representations, we observe a strong empirical correlation between the estimated NUI score and downstream classification accuracy. Representations with higher NUI tend to yield better predictive performance, supporting the premise that NUI provides a meaningful proxy for task-relevant information in graph representations. 
+
+Summary. Overall, these results demonstrate that N ETINFO GC not only enables effective graph classification using a diverse set of structural descriptors, but also provides a practical mechanism to evaluate the usefulness of such representations before training. The results further highlight that classical graph-theoretic measures can play a significant role in modern graph representation learning when viewed through the lens of Network Usable Information. 
+
+# 4 Conclusion 
+
+This work extended the NUI paradigm, originally developed for node- and link-level tasks in NETINFOF, to the graph classification setting. The main technical challenge in this extension is the lack of a shared representation space across graphs of varying size and topology; NETINFOGC addresses this by combining propagation-based descriptors with classical centrality measures under a common permutation-invariant READOUT operator. Two findings stand out from the experiments. First, degree centrality alone was consistently among the strongest representations on both IMDB-BINARY and IMDB-MULTI, often matching or exceeding the propagation-based descriptors inherited from NETINFOF. This is a useful reminder that simple, interpretable structural statistics still carry substantial discriminative signal for graph-level tasks, even relative to learned or propagation-heavy alternatives. Second, the clustering-based NUI estimate tracked downstream test accuracy fairly closely across representations, which suggests it can serve as a cheap, label-aware screening step before committing to a specific representation or training a full model. One counterintuitive result deserves more scrutiny than we were able to give it here: concatenating all descriptors together did not outperform the single best descriptor, and in some cases performed worse. This points to redundancy or noise introduced by naively stacking representations, and suggests that NUI-guided descriptor selection — rather than exhaustive concatenation — may be the more principled path forward, which is precisely the role the sparse-group LASSO stage is intended to play. The current evaluation is limited to two TUDataset benchmarks, and the centrality measures we used are standard but not exhaustive. Extending NETINFOGC to larger, more heterogeneous graph collections (e.g., OGB), incorporating attributed or weighted centrality variants, and studying the theoretical relationship between NUI and generalization error are natural next steps. 6A PREPRINT - J ULY 7, 2026 
+
+# References 
+
+Hamilton, W., Ying, Z., and Leskovec, J. (2017). Inductive representation learning on large graphs. Advances in neural information processing systems , 30. Hu, W., Fey, M., Zitnik, M., Dong, Y., Ren, H., Liu, B., Catasta, M., and Leskovec, J. (2020). Open graph benchmark: Datasets for machine learning on graphs. Advances in neural information processing systems , 33:22118–22133. Kipf, T. N. and Welling, M. (2016). Semi-supervised classification with graph convolutional networks. arXiv preprint arXiv:1609.02907 .Lee, M.-C., Yu, H., Zhang, J., Ioannidis, V. N., Adeshina, S., Zheng, D., Faloutsos, C., et al. (2024). Netinfof framework: Measuring and exploiting network usable information. In International Conference on Learning Representations ,volume 2024, pages 8451–8469. Malhotra, V., Potika, K., and Stamp, M. (2024). A comparison of graph neural networks for malware classification. 
+
+Journal of Computer Virology and Hacking Techniques , 20(1):53–69. Morris, C., Kriege, N. M., Bause, F., Kersting, K., Mutzel, P., and Neumann, M. (2020). Tudataset: A collection of benchmark datasets for learning with graphs. arXiv preprint arXiv:2007.08663 .Pendlebury, F., Pierazzi, F., Jordaney, R., Kinder, J., and Cavallaro, L. (2019). {TESSERACT }: Eliminating experimen-tal bias in malware classification across space and time. In 28th USENIX security symposium (USENIX Security 19) ,pages 729–746. Simon, N., Friedman, J., Hastie, T., and Tibshirani, R. (2013). A sparse-group lasso. Journal of computational and graphical statistics , 22(2):231–245. Veliˇ ckovi´ c, P., Cucurull, G., Casanova, A., Romero, A., Lio, P., and Bengio, Y. (2017). Graph attention networks. arXiv preprint arXiv:1710.10903 .Vinyals, O., Bengio, S., and Kudlur, M. (2015). Order matters: Sequence to sequence for sets. arXiv preprint arXiv:1511.06391 .Xu, K., Hu, W., Leskovec, J., and Jegelka, S. (2018). How powerful are graph neural networks? arXiv preprint arXiv:1810.00826 .Ying, Z., You, J., Morris, C., Ren, X., Hamilton, W., and Leskovec, J. (2018). Hierarchical graph representation learning with differentiable pooling. Advances in neural information processing systems , 31. Zaheer, M., Kottur, S., Ravanbakhsh, S., Poczos, B., Salakhutdinov, R. R., and Smola, A. J. (2017). Deep sets. Advances in neural information processing systems , 30. Zhou, J., Xu, Z., Rush, A. M., and Yu, M. (2020). Automating botnet detection with graph neural networks. arXiv preprint arXiv:2003.06344 .7

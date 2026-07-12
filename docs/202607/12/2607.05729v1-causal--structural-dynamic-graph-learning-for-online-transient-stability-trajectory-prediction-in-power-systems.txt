@@ -1,0 +1,510 @@
+Title: Causal–Structural Dynamic Graph Learning for Online Transient Stability Trajectory Prediction in Power Systems
+
+URL Source: https://arxiv.org/pdf/2607.05729v1
+
+Published Time: Wed, 08 Jul 2026 00:21:11 GMT
+
+Number of Pages: 7
+
+Markdown Content:
+# Causal–Structural Dynamic Graph Learning for Online Transient Stability Trajectory Prediction in Power Systems 
+
+Ibrahim Shahbaz, Omar Al-Refai ∗, Isaac Lagoy ∗, Ahmad Al-Khateeb †,Sathvik Sankaranarayanan †, and Eman Hammad 
+
+iSTAR Lab, Texas A&M University, College Station, TX, USA 
+
+{i.shahbaz, omaralrefai, isaac lagoy, ahmad.alkhateeb, sath440, eman.hammad }@tamu.edu 
+
+Abstract —Power systems consist of dynamically coupled gen-erators, motivating the use of Graph Neural Networks (GNNs) for online transient stability prediction. Traditional GNN frame-works are often constrained by fixed admittance-based topolo-gies that fail to capture state-dependent coupling, or by data-driven methods that neglect directional influences. This paper proposes Causal Dynamic Network Representation (C-DNR), a novel framework that fuses two complementary representations of inter-generator interactions prior to temporal modeling: a dynamic structural graph inferred from measurements and a directional causal graph obtained via nonlinear causal discovery. An end-to-end learned edge-wise fusion mechanism adaptively weights these representations for each generator pair, and the resulting graph is propagated through a Gated Recurrent Unit (GRU) to predict post-fault trajectories. Evaluated on the IEEE 39-bus system, C-DNR reduces autoregressive prediction error by 73% compared to a dynamic structural baseline. Among the evaluated causal methods, only Peter–Clark Momentary Conditional Independence (PCMCI) achieves consistent improve-ments, owing to its ability to isolate directional dependencies from misleading oscillatory correlations. The learned fusion weights further provide interpretable diagnostics aligned with the electrical topology, offering transparent, pairwise insight into the prediction process. 
+
+Index Terms —Smart grid, transient stability assessment, graph neural networks, dynamic graph learning, causal discovery. 
+
+I. I NTRODUCTION 
+
+The rapid integration of inverter-based resources (IBRs) reduces system inertia and accelerates post-fault dynamics, increasing the need for reliable online transient stability assessment (TSA) [1]. In this context, conventional time-domain simulation of differential-algebraic equations is com-putationally intensive for real-time applications and requires precise contingency information that is typically unavailable at fault inception [2]. Machine learning(ML)-based TSA methods have been developed to enable faster prediction [3], [4]; however, many approaches provide only binary stability clas-sification or scalar stability margins. In practice, grid operators require full post-fault trajectories of generator states to support timely remedial actions, such as load shedding and controlled islanding. 
+
+> ∗
+
+Equal contribution as second authors. †Equal contribution as third authors. 
+
+Trajectory prediction in complex networked systems, such as traffic forecasting, has been effectively addressed using spatio-temporal GNNs (STGNNs) [5]. The Temporal Graph Convolutional Network (T-GCN) [6] exemplifies this approach by combining a Graph Convolutional Network (GCN) [7] to model spatial dependencies with a Gated Recurrent Unit (GRU) [8] to capture temporal dynamics. This formulation has led to a broad class of STGNN architectures, including attention-based methods for dynamic spatio-temporal correla-tions [9], and graph attention mechanisms with learnable edge weights [10]. Motivated by their success in networked time-series prediction, variants of STGNNs have been adopted for various power-system applications [11], [12]. A key limitation of existing graph-based TSA methods is their reliance on the fixed admittance topology of the physical network. This static-graph assumption (i) cannot adapt to post-contingency topology changes, (ii) fails to capture the state-dependent coupling that arises during large rotor-angle excursions, and (iii) often restricts predictions to stability labels rather than full trajectories. The Deep Neural Represen-tation (DNR) framework [2] partially addresses the first two limitations by learning a dynamic parametric adjacency matrix from post-fault PMU measurements. However, the resulting adjacency remains symmetric and correlation-based, capturing similarity in generator behavior without resolving directional influence, which is critical for modeling post-fault propagation dynamics. Causal discovery provides directional information absent in correlation-based models. Granger causality [13] de-fines directed influence via time-lagged predictability, ex-tended to nonlinear settings by Kernel Granger Causality (KGC) [14] and to model-free formulations by Transfer En-tropy (TE) [15]. The Peter–Clark Momentary Conditional Independence (PCMCI) algorithm [16] further integrates these principles within a constraint-based framework that accounts for autocorrelation and indirect effects. Beyond directionality, causal modeling is increasingly recognized for improving generalization and interpretability in machine learning [17], [18]. Recent work, such as CTGCN [19], incorporates causal discovery into spatio-temporal graph learning by replacing correlation-based adjacency with a PCMCI-derived causal 
+
+Accepted author manuscript at the IEEE International Conference on Communications, Control, and Computing Technologies for Smart Grids (IEEE SmartGridComm 2026). This version has been accepted for publication and may differ slightly from the final published version. arXiv:2607.05729v1 [eess.SY] 7 Jul 2026 graph, demonstrating improved predictive performance in CCUS-EOR forecasting. However, the inferred causal graph is static , which is suitable for slow geophysical processes but inadequate for power-system transients characterized by rapidly evolving dynamics. Moreover, replacing structural con-nectivity with causal adjacency discards the informative, data-driven coupling captured by dynamic parametric approaches such as DNR. To address the limitations of fixed-topology and symmet-ric correlation-based methods, we propose Causal-DNR (C-DNR) , a unified framework that integrates measurement-driven structural learning with directional causal discovery for online TSA. C-DNR fuses a dynamic parametric adjacency with a directed causal graph via a learnable edge-wise blending matrix, enabling the model to adaptively prioritize causal directionality during high-curvature transients. The framework is optimized using a Sobolev-inspired loss function to capture critical-clearing dynamics and employs a hybrid temporal switching scheme to maintain adaptability over long horizons. The positioning of C-DNR relative to the state-of-the-art is summarized in Table I. TABLE I: Positioning of C-DNR relative to State-of-the-art Spatio-temporal Modeling Frameworks.                            
+
+> Method Static Struct. Dynamic Struct. Causal Temporal
+> ML-based TSA [3], [4] ×××✓
+> GNN [7], [20] ✓×××STGNN [5], [6], [9] ✓××✓
+> DNR [2] ×✓×✓
+> CTGCN [19] ✓×✓✓
+> C-DNR ×✓✓✓
+
+II. C AUSAL DYNAMIC NETWORK REPRESENTATION 
+
+FRAMEWORK 
+
+This section presents the proposed C-DNR Graph Learning framework. We begin by formulating the prediction problem, then describe how a dynamic structural dependency graph and a directed causal graph are independently constructed and subsequently fused to guide trajectory prediction. The overall architecture is illustrated in Fig. 1. 
+
+A. Problem Formulation 
+
+Consider a power system with N generators, modeled as a graph G = ( V, E). Each generator Gi ∈ V is monitored by a phasor measurement unit (PMU), providing two measurements at every time step t: rotor angular velocity ωit and rotor angle 
+
+δit, stacked into a feature vector xit = [ ωit, δ it]⊤ ∈ R2. The full system state is Xt ∈ RN ×2. Following a fault, the model observes a short post-fault window of Tinit steps, call this Xobs ,and must predict the next τ steps, denoted ˆXpred . This window slides forward until the end of the simulation. In this work, rather than fixing the topology to a static admittance matrix, we jointly learn two complementary ad-jacency matrices: (i) As(t) ∈ RN ×N , a dynamic structural dependency graph inferred dynamically from observed system states, and (ii) Ac ∈ RN ×N , a causal adjacency matrix encod-ing statistically validated cause-effect directional relationships from time-series analysis. The two are fused into a unified graph that drives GNN message passing for prediction. 
+
+B. Dynamic Structural Dependency Learning 
+
+To replace the static admittance topology with a graph that adapts to the observed contingency, we adopt the Net-work Constructor design of DNR [2] and infer a parametric structural dependency matrix As ∈ RN ×N . The construction proceeds in three stages: node encoding, attention-weighted message passing, and a cosine-similarity readout. Each generator state is first projected to a latent embedding through a shared MLP encoder, hj = f (0)  
+
+> v
+
+(xj ) ∈ Rd.Pairwise edge embeddings are then formed by concatenating the endpoint vectors and passing them through a shared edge MLP fe, hji = fe
+
+ [hj ∥ hi], i̸ = j, where ∥ denotes concatenation. Edge embeddings are aggregated back to the node level via a GAT-style attention mechanism [10] that assigns a normalized importance score, aji , to each neighbor, 
+
+aji = exp  LeakyReLU( f ⊤ 
+
+> a
+
+[Θahj ∥ Θahi]) P 
+
+> k∈N j
+
+exp  LeakyReLU( f ⊤ 
+
+> a
+
+[Θahj ∥ Θahk])  , (1) with P 
+
+> i̸=j
+
+aji = 1 , yielding the refined node state ˜hj =
+
+f (1) 
+
+> v
+
+ P  
+
+> i̸=j
+
+aji f hji 
+
+.The refined embeddings are then mapped to a dedicated edge-weight space by a linear projection zj = Θϕ ˜hj +bϕ, and the entries of As are obtained by cosine scoring the projected vectors, 
+
+Asij = ⟨zi, zj ⟩∥zi∥ ∥ zj ∥ ∈ [−1, 1] . (2) The cosine score captures the magnitude-invariant alignment of the latent representations of generators i and j and therefore reflects functional similarity in their post-fault behavior. Sym-metry is enforced by construction, Asij = Asji , mirroring the structural symmetry of the underlying Y and Z-bus matrices. Two properties make As well suited to online transient anal-ysis: it is fully parametric in {f (0)  
+
+> v
+
+, f e, f (1)  
+
+> v
+
+, Θa, fa, Θϕ, bϕ},so it is trained jointly with the downstream temporal model, and it is re-inferred per scenario from the observed win-dow, adapting to contingencies and topology changes without retraining. However, its inherent symmetry and correlation-like readout preclude directional cause-and-effect relations between generators, motivating the causal augmentation in-troduced next. 
+
+C. Causal Discovery 
+
+The structural adjacency As derived in Sec. II-B is sym-metric and therefore cannot encode the directional propagation of post-fault disturbances. We complement it with a directed causal adjacency Ac ∈ [0 , 1] N ×N , in which Acij scores the strength with which the past of generator i influences the future of generator j. For every scenario, Ac is inferred once from the Tinit -step fault-onset PMU window and held fixed across Fig. 1: Overview of the proposed causal–structural dynamic graph learning framework. the subsequent sliding windows, mirroring the single causal snapshot an operator would receive at fault inception. To verify that the value of causal augmentation is robust to the choice of estimator rather than tied to a single method’s characteristics, we evaluate three nonlinear discovery algo-rithms drawn from complementary methodological schools. Each is tested independently as the source of Ac in the fusion of Sec. II-D, yielding three C-DNR variants compared in Sec. IV. 
+
+1) PCMCI (constraint-based) [16]: After a PC-stable par-ent search up to lag τmax , every surviving link is re-tested with the Momentary Conditional Independence statistic 
+
+Xit−τ ⊥⊥ Xjt cPa( Xjt )\{ Xit−τ }, cPa( Xit−τ ), (3) which conditions on the parents of both source and target, thereby controlling for autocorrelation and indirect paths. The resulting link strength populates Ac, PCMCI  
+
+> ij
+
+.
+
+2) Kernel Granger Causality (regression-based) [14]: 
+
+Time-delay embeddings of candidate cause Xi and target 
+
+Xj are mapped into a Gaussian RBF kernel Hilbert space, in which two ridge regressions are fitted: a restricted model 
+
+ˆfR using only the target history and a full model ˆfF that additionally conditions on the candidate cause. Causal strength is the relative residual reduction 
+
+Ac, KGC  
+
+> ij
+
+= RSS R − RSS F
+
+RSS R
+
+, (4) extending Granger’s classical linear test to the non-linear swing dynamics that govern post-fault behavior, with signifi-cance assessed by an F -test. 
+
+3) Transfer Entropy (information-theoretic) [15]: A model-free conditional-entropy difference quantifies the bits of future uncertainty in Xj that the past of Xi resolves beyond Xj ’s own history: 
+
+Ac, TE  
+
+> ij
+
+= H Xjt+1 | Xjt
+
+> (k)
+
+ − H Xjt+1 | Xjt
+
+> (k)
+
+, X it
+
+> (k)
+
+, (5) where Xjt 
+
+> (k)
+
+= ( Xjt , . . . , X jt−k+1 ). Densities are estimated with a KSG k-nearest-neighbor estimator and significance is assessed against a block-shuffle null distribution. To make the fusion process in the following Eq. (6) com-parable across estimators despite their different native scales, every Ac is rescaled to [0 , 1] before entering the blending layer. The associated hyperparameters ( τmax , kernel band-width, embedding dimension k, KSG neighbors, significance level) are reported in Sec. III. 
+
+D. Causal–Structural Graph Fusion 
+
+The structural As and the causal Ac matrices encode complementary but mutually irreducible information about inter-generator coupling. As is symmetric, dynamic, and data-driven, but cannot distinguish cause from effect. Ac is di-rected and statistically validated, but static within a window and, therefore, unable to track the system as it evolves. To adaptively balance both perspectives, we learn per-edge fusion coefficients through a convex combination, 
+
+Aij = Wij Asij + (1 − Wij ) Ac 
+
+> ij
+
+, Wij ∈ [0 , 1] , (6) where W is a trainable matrix initialized uniformly at Wij =0.5 and updated by backpropagation through the trajectory regression loss. Despite its simplicity, this fusion is the central methodolog-ical contribution of this work, and it confers the following properties that neither a structural-only nor a causal-only graph can offer: • Per-edge adaptivity: every generator pair independently selects its position on the structural–causal spectrum, with 
+
+Wij → 1 recovering the similarity-based edge and Wij →
+
+0 the directional causal edge. Therefore, W is jointly optimized with all other learnable components against the trajectory regression loss.  
+
+> •
+
+Interpretability: once trained, W itself is a diagnostic artifact; each entry Wij quantifies the relative weight of structural versus causal evidence for that specific edge, yielding an edge-resolved map of where structural dynamic coupling dominates and where directional causal reasoning is required. This property is of operational value in safety-critical power-system applications. 
+
+E. Temporal Modeling 
+
+To roll the fused graph A forward in time and recover post-fault generator trajectories, we adopt the Dynamics Predictor design of DNR [2]. A recurrent model is conditioned on graph-aggregated messages computed over a fused A matrix at each step. The construction consists of three components: a GRU-based temporal cell, graph-based message aggregation, and a residual readout. We employ a standard Gated Recurrent Unit (GRU) [8] with hidden state ht ∈ Rd, written compactly as ht =GRU( mt, ht−1), where mt denotes the input at time t, and the GRU parameters are {U∗, b∗}. The input to the cell is the graph-aggregated message MSG jt = P 
+
+> i̸=j
+
+ˆh t+1  
+
+> ji
+
+, where ˆh t+1 
+
+> ji
+
+is the edge embedding computed over A. This formulation injects the fused adjacency into the recurrence at every step. The hidden state is initialized as ˆh t0+1  
+
+> j
+
+=
+
+fMLP ([MSG jt0 , xjt0 ]) , and updated autoregressively via 
+
+ˆh t0+mj = GRU  [MSG jt0+m, xjt0+m], ˆh t0+m−1
+
+> j
+
+,m = 2 , . . . , T p. (7) The predicted state is obtained through a residual readout 
+
+ˆxjt+1 = xjt + fout (ˆh t+1  
+
+> j
+
+), so that the model learns local state increments, improving stability during rollout. 
+
+F. Training Objective and Procedure 
+
+The model is trained end-to-end by minimizing a composite objective 
+
+Ltotal = Lreg + λ · Lsparse , (8) where λ controls the sparsity regularization strength. The regression term adopts a Sobolev-type loss that su-pervises both the predicted trajectories and their temporal derivatives, 
+
+Lreg = 1
+
+M
+
+> M
+
+X
+
+> m=1
+
+h 12 MSE 
+
+ ˆX(m), X(m)
+
++ 12 MSE 
+
+
+
+∆ ˆX(m), ∆X(m)i 
+
+,
+
+(9) where ∆X(m) 
+
+> t
+
+= X(m) 
+
+> t+1
+
+−X(m) 
+
+> t
+
+denotes the first-order temporal difference, and M is the number of rollout windows. To prevent overly dense graphs, an ℓ1 penalty is applied to the structural adjacency matrix, 
+
+Lsparse = 1
+
+N 2
+
+> N
+
+X
+
+> i=1
+> N
+
+X
+
+> j=1
+
+Asij , (10) where normalization by N 2 ensures scale invariance with respect to system size. The Network Constructor parameters ΘNC , the Dynamics Predictor parameters ΘDP , and the per-edge blender W are jointly optimized end-to-end against the composite loss of Eq. (8); the causal adjacency Ac is treated as a fixed precom-puted input. Within each scenario, the structural adjacency As
+
+and its fusion with Ac are computed once from the fault-onset window and reused across all M sliding prediction windows under teacher forcing. The full procedure is summarized in Algorithm 1. 
+
+Algorithm 1 Causal–Structural DNR training                                                                                              
+
+> Require: Trajectories {X(s)}Ss=1 of shape (N, T, F ); per-scenario causal matrices {Ac, (s)}Ss=1 ; window sizes Tinit ,τ; epochs E
+> Ensure: Trained parameters Θ = {ΘNC ,ΘDP ,W}
+> 1: Randomly initialize ΘNC ,ΘDP ; set Wij ←0.5∀i, j
+> 2: for e= 1 , . . . , E do
+> 3: for each scenario sin random order do
+> 4: x0←X(s)[ : , t fault :tfault +Tinit ]▷fault-onset window 5: As←NetworkConstructor ΘNC (x0)▷Eq. (2) 6: A←W⊙As+ ( 1−W)⊙Ac, (s)▷Eq. (6) 7: Lreg ←0
+> 8: for k= 1 , . . . , M do
+> 9: xk
+> seed ←next Tinit -step seed from X(s)
+> 10: ˆXk←DynamicsPredictor ΘDP (xk
+> seed ,A)▷ τ -step rollout 11: Lreg ← L reg +1
+> MLreg ( ˆXk,X(s),k )▷Eq. (9) 12: end for
+> 13: L ← L reg +λsparse Lsparse (As)▷Eq. (8) 14: Update Θvia one Adam step on ∇ΘL
+> 15: end for
+> 16: end for
+> 17: return Θ
+
+III. E XPERIMENTAL SETUP 
+
+A. Dataset and Pre-processing 
+
+Simulations are conducted on the 10-machine IEEE 39-bus (New England) system using the ANDES Python pack-age with full GENROU round-rotor synchronous generator dynamics [21], [22]. Replicating the two scenario types in [2], each case includes either: (i) operational variability, where PQ load active power is uniformly scaled within [0 .80 , 1.20] 
+
+and subjected to a random three-phase line fault; or (ii) an 
+
+N −1 contingency, where each transmission line is sequentially short-circuited at ton = 0 seconds (s) and cleared at toff = 0 .2
+
+s. Each scenario is simulated via time-domain simulation (TDS) over t ∈ [0 , 7.2] s with a sampling interval ∆t = 0 .02 s, resulting in T = 360 time steps. For the N = 10 gen-erators, per-unit rotor speed ωi and rotor angle δi features 
+
+F are recorded, yielding a data tensor of size (N, T, F ) = (10 , 360 , 2) , corresponding to 7,200 scalar measurements per scenario. After removing cases with power-flow or TDS diver-gence, 995 valid scenarios remain. These are split (seed = 42) into 796 training, 99 validation, and 100 test samples. Z-score normalization is computed on the training set and consistently applied to the validation and test sets. 
+
+B. Evaluation Metric 
+
+Performance is quantified using the mean per-scenario au-toregressive MSE in normalized space, 
+
+MSE = 1
+
+N · Tpred · F
+
+X
+
+> i,t,f
+
+  ˆXi,f t − Xi,f t
+
+2,
+
+where F = 2 corresponds to rotor speed ω and rotor angle δ.The metric is averaged over the 100 test scenarios. 
+
+C. Implementation and Hyperparameters 
+
+All four model variants compared in this study share the same architecture, training schedule, and loss function; they differ only in the source of the causal adjacency Ac entering the per-edge fusion of Eq. (6). The structural-only DNR is recovered by clamping Wij ≡ 1, and the Hybrid uses the PCMCI-fused adjacency for the first T ∗ steps post-fault before reverting to plain DNR. Common training hyperparameters are listed in Table II, and estimator-specific causal-discovery hyperparameters in Table III. Within each τ -step prediction window, the Dynamics Pre-dictor initializes its GRU using a Tinit -step seed and then generates the subsequent τ states in a closed-loop manner. The treatment of window boundaries differs between train-ing and testing. During training, teacher forcing is applied: each window is initialized with a ground-truth Tinit -step seed, limiting error accumulation. In contrast, during testing, each window is seeded with the final Tinit steps of the preceding window’s prediction, resulting in a fully autoregressive rollout from fault onset to Tend . All MSE reported in Sec. IV follow this test-time autoregressive protocol. TABLE II: Architecture and training hyperparameters shared by all model variants.                              
+
+> Hyperparameter Value
+> Hidden dimension d32
+> Input window Tinit 10 steps ( 0.2s) Prediction horizon τ10 steps ( 0.2s) Sliding windows per trajectory M35
+> Sparsity weight λsparse 1×10 −2
+> Optimizer Adam Learning rate (Network Constructor) 4×10 −3
+> Learning rate (Dynamics Predictor) 1×10 −3
+> LR scheduler StepLR ( γ= 0 .5, step = 100 )Gradient clip (max norm) 1.0
+> Epochs 20
+> Training scenarios per epoch 500
+
+IV. R ESULTS AND ANALYSIS 
+
+A. Quantitative Comparison 
+
+Table IV reports the mean autoregressive test MSE for the DNR baseline and the three C-DNR variants. Of the three estimators, only PCMCI produces a substantial improvement, reducing the mean MSE from 4.469 ×10 −1 to 1.679 × 10 −1,TABLE III: Causal-discovery hyperparameters per estimator. All matrices are min–max rescaled to [0 , 1] before fusion.                        
+
+> Setting PCMCI KGC TE
+> Maximum lag τmax 351Significance level αsig 0.01 0.97 0.01 History / embedding length kn/a 51Kernel bandwidth (RBF) n/a γ= 0 .5n/a KSG k-nearest-neighbor count n/a n/a 8
+
+a 62 .4% relative reduction. Transfer Entropy yields a marginal gain of ∼ 8% , and Kernel Granger Causality actively de-grades performance to 6.393 × 10 −1, roughly 43% worse than the baseline. The reason is methodologically driven by TABLE IV: Mean test MSE. 
+
+Model MSE 
+
+DNR 4.469 × 10 −1
+
+DNR + KGC 6.393 × 10 −1
+
+DNR + TE 4.102 × 10 −1
+
+DNR + PCMCI 1.679 × 10 −1
+
+PCMCI’s Momentary Conditional Independence test conditions on the parents of both source and target, suppressing misleading edges induced by autocorrelation and indirect coupling among generators that swing together post-fault. KGC’s pairwise regression contrast lacks this confounder control and labels co-moving generators as mutually causal, producing a noisy graph; TE’s nearest-neighbor entropy estimator captures some directional signal but with high variance at the short post-fault horizons used for inference. We therefore adopt PCMCI as the causal estimator for the remaining experiments. 
+
+B. Hybrid Switch Point Sensitivity 
+
+The quantitative comparison in Sec. IV-A shows that in-corporating the PCMCI-derived causal graph substantially improves autoregressive prediction accuracy. This indicates that directional causal information is especially useful during the early post-fault response. As the trajectory evolves away from the initial transient, this fixed causal representation may become less aligned with the later post-fault dynamics. Em-pirically, we observe that prediction error tends to compound in later rollout windows, motivating a strategy that uses causal information during the early transient and relies more heavily on the adaptive structural graph afterward. To address this, a hybrid model is introduced; this model uses C-DNR (PCMCI) for the first T ∗ steps post-fault and reverts to the per-window-refreshed structural DNR thereafter; 
+
+T ∗ is the only hyperparameter that distinguishes it from the PCMCI causal-structural DNR. Fig. 2 sweeps T ∗ ∈ [40 , 320] 
+
+steps. Switching too early discards causal information prema-turely, leading to higher MSE. For intermediate switch points, the performance remains nearly flat, indicating that the hybrid model is not sensitive to the exact value of T ∗ as long as the switch occurs after the early transient. In contrast, delaying the switch too long keeps the fixed causal graph active into later trajectory regimes, where its relevance diminishes. Adopting 
+
+T ∗ = 160 (3.2 s) at the center of the plateau yields a mean MSE of 1.196 × 10 −1, a 73% reduction over DNR and 29% 
+
+over regular C-DNR. The width of the plateau is operationally relevant: no fine-tuning of T ∗ is required per network or contingency. 50 100 150 200 250 300          
+
+> Hybrid switch step T*(steps; Δt= 0.02 s)
+> 0.12
+> 0.14
+> 0.16
+> 0.18
+> 0.20
+> 0.22
+> Mean test MSE (normalized)
+> min at T*= 160
+
+Fig. 2: Mean test MSE of the Hybrid model as a function of the switch step T ∗.
+
+C. Interpreting the Learned Blending Matrix 
+
+The learned blending matrix W in Fig. 3 provides an edge-level view of how the model balances structural and causal information: Wij = 1 favors the structural adjacency Asij ,while Wij = 0 favors the PCMCI causal adjacency Acij .The off-diagonal entries span a wide range, indicating that the model does not collapse to a purely structural or purely causal graph. Instead, different generator pairs rely on different mixtures of the two information sources. A clear source-dependent pattern is visible. Generator 5
+
+is strongly structural across nearly all outgoing edges, while Generator 10 relies heavily on causal information for several targets, especially Generators 1, 2, 3, and 8. This suggests that the learned fusion is not merely global reweighting, but an edge-specific selection of the more useful dependency representation. Thus, W serves as a compact diagnostic of where the model relies on adaptive structural similarity and where it relies on directed causal influence. 
+
+D. Trajectory Prediction Fidelity 
+
+Fig. 4 compares the four variants on stable and unstable contingencies for Generator 8. On the stable contingency (Figs. 4a and 4b), DNR tracks ground truth almost exactly, but the static fault-onset PCMCI graph injects directional edges that are misleading in this near-equilibrium regime and pull the rollout off course as it accumulates them. On the unstable contingency (Figs. 4c and 4d), DNR overshoots both the rotor-speed swing depth and the rotor-angle drift and accumulates monotonic error throughout, since its symmetric adjacency cannot resolve the directional propagation that drives inter-machine coupling. The Hybrid resolves both failure modes: it drives the early high-curvature phase with the directional causal graph and reverts to the adaptive structural adjacency for the slow drift, achieving the closest tracking. G1 G2 G3 G4 G5 G6 G7 G8 G9 G10                                                                                            
+
+> Target generator
+> G1
+> G2
+> G3
+> G4
+> G5
+> G6
+> G7
+> G8
+> G9
+> G10
+> Source generator
+> 0.50 0.24 0.31 0.63 0.38 0.46 0.47 0.88 0.10 0.41
+> 0.23 0.50 0.22 0.53 0.40 0.30 0.39 0.15 0.47 0.62
+> 0.39 0.34 0.50 0.42 0.28 0.26 0.11 0.32 0.68 0.78
+> 0.78 0.63 0.62 0.50 0.09 0.63 0.52 0.72 0.83 0.98
+> 0.98 0.98 0.92 0.79 0.50 0.96 0.81 0.98 0.98 0.99
+> 0.09 0.03 0.13 0.22 0.13 0.50 0.49 0.11 0.32 0.89
+> 0.12 0.12 0.05 0.23 0.10 0.40 0.50 0.27 0.57 0.92
+> 0.92 0.20 0.13 0.55 0.42 0.39 0.26 0.50 0.17 0.55
+> 0.22 0.35 0.59 0.59 0.45 0.48 0.52 0.13 0.50 0.64
+> 0.01 0.00 0.01 0.41 0.55 0.35 0.38 0.01 0.51 0.50
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00 Mixing weight  Wij
+
+Fig. 3: Learned per-edge blending matrix W after training the PCMCI C-DNR. 
+
+E. Discussion 
+
+The experiments support a coherent picture. Structural sim-ilarity alone yields a fast but symmetric and overconfident predictor. Directional causal information improves it only when the discovery method controls for confounders, which is why PCMCI clearly outperforms KGC and TE (Sec. IV-A). The remaining failure mode of static causal injection, namely staleness as the system settles, is resolved by the Hybrid, which separates the early-transient regime (where directional information is most valuable) from the slow-drift regime (where the per-window-refreshed structural adjacency dom-inates) (Sec. IV-B and IV-D). The wide T ∗ plateau makes the framework operationally practical, and the learned W
+
+matrix offers an interpretable per-edge rationale aligned with the electrical topology, separating central machines (structural) from peripheral ones (causal), a transparency that opaque end-to-end GNN baselines do not provide. Three directions remain open. The causal adjacency is currently inferred only at fault onset; a rolling re-estimation of Ac as the system evolves may obviate the need for the Hybrid switch entirely. Scaling to larger networks may require sparse-graph approximations or partitioned causal discovery, since both the DNR and PCMCI scale superlinearly in N . Finally, extension to systems with IBRs and to scheduled-sampling or fully autoregressive train-ing is a natural next step toward deployment, with attention to the few near-unstable scenarios that remain difficult for all variants and may require fundamentally different graph representations. V. C ONCLUSIONS AND FUTURE WORK 
+
+This paper proposes a novel causal–structural dynamic graph learning framework (C-DNR) for online transient sta-bility trajectory prediction. The framework learns a parametric structural adjacency from post-fault PMU windows using cosine similarity of latent embeddings, fuses it with a directed causal adjacency from nonlinear causal discovery through 0 1 2 3 4 5 6 7 
+
+> Time (s)
+> 0.9970
+> 0.9975
+> 0.9980
+> 0.9985
+> 0.9990
+> 0.9995
+> 1.0000
+> 1.0005
+> ω (pu)
+> Ground truth
+> DNR
+> Causal DNR (PCMCI)
+> Hybrid ( T*=160)
+> Input window
+
+(a) Stable: ω0 1 2 3 4 5 6 7  
+
+> Time (s)
+> −300
+> −250
+> −200
+> −150
+> −100
+> −50
+> 0
+> 50
+> δ (degrees)
+> Ground truth
+> DNR
+> Causal DNR (PCMCI)
+> Hybrid ( T*=160)
+> Input window
+
+(b) Stable: δ0 1 2 3 4 5 6 7  
+
+> Time (s)
+> 0.9970
+> 0.9975
+> 0.9980
+> 0.9985
+> 0.9990
+> 0.9995
+> 1.0000
+> 1.0005
+> ω (pu)
+> Ground truth
+> DNR
+> Causal DNR (PCMCI)
+> Hybrid ( T*=160)
+> Input window
+
+(c) Unstable: ω0 1 2 3 4 5 6 7  
+
+> Time (s)
+> −300
+> −250
+> −200
+> −150
+> −100
+> −50
+> 0
+> 50
+> δ (degrees)
+> Ground truth
+> DNR
+> Causal DNR (PCMCI)
+> Hybrid ( T*=160)
+> Input window
+
+(d) Unstable: δ
+
+Fig. 4: Autoregressive trajectories of Generator 8 under stable (a)–(b) and unstable (c)–(d) contingencies. Grey: Tinit input window; green dotted line: Hybrid switch at T ∗ = 160 .
+
+a learnable per-edge matrix W, and rolls the fused graph forward with a GRU-based dynamics predictor. Evaluated on the IEEE 39-bus system, C-DNR reduces autoregressive MSE by 73% relative to the structural-only DNR baseline. Three findings explain this improvement. First, the causal estimator matters: PCMCI yields the strongest gain, while KGC degrades performance because its pairwise regression contrast lacks the confounder control provided by PCMCI’s Momentary Conditional Independence stage for co-moving generators. Second, causal information is most beneficial during the early post-fault response, where distur-bance propagation is strongly directional. This motivates a hybrid model that uses causal-structural DNR during the early transient interval and switches to structural DNR thereafter to better match the later trajectory regime. Third, the learned matrix W acts as a per-edge diagnostic of the model’s reliance on structural versus causal information, with row-level patterns that align with the observed structural–causal roles of different generators. Future work will focus on transitioning to adaptive causal re-estimation to better track evolving system dynamics over longer periods. Additionally, we aim to improve scalability by investigating partitioned causal discovery. By focusing analysis on local generator clusters, the C-DNR framework can be extended from small-scale benchmarks to large-scale, real-world power systems. REFERENCES [1] N. Hatziargyriou, J. V. Milanovic, C. Rahmann, V. Ajjarapu, C. Ca˜ nizares, I. Erlich, D. Hill, I. Hiskens, I. Kamwa, B. Pal, P. Pourbeik, J. Sanchez-Gasca, A. Stankovic, T. Van Cutsem, V. Vittal, and C. Vour-nas, “Definition and classification of power system stability revisited & extended,” IEEE Transactions on Power Systems , vol. 36, no. 4, pp. 3271–3281, 2021. [2] T. Zhao, M. Yue, and J. Wang, “Structure-informed graph learning of networked dependencies for online prediction of power system transient dynamics,” IEEE Transactions on Power Systems , vol. 37, no. 6, pp. 4885–4895, 2022. [3] S. K. Azman, Y. J. Isbeih, M. S. El Moursi, and K. Elbassioni, “A unified online deep learning prediction model for small signal and transient stability,” IEEE Transactions on Power Systems , vol. 35, no. 6, pp. 4585– 4598, 2020. [4] L. Zhu, D. J. Hill, and C. Lu, “Hierarchical deep learning machine for power system online transient stability prediction,” IEEE Transactions on Power Systems , vol. 35, no. 3, pp. 2399–2411, 2020. [5] B. Yu, H. Yin, and Z. Zhu, “Spatio-temporal graph convolutional networks: A deep learning framework for traffic forecasting,” in Proc. 27th Int. Joint Conf. Artificial Intelligence (IJCAI) , 2018, pp. 3634–3640. [6] L. Zhao, Y. Song, C. Zhang, Y. Liu, P. Wang, T. Lin, M. Deng, and H. Li, “T-GCN: A temporal graph convolutional network for traffic prediction,” 
+
+IEEE Transactions on Intelligent Transportation Systems , vol. 21, no. 9, pp. 3848–3858, 2020. [7] T. N. Kipf and M. Welling, “Semi-supervised classification with graph convolutional networks,” in Int. Conf. Learning Representations (ICLR) ,2017. [8] K. Cho, B. van Merri¨ enboer, C. Gulcehre, D. Bahdanau, F. Bougares, H. Schwenk, and Y. Bengio, “Learning phrase representations using RNN encoder–decoder for statistical machine translation,” in Proc. Conf. Empirical Methods in Natural Language Processing (EMNLP) , 2014, pp. 1724–1734. [9] S. Guo, Y. Lin, N. Feng, C. Song, and H. Wan, “Attention based spatial-temporal graph convolutional networks for traffic flow forecasting,” in 
+
+Proc. AAAI Conference on Artificial Intelligence , vol. 33, no. 01, 2019, pp. 922–929. [10] P. Veliˇ ckovi´ c, G. Cucurull, A. Casanova, A. Romero, P. Li` o, and Y. Ben-gio, “Graph attention networks,” in Int. Conf. Learning Representations (ICLR) , 2018. [11] P. Dolatyabi and M. Khodayar, “Graph neural networks and their applications in power systems: A review,” in 2025 IEEE International Conference on Electro Information Technology (eIT) . IEEE, 2025, pp. 1–10. [12] Y. Luo, C. Lu, L. Zhu, and J. Song, “Data-driven short-term voltage stability assessment based on spatial-temporal graph convolutional net-work,” International Journal of Electrical Power & Energy Systems , vol. 130, p. 106753, 2021. [13] C. W. J. Granger, “Investigating causal relations by econometric models and cross-spectral methods,” Econometrica , vol. 37, no. 3, pp. 424–438, 1969. [14] D. Marinazzo, M. Pellicoro, and S. Stramaglia, “Kernel method for nonlinear Granger causality,” Physical Review Letters , vol. 100, no. 14, p. 144103, 2008. [15] T. Schreiber, “Measuring information transfer,” Physical Review Letters ,vol. 85, no. 2, pp. 461–464, 2000. [16] J. Runge, P. Nowack, M. Kretschmer, S. Flaxman, and D. Sejdinovic, “Detecting and quantifying causal associations in large nonlinear time series datasets,” Science Advances , vol. 5, no. 11, p. eaau4996, 2019. [17] B. Sch¨ olkopf, F. Locatello, S. Bauer, N. R. Ke, N. Kalchbrenner, A. Goyal, and Y. Bengio, “Toward causal representation learning,” 
+
+Proceedings of the IEEE , vol. 109, no. 5, pp. 612–634, 2021. [18] J. Pearl, Causality: Models, Reasoning, and Inference , 2nd ed. Cam-bridge University Press, 2009. [19] B. Shen, S. Yang, J. Hu, Y. Zhang, L. Zhang, S. Ye, Z. Yang, J. Yu, X. Gao, and E. Zhao, “Interpretable causal-based temporal graph convolutional network framework in complex spatio-temporal systems for CCUS-EOR,” Energy , vol. 309, p. 133129, 2024. [20] J. Qiao, X. Wang, J. Ni, M. Shi, H. Ren, and E. Chen, “Graph neural network based transient stability assessment considering topology changes,” in 2021 International Conference on Power System Technology (POWERCON) , 2021, pp. 1999–2003. [21] H. Cui and F. Li, “Andes: A python-based cyber-physical power system simulation tool,” in 2018 North American Power Symposium (NAPS) ,2018, pp. 1–6. [22] T. Athay, R. Podmore, and S. Virmani, “A practical method for the direct analysis of transient stability,” IEEE Transactions on Power Apparatus and Systems , vol. PAS-98, no. 2, pp. 573–584, 1979.
