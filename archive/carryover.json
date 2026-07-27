@@ -1,128 +1,132 @@
 {
-  "generated_at": "2026-07-12T20:33:51.171714+00:00",
-  "updated_date": "20260712",
+  "generated_at": "2026-07-27T20:28:15.795824+00:00",
+  "updated_date": "20260727",
   "carryover_days": 9,
   "tag_states": {
     "power-ticket": {
-      "updated_date": "20260712",
-      "carryover_days": 9,
-      "items": []
-    },
-    "pwt": {
-      "updated_date": "20260712",
+      "updated_date": "20260727",
       "carryover_days": 9,
       "items": [
         {
-          "id": "2607.08572v1",
+          "id": "2607.21949v1",
           "source": "arxiv",
-          "title": "Switch-Reasoner: Learn When to Think in Multitask Mixtures via Reinforcement Learning",
-          "abstract": "Multimodal Large Language Models (MLLMs) often follow a fixed Think-then-Answer paradigm, which is inefficient in heterogeneous multitask settings because simple inputs may not require explicit reasoning while difficult ones can benefit substantially from it. Learning when to think is also unstable during post-training, where imbalanced rollouts can drive the model toward always-thinking or always-direct behavior. We propose Switch-Reasoner, a GRPO-based framework that learns to adaptively select reasoning modes for MLLMs. It treats thinking as a virtual tool invocation and allows the model to either answer directly or invoke explicit reasoning before answering. To stabilize this decision, we introduce a dual-level regulation mechanism that balances the overall use of Thinking Mode and Direct Mode while providing sample-level supervision based on the relative benefit of the two choices. Experiments on 11 multimodal tasks show that Switch-Reasoner reduces unnecessary reasoning while maintaining strong performance, achieving a better accuracy-efficiency trade-off.",
+          "title": "MA-DAR: Manifold-Aligned Dynamic Adaptive Routing for Continual Temporal Knowledge Graph Reasoning",
+          "abstract": "Continual temporal knowledge graph (TKG) reasoning aims to continuously incorporate newly emerging facts while preserving previously acquired knowledge. Replay-based continual learning has achieved promising performance by revisiting historical representations. However, existing methods primarily focus on what to replay, while largely overlooking how replayed representations should be integrated with current ones. Such direct integration often gives rise to two critical forms of representation conflict: \\textit{norm domination} and \\textit{semantic blurring}, ultimately degrading continual reasoning performance. To address these challenges, we propose MA-DAR (Manifold-Aligned Dynamic Adaptive Routing), a lightweight plug-and-play framework for replay representation fusion. MA-DAR first aligns replayed and current representations onto a shared manifold to alleviate distribution discrepancies. It then employs a dynamic gating mechanism to learn dimension-wise fusion weights, adaptively determining the contribution of replayed and current representations to the fused representation. Furthermore, a polarization regularizer encourages more decisive routing behaviors by discouraging ambiguous gating decisions, resulting in more stable and effective knowledge integration. Extensive experiments on four public continual TKG benchmarks demonstrate that MA-DAR consistently improves the performance of representative TKG encoders while remaining effective under different replay settings. Comprehensive ablation studies and visualization analyses further verify the effectiveness of manifold alignment and dynamic adaptive routing in mitigating representation conflicts and improving continual reasoning.",
           "authors": [
-            "Yiyang Fang",
-            "Pei Fu",
-            "Jinjie Li",
-            "Jian Liang",
-            "Wenke Huang",
-            "Ruijie Luo",
-            "Shaojie Zhang",
-            "Jian Luan",
-            "Yi R. Fung",
-            "Mang Ye"
+            "Xiangjun Shi",
+            "Chong Mu",
+            "Jinchuan Zhang",
+            "Lizong Zhang",
+            "Yuefeng He",
+            "Shang Liu"
           ],
-          "primary_category": "cs.CV",
+          "primary_category": "cs.LG",
           "categories": [
-            "cs.CV"
+            "cs.LG",
+            "cs.AI"
           ],
-          "published": "2026-07-09T15:04:05+00:00",
-          "link": "https://arxiv.org/pdf/2607.08572v1",
+          "published": "2026-07-24T03:52:13+00:00",
+          "link": "https://arxiv.org/pdf/2607.21949v1",
           "tags": [
             "keyword:llm-memory",
+            "keyword:power-ticket",
             "keyword:pwt",
             "query:llm-memory",
+            "query:power-ticket",
             "query:pwt"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "adaptive reasoning mode selection as alternative to fixed CoT",
-          "llm_evidence_cn": "自适应选择思考或直接回答，作为固定思维链的替代方法",
-          "llm_evidence": "自适应选择思考或直接回答，作为固定思维链的替代方法",
-          "canonical_evidence": "自适应选择思考或直接回答，作为固定思维链的替代方法",
-          "llm_tldr_en": "Switch-Reasoner uses GRPO to learn when to invoke explicit reasoning or answer directly, replacing the fixed think-then-answer paradigm, stabilizing mode selection via dual-level regulation.",
-          "llm_tldr_cn": "多模态大语言模型通常采用固定的思考-回答范式，在异构多任务场景下效率低下。Switch-Reasoner提出基于GRPO的框架，将思考视为虚拟工具调用，让模型自适应选择直接回答或调用显式推理。通过双层调控机制稳定决策，避免始终思考或始终直接回答的极端行为。实验表明该方法在混合难度任务中取得更好效果。",
-          "llm_tldr": "多模态大语言模型通常采用固定的思考-回答范式，在异构多任务场景下效率低下。Switch-Reasoner提出基于GRPO的框架，将思考视为虚拟工具调用，让模型自适应选择直接回答或调用显式推理。通过双层调控机制稳定决策，避免始终思考或始终直接回答的极端行为。实验表明该方法在混合难度任务中取得更好效果。",
+          "llm_evidence_en": "continual knowledge graph reasoning with adaptive routing",
+          "llm_evidence_cn": "持续知识图谱推理的自适应路由",
+          "llm_evidence": "持续知识图谱推理的自适应路由",
+          "canonical_evidence": "持续知识图谱推理的自适应路由",
+          "llm_tldr_en": "Proposes MA-DAR, a lightweight plug-and-play module for continual TKG reasoning that mitigates representation conflicts via manifold alignment and dynamic routing.",
+          "llm_tldr_cn": "针对持续时序知识图谱推理中重放表示与当前表示直接整合导致的范数主导和语义模糊问题，提出了MA-DAR（流形对齐动态自适应路由），一种轻量级即插即用模块。它通过流形对齐和动态路由机制缓解表示冲突，在多个持续TKG基准上显著提升推理性能。该方法有效支持知识图谱的持续学习，避免灾难性遗忘。其图结构学习的思路可推广至电力工作票领域的知识图谱推理，帮助模型不断吸收新知识。",
+          "llm_tldr": "针对持续时序知识图谱推理中重放表示与当前表示直接整合导致的范数主导和语义模糊问题，提出了MA-DAR（流形对齐动态自适应路由），一种轻量级即插即用模块。它通过流形对齐和动态路由机制缓解表示冲突，在多个持续TKG基准上显著提升推理性能。该方法有效支持知识图谱的持续学习，避免灾难性遗忘。其图结构学习的思路可推广至电力工作票领域的知识图谱推理，帮助模型不断吸收新知识。",
           "llm_tags": [
-            "query:pwt"
+            "query:power-ticket"
           ],
-          "matched_query_tag": "query:pwt",
-          "matched_query_text": "alternative to chain of thought reasoning",
-          "matched_requirement_id": "req-13",
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "graph structure learning",
+          "matched_requirement_id": "req-4",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.08572v1",
+          "paper_id": "2607.21949v1",
           "carry_days": 1
         },
         {
-          "id": "2607.08716v1",
+          "id": "2607.19297v1",
           "source": "arxiv",
-          "title": "Remember When It Matters: Proactive Memory Agent for Long-Horizon Agents",
-          "abstract": "In long-horizon tasks, decision-relevant state is often scattered across an expanding trajectory, while the action agent must surface it and act. As trajectories grow, task requirements, environment facts, prior attempts, diagnoses, and open subgoals can be buried in the context window or pushed beyond it, failing to influence decisions when needed. We call this failure mode \"behavioral state decay\". We study memory as an active intervention mechanism rather than passive retrieval. A separate memory agent runs alongside an unmodified action agent, updating a structured memory bank from the recent trajectory and deciding whether to inject a memory-grounded reminder or remain silent. The module is plug-and-play with frontier action agents and existing agent harnesses. Across Terminal-Bench 2.0 and $τ^2$-Bench, it improves pass@1 for both weaker and stronger action agents, with gains of +8.3 pp on Terminal-Bench and +6.8 pp on $τ^2$-Bench. Ablations show that selective intervention outperforms passive bank exposure, always-on injection, advisor-only guidance, and general retrieval. As an early step toward open-weight memory policies, we train Qwen3.5-27B on SETA using SFT and GRPO, improving validation reward and achieving partial transfer to Terminal-Bench.",
+          "title": "Graph-Based Agentic AI with LangGraph: Workflow Pathways for Long-Running Stateful Business Processes",
+          "abstract": "This paper is a practitioner guide to graph-based workflow pathways for long-running, stateful, multi-step generative AI systems in business processes. Rather than treating LangGraph, a low-level orchestration framework for stateful agents, as a model-quality benchmark target, we present three executable recipes -- SQL analytics with repair loops, agentic retrieval-augmented generation with evidence gating, and human-in-the-loop policy review with interrupt and checkpoint recovery -- to show how typed state, conditional routing, deterministic tools, retries, interrupts, checkpoints, and traces fit together. LangGraph is positioned by workflow-complexity fit, not as a universal default: simpler ReAct-style or plain SDK loops may be better for basic tool use, schema-first tools for structured extraction and validation, and DSPy when prompt or program optimization is the main goal. Each recipe explains when LangGraph is worth the extra structure and which implementation patterns make routes, pauses, and audit trails explicit product behavior rather than hidden prompt logic.",
           "authors": [
-            "Yifan Wu",
-            "Lizhu Zhang",
-            "Yuhang Zhou",
-            "Mingyi Wang",
-            "Bo Peng",
-            "Serena Li",
-            "Xiangjun Fan",
-            "Zhuokai Zhao"
+            "Daniel Pearson",
+            "Sidney Shapiro",
+            "Emiliano Sebastian Gonzalez Venegas",
+            "Sanad Al-Khatib",
+            "Aurora Pinzón Arzola"
           ],
           "primary_category": "cs.AI",
           "categories": [
             "cs.AI",
-            "cs.CL"
+            "cs.SE"
           ],
-          "published": "2026-07-09T17:26:28+00:00",
-          "link": "https://arxiv.org/pdf/2607.08716v1",
+          "published": "2026-07-21T17:07:13+00:00",
+          "link": "https://arxiv.org/pdf/2607.19297v1",
           "tags": [
             "keyword:llm-memory",
+            "keyword:power-ticket",
             "keyword:pwt",
             "query:llm-memory",
+            "query:power-ticket",
             "query:pwt"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "proactive memory agent for reasoning improvement",
-          "llm_evidence_cn": "主动记忆代理提升推理能力",
-          "llm_evidence": "主动记忆代理提升推理能力",
-          "canonical_evidence": "主动记忆代理提升推理能力",
-          "llm_tldr_en": "Proposes a separate memory agent that runs alongside an action agent, updating a structured memory bank and injecting memory-grounded reminders to combat behavioral state decay in long-horizon tasks, enabling plug-and-play reasoning improvement without modifying the action agent.",
-          "llm_tldr_cn": "本文针对长视野任务中决策相关状态因上下文窗口限制而丢失的问题，提出一种主动记忆代理机制。该代理作为一个独立模块，与现有动作代理并行运行，通过结构化记忆库动态更新轨迹信息，并在关键时刻注入记忆提醒，以缓解行为状态衰减。该方法无需修改原有动作代理，可即插即用，为提升模型在长序列任务中的推理能力提供了一种轻量级且有效的新范式。实验表明，该代理能显著改善模型在长视野任务中的决策质量。",
-          "llm_tldr": "本文针对长视野任务中决策相关状态因上下文窗口限制而丢失的问题，提出一种主动记忆代理机制。该代理作为一个独立模块，与现有动作代理并行运行，通过结构化记忆库动态更新轨迹信息，并在关键时刻注入记忆提醒，以缓解行为状态衰减。该方法无需修改原有动作代理，可即插即用，为提升模型在长序列任务中的推理能力提供了一种轻量级且有效的新范式。实验表明，该代理能显著改善模型在长视野任务中的决策质量。",
+          "llm_evidence_en": "graph-based agentic RAG workflow",
+          "llm_evidence_cn": "基于图的Agentic检索增强生成工作流",
+          "llm_evidence": "基于图的Agentic检索增强生成工作流",
+          "canonical_evidence": "基于图的Agentic检索增强生成工作流",
+          "llm_tldr_en": "LangGraph enables graph-based agentic workflows with retrieval-augmented generation, supporting long-running stateful processes.",
+          "llm_tldr_cn": "该论文以实践者指南形式介绍LangGraph框架，用于构建基于图的Agentic AI工作流，重点展示了三个配方：带修复循环的SQL分析、带证据门控的Agentic检索增强生成（RAG）以及带中断与检查点恢复的人工策略审查。论文强调图基工作流对于长运行有状态多步生成任务的适用性，为将RAG与图结构结合提供了实用参考。",
+          "llm_tldr": "该论文以实践者指南形式介绍LangGraph框架，用于构建基于图的Agentic AI工作流，重点展示了三个配方：带修复循环的SQL分析、带证据门控的Agentic检索增强生成（RAG）以及带中断与检查点恢复的人工策略审查。论文强调图基工作流对于长运行有状态多步生成任务的适用性，为将RAG与图结构结合提供了实用参考。",
           "llm_tags": [
-            "query:pwt"
+            "query:power-ticket"
           ],
-          "matched_query_tag": "query:pwt",
-          "matched_query_text": "agent memory for reasoning improvement",
-          "matched_requirement_id": "req-12",
+          "matched_query_tag": "query:power-ticket",
+          "matched_query_text": "graph based retrieval augmented generation",
+          "matched_requirement_id": "req-7",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.08716v1",
+          "paper_id": "2607.19297v1",
           "carry_days": 1
-        },
+        }
+      ]
+    },
+    "pwt": {
+      "updated_date": "20260727",
+      "carryover_days": 9,
+      "items": [
         {
-          "id": "2607.07492v1",
+          "id": "2607.19962v1",
           "source": "arxiv",
-          "title": "Search, Fail, Recover: A Training Framework for Correction-Aware Reasoning",
-          "abstract": "Many reasoning tasks are not well described by a single left-to-right chain: a solver may need to pursue a plausible branch, observe delayed failure, and return to the latest prefix that can still be completed. We introduce Pyligent, a training and inference framework inspired by the Diligent Learner formulation that represents reasoning as validated search over partial solution chains. A task validator labels generated continuations and failures, and the resulting search trees are converted into supervised targets for three actions: continue, finish, and backtrack, with optional traces that summarize abandoned branches. We evaluate Pyligent on a hidden directed graph task designed to isolate delayed-failure recovery, and on structured reasoning domains with exact validators, including $4{\\times}4$ Sudoku, Sudoku with reasoning traces, and Blocksworld. Compared with gold-only supervised fine-tuning, Pyligent improves solve rate by $72.7$ percentage points on hidden graphs, by $17$ and $18$ points on mixed and expert Sudoku, by $27$ and $14$ points on mixed and expert Sudoku with reasoning traces, and by $13$ points on Blocksworld. These results suggest that explicit failed-branch supervision can teach useful recovery behavior beyond imitation of polished solution chains.",
+          "title": "EvoThink: Evolving Thinking in Large Reasoning Models via Self-Pruning and Aha-Moment Preference Optimization",
+          "abstract": "Large Reasoning Models (LRMs) often suffer from overthinking due to redundant verification steps. Existing approaches for mitigating overthinking, such as fast-slow thinking switching and reasoning trajectory compression, fail to make a fine-grained distinction between beneficial and redundant steps within the LRM's reasoning process, and may thus impair reasoning capability in their pursuit of efficiency. To simultaneously improve reasoning efficiency and capability, we propose EvoThink, a framework that reduces redundant verification and encourages the exploration of new reasoning paths. EvoThink comprises two key components: Self-Pruning Training (SPT), an unsupervised method that iteratively prunes redundant reasoning steps and self-trains on the concise trajectories; and Aha-Moment Preference Optimization (AMPO), which, inspired by genetic algorithms, identifies valuable failed reasoning attempts, synthesizes from-wrong-to-right aha-moment data, and optimizes the model to internalize this reasoning pattern. Extensive evaluations across mathematical reasoning and code generation benchmarks demonstrate that EvoThink not only substantially reduces inference-time token usage but also improves the reasoning capability of LRMs.",
           "authors": [
-            "Dmitry Beresnev",
-            "Vladimir Makharev",
-            "Roman Khalikov",
-            "Ivan Oseledets",
-            "Petr Anokhin"
+            "Xinbang Dai",
+            "Zheyu Xin",
+            "Huikang Hu",
+            "Lin Ren",
+            "Rihui Jin",
+            "Guohui Xiao",
+            "Guilin Qi",
+            "Kuicai Dong",
+            "Zhaocheng Du",
+            "Yuyang Zhang"
           ],
           "primary_category": "cs.AI",
           "categories": [
             "cs.AI"
           ],
-          "published": "2026-07-08T14:53:55+00:00",
-          "link": "https://arxiv.org/pdf/2607.07492v1",
+          "published": "2026-07-22T09:40:22+00:00",
+          "link": "https://arxiv.org/pdf/2607.19962v1",
           "tags": [
             "keyword:llm-memory",
             "keyword:power-ticket",
@@ -132,13 +136,13 @@
             "query:pwt"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "training framework for correction-aware reasoning with backtracking",
-          "llm_evidence_cn": "带回溯的纠正感知推理训练框架",
-          "llm_evidence": "带回溯的纠正感知推理训练框架",
-          "canonical_evidence": "带回溯的纠正感知推理训练框架",
-          "llm_tldr_en": "Pyligent represents reasoning as validated search with backtracking, enabling models to recover from delayed failures on structured tasks without a single left-to-right chain.",
-          "llm_tldr_cn": "许多推理任务无法通过单一从左到右的链完成，需要分支和回溯。本文提出Pyligent框架，将推理建模为经过验证的搜索，通过任务验证器标记延续和失败，生成继续、完成和回溯三种动作的监督目标。在隐藏有向图任务和结构化推理域中，该方法有效提升了模型从延迟失败中恢复的能力。",
-          "llm_tldr": "许多推理任务无法通过单一从左到右的链完成，需要分支和回溯。本文提出Pyligent框架，将推理建模为经过验证的搜索，通过任务验证器标记延续和失败，生成继续、完成和回溯三种动作的监督目标。在隐藏有向图任务和结构化推理域中，该方法有效提升了模型从延迟失败中恢复的能力。",
+          "llm_evidence_en": "alternative to chain of thought reasoning by self-pruning redundant verification",
+          "llm_evidence_cn": "通过自剪枝减少冗余验证，替代思维链推理",
+          "llm_evidence": "通过自剪枝减少冗余验证，替代思维链推理",
+          "canonical_evidence": "通过自剪枝减少冗余验证，替代思维链推理",
+          "llm_tldr_en": "LRMs overthink with redundant verification steps; EvoThink uses self-pruning and Aha-moment preference optimization to reduce overthinking and explore new reasoning paths.",
+          "llm_tldr_cn": "大型推理模型常因冗余验证步骤而过思考，现有方法无法精细区分有益与冗余步骤。本文提出EvoThink框架，包含自剪枝训练（无监督剪枝冗余步骤）和顿悟偏好优化（鼓励探索新路径），在不损害推理能力的前提下提升效率并在多个推理任务上取得更好效果。",
+          "llm_tldr": "大型推理模型常因冗余验证步骤而过思考，现有方法无法精细区分有益与冗余步骤。本文提出EvoThink框架，包含自剪枝训练（无监督剪枝冗余步骤）和顿悟偏好优化（鼓励探索新路径），在不损害推理能力的前提下提升效率并在多个推理任务上取得更好效果。",
           "llm_tags": [
             "query:pwt"
           ],
@@ -146,31 +150,30 @@
           "matched_query_text": "alternative to chain of thought reasoning",
           "matched_requirement_id": "req-13",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.07492v1",
+          "paper_id": "2607.19962v1",
           "carry_days": 1
         },
         {
-          "id": "2607.08497v1",
+          "id": "2607.18481v1",
           "source": "arxiv",
-          "title": "Cognitive-structured Multimodal Agent for Multimodal Understanding, Generation, and Editing",
-          "abstract": "Recent unified multimodal models show a single architecture can jointly perform vision/language understanding and image generation/editing. However, they repeatedly feed all historical visual and textual inputs into a shared context window, limiting long-horizon multimodal dialogue due to visual token explosion and unreliable cross-turn referencing. We propose a Cognitive-structured Multimodal Agent that externalizes visual information into an Episodic Visual Memory and selectively reactivates relevant episodes during reasoning. The agent consists of a Perceptual Abstraction Engine for structured visual abstraction, a Cognitive Retrieval Engine for cross-turn memory retrieval, and a Multimodal Executive Controller for autonomous task inference and action planning. To address the lack of turn-level retrieval supervision in existing datasets, we develop a Unified Scenario Engine that programmatically generates structured multi-turn conversations with fine-grained retrieval annotations, enabling reinforcement learning to optimize abstraction and retrieval policies. We also construct a long-horizon visual-dialogue benchmark stratified by difficulty to evaluate episodic visual recall. Our 8B agent achieves 91.4% retrieval accuracy over 20-turn sessions, surpassing 32B baselines by +8.2% while nearly halving per-turn inference time (23.1s -> 12.7s). We further present the Cognitive-structured Multimodal Agent Harness (CMA-Harness), a tool-augmented deployment of the same cognitive structure integrating persistent multimodal memory, web access, image generation/editing/composition tools, and OpenAI-compatible serving. Structured memory and modular decision-making offer a more scalable, efficient paradigm for long-horizon multimodal agents than monolithic parameter scaling. Code: https://github.com/caseclose/cma-harness ; Project page: https://caseclose.github.io/cma-harness/",
+          "title": "Search-on-Graph-R1: Training Large Language Models to Search Knowledge Graphs with Reinforcement Learning",
+          "abstract": "Knowledge graph question answering (KGQA) requires navigating from topic entities to an answer several relations away. Recent methods prompt a frontier LLM to explore the graph through a retrieval tool, but their reliance on frontier-scale inference makes them costly to deploy. We present Search-on-Graph-R1 (\\sogrone{}), which internalizes this navigation into a compact 8B model through supervised fine-tuning (SFT) followed by reinforcement learning (RL). Our central idea is to scaffold a frontier teacher with each question's gold SPARQL query, so the teacher traverses a known answer-bearing path with a live \\texttt{Search} tool rather than having to discover the path itself. Since every call executes against a live Freebase server, the resulting trajectories are grounded in the knowledge graph by construction. On WebQSP, CWQ, and GrailQA, \\sogrone{} at 8B surpasses every frozen frontier-LLM system in our comparison and posts the strongest results on CWQ of any system we compare against. It does so using no auxiliary module at inference and no LLM judge during training. Isolating each training stage shows that SFT and RL contribute complementary gains, our approach transfers across model families, and RL learns to reach answers in fewer \\texttt{Search} calls than its SFT initialization.",
           "authors": [
-            "Feng Wang",
-            "Canmiao Fu",
-            "Zhipeng Huang",
-            "Chen Li",
-            "Jing Lyu",
-            "Ge Li"
+            "Jia Ao Sun",
+            "Hao Yu",
+            "Fengran Mo",
+            "Zhan Su",
+            "Yuchen Hui",
+            "Bang Liu",
+            "Jian-Yun Nie"
           ],
-          "primary_category": "cs.CV",
+          "primary_category": "cs.CL",
           "categories": [
-            "cs.CV",
-            "cs.AI",
             "cs.CL",
-            "cs.LG"
+            "cs.IR"
           ],
-          "published": "2026-07-09T13:55:55+00:00",
-          "link": "https://arxiv.org/pdf/2607.08497v1",
+          "published": "2026-07-20T19:58:32+00:00",
+          "link": "https://arxiv.org/pdf/2607.18481v1",
           "tags": [
             "keyword:llm-memory",
             "keyword:power-ticket",
@@ -180,177 +183,173 @@
             "query:pwt"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "Cognitive-structured agent with episodic visual memory for reasoning",
-          "llm_evidence_cn": "具有情景视觉记忆的认知结构智能体用于推理",
-          "llm_evidence": "具有情景视觉记忆的认知结构智能体用于推理",
-          "canonical_evidence": "具有情景视觉记忆的认知结构智能体用于推理",
-          "llm_tldr_en": "A Cognitive-structured Multimodal Agent with Episodic Visual Memory externalizes visual information and selectively reactivates relevant episodes during reasoning, overcoming visual token explosion in long multimodal dialogues.",
-          "llm_tldr_cn": "统一多模态模型将历史视觉文本输入全部放入上下文窗口，导致视觉令牌爆炸和跨轮引用不可靠。本文提出认知结构多模态智能体，将视觉信息外化为情景视觉记忆，由感知抽象引擎、认知检索引擎和多模态执行控制器组成，在推理时选择性重放相关情景。实验表明该方法能有效支持长程多模态对话，提升推理稳定性。",
-          "llm_tldr": "统一多模态模型将历史视觉文本输入全部放入上下文窗口，导致视觉令牌爆炸和跨轮引用不可靠。本文提出认知结构多模态智能体，将视觉信息外化为情景视觉记忆，由感知抽象引擎、认知检索引擎和多模态执行控制器组成，在推理时选择性重放相关情景。实验表明该方法能有效支持长程多模态对话，提升推理稳定性。",
+          "llm_evidence_en": "Reinforcement learning for KG search and reasoning",
+          "llm_evidence_cn": "基于强化学习的知识图谱搜索与推理",
+          "llm_evidence": "基于强化学习的知识图谱搜索与推理",
+          "canonical_evidence": "基于强化学习的知识图谱搜索与推理",
+          "llm_tldr_en": "Search-on-Graph-R1 trains an 8B model to internalize KG navigation via SFT and RL, using a frontier teacher with gold SPARQL queries, reducing cost while maintaining performance.",
+          "llm_tldr_cn": "本文针对知识图谱问答中依赖前沿模型的高昂成本问题，提出Search-on-Graph-R1，通过监督微调与强化学习将知识图导航内化至8B模型。其核心是用含标准SPARQL查询的前沿教师引导模型沿已知路径搜索，从而避免自发现路径的开销。实验表明该方法在保持性能的同时大幅降低了部署成本，为资源受限场景下的知识图谱推理提供了新方案。",
+          "llm_tldr": "本文针对知识图谱问答中依赖前沿模型的高昂成本问题，提出Search-on-Graph-R1，通过监督微调与强化学习将知识图导航内化至8B模型。其核心是用含标准SPARQL查询的前沿教师引导模型沿已知路径搜索，从而避免自发现路径的开销。实验表明该方法在保持性能的同时大幅降低了部署成本，为资源受限场景下的知识图谱推理提供了新方案。",
           "llm_tags": [
             "query:pwt"
           ],
           "matched_query_tag": "query:pwt",
-          "matched_query_text": "agent memory for reasoning improvement",
-          "matched_requirement_id": "req-12",
+          "matched_query_text": "knowledge graph reasoning for work tickets",
+          "matched_requirement_id": "req-10",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.08497v1",
+          "paper_id": "2607.18481v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.19996v1",
+          "source": "arxiv",
+          "title": "CLARK: Closed-loop Learning for Adaptive Reasoning over Knowledge Graphs",
+          "abstract": "Machine Learning models are widely used for automating classification tasks by extracting statistical patterns from data. However, their performance deteriorates if the data distribution changes, making them ill-suited to handle uncertain and evolving information. Moreover, they provide limited support for integrating prior knowledge. To address these limitations, we present CLARK (Closed-loop Learning for Adaptive Reasoning over Knowledge Graphs), a framework that integrates knowledge graphs, symbolic rule mining, and probabilistic reasoning under the Logic Programs with Markov Logic Networks (LP$^{\\text{MLN}}$) formalism. Starting from CACTUS-derived KGs, CLARK translates graph structure into an LP$^{\\text{MLN}}$ program and iteratively enriches it with candidate rules proposed by symbolic learners. These rules are calibrated through probabilistic weight learning, enabling reasoning under uncertainty and refinement of the underlying graph structure. We evaluate CLARK on two medical datasets, analysing both rule quality and downstream classification performance. Results demonstrate that CLARK leads to improved classification performance and more generalisable inference. Overall, CLARK provides a principled approach to constructing adaptive, interpretable, knowledge-driven models for classification.",
+          "authors": [
+            "Yousef Khan",
+            "Luca Gherardini",
+            "Marco Maratea",
+            "Joel Arrais",
+            "Jose Sousa"
+          ],
+          "primary_category": "cs.AI",
+          "categories": [
+            "cs.AI"
+          ],
+          "published": "2026-07-22T10:30:45+00:00",
+          "link": "https://arxiv.org/pdf/2607.19996v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:power-ticket",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "knowledge graph reasoning framework",
+          "llm_evidence_cn": "知识图谱推理框架",
+          "llm_evidence": "知识图谱推理框架",
+          "canonical_evidence": "知识图谱推理框架",
+          "llm_tldr_en": "CLARK integrates knowledge graphs, symbolic rule mining, and probabilistic reasoning in a closed-loop to enable adaptive reasoning over KGs, improving robustness to distribution shifts.",
+          "llm_tldr_cn": "现有机器学习模型在处理分布变化时性能下降，且难以整合先验知识。CLARK提出了一种闭环学习框架，将知识图谱、符号规则挖掘和概率推理集成到LP-MLN形式中。从CACTUS派生的知识图谱出发，CLARK将图结构转化为逻辑程序并迭代丰富。实验表明该方法在分布变化下仍能保持稳定的推理性能，为知识图谱推理提供了自适应的解决方案。",
+          "llm_tldr": "现有机器学习模型在处理分布变化时性能下降，且难以整合先验知识。CLARK提出了一种闭环学习框架，将知识图谱、符号规则挖掘和概率推理集成到LP-MLN形式中。从CACTUS派生的知识图谱出发，CLARK将图结构转化为逻辑程序并迭代丰富。实验表明该方法在分布变化下仍能保持稳定的推理性能，为知识图谱推理提供了自适应的解决方案。",
+          "llm_tags": [
+            "query:pwt"
+          ],
+          "matched_query_tag": "query:pwt",
+          "matched_query_text": "knowledge graph reasoning for work tickets",
+          "matched_requirement_id": "req-10",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.19996v1",
+          "carry_days": 1
+        },
+        {
+          "id": "2607.19547v1",
+          "source": "arxiv",
+          "title": "ChronoStitch: Training-Free Composition of Visual KV Memories for Long-Horizon Temporal Reasoning",
+          "abstract": "Long-video question answering requires a model to preserve visual evidence over time without repeatedly reprocessing the same video. A practical approach is to store the vision-language model's internal key-value (KV) cache for each video chunk and retrieve that state at query time. However, independently cached video chunks do not compose correctly: every chunk is prefilled from local rotary position zero, so naive concatenation collides temporal phases and removes the global order required for questions about what happened first, how often events occurred, or what changed across the video. This paper presents ChronoStitch, a training-free method for composing independently stored visual KV memories. The method first re-bases stored post-rotary keys onto a global three-axis multimodal RoPE coordinate system that preserves time, height, and width structure. We show why a one-dimensional scalar re-indexing is geometrically inconsistent for visual tokens because it turns spatial order within a frame into false temporal displacement. We then address the residual content gap left by positional repair: later chunks were originally encoded without attending to earlier chunks. ChronoStitch therefore selectively recomputes a small fraction of high-deviation later-chunk visual tokens while allowing them to attend over the composed cache. On Qwen2.5-VL-3B and the temporal split of TempCompass, ChronoStitch outperforms naive composition and position-only variants, improving event-ordering accuracy while running 3.3x faster than full joint re-prefilling.",
+          "authors": [
+            "Santiram Tiwari",
+            "Nishant Sinha",
+            "Kunal Kislay"
+          ],
+          "primary_category": "cs.CV",
+          "categories": [
+            "cs.CV",
+            "eess.IV"
+          ],
+          "published": "2026-07-21T19:46:38+00:00",
+          "link": "https://arxiv.org/pdf/2607.19547v1",
+          "tags": [
+            "keyword:llm-memory",
+            "keyword:pwt",
+            "query:llm-memory",
+            "query:power-ticket",
+            "query:pwt"
+          ],
+          "llm_score": 8.0,
+          "llm_evidence_en": "training-free composition of visual KV memories for reasoning",
+          "llm_evidence_cn": "无需训练的视频KV记忆组合用于长时推理",
+          "llm_evidence": "无需训练的视频KV记忆组合用于长时推理",
+          "canonical_evidence": "无需训练的视频KV记忆组合用于长时推理",
+          "llm_tldr_en": "Proposes ChronoStitch, a training-free method to compose visual KV memories for long-horizon temporal reasoning, directly addressing memory-augmented reasoning without training.",
+          "llm_tldr_cn": "该论文提出ChronoStitch，一种无需训练的方法，用于组合独立缓存的视频KV记忆以支持长时时间推理。解决了各片段位置编码冲突导致时序丢失的问题。方法通过重新调整位置编码实现全局顺序，无需微调即可回答时序问题。这直接对应了无需训练的记忆增强推理需求，且可推广至多跳推理场景。",
+          "llm_tldr": "该论文提出ChronoStitch，一种无需训练的方法，用于组合独立缓存的视频KV记忆以支持长时时间推理。解决了各片段位置编码冲突导致时序丢失的问题。方法通过重新调整位置编码实现全局顺序，无需微调即可回答时序问题。这直接对应了无需训练的记忆增强推理需求，且可推广至多跳推理场景。",
+          "llm_tags": [
+            "query:pwt"
+          ],
+          "matched_query_tag": "query:pwt",
+          "matched_query_text": "memory augmented reasoning without training",
+          "matched_requirement_id": "req-17",
+          "selection_source": "carryover_cache",
+          "paper_id": "2607.19547v1",
           "carry_days": 1
         }
       ]
     },
     "llm-memory": {
-      "updated_date": "20260712",
+      "updated_date": "20260727",
       "carryover_days": 9,
       "items": [
         {
-          "id": "2607.07740v1",
+          "id": "2607.21911v1",
           "source": "arxiv",
-          "title": "Jet-Long: Efficient Long-Context Extension with Dynamic Bifocal RoPE",
-          "abstract": "Modern LLMs are increasingly deployed in long-context applications such as retrieval-augmented generation, repository-level coding, and agentic workflows whose accumulated reasoning and tool traces routinely push the input an order of magnitude past the pretraining window, making zero-shot context extension the dominant deployment path for open-weight checkpoints. Most existing zero-shot methods fix a single rescaling factor up front, so an aggressive factor sacrifices short-context fidelity while a conservative one breaks down at long contexts. We propose Jet-Long, a tuning-free zero-shot method that pairs a local RoPE-faithful window with a long-range window whose rescaling factor adapts dynamically to the current sequence length, recovering the base model exactly at short inputs while extrapolating cleanly at long ones. An inclusion-exclusion attention merge and an on-the-fly RoPE correction rotation make the bifocal construction essentially free at inference; fused into a single CuTe kernel, long-context prefill reaches up to $1.39\\times$ FA2 throughput on H100 (approaching the Hopper-only FA4), and single-batch generation incurs $\\le 4\\%$ overhead at every length. On Qwen3-1.7B/4B/8B up to 128K context, Jet-Long leads RULER by $+4.79$/$+2.18$/$+2.03$~pp over the strongest baseline at 1.7B/4B/8B, achieves the best overall accuracy on HELMET-RAG (a benchmark identified by HELMET as the most efficient predictor of downstream long-context performance) and attains the lowest PG-19 perplexity. Jet-Long also generalizes to hybrid attention architectures such as Jet-Nemotron for further long-context improvement without retraining, and remains hyperparameter-resilient for ease of deployment.",
+          "title": "Leveraging Resolved Incident History for LLM-Assisted Software Bug Diagnosis",
+          "abstract": "Effective software bug diagnosis requires two ingredients: the right knowledge source (operational failure history, not just system documentation) and the right retrieval structure (structured records, not unstructured chunks). Current retrieval-augmented generation (RAG) approaches fall short on one or both dimensions. We propose Operational Memory RAG (OM-RAG), which indexes resolved issues as structured symptom-root cause-resolution triples and retrieves the most similar historical precedent via single-hop embedding. OM-RAG powers a purpose-built large language model (LLM) administrator that has operated a production Dataverse instance for over six months, operationalizing the Knowledge component of the Monitor-Analyze-Plan-Execute-Knowledge (MAPE-K) feedback loop with the system's own resolved failure history. In a controlled four-configuration ablation, LLM-based judging covers all 1,172 issues and manual verification a 123-issue subset. OM-RAG achieves Diagnosis Accuracy of 0.931 and Fix Correctness of 0.809, outperforming chunk-based retrieval (+186%) and a documentation-anchored concept graph (+77%). Model-free retrieval metrics (mean similarity 0.880) independently corroborate the ranking.",
           "authors": [
-            "Haozhan Tang",
-            "Zerui Wang",
-            "Yuxian Gu",
-            "Song Han",
-            "Han Cai"
+            "Boyuan Guan",
+            "Hailu Xu",
+            "Jamie Rogers"
           ],
-          "primary_category": "cs.LG",
+          "primary_category": "cs.SE",
           "categories": [
-            "cs.LG",
-            "cs.AI"
+            "cs.SE",
+            "cs.DL"
           ],
-          "published": "2026-07-08T06:23:42+00:00",
-          "link": "https://arxiv.org/pdf/2607.07740v1",
+          "published": "2026-07-24T02:33:14+00:00",
+          "link": "https://arxiv.org/pdf/2607.21911v1",
           "tags": [
             "keyword:llm-memory",
             "keyword:power-ticket",
             "keyword:pwt",
-            "query:llm-memory",
-            "query:power-ticket",
-            "query:pwt"
+            "query:power-ticket"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "Zero-shot long-context extension technique for LLMs",
-          "llm_evidence_cn": "零样本长上下文扩展技术",
-          "llm_evidence": "零样本长上下文扩展技术",
-          "canonical_evidence": "零样本长上下文扩展技术",
-          "llm_tldr_en": "Jet-Long proposes a tuning-free zero-shot method with dynamic bifocal RoPE that adaptively rescales for long contexts without sacrificing short-context fidelity.",
-          "llm_tldr_cn": "现有零样本长上下文扩展方法使用固定缩放因子，导致短上下文保真度下降或长上下文失效。Jet-Long提出无训练零样本方法，通过局部RoPE保持窗口和自适应缩放因子的长程窗口配对，动态适应序列长度，恢复基础模型在长上下文上的性能，同时保持短上下文质量。在多个长上下文基准测试中表现优异。",
-          "llm_tldr": "现有零样本长上下文扩展方法使用固定缩放因子，导致短上下文保真度下降或长上下文失效。Jet-Long提出无训练零样本方法，通过局部RoPE保持窗口和自适应缩放因子的长程窗口配对，动态适应序列长度，恢复基础模型在长上下文上的性能，同时保持短上下文质量。在多个长上下文基准测试中表现优异。",
+          "llm_evidence_en": "Operational Memory RAG uses structured incident memory for LLM-based diagnosis, directly relevant to retrieval augmented generation with memory.",
+          "llm_evidence_cn": "操作记忆RAG利用结构化事故记忆进行LLM诊断，直接关联记忆增强的检索生成。",
+          "llm_evidence": "操作记忆RAG利用结构化事故记忆进行LLM诊断，直接关联记忆增强的检索生成。",
+          "canonical_evidence": "操作记忆RAG利用结构化事故记忆进行LLM诊断，直接关联记忆增强的检索生成。",
+          "llm_tldr_en": "OM-RAG indexes resolved incidents as symptom-root cause-resolution triples, enabling LLM diagnosis via memory-augmented retrieval.",
+          "llm_tldr_cn": "本文提出操作记忆RAG，将历史故障解析为结构化三元组（症状-根因-解决方案），通过单跳嵌入检索最相似案例，为LLM诊断提供记忆增强的检索生成，在真实生产环境中运行超过6个月，验证其有效性，可借鉴至工作票的知识记忆增强。",
+          "llm_tldr": "本文提出操作记忆RAG，将历史故障解析为结构化三元组（症状-根因-解决方案），通过单跳嵌入检索最相似案例，为LLM诊断提供记忆增强的检索生成，在真实生产环境中运行超过6个月，验证其有效性，可借鉴至工作票的知识记忆增强。",
           "llm_tags": [
             "query:llm-memory"
           ],
           "matched_query_tag": "query:llm-memory",
-          "matched_query_text": "Long context reasoning techniques in large language models",
-          "matched_requirement_id": "req-19",
+          "matched_query_text": "retrieval augmented generation with memory",
+          "matched_requirement_id": "req-22",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.07740v1",
-          "carry_days": 2
-        },
-        {
-          "id": "2607.07386v1",
-          "source": "arxiv",
-          "title": "Sparse Delta Memory: Scaling the State of Linear RNNs through Sparsity",
-          "abstract": "Linear attention models allow a fixed state size and a fixed amount of compute per token. However, due to their limited state size, linear attention models fall behind in long-context recall compared to softmax-attention-based transformer architectures. Increasing the state size of linear attention improves recall performance but at the cost of higher FLOPs. In this work, we introduce Sparse Delta Memory (SDM), an architecture that scales the hidden state of gated linear RNNs to orders of magnitude higher capacity using a sparse addressing scheme. SDM extends the Gated DeltaNet architecture by replacing the dense key-value outer product with sparse reads and writes to a large explicit memory. We show that, under an isoFLOP constraint and with an identical number of parameters, a higher state memory capacity significantly improves performance on in-context learning and long-context retrieval tasks. Moreover, by learning the initial state of the SDM memory and therefore using it as a parametric memory, we show that the model further improves on a wide range of common-knowledge and reasoning tasks.",
-          "authors": [
-            "Loïc Cabannes",
-            "Pierre-Emmanuel Mazaré",
-            "Gergely Szilvasy",
-            "Matthijs Douze",
-            "Maria Lomeli",
-            "Ilze Amanda Auzina",
-            "Justin Carpentier",
-            "Gabriel Synnaeve",
-            "Hervé Jégou"
-          ],
-          "primary_category": "cs.LG",
-          "categories": [
-            "cs.LG"
-          ],
-          "published": "2026-07-08T13:17:19+00:00",
-          "link": "https://arxiv.org/pdf/2607.07386v1",
-          "tags": [
-            "keyword:llm-memory",
-            "keyword:power-ticket",
-            "keyword:pwt",
-            "query:llm-memory",
-            "query:power-ticket",
-            "query:pwt"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "sparse addressing for scaling linear RNN state, improving long-context memory capacity",
-          "llm_evidence_cn": "通过稀疏寻址扩展线性RNN状态，提升长上下文记忆容量",
-          "llm_evidence": "通过稀疏寻址扩展线性RNN状态，提升长上下文记忆容量",
-          "canonical_evidence": "通过稀疏寻址扩展线性RNN状态，提升长上下文记忆容量",
-          "llm_tldr_en": "Introduces Sparse Delta Memory (SDM) that scales gated linear RNN hidden state via sparse reads/writes to explicit memory, achieving higher capacity under isoFLOP constraints and improving long-context recall.",
-          "llm_tldr_cn": "线性注意力模型因固定状态大小在长上下文召回上落后于Transformer。本文提出Sparse Delta Memory（SDM），通过稀疏读写显式记忆来扩展门控线性RNN的隐藏状态，在等FLOP约束下显著提升容量。实验表明SDM在长上下文任务中召回性能优于基线，且保持了线性注意力的计算效率。",
-          "llm_tldr": "线性注意力模型因固定状态大小在长上下文召回上落后于Transformer。本文提出Sparse Delta Memory（SDM），通过稀疏读写显式记忆来扩展门控线性RNN的隐藏状态，在等FLOP约束下显著提升容量。实验表明SDM在长上下文任务中召回性能优于基线，且保持了线性注意力的计算效率。",
-          "llm_tags": [
-            "query:llm-memory"
-          ],
-          "matched_query_tag": "query:llm-memory",
-          "matched_query_text": "memory augmented language model techniques",
-          "matched_requirement_id": "req-20",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.07386v1",
+          "paper_id": "2607.21911v1",
           "carry_days": 1
         },
         {
-          "id": "2607.07666v1",
+          "id": "2607.20764v1",
           "source": "arxiv",
-          "title": "A hierarchical memory architecture overcomes context limits in long-horizon multi-agent computational modeling",
-          "abstract": "Large language models (LLMs) demonstrate remarkable reasoning capabilities, yet their stateless architecture fundamentally limits deployment in long-horizon research workflows requiring multi-session continuity and quantitative rigor. Here we present Ensemble QSP, a multi-agent framework featuring a three-layer hierarchical memory architecture that keeps injected context bounded and constant in project duration (mid-term project state: median 301 tokens, max 4,050, across 104 runs) by capping each state category and evicting completed work, enabling continuous autonomous operation without context degradation. The system orchestrates five specialist worker agents under domain-expert principal investigators, enforcing physical constraints through physics-based checklists and structured-domain knowledge. Comprehensive benchmarking demonstrates robust autonomous pharmacokinetic-pharmacodynamic model selection without human intervention, consistent result quality across both lower-cost and frontier LLMs, improved PK parameter recovery relative to single-agent baselines, and stable model selection across linguistically diverse prompts of the same task. Feature-level ablation across physiologically based pharmacokinetic (PBPK) models spanning a broad complexity range shows that PI-agent oversight improves debugging efficiency while preserving final accuracy across conditions. The architecture is structurally domain-agnostic, adding a new scientific domain requires only a new PI agent configuration.",
+          "title": "ArbiGraph: Arbitrarily Scalable Verifiable Task Graphs for Evaluating Context Management",
+          "abstract": "We introduce ARBIGRAPH, a benchmark generator for evaluating whether tool-assisted language agents can retain, update, compose, and discard task-relevant context across extended reasoning workflows. ARBIGRAPH represents each task as a natural-language problem with an executable Python solver, and composes tasks through typed intermediate states, instantiated here as scalar and list values. This design enables controllable task graphs whose length, dependency structure, distractor count, and value type can be varied while preserving exact automatic verification. We instantiate ARBIGRAPH with math, GSM-style word-problems, and Python-tracing task categories, and evaluate a Qwen3.5-27B tool-assisted agent across four topologies. The results show high accuracy on isolated tasks but substantial degradation on more complex dependent tasks: accuracy drops by up to 33.3% on branching chains of dependent math tasks. This shows that ARBIGRAPH exposes failures that are not visible from single-task evaluation alone. Our code, generated datasets, and evaluation results are available at https://github.com/pavelgolikov/ArbiGraph.git",
           "authors": [
-            "Shivendra G. Tewari",
-            "Holly Kimko"
-          ],
-          "primary_category": "q-bio.QM",
-          "categories": [
-            "q-bio.QM",
-            "cs.MA"
-          ],
-          "published": "2026-07-08T17:22:28+00:00",
-          "link": "https://arxiv.org/pdf/2607.07666v1",
-          "tags": [
-            "keyword:llm-memory",
-            "keyword:pwt",
-            "query:llm-memory",
-            "query:pwt"
-          ],
-          "llm_score": 8.0,
-          "llm_evidence_en": "hierarchical memory architecture for long-horizon multi-agent scenarios",
-          "llm_evidence_cn": "用于长程多智能体场景的分层记忆架构",
-          "llm_evidence": "用于长程多智能体场景的分层记忆架构",
-          "canonical_evidence": "用于长程多智能体场景的分层记忆架构",
-          "llm_tldr_en": "Ensemble QSP uses a three-layer hierarchical memory to keep context bounded and constant, enabling continuous autonomous operation for long-horizon multi-agent tasks without context degradation.",
-          "llm_tldr_cn": "该论文针对大语言模型在长程多智能体任务中因无状态架构导致的上下文退化问题，提出了Ensemble QSP框架，采用三层层次化记忆架构，通过限制每一状态类别的最大令牌数并驱逐已完成工作，使得注入的上下文在整个项目周期内保持有界且恒定。实验表明该方法在104次运行中中位项目状态仅301个令牌，支持持续自主运行。该工作为将长期记忆有效融入LLM代理提供了一种实用的架构方案，直接服务于长上下文记忆增强的研究需求。",
-          "llm_tldr": "该论文针对大语言模型在长程多智能体任务中因无状态架构导致的上下文退化问题，提出了Ensemble QSP框架，采用三层层次化记忆架构，通过限制每一状态类别的最大令牌数并驱逐已完成工作，使得注入的上下文在整个项目周期内保持有界且恒定。实验表明该方法在104次运行中中位项目状态仅301个令牌，支持持续自主运行。该工作为将长期记忆有效融入LLM代理提供了一种实用的架构方案，直接服务于长上下文记忆增强的研究需求。",
-          "llm_tags": [
-            "query:llm-memory"
-          ],
-          "matched_query_tag": "query:llm-memory",
-          "matched_query_text": "methods for incorporating long term memory into large language models",
-          "matched_requirement_id": "req-24",
-          "selection_source": "carryover_cache",
-          "paper_id": "2607.07666v1",
-          "carry_days": 2
-        },
-        {
-          "id": "2607.08284v1",
-          "source": "arxiv",
-          "title": "Understanding Axes of Difficulty For Long Context Tasks Via PredicateLongBench",
-          "abstract": "Large language models (LLMs) have demonstrated rapidly improving long-context capabilities, prompting a wave of benchmarks designed to evaluate them. However, existing long-context evaluations - from Needle-in-a-Haystack (NIAH) tests to more recent multi-hop reasoning and summarization tasks - predominantly measure average-case performance, and many are either saturated or lack robustness. Notably absent is a systematic way to probe how models perform as we scale up the difficulty of tasks along various axes. We address this gap by proposing PredicateLongBench, a benchmark that stress-tests long-context reasoning by asking models to identify the longest contiguous subsequence of words in a long input that satisfies given predicates/constraints (e.g., lexicographic ordering), drawn from a broader predicate class. The central innovation of our benchmark is the identification and systematic exploration of multiple different axes of difficulty which test multiple aspects of long context understanding. We provide two complementary generation pipelines - a fully synthetic setup using random word-like strings, and a real-world setup that samples words from natural documents while preserving their distributional properties. We find that frontier models struggle to perform well as we scale up the difficulty of tasks along our axes, demonstrating the utility of our benchmark in understanding the limitations of current long-context capabilities. Furthermore, the tasks in PredicateLongBench, though challenging, are conceptually simple and do not require LLM-based generations or judges.",
-          "authors": [
-            "Siddhartha Jain",
-            "Ameya Velingker"
+            "Pavel Golikov",
+            "Evgenii Opryshko",
+            "Gennady Pekhimenko",
+            "Mark C. Jeffrey"
           ],
           "primary_category": "cs.AI",
           "categories": [
             "cs.AI"
           ],
-          "published": "2026-07-09T09:28:06+00:00",
-          "link": "https://arxiv.org/pdf/2607.08284v1",
+          "published": "2026-07-22T22:30:12+00:00",
+          "link": "https://arxiv.org/pdf/2607.20764v1",
           "tags": [
             "keyword:llm-memory",
             "keyword:power-ticket",
@@ -360,65 +359,61 @@
             "query:pwt"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "benchmark for long-context reasoning difficulty axes",
-          "llm_evidence_cn": "长上下文推理难度轴基准",
-          "llm_evidence": "长上下文推理难度轴基准",
-          "canonical_evidence": "长上下文推理难度轴基准",
-          "llm_tldr_en": "PredicateLongBench stress-tests LLMs on long-context reasoning by measuring performance as task difficulty scales across multiple axes, filling a gap in existing benchmarks.",
-          "llm_tldr_cn": "现有长上下文评估缺乏系统性难度递进测试。本文提出PredicateLongBench基准，通过要求模型在长输入中找出满足给定谓词/约束的最长连续子序列，从多维度压力测试长上下文推理能力。实验揭示了不同模型在不同难度轴上的弱点，为未来模型改进提供了方向。",
-          "llm_tldr": "现有长上下文评估缺乏系统性难度递进测试。本文提出PredicateLongBench基准，通过要求模型在长输入中找出满足给定谓词/约束的最长连续子序列，从多维度压力测试长上下文推理能力。实验揭示了不同模型在不同难度轴上的弱点，为未来模型改进提供了方向。",
+          "llm_evidence_en": "scalable task graph benchmark for evaluating context management in multi-step reasoning",
+          "llm_evidence_cn": "用于评估多步推理中上下文管理的可扩展任务图基准",
+          "llm_evidence": "用于评估多步推理中上下文管理的可扩展任务图基准",
+          "canonical_evidence": "用于评估多步推理中上下文管理的可扩展任务图基准",
+          "llm_tldr_en": "ArbiGraph generates controllable task graphs with typed intermediate states to evaluate LLM agents' ability to retain, update, compose, and discard context across extended reasoning workflows.",
+          "llm_tldr_cn": "现有基准缺乏对语言代理在扩展推理中上下文管理能力的细粒度评估。ArbiGraph提出了一种任务图生成器，通过类型化中间状态组合任务，可控制图长度、依赖结构和干扰项，实现精确自动验证。在数学、GSM和Python追踪任务上评估了Qwen3.5-27B代理，揭示了不同图拓扑下的性能差异。",
+          "llm_tldr": "现有基准缺乏对语言代理在扩展推理中上下文管理能力的细粒度评估。ArbiGraph提出了一种任务图生成器，通过类型化中间状态组合任务，可控制图长度、依赖结构和干扰项，实现精确自动验证。在数学、GSM和Python追踪任务上评估了Qwen3.5-27B代理，揭示了不同图拓扑下的性能差异。",
           "llm_tags": [
             "query:llm-memory"
           ],
           "matched_query_tag": "query:llm-memory",
-          "matched_query_text": "Long context reasoning techniques in large language models",
-          "matched_requirement_id": "req-19",
+          "matched_query_text": "Multi-hop reasoning with long context",
+          "matched_requirement_id": "req-23",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.08284v1",
+          "paper_id": "2607.20764v1",
           "carry_days": 1
         },
         {
-          "id": "2607.08724v1",
+          "id": "2607.19326v1",
           "source": "arxiv",
-          "title": "Latent Memory Palace: Reasoning for Control as Autoregressive Variational Inference",
-          "abstract": "Human decision-making is highly flexible -- some actions are taken immediately; others require longer deliberation. Language models have exhibited a similar capacity for adaptive \"reasoning.\" However, transferring this capability to continuous control policies has been challenging, as directly reasoning in language space may lack the granularity for spatial understanding and precise motions. In this work, we show that reasoning for control policies can emerge by organizing information in an autoregressive latent space reminiscent of a memory palace, where retrieval is iterative and adaptive. Our method, Latent Memory Palace (LMP), formulates reasoning as variational inference with an autoregressive latent distribution. We derive a latent-space reinforcement learning technique to tractably optimize its variational lower bound. The resulting policy, LMP-$π$, achieves strong empirical performance in simulation and real-world domains while exhibiting interpretable, adaptive allocation of test-time compute. We further show that the same framework yields a variable-length action tokenizer, LMP-$\\texttt{tok}$, which significantly improves the performance of downstream autoregressive policies. Together, these results present a new perspective on latent reasoning for control through the lens of variational inference.",
+          "title": "Selective State-Space Adaptation and Retrieval for Language Model Reasoning",
+          "abstract": "Low-rank adaptation introduces a static learned update applied identically to every input. The update provides task-level adaptation but does not explicitly represent token-level or instance-level state variation. A family of adapters is proposed that introduces selective state-space recurrence at two complementary granularities. At the token level, \\textbf{MaLoRA} (Mamba-modulated low-rank adaptation) makes the adapter's scaling factor a dynamic input-dependent function with recurrent state across tokens, in contrast to the stateless modulators of prior work. At the context level, \\textbf{MaRA} (Mamba Retrieval Adapter) tracks cross-segment state and selects the segments most relevant to the query, before the modulated language model generates its answer. Across three frozen backbones (Qwen-2.5-7B, Llama-3.1-8B, Gemma-2-9B) and two reasoning benchmarks (MuSiQue, 2WikiMultihopQA), the family improves reasoning accuracy on every cell of the $3{\\times}2$ grid, by $+6.8$ F1 ($+10.5\\%$ relative) on average and up to $+9.3$ F1 ($+18.2\\%$ relative) on the hardest cell over the LoRA baseline, and the token-level gains carry to RULER QA-2 under length stress.",
           "authors": [
-            "Chuning Zhu",
-            "Eva Xu",
-            "Jose Barreiros",
-            "Krishnan Srinivasan",
-            "Paarth Shah",
-            "Abhishek Gupta"
+            "Atahan Dokme",
+            "Larry Heck"
           ],
-          "primary_category": "cs.LG",
+          "primary_category": "cs.CL",
           "categories": [
-            "cs.LG",
-            "cs.RO"
+            "cs.CL"
           ],
-          "published": "2026-07-09T17:30:49+00:00",
-          "link": "https://arxiv.org/pdf/2607.08724v1",
+          "published": "2026-07-21T17:47:57+00:00",
+          "link": "https://arxiv.org/pdf/2607.19326v1",
           "tags": [
             "keyword:llm-memory",
             "keyword:pwt",
             "query:llm-memory",
+            "query:power-ticket",
             "query:pwt"
           ],
           "llm_score": 8.0,
-          "llm_evidence_en": "memory palace for autoregressive latent reasoning",
-          "llm_evidence_cn": "用于自回归潜在推理的记忆宫",
-          "llm_evidence": "用于自回归潜在推理的记忆宫",
-          "canonical_evidence": "用于自回归潜在推理的记忆宫",
-          "llm_tldr_en": "Latent Memory Palace (LMP) formulates reasoning as variational inference in an autoregressive latent space, enabling memory-augmented reasoning for continuous control without language-level reasoning.",
-          "llm_tldr_cn": "将大语言模型的推理能力迁移到连续控制策略面临挑战。本文提出潜在记忆宫(LMP)，通过自回归潜在分布组织信息，将推理形式化为变分推断，自适应迭代检索。该方法在控制任务上展示了类似于记忆增强的推理能力，无需语言空间推理，为记忆增强模型提供了新视角。",
-          "llm_tldr": "将大语言模型的推理能力迁移到连续控制策略面临挑战。本文提出潜在记忆宫(LMP)，通过自回归潜在分布组织信息，将推理形式化为变分推断，自适应迭代检索。该方法在控制任务上展示了类似于记忆增强的推理能力，无需语言空间推理，为记忆增强模型提供了新视角。",
+          "llm_evidence_en": "Selective retrieval and state-space adaptation for reasoning",
+          "llm_evidence_cn": "选择性检索与状态空间自适应推理",
+          "llm_evidence": "选择性检索与状态空间自适应推理",
+          "canonical_evidence": "选择性检索与状态空间自适应推理",
+          "llm_tldr_en": "Proposes MaLoRA and MaRA adapters using Mamba recurrence to enable dynamic token-level and context-level retrieval and state tracking, improving language model reasoning.",
+          "llm_tldr_cn": "本文针对语言模型推理中静态适配无法捕捉输入状态变化的问题，提出了两种基于Mamba的适配器：MaLoRA实现令牌级动态缩放，MaRA实现跨段状态跟踪与查询相关段检索。实验表明该方法在推理任务上有效提升了性能，为将记忆机制融入语言模型提供了新途径。",
+          "llm_tldr": "本文针对语言模型推理中静态适配无法捕捉输入状态变化的问题，提出了两种基于Mamba的适配器：MaLoRA实现令牌级动态缩放，MaRA实现跨段状态跟踪与查询相关段检索。实验表明该方法在推理任务上有效提升了性能，为将记忆机制融入语言模型提供了新途径。",
           "llm_tags": [
             "query:llm-memory"
           ],
           "matched_query_tag": "query:llm-memory",
-          "matched_query_text": "memory augmented language model techniques",
-          "matched_requirement_id": "req-20",
+          "matched_query_text": "retrieval augmented generation with memory",
+          "matched_requirement_id": "req-22",
           "selection_source": "carryover_cache",
-          "paper_id": "2607.08724v1",
+          "paper_id": "2607.19326v1",
           "carry_days": 1
         }
       ]

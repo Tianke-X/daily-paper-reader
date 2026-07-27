@@ -6,86 +6,86 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-12
-- 运行时间：2026-07-12 20:46:41 UTC
+- 最新运行日期：2026-07-27
+- 运行时间：2026-07-27 20:39:58 UTC
 - 运行状态：成功
 - 本次总论文数：22
 - 精读区：9
 - 速读区：13
 
 ### 今日简报（AI）
-今日推荐22篇论文，精读9篇，其中两篇9分高关注：因果结构动态图学习提升电力系统暂态稳定预测，以及证据图指导长上下文理解指令合成。最值得看这两个前沿方向，均提出新颖图结构方法。建议优先精读这两篇，速读列表中的RAG与KV缓存优化也值得快速浏览。
-- 详情：[/202607/12/README](/202607/12/README)
+今日聚焦语言代理记忆管理及KV缓存重用技术，精读2篇高分论文，速读3篇相关研究。最值得关注的是预算依赖的代理记忆操作符选择与长期记忆的反思循环机制，均获得9.0分推荐。建议优先精读这两篇，速读可补充关注压缩可组合KV缓存复用方法。
+- 详情：[/202607/27/README](/202607/27/README)
 
 ### 精读区论文标签
-1. [Causal--Structural Dynamic Graph Learning for Online Transient Stability Trajectory Prediction in Power Systems](/202607/12/2607.05729v1-causal--structural-dynamic-graph-learning-for-online-transient-stability-trajectory-prediction-in-power-systems)  
-   标签：评分：9.0/10、query:power-ticket
-   evidence：电力系统动态图结构学习
-2. [LongCrafter: Towards Diverse Long-Context Understanding via Evidence-Graph-Guided Instruction Synthesis](/202607/12/2607.06160v1-longcrafter-towards-diverse-long-context-understanding-via-evidence-graph-guided-instruction-synthesis)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：利用证据图引导指令合成实现多样化长上下文理解
-3. [DepthWeave-KV: Token-Adaptive Cross-Layer Residual Factorization for Long-Context KV Cache Compression](/202607/12/2607.06523v1-depthweave-kv-token-adaptive-cross-layer-residual-factorization-for-long-context-kv-cache-compression)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：面向长上下文记忆优化的令牌自适应KV缓存压缩
-4. [MILES: Modular Instruction Memory with Learnable Selection for Self-Improving LLM Reasoning](/202607/12/2607.06974v1-miles-modular-instruction-memory-with-learnable-selection-for-self-improving-llm-reasoning)  
+1. [Retain or Consolidate? Budget-Dependent Operator Selection for Language Agent Memory](/202607/27/2607.17545v2-retain-or-consolidate-budget-dependent-operator-selection-for-language-agent-memory)  
    标签：评分：9.0/10、query:pwt
-   evidence：通过模块化指令记忆和可学习选择实现自我改进的LLM推理，无需训练
-5. [TF-Engram: A Train-Free Engram with SSD-Backed Memory for Large Language Models](/202607/12/2607.07388v1-tf-engram-a-train-free-engram-with-ssd-backed-memory-for-large-language-models)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：无训练的Engram记忆系统，利用SSD为LLM提供外部记忆
-6. [Co-LMLM: Continuous-Query Limited Memory Language Models](/202607/12/2607.07707v1-co-lmlm-continuous-query-limited-memory-language-models)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：连续查询的有限记忆语言模型用于记忆增强生成
-7. [Uncertainty-gated selection for block-sparse attention](/202607/12/2607.07724v1-uncertainty-gated-selection-for-block-sparse-attention)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：块稀疏注意力用于长上下文推理，不确定性门控选择提升召回率
-8. [What to Keep, What to Forget: A Rate--Distortion View of Memory Compaction in LLMs and Agents](/202607/12/2607.08032v1-what-to-keep-what-to-forget-a-rate--distortion-view-of-memory-compaction-in-llms-and-agents)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：LLM与agent中内存压缩的统一视角
-9. [Conversational Retrieval and On-the-Fly Knowledge Modeling of Historical Penitentiary Repression Records](/202607/12/2607.08459v1-conversational-retrieval-and-on-the-fly-knowledge-modeling-of-historical-penitentiary-repression-records)  
+   evidence：基于预算的语言代理记忆保留与合并操作符选择
+2. [Exploratory and Assimilating Reflection: Reflective Recall Cycle for Long-term Memory](/202607/27/2607.17879v1-exploratory-and-assimilating-reflection-reflective-recall-cycle-for-long-term-memory)  
+   标签：评分：9.0/10、query:pwt
+   evidence：无需训练的记忆检索框架
+3. [Scalable and Efficient Joint Spiking Embedding Predictive Architecture for Large-Scale Dynamic Graphs](/202607/27/2607.18412v1-scalable-and-efficient-joint-spiking-embedding-predictive-architecture-for-large-scale-dynamic-graphs)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：基于图的检索增强生成与动态知识建模
+   evidence：动态图结构学习
+4. [Supra Cognitive Modes: A Routed Architecture for Agent Memory](/202607/27/2607.19096v1-supra-cognitive-modes-a-routed-architecture-for-agent-memory)  
+   标签：评分：9.0/10、query:pwt
+   evidence：提出带图多跳处理的路由化智能体记忆架构
+5. [PAGE-RAG: Evidence-Grounded Adaptive Graph Retrieval for Long-Document Question Answering](/202607/27/2607.19301v1-page-rag-evidence-grounded-adaptive-graph-retrieval-for-long-document-question-answering)  
+   标签：评分：9.0/10、query:power-ticket
+   evidence：基于图的自适应检索增强生成
+6. [VizRAG: Enhancing Retrieval-Augmented Generation with Hypergraph Visualization](/202607/27/2607.19830v1-vizrag-enhancing-retrieval-augmented-generation-with-hypergraph-visualization)  
+   标签：评分：9.0/10、query:power-ticket
+   evidence：通过超图可视化增强RAG，直接关联基于图的RAG系统。
+7. [Naju: A Native Discrete State-Space Model with Independent Retention and Writing for Long-Sequence Memory](/202607/27/2607.21000v1-naju-a-native-discrete-state-space-model-with-independent-retention-and-writing-for-long-sequence-memory)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：原生离散状态空间模型用于长序列记忆
+8. [AttriMem: Attribution-Guided Process Feedback for Agent Memory Learning](/202607/27/2607.21106v1-attrimem-attribution-guided-process-feedback-for-agent-memory-learning)  
+   标签：评分：9.0/10、query:pwt
+   evidence：通过属性引导过程反馈学习代理记忆
+9. [MemTools: A Unified Research Framework for Interoperable Agent Memory](/202607/27/2607.21404v1-memtools-a-unified-research-framework-for-interoperable-agent-memory)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：代理记忆生命周期的统一框架
 
 ### 速读区论文标签
-1. [Candidate-Constrained Retrieval-Augmented Generation for LongEval-RAG: System Design and Empirical Analysis](/202607/12/2607.04008v1-candidate-constrained-retrieval-augmented-generation-for-longeval-rag-system-design-and-empirical-analysis)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：检索增强生成系统设计
-2. [KVpop -- Key-Value Cache Compression with Predictive Online Pruning](/202607/12/2607.05061v2-kvpop----key-value-cache-compression-with-predictive-online-pruning)  
+1. [Retain or Consolidate? Budget-Dependent Operator Selection for Language Agent Memory](/202607/27/2607.17545v1-retain-or-consolidate-budget-dependent-operator-selection-for-language-agent-memory)  
+   标签：评分：8.0/10、query:pwt
+   evidence：语言代理记忆中的预算依赖算子选择
+2. [Mechanistic Attention Guidance for Agent Memory Refinement](/202607/27/2607.17621v1-mechanistic-attention-guidance-for-agent-memory-refinement)  
+   标签：评分：8.0/10、query:pwt
+   evidence：基于注意力的智能体记忆精炼
+3. [C$^2$KV: Compressed and Composable KV Cache Reuse for Efficient LLM Inference](/202607/27/2607.17715v1-c2kv-compressed-and-composable-kv-cache-reuse-for-efficient-llm-inference)  
    标签：评分：8.0/10、query:llm-memory
-   evidence：基于预测性在线剪枝和记忆评分的KV缓存压缩
-3. [DynaKRAG: A Unified Framework for Learnable Evidence Control in Multi-Hop Retrieval-Augmented Generation](/202607/12/2607.06507v1-dynakrag-a-unified-framework-for-learnable-evidence-control-in-multi-hop-retrieval-augmented-generation)  
+   evidence：面向长上下文推理的压缩可组合KV缓存重用
+4. [Evidence-in-the-Loop: Trace-Driven Optimization for Customer-Service LLM Agents](/202607/27/2607.18039v1-evidence-in-the-loop-trace-driven-optimization-for-customer-service-llm-agents)  
    标签：评分：8.0/10、query:power-ticket
-   evidence：用于多跳检索增强生成的可学习证据控制
-4. [RSF-GLLM: Bridging the Semantic Gap in Multi-Hop Knowledge Graph QA via Recurrent Soft-Flow and Decoupled LLM Generation](/202607/12/2607.06527v1-rsf-gllm-bridging-the-semantic-gap-in-multi-hop-knowledge-graph-qa-via-recurrent-soft-flow-and-decoupled-llm-generation)  
+   evidence：面向客服agent的检索增强生成与记忆
+5. [Neuro-Symbolic Meta-Policies for Temporal Knowledge-Graph Memory under Partial Observability](/202607/27/2607.18368v1-neuro-symbolic-meta-policies-for-temporal-knowledge-graph-memory-under-partial-observability)  
    标签：评分：8.0/10、query:pwt
-   evidence：基于可微分图推理的多跳知识图谱问答
-5. [Seeing and Reflecting: Multimodal Memory-Enhanced Agent Collaboration for Recommendation](/202607/12/2607.07108v1-seeing-and-reflecting-multimodal-memory-enhanced-agent-collaboration-for-recommendation)  
-   标签：评分：8.0/10、query:pwt
-   evidence：多模态记忆增强的智能体协作用于推理改进
-6. [Graph Classification via Network Usable Information: From Representation Evaluation to Structure Selection](/202607/12/2607.03587v1-graph-classification-via-network-usable-information-from-representation-evaluation-to-structure-selection)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：基于网络可用信息的图分类与结构学习
-7. [GRASP: Graph-Reasoning Aided Survey Planning for High-Fidelity Related Work Generation](/202607/12/2607.03709v1-grasp-graph-reasoning-aided-survey-planning-for-high-fidelity-related-work-generation)  
-   标签：评分：7.0/10、query:power-ticket
-   evidence：图推理用于生成，与基于图的检索增强生成相关
-8. [Heaviside Continuity of Rolling Coefficients for Eliminating Epistemic Entropy in Large Language Models](/202607/12/2607.04562v1-heaviside-continuity-of-rolling-coefficients-for-eliminating-epistemic-entropy-in-large-language-models)  
+   evidence：时序知识图谱记忆的神经符号元策略支持自适应推理
+6. [MechMem-RTL: Reusing Verified Mechanism Memories for LLM-Based RTL Repair](/202607/27/2607.17053v1-mechmem-rtl-reusing-verified-mechanism-memories-for-llm-based-rtl-repair)  
    标签：评分：7.0/10、query:pwt
-   evidence：验证优先的执行框架作为思维链替代方案
-9. [KVpop -- Key-Value Cache Compression with Predictive Online Pruning](/202607/12/2607.05061v1-kvpop----key-value-cache-compression-with-predictive-online-pruning)  
+   evidence：重用验证机制记忆进行LLM修复，无需训练
+7. [Persistent Sparse Autoencoders: Learning Feature Timescales in Language Models](/202607/27/2607.17117v1-persistent-sparse-autoencoders-learning-feature-timescales-in-language-models)  
    标签：评分：7.0/10、query:llm-memory
-   evidence：预测性KV缓存淘汰学习，提升长上下文记忆效率
-10. [Probe, Don't Prompt: A Hidden-State Probe for Metadata Filtering in Multi-Meta-RAG](/202607/12/2607.03929v1-probe-dont-prompt-a-hidden-state-probe-for-metadata-filtering-in-multi-meta-rag)  
+   evidence：持久特征作为记忆增强
+8. [LenGuard-GPC: Length Guarding with Guided-Prompt Consistency for Spatial Reasoning Reinforce Learning](/202607/27/2607.17243v1-lenguard-gpc-length-guarding-with-guided-prompt-consistency-for-spatial-reasoning-reinforce-learning)  
+   标签：评分：7.0/10、query:pwt
+   evidence：提出密集奖励框架作为思维链替代方案，适用于空间推理，可推广至工作票生成的冷启动问题。
+9. [Debate-on-Graph: Reliable and Adaptive Reasoning of Large Language Model on Uncertain Knowledge Graph](/202607/27/2607.17266v1-debate-on-graph-reliable-and-adaptive-reasoning-of-large-language-model-on-uncertain-knowledge-graph)  
+   标签：评分：7.0/10、query:pwt
+   evidence：知识图谱推理应用于工作票
+10. [TurboVec: A Case Study in Cost-Efficient Private Retrieval for Enterprise RAG via Codebook-Oblivious Quantization](/202607/27/2607.16973v1-turbovec-a-case-study-in-cost-efficient-private-retrieval-for-enterprise-rag-via-codebook-oblivious-quantization)  
+   标签：评分：6.0/10、query:power-ticket
+   evidence：通过量化优化RAG向量检索
+11. [SALT: Salience-Aware Lexical Trie for Long-Context Compression](/202607/27/2607.17486v1-salt-salience-aware-lexical-trie-for-long-context-compression)  
    标签：评分：6.0/10、query:llm-memory
-   evidence：多跳RAG中的元数据过滤
-11. [Detecting Hallucinations in Retrieval-Augmented Generation through Grounding-Aware Sensitivity by Perturbation (GASP)](/202607/12/2607.04223v1-detecting-hallucinations-in-retrieval-augmented-generation-through-grounding-aware-sensitivity-by-perturbation-gasp)  
+   evidence：保留主题的长上下文压缩
+12. [D-NOVA: In-Storage Retrieval Accelerator via Dual-Bound 3D NAND-Optimized Similarity Search with Vector Adaptation](/202607/27/2607.17538v1-d-nova-in-storage-retrieval-accelerator-via-dual-bound-3d-nand-optimized-similarity-search-with-vector-adaptation)  
+   标签：评分：6.0/10、query:llm-memory
+   evidence：存储内检索加速器用于带记忆的RAG
+13. [ANNLib: A Development Framework for Efficient Approximate Nearest Neighbor Search](/202607/27/2607.17582v1-annlib-a-development-framework-for-efficient-approximate-nearest-neighbor-search)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：检索增强生成中的幻觉检测，与检索增强生成相关
-12. [GORIO: GPU-Centered Remote I/O for Graph ANNS over NVMe-oF](/202607/12/2607.04415v1-gorio-gpu-centered-remote-io-for-graph-anns-over-nvme-of)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：面向图ANN的GPU中心远程I/O，用于检索增强生成
-13. [Enhancing Large Multimodal Models in Key Information Extraction via Scene-Aware Document Synthesis](/202607/12/2607.04636v1-enhancing-large-multimodal-models-in-key-information-extraction-via-scene-aware-document-synthesis)  
-   标签：评分：6.0/10、query:pwt
-   evidence：低资源文档关键信息提取的合成数据生成
+   evidence：基于图的近似近邻搜索可用于RAG检索
 
 
 <div class="dpr-home-promo-card">
