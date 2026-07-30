@@ -1,0 +1,846 @@
+Title: Alleviating Regional Shortcuts for Few-Shot Class-Incremental Learning
+
+URL Source: https://arxiv.org/pdf/2607.22072v1
+
+Published Time: Mon, 27 Jul 2026 00:36:50 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+> JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 1
+
+# Alleviating Regional Shortcuts for Few-Shot Class-Incremental Learning 
+
+Haichen Zhou*, Yazhe Lyu*, Yixiong Zou, Member, IEEE , Ruixuan Li, Member, IEEE , Yuhua Li, Member, IEEE 
+
+Abstract —Few-shot class-incremental learning (FSCIL) aims to incrementally learn novel classes with only a few samples while avoiding forgetting base classes. However, current methods show a tendency to misclassify novel-class samples into base classes, which we find to be caused by the excessive focus on base-class-discriminative regions on novel-class samples. In this work, we aim to explore the underlying mechanism for an interpretation and solution. We first provide a compositional view to analyze the transferred and reused spatial patterns on novel-class samples. Then, through extensive experiments and theoretical analysis, we identify both empirically and theoretically that a shortcut exists in the model’s base-class training, which naturally forms the excessive focus on only the most discriminative regions (primitives), which we term as the regional shortcut. Finally, based on this interpretation, to address this problem, we propose a compositional-learning-based method to learn two primitive sets (a common set and a discriminative set), which alleviates the regional shortcut by constraining the model to learn and utilize the common primitive set for base- and novel-class recog-nition. Extensive experiments on standard FSCIL benchmarks demonstrate the effectiveness of our approach, yielding consistent improvements over existing state-of-the-art methods in both accuracy and interpretability. 
+
+Index Terms —Few-Shot Class-Incremental Learning, Compo-sitional Learning, Regional Shortcut, Few-Shot Learning. 
+
+I. I NTRODUCTION 
+
+# FEW-Shot Class-Incremental Learning (FSCIL) is pro-posed to handle the continuously arising real-world knowledge with only limited data [1], [2], aiming to first learn from abundant data in the base session (base classes), and then transfer the knowledge to downstream novel sessions (novel classes) with scarce training data. The main challenges in FSCIL arise from two aspects: catastrophic forgetting [3] of learned knowledge (base classes), caused by the sequential nature of the incremental learning task, and overfitting to novel classes, due to the scarcity of training data. To address these challenges, a common strategy is to freeze the feature extractor pretrained on base classes during novel-class learning [4], [5], which stably shows good performance despite its simple design. However, it also leads to limited adaptation and performance on novel classes. Specifically, we first find the model tends to classify a substantial portion of novel-class samples into base classes (Fig.1(a)), revealing a bias in the model’s decision. While this has been observed 
+
+*These authors contributed equally to this work. The authors are with the School of Computer Science and Technology, Huazhong University of Science and Technology, Wuhan 430074, China. Emails: m202273832@hust.edu.cn, yazhelv@hust.edu.cn, yixiongz@hust.edu.cn, rxli@hust.edu.cn, idcliyuhua@hust.edu.cn. Corresponding author: Yixiong Zou. 
+
+across FSCIL benchmarks, the mechanistic reasons behind it remain insufficiently studied. To understand this behavior, we visualize the heatmap of those misclassified samples, and we observe that the model tends to incorrectly focus on a small number of discriminative regions associated with base classes. For example, focusing on the ant-like insect on the corn and misclassifying a corn (novel class) as an ant (base class), as in Fig.1(b). Although it is natural to focus on the learned base-class pattern on novel classes, the model should gradually shift its attention to the corn by learning from the novel-class training samples, albeit of their scarcity. However, we find that the model shows very low activation on corn-like patterns across most training samples, which makes it extremely difficult to learn to recognize such patterns. In other words, we hold that such a bias in learned and transferred base-class spatial patterns limits the adaptation to novel classes. To address this problem, in this paper, we are inspired by recent compositional learning works [6] for an interpretation, which analyzes from the aspect of decomposition and re-composition of base-class spatial patterns. These works typ-ically view image patches as visual primitives, which de-compose base-class knowledge and are transferred into novel classes for knowledge re-composition, as in Fig.1(c). In other words, ideally, the model should transfer both the ant-like primitives and corn-like primitives to novel classes, and shift its attention to corn-like primitives by seeing more corn-like samples. However, quantitative and qualitative studies such as Fig.1(b) show that the model only captures ant-like patterns (base-class-discriminative primitives, BCD primitives) but totally ignores other visual patterns, leading to the incor-rect focus on the ineffective regions of novel-class samples. Moreover, we find both empirically and theoretically that such an excessive focus on BCD primitives is inherited from the model’s inherent shortcut in learning the most discriminative regions, which we term as regional shortcuts .Based on this interpretation, we propose a novel composi-tional method to mitigate biased primitives caused by regional shortcuts. Specifically, we introduce an additional common primitive set that captures class-agnostic, shared semantic cues across categories. This encourages the model to learn more transferable and semantically enriched primitives during the base-class training phase, thereby alleviating misclassification on novel classes that arises from over-reliance on BCD prim-itives and neglect of all other ones. Notably, by visualizing learned primitives, our method shows better interpretability of the models’ behavior. Our contributions can be listed as:  
+
+> •
+
+We find that current FSCIL models tend to misclassify arXiv:2607.22072v1 [cs.CV] 24 Jul 2026 JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 2(a) Novel-class samples’ predictions (b) M odels’ incorrect focus                         
+
+> Image Label Pred. Heatmap
+> Ant
+> Ant x
+> Ant
+> Corn
+> Frying
+> _pan
+> Frying
+> _pan x
+> Frying
+> _pan
+> Corn
+> 0
+> 50
+> 100
+> 12345678
+> pred_true
+> pred_false
+> 0
+> 50
+> 100
+> 12345678
+> pred_base
+> pred_novel
+> Importance …
+> Base-Class Novel-Class
+> Learn from
+> novel-class samples
+> Shift model attention
+> Ant-like High Corn-like Low
+> Pest-like High Corn-like Low
+> Novel-Class
+> Corn-like High Ant-like Low
+> Corn-like High Pest-like Low
+> (c) A compositional view of this problem
+> Primitive s
+
+Fig. 1. (a) FSCIL models tend to make wrong predictions on novel-class samples (pred false), where the wrong predictions as base classes (pred base) are much more than those as novel classes (pred novel). (b) We find the cause is in models’ incorrect focus on base-class-related discriminative regions in novel-class data, e.g., only focusing on the ant-like insect on the corn and misclassifying a corn (novel class) as an ant (base class), albeit the given novel-class training samples. (c) We are inspired to provide a compositional view to delve into this problem, which decomposes base-class knowledge into primitives (patches) and transfers them to novel classes for knowledge re-composition. 
+
+novel classes by incorrectly focusing on discriminative regions associated with base classes, reflecting a bias in the learned and transferred spatial patterns, which limits the model’s adaptation to novel classes.  
+
+> •
+
+We provide a compositional view into this problem, and interpret it both empirically and theoretically as an excessive focus on BCD primitives caused by the model’s regional shortcuts during base class training.  
+
+> •
+
+Based on this interpretation, we further propose a com-positional method that incorporates a common primitive set, encouraging the model to learn more transferable and semantically enriched primitive representations, thereby reducing over-reliance on BCD primitives and neglect of all other primitives.  
+
+> •
+
+Extensive experiments validate the rationale of our inter-pretation and method, and show that we can consistently outperform state-of-the-art works. II. R ELATED WORK 
+
+Few-Shot Class-Incremental Learning (FSCIL) [7], [8] aims to learn novel classes with few examples per incre-mental session. Current FSCIL challenges mainly stem from catastrophic forgetting [9] and overfitting to novel classes [10]. Our research targets FSCIL challenges, especially novel-class performance. TEEN [5] offers a training-free prototype calibration based on semantic similarity to reduce misclas-sifying novel as base classes. RDI [11] links poor novel-class performance to label-irrelevant redundancies, suggesting decoupling and adding a dummy class to improve the feature space. Recent FSCIL studies further address these challenges from different perspectives, including generative co-memory regularization [12], prior-knowledge infusion [13], constrained dataset distillation [14], static-dynamic collaboration [15], attraction redistribution [16], and language-guided relation transfer [17]. These methods mainly focus on memory preser-vation, prior knowledge transfer, distilled sample construction, or cross-modal relation modeling to improve incremental adaptation. Unlike prior approaches, we conduct an in-depth investigation into why models confuse novel and base classes, attributing the performance degradation on novel classes to the excessive focus on base-class discriminative regions during the processing of novel-class samples. We are the first to attribute this confusion to regional shortcuts from base-class training, differing from RDI’s view. Based on it, we propose a novel method to boost performance and interpretability. 
+
+Compositional learning , inspired by cognitive theo-ries [18], aims to generalize to novel combinations by lever-aging the compositional structure inherent in many visual and linguistic concepts. This principle has been widely applied in zero-shot learning [19] and few-shot learning [6], where meth-ods often decompose visual categories into attribute–object pairs [20] or part-based representations [21], enabling the recognition of unseen compositions by recombining known primitives. Recent works aim to learn semantically expressive and spatially comprehensive primitive sets to better capture the structure of visual concepts. Disentangled representation meth-ods [22] enhance interpretability and generalization but often lack explicit constraints on spatial diversity. Attention-based compositional models [23] aggregate multi-region information to reduce reliance on overly discriminative features, yet they typically treat all primitives equally without distinguishing shared from distinctive elements. Prototype-based frameworks [24] encourage compact and meaningful representations, but seldom differentiate primitives by their semantic roles or levels of generality. Unlike prior works such as [6], which implicitly learn shared primitives, our method explicitly constructs two primitive sets and mitigates regional shortcuts by enforcing the use of a common set for both base and novel classes. III. A C LOSER LOOK AT THE BIASED SPATIAL PATTERNS 
+
+In this section, we take a closer look at the biased spatial patterns in existing FSCIL models, which tend to focus on a small set of highly discriminative regions. While this behavior often boosts performance on base classes, it can significantly impair the ability to adapt to novel classes in few-shot incremental settings. From a compositional learning perspective, we analyze how visual primitives are learned, transferred, and recombined across sessions. Our analysis is based on experiments on miniImageNet, comprising 60 base and 40 novel classes across 8 incremental sessions. Through this perspective, we reveal the structural biases that limit JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 3Novel Classes Base Classes     
+
+> Label
+> Coral_reef
+> Orange
+> Unicycle
+> Corn
+> Pred.
+> Rock_beauty ×
+> Beer_bottle ×
+> Garbage_truck ×
+> Frying_pan ×
+> Image Heatmap Heatmap Label
+> Rock_Beauty
+> Beer_bottle
+> Garbage_truck
+> Frying_pan
+> Image Primitive s
+> Fig. 2. More visualization of misclassified samples and transferred primitives for re-composition.
+
+effective generalization to novel classes and investigate the reasons behind misclassifying novel classes as base classes. 
+
+A. Preliminaries 
+
+FSCIL continuously learns novel classes with afew examples. Specifically, the model learns classes in a sequence of T training sessions denoted as D0
+
+> train
+
+, D 1
+
+> train
+
+, . . . , D T −1 
+
+> train
+
+, each associated with adistinct label space C0, C 1, . . . , C T −1 , ensuring no overlap between label spaces. Within each session, only the session-specific training set Dttrain is accessible, comprising examples {(xi, y i)}nt 
+
+> i=1
+
+with yi ∈ Ct and nt denoting the number of examples. The testing set Dttest , however, encompasses samples from all previously encountered and current classes, denoted as Dttest = {(xi, y i)}mt
+
+> i=1
+
+, where 
+
+yi ∈ Sti=0 Ci and mt denoting the number of examples. The base session (t = 0) involves a training set with ample examples per class. Subsequent incremental sessions 
+
+(0 < t < T ) consist of only limited samples. A common strategy is to fix the backbone trained on base classes while adapting to novel classes. During the base session, the model f (x) = W T ϕ(x) is trained with: 
+
+Lce = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+−log eτ cos (ϕ(xi),w yi )
+
+eτ cos (ϕ(xi),w yi ) + P 
+
+> m̸=yi
+
+eτ cos (ϕ(xi),w m) ,
+
+(1) where ϕ(·) represents the feature extractor and W denotes the classifier for base classes. Then, ϕ(x) will be fixed and tran-sitioned to the incremental session, and W will be substituted with the novel-class classifiers. Throughout the incremental session, the classifier for base classes remains fixed, while for novel classes, the classifier can be refined through fine-tuning or by employing the average embedding. During evaluation in session t, given an input x, the predicted label ˆy is obtained by comparing the similarity between the feature ϕ(x) and classifier weights {wk} for all classes encountered so far: 
+
+ˆy = arg max  
+
+> 1≤k≤Pti=0 Ni
+
+⟨ϕ(x), w k⟩, (2) where ϕ(x) ∈ Rd is the feature extractor output, wk ∈ Rd is the classifier weight vector of the k-th class, and Ni is the number of classes introduced in session i.
+
+B. Compositional View of FSCIL 
+
+Humans possess a core cognitive ability to decompose complex information into simpler, meaningful components, enabling efficient learning and generalization by reusing fa-miliar elements in new contexts [25]. Recent studies [6] have achieved promising results based on compositional learning, which extracts visual primitives from previously acquired knowledge and recombines them to understand new concepts, where image patches are treated as candidate visual primitives. Inspired by it, we hold that the biased base-class spatial pat-terns observed in heatmaps (Fig.1(b)) can also be understood through compositional learning (Fig.2). Following [6], let {Xi}ni=1 denote the set of feature rep-resentations extracted from all patches of an image, where the patch granularity follows the output resolution of the backbone, and let {Zyk }Nk=1 represents the collection of patches corresponding to a specific class y. The cosine similarity computation between the image-level representation and class 
+
+y can thus be formulated as: 
+
+sim( ¯X, ¯Zy ) = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+Xi
+
+∥Xi∥
+
+!
+
+· 1
+
+N
+
+> N
+
+X
+
+> k=1
+
+Zyk
+
+∥Zyk ∥
+
+!
+
+= 1
+
+nN 
+
+> n
+
+X
+
+> i=1
+> N
+
+X
+
+> k=1
+
+Xi
+
+∥Xi∥ · Zyk
+
+∥Zyk ∥ .
+
+(3) From the above equation, we can see that the similarity between an image and a class y can be reformulated as the average similarity across the set of image patches and the constituent elements (primitives) of class y. This suggests that the learning process of the baseline model can be viewed as decomposing an image into patches for primitive-level understanding, and then recomposing these patches to form new class representations for classification. Specifically, during the base stage, the model learns a set of primitives. In the in-cremental stage, when facing the challenge of limited samples for novel classes, the model generates semantic representa-tions of novel classes by matching and composing primitives transferred from base classes for novel-class recognition. 
+
+Ideal properties: Novel-class generalization is closely re-lated to the re-composition of base-class primitives. Although it is natural for the model to reuse primitives that are most effective in base classes to represent novel classes, by en-countering novel-class images, the model should gradually shift its attention to novel-class-discriminative primitives, even though these primitives are not the most discriminative ones in base classes. For example, in Fig.1(c), consider a base class ”ant” and a novel class ”corn”, although the model still has the tendency to focus on the ant-like insect on the corn, by showing more corn images, the model should learn to increase the importance of corn-like patterns and decrease that of ant-like ones. This can be achieved by, for instance, averaging the primitive embeddings to form the novel-class prototype, i.e., since corn-like primitives are much more than JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 40%                
+
+> 50%
+> 100%
+> 12345678
+> Activation Primitive  Ratio
+> Session
+> pred_base pred_novel
+> 0
+> 10
+> 20
+> 30
+> 61 71 81 91
+> Primitive Activation Ratio (%)
+> Novel Class
+> Baseline Ours
+> (c) Primitive activation ratio of novel classes (b) Prediction distribution of activated primitives (a) Comparison of activated primitives
+> Baseline
+> Ours
+> Fig. 3. (a) Activated primitives to show the re-composition on novel classes, where the baseline method can only activate (focus on) small regions that are incapable of representing novel classes. (b) Prediction of these attended regions for each novel-class image using the baseline model, which is heavily biased to base classes. (c) Quantitatively measuring the primitive activation ratio on all novel-class images. Combining with (b), it verifies that the baseline model classifies novel-class images primarily based on small regions closely associated with base classes, and can hardly focus on other useful regions.
+
+ant-like primitives in novel-class images, their importance will naturally be higher. However, in this example, this requires the model to at least capture corn-like primitives on base classes and transfer them to novel classes, although they may not be the most discriminative ones on base classes. In other words, during the base-class training, the model should learn a diverse primitive set instead of only focusing on the most discriminative ones .Therefore, we will study the re-composition and decomposi-tion of primitives on novel and base classes, respectively. 
+
+C. Analysis from the Perspective of Composition Learning 1) Novel-class re-composition : In Fig.2, we observe that the model’s re-composition of primitives for novel-class sam-ples is suboptimal, leading to misclassification. To gain deeper insights, we further analyze how the model activates its learned primitives for composition. Following [26], we first formalize the criteria for a primitive to be considered activated .Let the extracted feature map be F ∈ Rd×h×w, where d
+
+denotes the feature dimension and h, w the spatial dimensions. Each primitive at location (a, b ) is represented by the vector 
+
+f (a, b ) ∈ Rd. We compute an activation score s(a, b ) for each primitive and classify those exceeding a predetermined threshold as activated. With this definition, we analyze predictions over the acti-vated primitives (Fig.3(b)). The results show that most acti-vated primitive compositions are misclassified as base classes, indicating a strong bias toward BCD primitives. This bias is exemplified in Fig.3(a), where the model intuitively attends to regions closely related to base classes while overlooking other informative components To verify this intuition, we further quantitatively verify it on all novel-class images (Fig.3(c)), where we can see that the baseline model consistently exhibits a low activation ratio on novel classes, suggesting the model can hardly focus on other useful regions. These observations suggest that the model over-relies on BCD primitives and neglects other informative components, resulting in represen-tations biased toward base classes. 
+
+2) Base-class decomposition : Since primitives are trans-ferred from base classes [27], we then check whether the model’s excessive focus on BCD primitives is inherited from biased attention during base-class training (Fig.4(a)). To quan-tify this behavior, we also calculate the activation ratio on base-class samples (Fig.4(b), left), finding that the model exhibits consistently small activated regions, suggesting the collection of a limited primitive set. Further, we see that the model can still make correct predictions by using only a small number of the most attended primitives (Fig.4(b), right, 
+
+pred-true ). These results confirm that the model overfits to localized, discriminative regions during base training, which we term as regional shortcuts . This bias persists in novel classes, limiting the potential to shift the model’s attention to novel-class discriminative primitives. 
+
+3) Regional shortcut : To further delve into the cause of regional shortcuts, we analyze the optimization dynamics of representation models parameterized by nonnegative weights over primitive features, trained with cross-entropy loss. We consider a single sample represented by a set of prim-itive features {f1, . . . , f N } ⊂ Rd. Each primitive feature fi
+
+is associated with a nonnegative weight ai ≥ 0, forming the weight vector a = (a1, . . . , a N ) ∈ RN . The overall representation of the sample x is then obtained as a weighted combination of its primitives: ϕ(x) = PNi=1 aifi.For a given class y ∈ { 1, . . . , K }, let wy ∈ Rd denote the corresponding class weight vector. The prediction is evaluated using a cross-entropy loss based on cosine similarity: 
+
+L(ϕ) = − log eτ cos( ϕ,w y )
+
+eτ cos( ϕ,w y ) + P  
+
+> k̸=y
+
+eτ cos( ϕ,w k ) , (4) where τ is a temperature parameter controlling the sharpness of the distribution. To characterize the most informative features, we define the 
+
+discriminative set of primitives S ⊆ { 1, . . . , N } as 
+
+S = arg max  
+
+> 1≤i≤N
+
+⟨wy , f i⟩, (5) i.e., the primitives most aligned with wy , with all maximally aligned features included in S.We formalize the problem with the following assumption: 
+
+Assumption 1. Non-Degradation of Competing Classes 
+
+For any non-discriminative primitive i / ∈ S and any dis-criminative primitive s ∈ S, transferring weight from i to s
+
+does not increase the activation or logit of any competing class k̸ = y. In other words, the discriminative primitives in S are universally superior for the ground-truth class y,and reallocating representation mass from outside S to S
+
+cannot improve the relative advantage of any alternative class. Formally, this condition can be expressed as 
+
+⟨wk − wy , f s − fi⟩ ≤ 0, ∀i / ∈ S, s ∈ S, k ̸ = y, (6) 
+
+which mathematically encodes the notion that the discrimi-native set captures the most informative directions for the JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 5𝐀 𝐀 
+
+𝐀 (𝐀 )
+
+𝐀 𝐀 
+
+𝐀 𝐀 
+
+𝐀 𝐀 
+
+𝐀 𝐀 
+
+> ’
+
+𝐀 𝐀  
+
+> ’
+
+𝐀 (𝐀 )’
+
+𝐀 (𝐀 )𝐀𱀀𝐀 (𝐀 (𝐀 ), 𝐀 𝐀 ) ↑                                 
+
+> 𝐀 𝐀 𝐀 ↑𝐀 𝐀 𝐀 ↓
+> 0
+> 10
+> 20
+> 30
+> 40
+> 111 21 31 41 51
+> Patch Activation Ratio (%)
+> Base Class
+> Baseline Ours pred-other-
+> novel
+> pred-true
+> pred-other-
+> base
+> (a) Visualization of base-class feature maps
+> Baseline
+> Ours
+> (b) Primitive activation ratio and prediction distribution (c) A toy illustration of the generation of regional shortcuts
+> Fig. 4. (a) The baseline model tends to only focus on the most discriminative regions/primitives for base classes, which we term as regional shortcuts . (b) Primitive activation ratio on base-class images (left) and Prediction distribution of the most attended regions for each base-class image (right), verifying the attended primitives are the most discriminative ones for base classes. (c) To maximize cos( ϕ(x), w y), the model tends to increase || f1|| and decrease || f2||
+> (i.e., activation on primitives), where ϕ(x) = a1∗f1+a2∗f2and f1is more discriminative, leading to excessive focus on the most discriminative primitives.
+
+true class, ensuring that optimization dynamics favor these primitives over non-discriminative ones. 
+
+Within the formal framework of a sample characterized by its constituent primitive features, we establish theoretical guarantees to investigate the mechanisms underlying the emer-gence of regional shortcuts. We initiate our analysis with these lemmas if the assumptions hold: 
+
+Lemma 1. Gradient with Respect to Feature Weights 
+
+For the aggregated representation ϕ = P 
+
+> i
+
+aifi, the deriva-tive of the loss L with respect to a weight ai:
+
+∂L ∂a i
+
+=
+
+> d
+
+X
+
+> k=1
+
+∂L ∂ϕ k
+
+· ∂ϕ k
+
+∂a i
+
+=
+
+> d
+
+X
+
+> k=1
+
+(∇ϕL)kfi,k = ⟨∇ ϕL, f i⟩, (7) Here, each component of ϕ contributes via the chain rule, resulting in the inner product between the gradient with respect to ϕ and the primitive feature fi. Lemma 1 follows directly from this application of the chain rule, with a detailed proof provided in the Appendix. 
+
+Lemma 2. Primitive-Level Gradient Analysis 
+
+Consider the cross-entropy loss defined above, the gradient of the loss with respect to the aggregated representation ϕ is given by 
+
+∇ϕL = −wy +
+
+> K
+
+X
+
+> k=1
+
+pkwk, pk = exp( ⟨wk, ϕ ⟩)
+
+PKt=1 exp( ⟨wt, ϕ ⟩) . (8) Consequently, for any two primitive features fi and fj
+
+within the aggregated representation, the difference in the gradient with respect to their corresponding weights is 
+
+∂L ∂a j
+
+− ∂L ∂a i
+
+= ⟨∇ ϕL, f j −fi⟩ =
+
+> K
+
+X
+
+> k=1
+
+pk⟨wk −wy , f j −fi⟩. (9) This gradient analysis derives directly from the formal definition of the cross-entropy loss combined with the chain rule; it quantifies the contribution of each primitive feature to the aggregated representation. A detailed proof and derivation are provided in Appendix. 
+
+Proposition 1. Gradient Comparison Between Sets 
+
+For any discriminative primitive s ∈ S and any non-discriminative primitive i /∈ S, under Assumption 1, the gradient of the loss with respect to as is less than or equal to that with respect to ai:
+
+∂L ∂a s
+
+≤ ∂L ∂a i
+
+. (10) This follows directly from Lemma 2, since 
+
+∂L ∂a s
+
+− ∂L ∂a i
+
+=
+
+> K
+
+X
+
+> k=1
+
+pk⟨wk − wy , f s − fi⟩ ≤ 0, (11) where each term is non-positive by Assumption 1 and pk ≥ 0.Moreover, if there exists k such that ⟨wk − wy , f s − fi⟩ < 0,the inequality is strict. Building upon the preceding lemmas, we now formalize the principal theoretical result, which characterizes how the model’s optimization dynamics concentrate on the discrimina-tive set and establishes the invariant distribution criterion for feature-level representations. 
+
+Theorem 1. Concentration on the Discriminative Set 
+
+Under Assumption 1, any local minimizer a⋆ of the loss satisfies: 
+
+a⋆j → 0, ∀j / ∈ S. (12) We defer the proofs and accompanying discussion of Theo-rems 1 to the Appendix. Theorem 1 has formally shown that, under Assumption 1, any local minimizer drives the weights of all non-discriminative primitives towards zero . This conclu-sion follows directly from Proposition 1: since discriminative primitives consistently yield smaller gradients, transferring weight from non-discriminative to discriminative primitives never increases the loss and often strictly decreases it. As a result, the optimization dynamics naturally suppress irrelevant primitives and gradually lead the model to concentrate on the most discriminative regions during training . Note that the primitive refers to a backbone-extracted local semantic unit rather than a manually defined image patch, making this primitive-level formulation generally applicable to visual backbones whose representations are formed by aggregating local primitives. Thus, the theorem should be understood as characterizing a general optimization tendency at the primitive level. To provide intuition, we present a toy illustration of how re-gional shortcuts emerge during base-class training (Fig. 4(c)). Consider an image x fed into a feature extractor yielding its feature map F ∈ Rd×h×w, which can be divided into 
+
+h × w vectors f (a, b ) ∈ Rd corresponding to primitives in the image. For illustration, assume h × w = 2 , resulting in F
+
+containing two primitives, f1 and f2. we obtain the feature 
+
+ϕ(x) corresponding to x from F , which can be expressed simplistically as, ϕ(x) = a1 ∗ f1 + a2 ∗ f2 with weight a1, a2.Here, f1 represents a more discriminative primitive (region), closer to the ground-truth class centroid wy . To minimize the JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 6
+
+classification loss (Eq.1), the model shortcuts by increasing the activation of f1 and decreasing that of f2 to push ϕ(x) closer to wy (utilizing |·| 1 to compute activations of primitives). This toy illustration thus corroborates our theoretical finding. 
+
+D. Conclusion 
+
+We give the following interpretation of the current model’s suboptimal adaptation to novel classes: existing methods tend to minimize classification loss during the base-class training stage by exploiting highly discriminative local regions. As a result, the learned primitive set inherently lacks semantic diversity and spatial coverage. This structural bias persists when the model is transferred to novel classes, causing it to misfocus on BCD primitives during primitive composition, preventing the model’s focus from shifting to novel-class discriminative regions. Therefore, it is essential to learn a primitive set that is semantically rich, spatially broad, and diverse while maintaining discriminability. IV. M ETHODOLOGY 
+
+Based on the above interpretation, we are inspired to rectify the regional shortcuts by forcing the model to learn more transferable and semantically enriched primitives, instead of over-reliance on BCD primitives for each class . Building on this idea, we propose our method (Alleviating Regional Short-cuts by Common and Discriminative Primitives, ARS-CDP), which is divided into two stages (Fig.5). In the first stage, we construct a common primitive set and a discriminative primitive set based on the base classes. In the second stage, we encourage the model to learn from the common set to reduce its regional shortcuts on BCD primitives, and learn from the discriminative primitive set to facilitate learning from base classes and alleviate catastrophic forgetting. 
+
+A. Primitive Set Building Stage 
+
+In this stage (Fig.5 top), we train the model on base classes to obtain a well-trained feature extractor ϕ(·), a classifier 
+
+Wbase ∈ Rd×N0 , and two primitive sets: a common primitive set Ru storing common primitives among base classes, and a discriminative primitive set Ri preserving discriminative primitives between base classes. Here, N0 represents the number of base classes. During the base session, given an input image x ∈ D0
+
+> train
+
+labeled with c, the feature extractor output is ϕ(x) =
+
+g(h(x)) ∈ Rd, where h(·) represents a encoder and g(·)
+
+represents a pooling layer. We obtain the feature map F =
+
+h(x) ∈ Rd×h×w from the encoder. Each patch f (a, b ) ∈ Rd in 
+
+F corresponds to a distinct spatial location, representing candi-date primitives [6]. The primitive granularity is determined by the output resolution of the backbone, where each spatial/token location in the final backbone representation is treated as one primitive. Accordingly, the image x can be represented as the primitive set {f (a, b ) | a ∈ {0, . . . , h − 1}, b ∈{0, . . . , w − 1}} . From this set, we generalize the common primitive set and the discriminative primitive set. Previous methods such as Class Activation Mapping (CAM) [26] rely on implicit constraints to suppress over-reliance on biased local regions, but lack explicit structural constraints to ensure semantic consistency and knowledge sharing across classes. Consequently, their ability to promote transferable representations in few-shot class-incremental learning is lim-ited. In contrast, our method employs explicit constraints by decomposing features into common and discriminative primitive sets, facilitating semantic sharing and class-specific discrimination. This explicit modeling effectively alleviates regional shortcuts and better supports knowledge transfer and forgetting mitigation in incremental learning. 
+
+Common Primitive Set: To mitigate the model’s regional shortcuts on discriminative primitives during the base session, we encourage the model to represent images using common primitives. Drawing inspiration from the Basic Level Theory [28] in cognitive science, which posits that basic-level cat-egories offer higher cognitive efficiency and richer semantic content, we design a common primitive set to comprise M
+
+adaptive primitive sub-sets. Each sub-set corresponds to a basic-level category and is denoted as Ru = r1
+
+> u
+
+, . . . , r Mu ,where rMu ∈ Rd×U . Every adaptive primitive subset rmu =
+
+{um 
+
+> 1
+
+, . . . , u mU } contains a set of common primitives for a specific basic-level category, with umU ∈ Rd. These sub-sets are not manually assigned to predefined semantic categories; instead, they emerge as latent semantic structures learned from the training data. To maintain feature sparsity within each sub-repository, we adopt orthogonal initialization for each sub-primitive and impose an orthogonal loss during training, as proposed in [29]. To learn the common primitive set, we explore the com-mon primitives to capture inter-class relationships. Therefore, we first identify primitives through a common-feature mask, then highlight the inter-class relationships by removing the prediction of each sample’s ground truth class, and finally learn the common primitive set based on the reconstructed primitives and the class similarities. Specifically, we first com-pute a patch-wise commonness score for each spatial primitive. This score measures its association with semantically related classes and indicates whether the primitive tends to capture shared information rather than class-specific patterns. We then feed the score into a two-layer MLP to generate a spatial mask Mu ∈ R1×h×w and obtain the common feature map 
+
+Fu = Mu ⊙ F , where F ∈ Rd×h×w denotes the original feature map, since it provides a lightweight learnable mapping that is more flexible than other methods such as thresholding or attention pooling. Next, we reconstruct the common feature map Fu =
+
+{fu(a, b )}a<h,b<w into ¯Fu = { ¯fu(a, b )}a<h,b<w using an attention mechanism: 
+
+¯fu(a, b ) = 
+
+> M
+
+X
+
+> i=1
+> U
+
+X
+
+> j=1
+
+eij uij
+
+eij = exp( fu(a, b )uij )
+
+PMi=1 
+
+PUj=1 exp( fu(a, b )uij ) ,
+
+(13) Based on ¯Fu, we propose a similarity-guided loss that encour-ages the common feature map to capture inter-base-class similarity , ensuring the transferability of common primitives within Ru across base classes. First, to capture inter-base-class similarities, we compute the similarity between the image xJOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 7Feature      
+
+> Extractor
+> Data
+> Transform
+> Feature
+> Extractor
+> …
+> …
+> Primitive Set
+> Building Stage
+> Primitive Set
+> Utilization Stage
+> Learnable
+> Frozen
+> …
+> ℒ𝑐𝑙𝑠 +𝜆 ℒ𝑠𝑖𝑚 +𝛽 ℒ𝑝𝑟𝑜
+> Classifier 𝑊 𝑏𝑎𝑠𝑒
+> Classifier 𝑊 𝑏𝑎𝑠𝑒
+> 𝑝𝑟
+> ℒ𝑝𝑟𝑜
+> ℒ𝑠𝑖𝑚
+> ℒ𝑟
+> Base Class
+> Base/Novel Class
+> Feature Map
+> Feature Map
+> Common
+> Feature Map
+> Attention Reconstruct
+> Common Primitive Set
+> Discriminative
+> Feature Map
+> Attention Reconstruct
+> Discriminative Primitive Set
+> Common
+> Feature Map
+> Attention Reconstruct
+> Common Primitive Set
+> Discriminative
+> Feature Map
+> Attention Reconstruct
+> Discriminative Primitive Set
+
+Fig. 5. Our method comprises two main stages: the primitive set building stage and the primitive set utilization stage. (a) The primitive set building stage involves constructing common primitive set Ru and discriminative primitive set Ri based on base-class samples, with Lsim , Lpro , and Lr serving as constraints. (b) The primitive set utilization stage encourages the model to learn base and novel classes by utilizing both common and discriminative primitives. 
+
+and all base classes to obtain the label-similar class: 
+
+I(x) = ( Wbase 
+
+∥Wbase ∥2
+
+)T ( wc
+
+∥wc∥2
+
+), (14) where wc ∈ Rd represents the classifier for ground-truth label. The output I(x) ∈ RN0 indicates the similarity between the image x and all base classes. Next, we calculate the probability P b ( ¯F u ) ∈ RN0 that the common feature map ¯Fu
+
+is categorized into each base class: 
+
+P b ( ¯Fu) = ( Wbase 
+
+∥Wbase ∥2
+
+)T ( g( ¯Fu)
+
+g( ¯Fu) 2
+
+), (15) Finally, the similarity-guided loss is expressed as: 
+
+Lsim = JS (o(P b ( ¯Fu)) ∥ o(I(x))) , (16) where JS (∥) represents Jensen-Shannon Divergence [30], a measure often used to quantify the difference between apredicted probability distribution and true labels. To ensure that the common feature map captures class-agnostic shared semantics rather than class-specific discrim-inative cues, we apply the operator o(·) to suppress the con-tribution of the ground-truth class by setting its corresponding value to zero, thereby preventing trivial alignment from label supervision and preserving of inter-class relational structure essential for learning transferable common primitives. 
+
+Discriminative Primitive Set: To maintain the model’s per-formance on base classes, we propose to construct a discrimi-native primitive set Ri alongside Ru. This set consists of a set of discriminative primitives, denoted as Ri = {u1, . . . , u I },where uI ∈ Rd represents a discriminative primitive. To enable the discriminative primitive set to adaptively store discrimina-tive features, we introduce a prototype-centered loss. First, we reconstruct the original feature map F into a discriminative feature map Fi using the discriminative primitive set with an attention mechanism, following Eq.13 (where the common primitive set is replaced by the discriminative set). To ensure the discriminative primitive set focuses on class-specific features, we design a loss that forces the discrimi-native feature map to emphasize primitives correctly asso-ciated with the ground-truth class . This design indirectly encourages elements in the discriminative primitive set to capture discriminative features in base classes. Specifically, based on the reconstructed discriminative fea-ture map Fi ∈ Rd×h×w, we apply a prototype-centered loss to ensure correct categorization into the ground-truth class, thus enhancing the discriminative features in the set. The prototype-centered loss is defined as: 
+
+Lpro = 1 − cos (( g(Fi)
+
+∥g(Fi)∥2
+
+)T , wc
+
+∥wc∥2
+
+). (17) Here, wc denotes the classifier weight of the ground-truth class c. It is initialized as part of the base classifier and adaptively optimized during base-class training, thus serving as an adaptive class prototype. To jointly train the two sets and encourage their transferable and class-discriminative focuses, we introduce a primitive-reconstruction loss: 
+
+Fr = (1 − Ratio i) ¯Fu + Ratio iFi, Ratio i = IM × U + I (18) 
+
+Lr = CE 
+
+
+
+τ ·cos    Fr
+
+∥Fr ∥2
+
+T
+
+, F
+
+∥F ∥2
+
+, diag  0, 1, . . . , (h×w−1) 
+
+,
+
+(19) 
+
+where Fr ∈ Rd×h×w denotes the reconstructed feature map obtained by combining Fi and ¯Fu. In this context, M is the number of adaptive sub-sets in the common primitive set Ru,JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 8                                                                                                                                                             
+
+> TABLE I TOP -1 AVERAGE ACCURACY ON ALL SEEN CLASSES . R ESULTS FOR THE COMPARED METHODS ARE SOURCED FROM [31].
+> Method Backbone Accuracy in each session(%) on CIFAR-100 Average 012345678
+> CEC [4] ResNet-12 73.07 68.88 65.26 61.19 58.09 55.57 53.22 51.34 49.14 59.53 LIMIT [32] ResNet-12 73.81 72.09 67.87 63.89 60.70 57.77 55.67 53.52 51.23 61.84 Meta FSCIL [33] ResNet-12 74.50 70.10 66.84 62.77 59.48 56.52 54.36 52.56 49.97 60.79 Self-promoted [10] ResNet-12 64.10 65.86 61.36 57.45 53.69 50.75 48.58 45.66 43.25 54.52 FACT [34] ResNet-12 74.60 72.09 67.56 63.52 61.38 58.36 56.28 54.24 52.10 62.24 Data-free Replay [35] ResNet-12 74.40 70.20 66.54 62.51 59.71 56.58 54.52 52.39 50.14 60.78 ALICE [36] ResNet-12 79.00 70.50 67.10 63.40 61.20 59.20 58.10 56.30 54.10 63.21 NC-FSCIL [31] ResNet-12 82.52 76.82 73.34 69.68 66.19 62.85 60.96 59.02 56.11 67.50 RDI [11] ResNet-12 81.45 77.02 72.73 68.95 65.75 63.02 61.07 59.01 56.72 67.30 R-FSCIL [37] ResNet-12 82.90 76.30 72.90 67.80 65.20 62.00 60.70 58.80 56.60 67.02
+> Ours ResNet-12 81.25 77.26 73.56 69.60 66.64 63.84 62.14 60.62 58.28 68.13
+> PriViLege [38] ViT-B/16 90.88 89.39 88.97 87.55 87.83 87.35 87.53 87.15 86.06 88.08
+> Ours ViT-B/16 92.68 90.37 89.47 88.29 88.25 87.82 87.79 87.33 86.19 88.69
+
+U is the number of primitives within each sub-set, and I
+
+is the number of primitives in the discriminative primitive set Ri. Consequently, M × U represents the total number of common primitives, and M × U + I denotes the total number of primitives across both sets. The ratio Ratio i = IM ×U +I
+
+determines the relative weighting of discriminative versus common primitives during reconstruction, thereby balancing generalizable and class-specific information. The cosine similarity term cos 
+
+ Fr 
+
+> ∥Fr∥2
+
+T
+
+, F 
+
+> ∥F∥2
+
+
+
+∈ Rh×w
+
+measures similarity between the reconstructed and original feature maps along the channel dimension c, while diag (·)
+
+denotes the label matrix used in the loss computation. By minimizing this loss, the reconstructed feature map Fr is encouraged to closely match the original feature map F . This optimization guides the common primitive set to focus on more generalizable, transferable patterns, while the discriminative primitive set concentrates on class-specific, highly discrimina-tive cues, enabling a complementary division of roles for more effective sample characterization. 
+
+B. Primitive Set Utilization Stage 
+
+During the primitive set utilization stage (the bottom of Fig.5), we fix the common primitive set and discriminative primitive set and compel the model to utilize them for base-class classification, resulting in a new feature extractor ϕpr (·)
+
+and a new classifier W pr base . Fixing these sets is a reasonable strategy commonly adopted in incremental learning [5], [39], as base classes have sufficient data to learn robust primitives, and freezing them helps prevent overfitting to scarce novel-class samples and mitigates catastrophic forgetting. Mean-while, the feature extractor ϕpr (·) is fine-tuned with a small learning rate throughout this stage to adaptively refine rep-resentations for both base and novel classes, allowing for novel knowledge outside the primitive sets. To expedite model convergence, we initialize W pr base with the pre-trained feature extractor Wbase from the first stage. To train the model using the common primitive set and dis-criminative primitive set to represent base classes and prevent it from being trapped in local optima due to initialization, we perform mixed-sample transformations on base-class samples, inspired by [31]. Specifically, we combine two images in each mini-batch using a random binary spatial mask and mix their labels according to the mask ratio, encouraging more transferable primitive combinations and reducing over-fitting to fixed primitive regions. Subsequently, we generate the original feature map F pr for base-class samples based on W pr base and reconstruct F pr into common feature map 
+
+F pr u and discriminative feature map F pr i using the common primitive set Ru and discriminative primitive set Ri. Finally, we apply global average pooling to the original, common, and discriminative feature maps separately, and concatenate the resulting embeddings along the channel dimension to obtain the primitive-augmented image representation ϕpr (x) ∈ R3c.After normalization, ϕpr (x) is fed into a dimension-matched cosine classifier, where the logits are computed by cosine similarity between the concatenated embedding and each class prototype, followed by the cross-entropy loss. During this stage, we continue to use Lsim and Lpro to govern the properties of the two sets. The final loss function can be expressed as: 
+
+L = Lce + λLsim + βLpro , (20) where λ and β are hyperparameters. Moving to the incremental session, each base class’s clas-sifier is replaced with the class’s average embedding. The prototype calculation is denoted as: 
+
+pc = 1
+
+n0
+
+> c
+
+PD0 
+
+> train
+> j=1
+
+I(yj = c)ϕpr (xj ), (21) where I represents the indicator function and n0 
+
+> c
+
+denotes the count of examples in class c.Then the classifier for base classes remains fixed, while for novel classes, the classifier can be refined by employing the average embedding computed in the primitive-augmented representation space. The learned common and discrimina-tive primitive sets are reused during novel-class adaptation, avoiding the reconstruction of new primitive sets from scarce novel samples. During evaluation in session T , an input x is predicted using its primitive-augmented feature ϕ(x)pr and the classifier W pr , as stated in Sec. III-A. JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 935 55 75                        
+
+> 024681
+> 0
+> CEC LIMIT Meta FSCIL
+> SPPR FACT Data-free replay
+> ALICE NC-FSCIL Ours
+> 35
+> 55
+> 75
+> 0246810
+> 35
+> 55
+> 75
+> 02468
+> Accuracy(%)
+> (a) mini Imagenet (b) CUB200
+> Fig. 6. Comparison during each incremental session.
+
+V. E XPERIMENT 
+
+A. Dataset and Implementation Details 
+
+Dataset & Split: Following [31], we validate our method on CIFAR-100 [40], mini ImageNet [41], and CUB-200-2011 (CUB200) [42], using consistent data splits. CIFAR-100 con-tains 60,000 low-resolution images across 100 classes. miniIm-ageNet, derived from ImageNet, includes 100 classes with 600 medium-resolution images each, commonly used for few-shot and incremental learning. CUB-200 comprises 11,788 images of 200 bird species, offering a fine-grained and challenging benchmark for recognition and transfer learning. 
+
+Training Details: Following [31], we use ResNet-12 and ImageNet-pretrained ViT-B/16 for CIFAR-100, ResNet-12 for mini ImageNet, and ImageNet-pretrained ResNet-18 for CUB200. Experiments using ImageNet-pretrained ViT-B/16 and ResNet-18 are conducted on NVIDIA A5000 and NVIDIA GeForce RTX 3090 GPUs, while experiments using ResNet-12 are conducted on NVIDIA GeForce GTX 1080 GPUs. The backbone choices follow standard FSCIL evaluation settings for fair comparison, and our method is backbone-agnostic. 
+
+B. Comparison with State-of-the-Arts 
+
+Across three widely used benchmarks, our method consis-tently outperforms state-of-the-art approaches. On CIFAR-100 (Tab. I), it surpasses CEC [4], LIMIT [32], Meta FSCIL [33], and recent methods like NC-FSCIL [31], RDI [11], and R-FSCIL [37], achieving 68.13% top-1 accuracy with ResNet-12 and 88.69% with ViT-B/16, exceeding PriViLege [38]. Fig. 6 shows consistent superior performance across incremen-tal sessions on miniImageNet and CUB-200, demonstrating robustness and effectiveness. For fair comparison, all methods with the same backbone follow the same training protocol. Additional experimental results and analysis are provided in the appendix to further demonstrate our approach’s superiority and generalizability. 
+
+C. Ablation Study 
+
+We conduct ablation studies on CIFAR-100 to investigate the individual and combined contributions of the common and discriminative primitive sets (Tab.II). The results indicate that using these primitive sets separately already enhances the model’s generalization. Specifically, the common set improves generalization to novel classes, crucial for incremental learning with limited new samples, while the discriminative set mainly helps maintain and even boost performance on base classes, forming a solid foundation for learning. To further illustrate the distinct roles and complementary nature of these two primitive sets, we visualize the feature maps reconstructed by each set in Fig.7. The discriminative feature map F pr i focuses on localized, class-specific regions                              
+
+> TABLE II ABLATION STUDY OF EACH MODULE .
+> Lsim Lpro Lrnovel base average acc harmonic acc 18.63 81.22 54.28 48.34
+> ✓22.45 81.50 56.29 50.65
+> ✓✓23.40 81.98 56.72 51.17
+> ✓✓✓29.97 82.03 58.28 53.56 Image
+> Common
+> Feature Map
+> Discriminative
+> Feature Map
+> Fig. 7. Visualization shows that the common feature map Fpr utends to focus on the entire regions relevant to the class. Although not all regions are dis-criminative, the focus on less-discriminative regions benefits the transferability across novel and base classes. In contrast, the discriminative feature map Fpr i
+> tends to focus on the local region with discriminability.
+
+with strong discriminative power for distinguishing between categories. In contrast, the common feature map F upr highlights broader regions relevant to the class, capturing shared and transferable semantic information. aa -acc na -acc   
+
+> 𝜆 𝜆
+> 𝛽 𝛽
+> Fig. 8. Influence of hyper-parameters rules out data augmentation as the cause of performance improvement, indirectly validating our method design.
+
+Additionally, we conduct hyper-parameter sensitivity ex-periments on CIFAR-100 (Fig.8) to evaluate the impact of the second-stage loss components on two metrics: ’aa-acc’ (overall accuracy) and ’na-acc’ (novel-class accuracy). When both hyperparameters λ and β are set to zero—removing the similarity loss Lsim and prototype loss Lpro —performance drops significantly on both metrics. This demonstrates that the observed improvements are driven by the designed loss functions enforcing semantic consistency and discriminability, rather than trivial factors such as data augmentation, confirm-ing the effectiveness and robustness of our method.                                  
+
+> TABLE III ABLATION STUDY FOR PARAMETERS M, U, AND ION CIFAR-100. M2644444U60 60 40 80 60 60 60 I240 240 240 240 200 280 240 Acc. 56.18 57.35 56.96 57.73 57.49 57.37 58.28
+
+We conduct experiments on CIFAR-100 to verify the impact of parameters M, U, and I, and the results are illustrated as Tab.III. On mini ImageNet, we set M=3, U=100, and I=300. On CUB200, we set M=2, U=100, and I=200. 
+
+D. Qualitative and Quantitative Analysis 
+
+Alleviating Feature-Space Confusion: To validate our method in mitigating confusion between novel and base JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 10 0              
+
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 12345678Avg.
+> Base-Novel Confusion (%)  Basline Ours
+> (d)
+> Common Primitive Set Discriminative Primitive Set
+> Baseline Ours
+> R𝐀 𝐀 𝐀 𝐀 𝐀 −𝐀 𝐀 𝐀 𝐀
+> 2
+> R𝐀 𝐀 𝐀 𝐀 𝐀 −𝐀 𝐀 𝐀 𝐀 𝐀
+> 2
+> (c)
+> Baseline Ours
+> Base Classes Novel Classes
+> (a) (b)
+
+Fig. 9. (a) Comparison of distributions reveals that our method enhances the compactness of base-class and novel-class clusters and mitigates misclassifi-cation. (b) Comparison of the misclassification shows that ours mitigates it in each session. (c) Comparison of class separation indicates that ours improves novel-novel class and base-novel class separation. 
+
+classes, we use t-SNE [43] to visualize and compare feature embeddings from the baseline and our approach. We randomly select 5 base classes (circles) and 3 novel classes (triangles) from CIFAR-100, including all test samples for visualization. As shown in Fig.9(a), the baseline exhibits overlap between novel and base features, leading to frequent misclassification. In contrast, our method produces more compact and well-separated clusters, reducing confusion and improving class discriminability. This clearer separation validates the model’s ability to distinguish novel from base classes, enhancing performance and robustness in incremental learning. 
+
+Mitigating Novel-Base Classification Confusion: We quantitatively evaluate our method on CIFAR-100 by measur-ing its ability to reduce the misclassification of novel classes as base classes across incremental sessions. Specifically, we compare the accuracy of novel samples over novel classes only (sn-acc) with their accuracy over all encountered classes (sa-acc), where a larger gap indicates greater confusion. As shown in Fig.9(b), our method consistently narrows this gap throughout incremental learning, demonstrating improved sep-aration between novel and base classes. Despite session-wise variations due to class distribution and difficulty, the overall trend confirms enhanced classification clarity and robustness. 
+
+Improving Separation: Following [44], we compute the separation degree R2 to quantify the distinction between base and novel classes in the learned feature space, where larger val-ues indicate better separation. As shown in Fig.9(c) on miniIm-ageNet, our method achieves higher R2
+
+novel-base and R2
+
+novel-novel 
+
+than the baseline, demonstrating improved separation both between base and novel classes and among novel classes themselves. This indicates that the learned primitive sets are transferable and semantically enriched, enabling effective recomposition while enhancing fine-grained discriminability in incremental learning. (d)    
+
+> Common Primitive Set Discriminative Primitive Set
+> NN BN
+> Baseline Ours
+> R𝑛𝑜𝑣𝑒𝑙−𝑏𝑎𝑠𝑒 2
+> 𝑒𝑙−𝑛𝑜𝑣𝑒𝑙
+
+(c) 
+
+Fig. 10. The common primitive set captues inter-class common features, whereas the discriminative set captures intra-class discriminative features, demonstrating the interpretability of our method for the model. 
+
+Interpretability of Primitive Sets: To understand the semantic meaning of the two primitive sets, we retrieve image patches from mini ImageNet most similar to each primitive. As shown in Fig. 10, the common set captures cross-class features like shared textures, colors, or backgrounds (e.g., white fur in Arctic wolves and malamutes, green-leaf back-grounds in harvestmen and grass snakes), facilitating semantic transfer. The discriminative set encodes fine-grained, within-class features (e.g., Ibizan Hound’s feet, carton edges), crucial for distinguishing similar classes. Together, they provide com-plementary representations, enabling generalization to unseen classes while maintaining discrimination among base classes. 
+
+TABLE IV COMPARISON OF DECISION MARGINS . A LARGER MARGIN INDICATES BETTER SEPARATION BETWEEN THE GROUND -TRUTH CLASS AND ITS STRONGEST COMPETITOR .Methods Base Margin Novel Margin All Margin Baseline 0.3013 0.2052 0.2629 
+
+Ours 0.3328 0.2067 0.2663 
+
+Verification of Assumption 1: To empirically validate Assumption 1 in real FSCIL scenarios, we measure the logit margin between the ground-truth class and its strongest competing class, i.e., zy − max k̸ =y zk. As shown in Tab.IV, our method consistently yields larger margins than the base-line, indicating better separation between the target class and competing classes. This suggests that the proposed primitive decomposition indeed improves discriminative separation in practical FSCIL settings. 
+
+TABLE V COMPARISON UNDER DIFFERENT MASK GENERATION STRATEGIES ON 
+
+CIFAR-100 WITH VIT-B/16. Method Accuracy in each session (%) on CIFAR-100 Avg. 0 1 2 3 4 5 6 7 8Baseline 90.43 88.08 87.69 86.56 86.65 86.41 86.37 86.08 84.83 87.01 Attention Pooling 91.35 88.89 88.34 87.19 87.17 86.75 86.71 86.41 85.28 87.57 Thresholding 90.35 87.85 87.51 86.36 86.46 86.20 86.21 85.97 84.78 86.85           
+
+> Ours 92.68 90.37 89.47 88.29 88.25 87.82 87.79 87.33 86.19 88.69
+
+Mask Generation Strategy: To evaluate the design of our mask generation module, we compare the proposed MLP-based strategy with two simpler alternatives: attention pooling and thresholding. As shown in Table V, the MLP-based strategy achieves the best average accuracy, demonstrating the benefit of learnable mask calibration for common primitive extraction. 
+
+TABLE VI ABLATION STUDY OF PRIMITIVE SETS ON CIFAR-100 WITH VIT-B/16. Method 0 1 2 3 4 5 6 7 8 Avg. Baseline 90.43 88.08 87.69 86.56 86.65 86.41 86.37 86.08 84.83 87.01 Only Common 91.27 88.88 88.36 87.25 87.31 86.96 86.92 86.55 85.38 87.65 Only Discriminative 91.30 88.80 88.37 87.31 87.30 86.89 86.83 86.45 85.28 87.61           
+
+> Ours 92.68 90.37 89.47 88.29 88.25 87.82 87.79 87.33 86.19 88.69
+
+Ablation on Primitive Sets: We evaluate the contribution of the common and discriminative primitive sets. As shown in Table VI, both the common-only and discriminative-only variants improve over the baseline, while their combination achieves the best performance. This demonstrates that the two primitive sets provide complementary benefits. JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 11 
+
+TABLE VII COMPARISON WITH SHORTCUT -REDUCING DATA AUGMENTATION ON 
+
+CIFAR-100 WITH VIT-B/16. Method 0 1 2 3 4 5 6 7 8 Avg. Baseline 90.43 88.08 87.69 86.56 86.65 86.41 86.37 86.08 84.83 87.01 Data Augmentation 90.52 88.22 87.77 86.64 86.69 86.67 86.45 86.26 84.95 87.13           
+
+> Ours 92.68 90.37 89.47 88.29 88.25 87.82 87.79 87.33 86.19 88.69
+
+Comparison with Shortcut-Reducing Data Augmen-tation. We further evaluate a heuristic data augmentation strategy that reduces regional shortcuts by emphasizing non-discriminative regions. As shown in Table VII, this strategy slightly improves the average accuracy over the baseline, indicating that reducing shortcut reliance can be beneficial. However, it remains clearly inferior to ARS-CDP, suggesting that explicit common-primitive modeling with dedicated con-straints is more effective than heuristic input-level augmenta-tion. 
+
+TABLE VIII ROBUSTNESS COMPARISON UNDER PRIMITIVE VISIBILITY PERTURBATIONS ON CIFAR-100 WITH VIT-B/16. Method 0 1 2 3 4 5 6 7 8 Avg. Baseline 90.43 88.08 87.69 86.56 86.65 86.41 86.37 86.08 84.83 87.01 +Add Gaussian Noise 85.27 83.18 82.84 81.45 81.26 81.22 81.03 80.93 80.01 81.91 +Corrupt Discriminative 82.32 77.26 78.95 78.41 78.58 78.99 78.36 77.24 77.39 78.61                               
+
+> Ours 92.68 90.37 89.47 88.29 88.25 87.82 87.79 87.33 86.19 88.69
+> +Add Gaussian Noise 89.22 87.02 86.31 84.59 84.16 83.79 83.68 83.03 81.82 84.85 +Corrupt Discriminative 86.73 84.48 83.56 81.89 81.62 81.20 80.97 80.43 78.91 82.20
+
+Robustness to Primitive Visibility Perturbations: We evaluate robustness under synthetic perturbations, includ-ing Gaussian noise and discriminative-region corruption. As shown in Table VIII, both perturbations degrade perfor-mance, especially when discriminative regions are corrupted. However, ARS-CDP shows smaller performance drops than the baseline under the same perturbation settings, indicating that the proposed primitive modeling improves robustness to changes in primitive visibility. 
+
+TABLE IX COMPUTATIONAL OVERHEAD COMPARISON WITH THE BASELINE .Method Parameters Time Baseline 85.95M 165.44s Ours 86.44M 190.32s 
+
+Computational Overhead: We compare the computational overhead of ARS-CDP with the baseline in terms of parameter count and per-epoch runtime. As shown in Table IX, ARS-CDP introduces only a small increase in parameters with a moderate runtime increase. This indicates that the additional overhead of the proposed primitive modeling is manageable. 
+
+Limitations: ARS-CDP is mainly designed for standard image-based FSCIL settings, where the primitive structure can be derived from backbone-extracted visual features. Its gen-eralization to more complex real-world multimedia scenarios, such as those involving multiple modalities or highly dynamic visual content, remains to be further investigated. ACKNOWLEDGMENTS 
+
+This work is supported by the National Natural Science Foundation of China under grants 62206102; the National Key Research and Development Program of China under grant 2024YFC3307900; the National Natural Science Foundation of China under grants 62436003, 62376103 and 62302184; Major Science and Technology Project of Hubei Province un-der grant 2025BAB011 and 2024BAA008; Hubei Science and Technology Talent Service Project under grant 2024DJC078; Ant Group through CCF-Ant Research Fund. The computation is completed on the HPC Platform of Huazhong University of Science and Technology. REFERENCES [1] Z. Wang, Z. Zhang, C.-Y. Lee, H. Zhang, R. Sun, X. Ren, G. Su, V. Perot, J. Dy, and T. Pfister, “Learning to prompt for continual learning,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 139–149, 2022. [2] X. Tao, X. Hong, X. Chang, S. Dong, X. Wei, and Y. Gong, “Few-shot class-incremental learning,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 12183–12192, 2020. [3] G. Hinton, O. Vinyals, and J. Dean, “Distilling the knowledge in a neural network,” arXiv preprint arXiv:1503.02531 , 2015. [4] C. Zhang, N. Song, G. Lin, Y. Zheng, P. Pan, and Y. Xu, “Few-shot in-cremental learning with continually evolved classifiers,” in Proceedings of the IEEE/CVF conference on computer vision and pattern recognition ,pp. 12455–12464, 2021. [5] Q.-W. Wang, D.-W. Zhou, Y.-K. Zhang, D.-C. Zhan, and H.-J. Ye, “Few-shot class-incremental learning via training-free prototype calibration,” 
+
+Advances in Neural Information Processing Systems , vol. 36, pp. 15060– 15076, 2023. [6] Y. Zou, S. Zhang, H. Zhou, Y. Li, and R. Li, “Compositional few-shot class-incremental learning,” in Proceedings of the 41st International Conference on Machine Learning , pp. 62964–62977, 2024. [7] S. Hou, X. Pan, C. C. Loy, Z. Wang, and D. Lin, “Learning aunified classifier incrementally via rebalancing,” in Proceedings of the IEEE/CVF conference on Computer Vision and Pattern Recognition ,pp. 831–839, 2019. [8] Y. Zou, S. Zhang, Y. Li, and R. Li, “Margin-based few-shot class-incremental learning with class-level overfitting mitigation,” Advances in neural information processing systems , vol. 35, pp. 27267–27279, 2022. [9] R. M. French, “Catastrophic forgetting in connectionist networks,” 
+
+Trends in cognitive sciences , vol. 3, no. 4, pp. 128–135, 1999. [10] K. Zhu, Y. Cao, W. Zhai, J. Cheng, and Z.-J. Zha, “Self-promoted prototype refinement for few-shot class-incremental learning,” in Pro-ceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 6801–6810, 2021. [11] H. Zhou, Y. Zou, R. Li, Y. Li, and K. Xiao, “Delve into base-novel confusion: Redundancy exploration for few-shot class-incremental learning,” arXiv preprint arXiv:2405.04918 , 2024. [12] K. Bao, Y. Li, D. Zeng, and S. Ge, “Few-shot class-incremental learning via generative co-memory regularization,” arXiv preprint arXiv:2601.07117 , 2026. [13] K. Bao, F. Lin, Z. Wang, Y. Li, D. Zeng, and S. Ge, “Pki: Prior knowledge-infused neural network for few-shot class-incremental learn-ing,” Neural Networks , p. 107724, 2025. [14] K. Bao, D. Zhang, H. Zhang, Y. Li, Y. Yue, and S. Ge, “Cd2: constrained dataset distillation for few-shot class-incremental learning,” in Proceedings of the Thirty-Fourth International Joint Conference on Artificial Intelligence , pp. 4761–4769, 2025. [15] K. Bao, D. Zhang, Y. Li, D. Zeng, and S. Ge, “Divide and conquer: Static-dynamic collaboration for few-shot class-incremental learning,” in Proceedings of the 2025 International Conference on Multimedia Retrieval , pp. 5–14, 2025. [16] L.-J. Zhao, Z.-D. Chen, Y. Wang, X. Luo, and X.-S. Xu, “Attraction diminishing and distributing for few-shot class-incremental learning,” in 
+
+Proceedings of the Computer Vision and Pattern Recognition Confer-ence , pp. 25657–25666, 2025. [17] Y. Zhao, J. Li, Z. Song, and Y. Tian, “Language-inspired relation transfer for few-shot class-incremental learning,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 47, no. 2, pp. 1089–1102, 2024. [18] I. Biederman, “Recognition-by-components: a theory of human image understanding.,” Psychological review , vol. 94, no. 2, p. 115, 1987. [19] Y. Li, Z. Liu, H. Chen, and L. Yao, “Context-based and diversity-driven specificity in compositional zero-shot learning,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pp. 17037–17046, 2024. JOURNAL OF L ATEX CLASS FILES, VOL. 18, NO. 9, SEPTEMBER 2020 12 
+
+[20] W. Bao, L. Chen, H. Huang, and Y. Kong, “Prompting language-informed distribution for compositional zero-shot learning,” in European Conference on Computer Vision , pp. 107–123, Springer, 2024. [21] T. Weng, J. Xiao, and H. Jiang, “Decompose novel into known: Part concept learning for 3d novel class discovery,” Advances in Neural Information Processing Systems , vol. 36, pp. 54282–54299, 2023. [22] X. Wang, H. Chen, S. Tang, Z. Wu, and W. Zhu, “Disentangled representation learning,” IEEE Transactions on Pattern Analysis and Machine Intelligence , vol. 46, no. 12, pp. 9677–9696, 2024. [23] Y. Zheng, L. Lin, S. Li, Y. Yuan, Z. Lai, S. Liu, B. Fu, Y. Chen, and X. Shi, “Layer-wise representation fusion for compositional generaliza-tion,” in Proceedings of the AAAI Conference on Artificial Intelligence ,vol. 38, pp. 19706–19714, 2024. [24] H. Qu, J. Wei, X. Shu, and W. Wang, “Learning clustering-based prototypes for compositional zero-shot learning,” arXiv preprint arXiv:2502.06501 , 2025. [25] D. D. Hoffman and W. A. Richards, “Parts of recognition,” Cognition ,vol. 18, no. 1-3, pp. 65–96, 1984. [26] B. Zhou, A. Khosla, A. Lapedriza, A. Oliva, and A. Torralba, “Learning deep features for discriminative localization,” in Proceedings of the IEEE conference on computer vision and pattern recognition , pp. 2921–2929, 2016. [27] Y. Zou, S. Zhang, K. Chen, Y. Tian, Y. Wang, and J. M. Moura, “Compo-sitional few-shot recognition with primitive discovery and enhancing,” in 
+
+Proceedings of the 28th ACM International Conference on Multimedia ,pp. 156–164, 2020. [28] E. Rosch, C. B. Mervis, W. D. Gray, D. M. Johnson, and P. Boyes-Braem, “Basic objects in natural categories,” Cognitive psychology ,vol. 8, no. 3, pp. 382–439, 1976. [29] S.-A. Liu, Y. Zhang, Z. Qiu, H. Xie, Y. Zhang, and T. Yao, “Learning orthogonal prototypes for generalized few-shot semantic segmentation,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 11319–11328, 2023. [30] R. D. Hjelm, A. Fedorov, S. Lavoie-Marchildon, K. Grewal, P. Bach-man, A. Trischler, and Y. Bengio, “Learning deep representations by mutual information estimation and maximization,” arXiv preprint arXiv:1808.06670 , 2018. [31] Y. Yang, H. Yuan, X. Li, Z. Lin, P. Torr, and D. Tao, “Neural collapse inspired feature-classifier alignment for few-shot class incremental learn-ing,” arXiv preprint arXiv:2302.03004 , 2023. [32] D.-W. Zhou, H.-J. Ye, L. Ma, D. Xie, S. Pu, and D.-C. Zhan, “Few-shot class-incremental learning by sampling multi-phase tasks,” IEEE Transactions on Pattern Analysis and Machine Intelligence , 2022. [33] Z. Chi, L. Gu, H. Liu, Y. Wang, Y. Yu, and J. Tang, “Metafscil: a meta-learning approach for few-shot class incremental learning,” in 
+
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 14166–14175, 2022. [34] D.-W. Zhou, F.-Y. Wang, H.-J. Ye, L. Ma, S. Pu, and D.-C. Zhan, “For-ward compatible few-shot class-incremental learning,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pp. 9046–9056, 2022. [35] H. Liu, L. Gu, Z. Chi, Y. Wang, Y. Yu, J. Chen, and J. Tang, “Few-shot class-incremental learning via entropy-regularized data-free replay,” in Computer Vision–ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23–27, 2022, Proceedings, Part XXIV , pp. 146–162, Springer, 2022. [36] C. Peng, K. Zhao, T. Wang, M. Li, and B. C. Lovell, “Few-shot class-incremental learning from an open-set perspective,” in Computer Vision– ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23–27, 2022, Proceedings, Part XXV , pp. 382–397, Springer, 2022. [37] Y.-M. Tang, Y.-X. Peng, J. Meng, and W.-S. Zheng, “Rethinking few-shot class-incremental learning: Learning from yourself,” arXiv preprint arXiv:2407.07468 , 2024. [38] K.-H. Park, K. Song, and G.-M. Park, “Pre-trained vision and language transformers are few-shot incremental learners,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition ,pp. 23881–23890, 2024. [39] S. Ho, M. Liu, L. Du, L. Gao, and Y. Xiang, “Prototype-guided memory replay for continual learning,” IEEE transactions on neural networks and learning systems , vol. 35, no. 8, pp. 10973–10983, 2023. [40] A. Krizhevsky, G. Hinton, et al. , “Learning multiple layers of features from tiny images,” 2009. [41] O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh, S. Ma, Z. Huang, A. Karpathy, A. Khosla, M. Bernstein, et al. , “Imagenet large scale visual recognition challenge,” International journal of computer vision , vol. 115, pp. 211–252, 2015. [42] C. Wah, S. Branson, P. Welinder, P. Perona, and S. Belongie, “The caltech-ucsd birds-200-2011 dataset,” 2011. [43] L. Van der Maaten and G. Hinton, “Visualizing data using t-sne.,” 
+
+Journal of machine learning research , vol. 9, no. 11, 2008. [44] Z. Song, Y. Zhao, Y. Shi, P. Peng, L. Yuan, and Y. Tian, “Learning with fantasy: Semantic-aware virtual contrastive constraint for few-shot class-incremental learning,” in Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition , pp. 24183–24192, 2023. 
+
+VI. B IOGRAPHY SECTION 
+
+Haichen Zhou received the BS degree from the School of Management, Huazhong University of Science and Technology. She received the MS de-gree from the School of Computer Science and Technology, Huazhong University of Science and Technology. Her primary research interests include few-shot learning and incremental learning. 
+
+Yazhe Lyu received the BS degree from Harbin En-gineering University, Harbin, China. She is currently working toward the master’s degree with the School of Computer Science and Technology, Huazhong University of Science and Technology. Her primary research interests include few-shot learning, zero-shot learning, and multimodal large language mod-els. 
+
+Yixiong Zou (Member, IEEE) received the B.S. degree from Nankai University, and received the Ph.D. degree from the School of Electrical Engi-neering and Computer Science, Peking University, Beijing, China. He was a visiting scholar at Carnegie Mellon University. He has published more than 40 journal and conference papers. He is currently a Lecturer with the School of Computer Science and Technology, Huazhong University of Science and Technology. His research interests include multi-modal large language models, few-shot learning, open-world learning and computer vision. 
+
+Ruixuan Li (Member, IEEE) received the B.S., M.S., and Ph.D. degrees in computer science from the Huazhong University of Science and Technology in 1997, 2000, and 2004, respectively. From 2009 to 2010, he was a Visiting Researcher with the Department of Electrical and Computer Engineering, University of Toronto. He is currently a Professor with the School of Computer Science and Technol-ogy, Huazhong University of Science and Technol-ogy. His research interests include cloud and edge computing, big data management, and distributed system security. He has published more than 500 journal and conference papers (NeurIPS, KDD, ICDM, IJCAI). He is also a member of ACM. 
+
+Yuhua Li (Member, IEEE) received the Ph.D. degree in computer application technology from Huazhong University of Science and Technology, Wuhan, China, in 2006. She is currently a Professor in the School of Computer Science and Technology, Huazhong University of Science and Technology. She was a visiting scholar at the University of California, Santa Barbara. She has published more than 60 journal and conference papers (NeurIPS, TKDE, SIGIR, WWW, ICDM, IJCAI). She is also a senior member of the China Computer Federation (CCF). Her research interests include data mining, social networks, machine learning, and big data.
