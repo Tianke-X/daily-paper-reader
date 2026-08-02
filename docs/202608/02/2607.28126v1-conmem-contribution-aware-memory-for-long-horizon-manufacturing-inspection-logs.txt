@@ -1,0 +1,1033 @@
+Title: ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs
+
+URL Source: https://arxiv.org/pdf/2607.28126v1
+
+Published Time: Fri, 31 Jul 2026 00:59:15 GMT
+
+Number of Pages: 10
+
+Markdown Content:
+# ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs 
+
+## Bingchen Liu 
+
+lbcraf2018@126.com Shandong University, School of Software Jinan, Shandong, China 
+
+## Yuanyuan Fang 
+
+fyy@bu.edu Boston University, Metropolitan College Boston, MA, USA 
+
+## Lei Liu 
+
+120242227112@ncepu.edu.cn North China Electric Power University, School of Control and Computer Engineering Beijing, Beijing, China 
+
+## Guangyuan Dong 
+
+guangyuan@u.nus.edu National University of Singapore, Department of Statistics and Data Science Singapore, Singapore Singapore 
+
+## Xing Fu 
+
+fuxing@bu.edu Boston University, Metropolitan College Boston, MA, USA 
+
+## Yuanyuan Gao 
+
+202635611@mail.sdu.edu.cn Shandong University, School of Software Jinan, Shandong, China 
+
+## Shuyue Wei 
+
+weishuyue@sdu.edu.cn Joint SDU-NTU Centre for Artificial Intelligence Research (C-FAIR), Shandong University Jinan, Shandong, China 
+
+## Xin Li 
+
+lx@sdu.edu.cn Shandong University, School of Software Jinan, Shandong, China 
+
+## Xiangtian Meng 
+
+mxt99@163.com Rizhao Steel Holding Group Co., Ltd. Rizhao, Shandong, China 
+
+## Abstract 
+
+Long-horizon steel-equipment inspection requires reasoning over heterogeneous records accumulated across repeated inspection cycles. Existing retrieval-augmented generation systems treat his-torical logs as a static corpus and retain records without estimating their diagnostic value, failing to report early risk. To this end, we propose ConMem, a contribution-aware memory framework for LLM-assisted equipment inspection, supporting a human-in-the-loop early-risk screening system. Specifically, our ConMem first segments inspection logs into functional evidence units, then esti-mates each memory unit’s contribution to downstream diagnosis through a Shapley-style estimation, and finally retains high-value evidence under a constrained memory budget. In experiments, we evaluate ConMem on real-world dataset and ConMem achieves 76.0% QA accuracy, exceeding the strongest directly comparable baseline. Relative to the naive 8K-context LLM baselines, it reduces the average number of input tokens by 88.2% and response time by 86.6%. Ablation studies also show that the functional-role-aware segmentation and contribution-based valuation are helping priori-tize weak degradation signals for targeted field inspection. Practical deployments further confirm that ConMem retains the weak early signal across three inspection cycles, providing an early-stage seal-wear alert targeted for on-site inspectors. Source codes are available at https://anonymous.4open.science/r/ConMem-F1B0/. 
+
+## Keywords 
+
+Large Language Models, Steel Equipment Inspection, Shapley Value 
+
+ACM Reference Format: 
+
+Bingchen Liu, Yuanyuan Fang, Lei Liu, Guangyuan Dong, Xing Fu, Yuanyuan Gao, Shuyue Wei, Xin Li, and Xiangtian Meng. 2027. ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs . In Pro-ceedings of the 33rd ACM SIGKDD Conference on Knowledge Discovery and Data Mining (KDD ’27), August 1–5, 2027, San Jose, CA, USA. ACM, New York, NY, USA, 10 pages. https://doi.org/10.1145/nnnnnnn.nnnnnnn 
+
+## 1 INTRODUCTION 
+
+Modern manufacturing facilities rely on periodic routine inspec-tions of core production assets, such as motors, pumps, bearings, and conveyors, to detect operational risks early and prevent eco-nomically expensive unplanned downtime [ 22 ]. Thus, equipment inspection plays a critical role in modern manufacturing, such as in the steel industry. However, traditional manual inspection methods are usually labor-intensive, subjective, and often fail to capture early signs of equipment degradation. With the rapid advancement of large language models (LLMs), there is growing interest in per-forming equipment inspection with the assistance of LLM-based agents, which enable retrieval and reasoning over historical inspec-tion records [ 4, 16 ]. We show a typical example of LLM-assisted equipment inspection for human-in-the-loop early-risk screening system in the steel manufacturing industry in Fig. 1. History Inspection Logs                     
+
+> Technical Manuals
+> LLM
+> Reasoning
+> Evidences across cycles
+> Vibration ,
+> Temperature
+> normal ranges .
+> Query: No. 3 trough -front oil
+> pump Inspection;
+> Equipment: pump;
+> Fault: seal degrade ..
+> Record1: [2026 -06 -10]
+> Normal T, pressure 36.98;
+> Outcome: Oil level drop
+> Record3: [2026 -04 -14]
+> rumble, pressure 42.24;
+> Outcome: Seal leakage
+> Early -stage mechanical -seal
+> degradation risk.
+> Scheduled
+> Inspection Task
+> On -site Industrial Equipment
+> (e.g., Oil pump)
+> Sealing, Joints,
+> Oil level Visual Inspection
+> Measurement Tools
+> (Hermometer, Gage,
+> Other measurer)
+> Maintenance Check
+> Outcome Update
+> Inspection
+> Record
+> Updated Issue confirmed
+> Normal
+> Abnormal
+> Record2: [2026 -05 -17]
+> Retrieving result
+> ~ 12% pressure
+> decline trend over 3
+> Output
+> Thereshold
+> Q: Is there an early mechanical -seal degradation in
+> the No. 3 trough -front oil pump for the last 3 months ?
+> Check belt loose, roller wear.
+> Tension specifiction.
+> Gear wear limits.
+> Maintenance Parameters
+> Lubrication for bearings.
+> [2026 -01 -10] Rear Bearing
+> 57 ℃. Pressure slightly
+> [2026 -01 -17] Rear Bearing T at
+> 59 ℃.
+> below.
+> T at
+> Vibration increased rumble.
+> ...
+> ...
+> Pressure 39.65;
+> Outcome: Oil seepage
+> inspection records.
+> Inspector checking
+> Validation Result
+> [High Confidence: 75% ]
+> CHECK
+> Early -stage S eal
+> degradation risk.
+
+Figure 1: A typical equipment inspection workflow. 
+
+Example 1 (Real-world Eqipment Inspection). A typical in-dustrial inspection workflow consists of three stages. ① The system receives a query of a scheduled inspection task, from which the LLM identifies the target equipment and inspection objectives, and then retrieves the corresponding technical manuals together with histor-ical inspection records. ②The system then analyzes heterogeneous inspection evidence, including equipment status, safety anomalies, maintenance action, and technical manuals, to evaluate equipment health. For instance, the LLM retrieves historical inspection records from memory and identifies a pressure drop over the previous three inspection cycles. By combining this degradation trend with similar historical cases, it infers a potential early-stage seal wear issue and arXiv:2607.28126v1 [cs.AI] 30 Jul 2026 KDD ’27, August 1–5, 2027, San Jose, CA, USA Liu et al. 
+
+Table 1: Comparison of different inspection paradigms.                
+
+> Method Acc.(%) ↑Token ↓Time(ms) ↓
+> Standalone LLM [1] 46.0 10086.4 18760.0 Full RAG [11] 55.0 4496.2 2934.4
+> A-MEM [31] 62.0 3702.1 8910.8
+
+generates an alert with a confidence score. ③Finally, the inspector targets the belt and performs a sealing test to validate the anomaly and records the inspection outcome, which can be stored for future inspections. This workflow enables the system to recognize early weak degradation signals as long-term records continuously accumulate. 
+
+Existing LLM-assisted equipment inspection systems mainly adopt two paradigms: (i) standalone-LLM reasoning [ 1–3 ], which di-rectly analyzes current inspection records, and (ii) retrieval-augmented reasoning [ 4 , 10 , 11 , 16 , 17 ], which incorporates external knowledge through retrieval. As shown in Table 1, there’s an inherent in-compatibility between early warning accuracy and computational efficiency. Existing systems usually fail to effectively model equip-ment health evolution or provide reliable early warnings for the following reasons. First, both paradigms implicitly formulate each inspection cycle as an independent task, thereby fail to exploit cross-cycle evidence accumulated during long-term equipment in-spection. Second, when reasoning over heterogeneous inspection records spanning multiple components of large-scale equipment, they lack the structured historical context associating critical abnor-malities with relevant evidence, leading to inaccurate fine-grained fault diagnosis. Furthermore, industrial equipment continuously accumulates thousands of inspection records over its service life, in which long-horizon degradation rather than isolated observations characterizes equipment health. We argue that it is crucial for equipment inspection to selectively reason over long-horizon historical evidence accumulated across inspection cycles, which motivates us to take a memory-enhanced long-horizon agentic equipment inspection. Agentic memory equips LLM with an external memory that persists across queries and can be continuously updated and retrieved [ 21 , 27 , 30 ], fitting equip-ment inspection where long-term degradation must be tracked across cycles. However, it faces two key challenges to implement memory-enhanced agentic inspection as follows. 
+
+• Challenge 1 : Existing memory systems [ 21 , 28 ] rely on textual con-tinuity to segment conversation history. However, inspection texts in equipment inspection are typically formed with heterogeneous functional-roles units (e.g., equipment status, safety anomalies, and maintenance actions), where generic segmentation fails to dis-tinguish one from another, leading to degraded reasoning results over such mixed evidence. 
+
+• Challenge 2 : Existing retrieval mechanisms [ 27 , 30 ] use task-agnostic relevance metrics (e.g., semantic similarity) rather than inspection-oriented contribution metrics to rank memory units, fail to prioritize critical anomalies like belt peeling over trivial records such as normal temperature. Consequently, it will cause unnecessary context expansion and limited reasoning gains. 
+
+To overcome these challenges, we propose a contribution-aware memory framework for LLM-assisted equipment inspection, Con-Mem , supporting a human-in-the-loop early-risk screening sys-tem. Our framework follows a three-stage workflow tailored to the inspection domain. First, we design a functional-role-aware segmentation module, which parses raw inspection logs into func-tional evidence units, thereby clearly separating equipment status, safety anomalies, and maintenance action. Second, we introduce a Shapley-based valuation module to quantify each memory unit’s contribution to future reasoning, ensuring that high valued evi-dences are selected. Finally, we propose a priority-based storage and retrieval module maintains a max-heap of memory units ranked by contribution, so long-term evolving components like belt wear are prioritized over static ones like lighting status. The main contributions of this paper are summarized as follows: 
+
+• We propose a contribution-aware memory framework for LLM-assisted equipment inspection, addressing the challenges of long-term degradation tracking and early warnings. 
+
+• We introduce a Shapley-based valuation mechanism to quantify the contributions of memory units to diagnosis results, enabling token reduction while prioritizing critical anomalies. 
+
+• We conduct extensive experiments on a real-world steel equip-ment inspection dataset, demonstrating that our method signifi-cantly outperforms representative full-RAG and generic agentic-memory baselines, improving early warning accuracy by up to 4% while reducing token overhead by up to 72.9%. The remainder of this paper is organized as follows. We present the related work corresponding to this paper in Section 2. We formulate the equipment inspection task and provides the necessary notation in Section 3. Detailed specifics of our ConMem system are introduced in Section 4 and the experimental results are reported in Section 5. Finally, we conclude this work in Section 6. 
+
+## 2 RELATED WORK 
+
+LLM for Industrial Equipment Inspection. Recent years have witnessed growing interest in applying large language models (LLMs) to industrial equipment inspection. Researchers have ex-plored various LLM-based approaches to assist inspectors in ana-lyzing routine inspection logs, identifying surface anomalies such as belt peeling and roller wear, and generating maintenance rec-ommendations. A common paradigm is retrieval-augmented gen-eration (RAG), where an LLM queries historical inspection logs to retrieve relevant records before generating responses. RAG-based systems have been developed to retrieve past anomaly records and maintenance actions for steel rolling equipment and conveyor sys-tems [ 4, 10 , 16 , 17 ]. Several studies have applied semantic segmen-tation and object detection to identify equipment defects such as cracks and surface wear in steel production lines [ 12 , 13 , 19 , 24 , 34 ]. Besides, in the steel manufacturing domain, researchers have also focused on predictive maintenance and degradation tracking for critical components like blast furnace shells and continuous casting rollers [ 8, 14 , 22 ]. However, these RAG-based approaches retrieve the full history or fixed-length chunks for each query, leading to high token overhead and slow retrieval speed [ 28 , 33 ]. Moreover, they treat each query independently and cannot capture long-term degradation trends across cycles. In our work, we propose an agen-tic memory tailored for industrial equipment inspection that per-sistently store and update the inspection logs across cycles. 
+
+LLM Memory Systems. External memory management in LLM agents has been explored across multiple domains, yet each line of ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+work carries assumptions that do not align with industrial equip-ment inspection. Early studies focus on conversational memory, storing user-LLM dialogue histories as textual records. SCM [ 28 ]and Generative Agents [ 21 ] maintain social or dialogue contexts through hierarchical memory and memory streams, respectively. MemGPT [ 20 ] and MemoChat [ 15 ] target extended conversations and topic-level summarization. Other works focus on task-oriented memory, such as MAC [ 27 ] compressing document information and AWM [ 30 ] extracting reusable workflows from agent trajectories. More recently, Mem0 [ 5 ] and Zep [ 25 ] provide lightweight or persis-tent memory layers for general LLM applications. While effective in general-purpose chat or tool-use scenarios, these methods assume that memory units are either equally important or selected heuris-tically. However, equipment inspection logs contain heterogeneous entries, whose long-term value varies greatly. Moreover, inspection queries span hundreds of cycles, requiring the system to track slow degradation trends while filtering out routine records. To address these issues, we focus on the equipment inspection scenario, explic-itly modeling inspection record segments and evaluating memory contribution for effective early warning. 
+
+## 3 PRELIMINARIES 3.1 Problem definition 
+
+Definition 1 (Inspection Records). Formally, an inspection record is represented as 𝐼 = (𝑒, 𝑐, R, 𝑡, 𝑜 ), where 𝑒 denotes the equipment ID, 
+
+𝑐 is the inspected component (e.g., belt, fire extinguisher, lighting), 
+
+𝑡 is the inspection timestamp, 𝑜 is the human check result, and 
+
+R = {𝑟 1, . . . , 𝑟 𝑛 } is a collection of inspection entries. Each entry is represented as 𝑟 = (𝜏, 𝑤 ), 𝜏 ∈ { Parameter Status , Safety Anomalies ,
+
+Maintenance Advice }, denotes the information category, and 𝑤 de-notes the corresponding inspection content. A steel inspection record corresponding to a single inspection task performed on a specific equipment component. It aggregates multiple categories of inspection information, including equipment parameter status, safety anomaly analysis, and maintenance action. 
+
+Definition 2 (Memory Unit). A memory unit corresponds to a semi-structured inspection record generated from a single inspec-tion task. It is represented as 𝑚 = (𝑒, 𝑐, 𝐶, 𝑡 ), where 𝑒 denotes the equipment ID, 𝑐 is the inspected component, 𝑡 is the inspection timestamp, 𝐶 denotes the inspection content. 
+
+Definition 3 (Evidence Unit). The inspection content is semanti-cally organized into a set of functional-role-aware evidence units 
+
+𝐶 = {𝑣 𝑆 , 𝑣 𝐴 , 𝑣 𝑀 }, where 𝑣 𝑆 , 𝑣 𝐴 , 𝑣 𝑀 respectively correspond to the inspection segment describing the equipment status, safety anom-alies, and maintenance actions. 
+
+Definition 4 (Human-in-the-Loop Early-Warning Inspection). Amemory-enhanced steel inspection problem is defined as a tuple 
+
+(D , 𝑞 𝑡 , M𝑡 , LLM ), where 𝑞 𝑡 denotes a routine inspection query is-sued at time 𝑡 , and D𝑊 𝑡 = {𝑑 𝑖 ∈ D | 𝑡 − 𝑊 ≤ 𝑡 𝑖 ≤ 𝑡 } denotes the inspection records available within a look-back window 𝑊 .The system maintains a persistent memory store M𝑡 , which is up-dated across inspection cycles using only records available up to time 𝑡 . For each query 𝑞 𝑡 , it retrieves a relevant subset M𝑞 𝑡 ⊆ M 𝑡 
+
+combining with the current inspection context X𝑞 𝑡 to generate 
+
+𝑎 𝑡 = ( ˆ𝑦 𝑡 , E𝑡 , 𝑟 𝑡 ) = LLM  𝑞 𝑡 , M𝑞 𝑡 , X𝑞 𝑡 
+
+,where ˆ𝑦 𝑡 is an early-risk indicator, E𝑡 contains the supporting historical evidence, and 𝑟 𝑡 
+
+provides the corresponding risk explanation and recommended inspection target. Let 𝑔 𝑗 = (𝑒 𝑗 , 𝑐 𝑗 , 𝑓 𝑗 , 𝑡 𝑐 𝑗 ) denote a subsequently confirmed anomaly equipment 𝑒 𝑗 , component 𝑐 𝑗 , fault type 𝑓 𝑗 , and confirmation time 
+
+𝑡 𝑐 𝑗 . We write 𝑔 𝑗 ∼ 𝑞 𝑡 when 𝑔 𝑗 and 𝑞 𝑡 refer to the same equipment and component, and their fault types satisfy the matching criterion 
+
+𝑓 𝑗 ≃ 𝑓 𝑞 𝑡 . Given a follow-up horizon ℎ𝑑 , the early-warning label is defined as 𝑦 𝑡 = I[∃ 𝑔 𝑗 ∼ 𝑞 𝑡 : 𝑡 𝑐 𝑗 − 𝑡 ∈ ( 0, ℎ 𝑑 )] . Importantly, the confirmed result becomes part of the historical evidence available only to subsequent routine inspection queries issued after 𝑡 𝑐 𝑗 .The objective is to maximize the recall of subsequently con-firmed anomalies while maintaining an acceptable false-alert rate and providing sufficient lead time for targeted inspection. The gen-erated warning is therefore a decision-support signal rather than an autonomous fault diagnosis: professional inspectors remain re-sponsible for confirming anomalies and determining corresponding maintenance actions. 
+
+## 4 METHOD 4.1 ConMem Overview 
+
+This section details the technical implementation of the three mod-ules introduced in Section 4, with all techniques specifically adapted for steel equipment inspection scenarios. To address the limitations of existing historical records segmenta-tion and memory storage mechanisms for long-horizon equipment inspection, which often lead to inefficient retrieval and reduced early-warning accuracy, we propose a con tribution-aware mem ory framework for LLM-assisted equipment inspection, supporting a human-in-the-loop early-risk screening system. As shown in Fig. 2, ConMem consists of three key components. (1) The functional-role-aware segmentation module follows a standard NLP pipeline to decompose each inspection record into several functional roles, en-abling fine-grained valuation of evidence units (in Sec. 4.2). (2) The contribution estimation module estimates the contribution of each memory unit to anomaly diagnosis through a utility function. (in Sec. 4.3). (3) The priority-based efficient storage module supports efficient long-horizon evidence retrieval under constrained memory capacity through a priority-based storage strategy that dynamically retains high-value memory units while evicting low-value ones during memory updates (in Sec. 4.4). 
+
+## 4.2 Functional-Role-Aware Segmentation 
+
+For equipment inspection, logs are inherently heterogeneous. A sin-gle record may contain equipment status entries, safety anomalies, and maintenance records. A query "are there any belt wear issues in the past six months?" may get more evidence information from the equipment status entries like "Vibration slightly exceeds 4.5 mm/s" than from maintenance records entries like "Replace all bearings". Generic segmentation methods [ 21 , 28 ] cannot distinguish different roles, thus, it demands a segmentation approach that respects the functional role within inspection records. Our observation is that steel inspection logs naturally contain functional-role shifts. For instance, a log sequence often transitions KDD ’27, August 1–5, 2027, San Jose, CA, USA Liu et al. Steel Mill 
+
+Inspection Logs 
+
+> Equipment status
+> Safety anomaly
+> Maintenance
+
+Raw Logs C = {c 1 ... c n}
+
+Stage1  Functional -role -aware Segementation  Stage2  Contribution Estimation  Stage3 Priority Storage & Retrieval   
+
+> (a) Concept
+> Library N
+> (b) Lightweight
+> Encoder E light
+> (c) Sliding
+> Window
+> belt peeling
+> bearing
+> temperature
+> Low fire
+> extinguisher
+> pressure
+> ...
+> concepts
+> Frozen
+> Encoder
+> frozen SBERT space
+> sim t
+> boundry if
+> sim t<τ
+
+Γc = Γo ∙ exp ( -wc / ∑ wj)
+
+> Criticality -Adaptive threshold
+
+Evidence segments S = {s 1 ... s m}
+
+...                         
+
+> (a) Coalition Sampling T ⊆S
+> (b) Utility U(M T) = α∙Acc + β∙Rel + γ∙Tim
+> (c) Marginal Contribution
+> (d) Shapley Value φi
+> LLM
+> evaluates
+> utility
+> Diminishing Marginal Utility
+> Utility
+> 012n-2n-1n
+> |T| (subset size)
+> Key combos
+> k* ⩾n-2
+> IPSS -Seg:
+> Importance -pruned
+> Stratified sampling
+> Shapley Scores
+> Belt peeling
+> Fire extinguisher
+> Dust pipe worn
+> Lighting norm
+> Φ=0.67
+> Φ=0.58
+> Φ=0.45
+> Φ=0.08
+> high
+> high
+> mid
+> low
+> (a) Max -Heap ordered by Φ
+> Belt peeling
+> 0.67
+> low pressure
+> 0.58
+> Dust pipe worn
+> 0.58
+> Lighting normal
+> 0.08
+> Sparse note
+> 0.12
+> evict
+> (b) Eviction threshold
+> Θ=percentile({ φi}, p)
+> (C) LLM Memory M free
+> capacity
+
+Inspector query 
+
+“Any belt wear issues in 
+
+the past 6 months? ”
+
+> Criticality
+> feedback
+
+Retrieve Top -K
+
+Mq ⊆ M
+
+Generate 
+
+= LLM(q t, M qt , X qt )
+
+Answer 
+
+Belt wear increasing  -
+
+Prioritize maintenance. 
+
+Heterogeneous 
+
+Logs 
+
+Long -Term 
+
+Degradation 
+
+High Cost of 
+
+Full Retrieval 
+
+Inspection Challenges 
+
+ConMem:  Contribution -Aware Memory 
+
+for long -horizon inspection logs  Long -term degradation tracking across inspection cycles      
+
+> Memory Read
+> ∆= U (M TՍ{s i}) –U (M T)
+
+at’
+
+> ...
+
+Figure 2: Overall framework of ConMem. 
+
+from equipment status reporting to safety anomaly detection, then to maintenance action recording. Based on this observation, we design a functional-role-aware segmentation module that parses raw inspection logs into functional-role-aware evidence units. Specifically, given available historical inspection logs C = {𝑐 1, . . . , 𝑐 𝑛 },we first extract noun phrases N using standard NLP pipelines. A lightweight encoder 𝐸 light is trained to map these concepts to a frozen sentence encoder space (e.g., SBERT) by minimizing: 
+
+min 
+
+𝜃 ∑︁ 𝑛 ∈ N 
+
+∥𝐸 light (𝑛 ) − 𝐸 frozen (𝑛 )∥ 2. (1) Then after 𝐸 light is prepared, the segmentation is processed on dynamic sliding windows. For sliding window position 𝑠 𝑡 , concept similarity is computed as: sim 𝑠𝑡 = 1
+
+|N 𝑠𝑡 |∑︁ 𝑛 ∈ N 𝑠𝑡 
+
+max 
+
+𝑐 ∈ C prev 
+
+cos (𝐸 light (𝑛 ), 𝐸 light (𝑐 )) . (2) A segment boundary is detected when sim 𝑠𝑡 < 𝜏 , indicating a role shift. For example, transitioning from equipment status to safety anomaly. Besides, to further optimize segmentation quality for steel inspection, we introduce a domain-adaptive threshold adjust-ment mechanism. Finally, given the varying importance of different equipment components, the threshold 𝜏 is dynamically calibrated based on component criticality 𝜏 𝑐 = 𝜏 0 · exp (− 𝑤 𝑐 /∑︁ 
+
+> 𝑗
+
+𝑤 𝑗 ), where 𝑤 𝑐 
+
+denotes the criticality weight of component 𝑐 (e.g., conveyor belts receive higher weight than lighting fixtures). Thus, this ensures that segments containing critical components like belt drives are preserved with higher fidelity. Consequently, each evidence unit preserves complete evidence within a single functional role, providing reliable memory entries for fine-grained valuation and efficient long-horizon retrieval. 
+
+## 4.3 Contribution Estimation for Inspection Logs 
+
+Not all evidence units are equally valuable for future queries, each memory unit obtained from Sec. 4.2 lacks contribution estimation. A routine temperature reading from three months ago contributes little to answering “Has the belt shown signs of wear?” whereas a single occurrence of “fire extinguisher underpressure” may be critical. In equipment inspection, the long-term value of a record depends on two factors: (i) its relevance to equipment health (anom-alies matter more than routine status), and (ii) its timeliness (older records gradually lose value). However, existing agentic-memory methods lack a principled way to quantify such contributions, lead-ing to critical anomalies being evicted in favor of trivial records. Our key observation, validated on steel inspection data, is that marginal utility diminishes as more context is provided. After re-trieving the top 3 most valuable segments, adding more inspection records yields negligible accuracy improvement. This diminishing returns property motivates a valuation mechanism that can fairly rank segments by their contribution. Thus, we adopt the marginal contribution underlying the Shapley value from cooperative game theory [ 6, 18 , 26 ]. Specifically, for 
+
+𝑚 segments S = {𝑠 1, . . . , 𝑠 𝑚 } extracted from inspection logs, the marginal contribution-based Shapley value for segment 𝑠 𝑖 is: 
+
+𝜙 𝑖 =∑︁ 
+
+𝑇 ⊆ S\{ 𝑠 𝑖 }
+
+𝑈 (𝑀 𝑇 ∪{ 𝑠 𝑖 } ) − 𝑈 (𝑀 𝑇 )
+
+𝑚 ·  𝑚 −1
+
+|𝑇 |
+
+ , (4) where 𝑈 (·) measures LLM response quality for representative queries, such as “Has the belt shown degradation over the past three months?”. However, direct computation requires 𝑂 (2𝑚 ) evaluations. Thus, to make Shapley computation tractable for inspection scenarios, first we define the utility function 𝑈 (·) . Importantly, 𝑈 is estimated exclusively from chronologically earlier training data and remains ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+Table 2: Complexity analysis of the proposed pruned strategy. K denotes the number of elements in a coalition.                              
+
+> Strategy(n=8) Evaluation-times ↓Spearman ↑Top-3 Overlap ↑
+> Full 256 1.000 1.000
+> 𝐾 ≥𝑛 −393 1.000 1.000
+> 𝐾 ≥𝑛 −237 1.000 1.000
+> 𝐾 ≥𝑛 −190.997 0.959
+
+fixed throughout test-time evaluation. Specifically, for each train-ing query 𝑞 𝑡 issued at time 𝑡 , its input context and every evalu-ated memory coalition 𝑀 𝑞𝑡 contain only inspection records whose timestamps fall within the look-back window [t-W,t]. The query is constructed from the scheduled inspection task and metadata available at time 𝑡 . The label 𝑦 𝑡 is determined retrospectively from human-confirmed outcomes occurring within the follow-up win-dow (𝑡, 𝑡 + ℎ𝑑 ]. For a memory coalition 𝑀 𝑞𝑡 we compute 
+
+𝑈 (𝑀 𝑞𝑡 ) = 𝛼 Acc Qtrain (𝑀 𝑞𝑡 ) + 𝛽 Rel Qtrain (𝑀 𝑞𝑡 ) + 𝛾 Tim (𝑀 𝑞𝑡 ), (5) where Acc (𝑀 𝑞𝑡 ) measures factual accuracy against ground-truth in-spection records, Rel (𝑀 𝑞𝑡 ) captures relevance to the current equip-ment component, and Tim (𝑀 𝑞𝑡 ) penalizes outdated information (e.g., records older than 12 months receive lower weight). Then we formalize the diminishing returns property for inspection segments, 
+
+𝜕𝑈 (𝑀 𝑇 ∪{ 𝑠 𝑖 } )
+
+𝜕 |𝑇 | ∝ 𝑒 −𝜆 |𝑇 | , 𝜆 > 0, (6) where 𝜆 is the decay rate empirically estimated from inspection data. Finally, based on this property, we use importance-pruned stratified sampling to prune low-impact combinations while pre-serving accuracy, reducing the number of utility evaluations to only a small subset of the original 𝑂 (2𝑚 ) coalition space. 
+
+Complexity Analysis. To validate our pruned strategy, we com-pare the estimated Shapley rankings under different coalition trun-cations. As shown in Table 2, the relative ranking of evidence contributions remains stable in near-complete coalitions. So, Our diminishing-marginal-utility observation and high-order trunca-tion characterize two complementary aspects of evidence contri-bution. The former describes the absolute marginal gain of adding a segment decreasing as more evidences including in the context. The latter offers an efficient way to estimate shapley values. 
+
+## 4.4 Priority-Based Efficient Storage 
+
+In a steel mill, the LLM’s context window is a critical resource. When memory capacity is constrained, the system must decide which inspection records to retain and which to evict. A key observation is that inspection records exhibit a long-tail distribution: a small number of critical anomalies (e.g., belt peeling, fire extinguisher underpressure) are queried frequently, while the majority of routine status are rarely accessed. This observation suggests a memory-saving strategy that prioritizes high-value anomalies. Specifically, our priority-based storage module directly leverages the Shapley values computed in the previous stage. Segments are stored in a max-heap ordered by ˆ𝜙 𝑖 . When memory capacity is constrained, the lowest-contribution segments are evicted first. This ensures that critical anomalies are never lost. For a new query 𝑞 such as “Have any belt wear issues in the past six months?”, first, it retrieves top-𝐾 segments semantically 
+
+Table 3: Analysis result of different Shapley-ranked ratio. 
+
+Strategy 10% 25% 50% 75% 90% 100% Acc.(%) 51 76 72 57 53 52 relevant to 𝑞 from high-shapley-value candidates. Then, to balance memory retention and retrieval efficiency, we define an eviction threshold 𝜃 that adapts to current memory pressure: 
+
+𝜃 = percentile ({ ˆ𝜙 𝑖 }𝑚 𝑖 =1, 𝑝 ), (7) where 𝑝 is the target retention percentile (e.g., 𝑝 = 20% retains the top 20% of segments by contribution). Finally, all segments with 
+
+ˆ𝜙 𝑖 < 𝜃 are candidates for eviction when the context window is full. This adaptive strategy enables the agent to maintain a compact yet informative memory store. 
+
+Effectiveness Analysis. We evaluate the proposed storage strat-egy by varying the proportion of Shapley-ranked evidence retained in memory. As shown in Table 3, retaining only the top 25%-50% of Shapley-ranked evidence achieves superior accuracy, indicat-ing that the proposed priority-based storage maintains a compact memory for efficient retrieval. 
+
+Algorithm 1: ConMem for equipment inspection 
+
+Require: Inspection logs D, query 𝑞 𝑡 , inspection prompt 𝑋 𝑞𝑡 ,budget 𝜌 
+
+Ensure: Response 𝑎 𝑡 ′ , retrieved memory M𝑞𝑡  
+
+> 1:
+
+Stage 1: Functional-Role-Aware Segmentation  
+
+> 2:
+
+Extract noun phrases (e.g., “belt peeling”, “fire extinguisher”) from D; 
+
+> 3:
+
+Detect boundaries via sim 𝑡 < 𝜏 , output segments S; 
+
+> 4:
+
+Stage 2: Shapley Valuation  
+
+> 5:
+
+Compute 𝜙 𝑖 = Í𝑇 𝑈 (𝑀 𝑇 ∪{ 𝑠 𝑖 } ) − 𝑈 (𝑀 𝑇 ) 
+
+> 𝑚 ·
+
+(𝑚 −1  
+
+> |𝑇 |
+
+) for each 𝑠 𝑖 ∈ S ; 
+
+> 6:
+
+Stage 3: Priority Storage & Retrieval  
+
+> 7:
+
+Store segments in max-heap ordered by ˆ𝜙 𝑖 ; 
+
+> 8:
+
+Retrieve top-𝐾 segments M𝑞𝑡 relevant to 𝑞 𝑡 ; 
+
+> 9:
+
+Generate 𝑎 = LLM (𝑞 𝑡 , M𝑞𝑡 , 𝑋 𝑞𝑡 ); 
+
+> 10:
+
+return 𝑎 𝑡 ′ , M𝑞𝑡 
+
+## 4.5 Complexity Analysis of ConMem 
+
+Algorithm 1 presents the pseudo-code of our ConMem framework for steel equipment inspection. The sampling algorithm requires 
+
+𝑂 (𝜌 ) LLM inferences, where 𝜌 is the sampling budget. The rela-tionship between sampling budget 𝜌 and the minimum evaluated combination size 𝑘 ∗ is given by, 𝜌 = Í𝑛 𝑗 =𝑘 ∗
+
+ 𝑚 𝑗 
+
+, with typical settings where 𝑘 ∗ ≥ 𝑛 − 2 and 𝑚 ≤ 20 , which is common in steel inspec-tion where approximately 20 anomaly segments are extracted from each batch of inspection logs, This reduces the number of utility evaluations from exponential 𝑂 (2𝑛 ) to quadratic 𝑂 (𝑛 2) while main-taining approximation accuracy within 1% . Thus, the overall time complexity of our method for a single inspection query is: 
+
+𝑇 total = 𝑇 seg + 𝑇 val + 𝑇 ret = 𝑂 (𝑛 · 𝑑 ) + 𝑂 (𝜌 · 𝜏 ) + 𝑂 (𝐾 log 𝑚 ), (9) where 𝑇 seg is the segmentation cost, linear in log length 𝑛 and em-bedding dimension 𝑑 . 𝑇 val is the Shapley valuation cost, requiring 𝜌 
+
+LLM calls, and 𝑇 ret is the retrieval cost, logarithmic in memory size KDD ’27, August 1–5, 2027, San Jose, CA, USA Liu et al. 
+
+𝑚 . For steel equipment inspection, this translates to sub-second re-sponse times, reducing from Naive Context retrieval’s 18.76 seconds to about 2.5 seconds, thereby enabling in time anomaly detection. 
+
+## 5 EXPERIMENTS 
+
+In this section, we conduct comprehensive experiments to evaluate the proposed ConMem framework on a steel equipment inspection dataset. We aim to answer the following research questions: 
+
+• RQ1: Can ConMem achieve comparable or superior accuracy to Full RAG while using significantly fewer tokens? 
+
+• RQ2: How does ConMem compare against heuristic memory selection strategies in terms of retrieval efficiency? 
+
+• RQ3: What is the impact of the diminishing marginal utility phenomenon on memory retention? 
+
+## 5.1 Experimental Setup 
+
+Dataset. From real-world steel equipment inspection practices, we construct a large-scale inspection dataset based on authentic in-spection records. The dataset contains approximately 30,080 inspec-tion entries, each preserving key fields: equipment ID, component, timestamp, responsible personnel, and anomaly description. From the anomaly descriptions, we automatically extract anomaly event cards (e.g., “belt back peeling severe”, “fire extinguisher underpres-sure”, “dust pipe worn”) to build the memory candidate pool. Gold labels are hidden as standard answers for evidence-level validation. 
+
+Evaluation Metrics. We adopt accuracy (recall of subsequently confirmed anomalies), Token Overhead, and Response Time (ms). 
+
+Implementation Details. Experiments are conducted on a server equipped with an NVIDIA GeForce RTX 5090 GPU and 128GB main memory. The LLM backbone is GPT-4o [ 9]. We use the all-MiniLM-L6-v2 [ 29 ] as the frozen sentence encoder. For ConMem, we set the sampling budget 𝜌 according to minimum combination size 
+
+𝑘 ∗, and 𝑘 ∗ = 𝑛 − 2. For records look-back window, we set W=366 days. For human reinspection horizon, we set ℎ𝑑 =14 days. For Full RAG, the context window is set to 8K tokens. The coefficients 
+
+𝛼 = 0.45 , 𝛽 = 0.45 , 𝛾 = 0.1 defined in the utility function 𝑈 (·) are tuned specifically for steel inspection tasks. We construct queries based on inspection logs and partition them into training and test sets by year. The training of the lightweight encoder 𝐸 light and the evaluation of the utility function 𝑈 (·) are conducted on the training set, and experiments are performed on the test set. 
+
+Baselines. We compare ConMem with representative baselines from four categories, including several state-of-art methods. 
+
+(i) Context-based retrieval methods. These methods directly provide raw historical inspection logs to the LLM. 
+
+• Naive Context-8K : It directly uses the most recent records within an 8K-token context window through TF-IDF retrieval and greedy 8K packing strategy. 
+
+• Full RAG : It represents methods that retrieve relevant inspection records from the complete history without memory construction. We implement it using a two-stage retrieval pipeline, where TF-IDF retrieves top-100 candidates and E5 reranking selects the final top-10 records. 
+
+• Full Event Retrieval : It directly provides complete structured inspection events (i.e., event cards) from the entire historical records to the LLM without memory compression or pruning, serving as an upper-bound retrieval setting with full access to historical information. 
+
+(ii) Heuristic Memory methods. These methods construct mem-ories using heuristic rules instead of value-aware selection. 
+
+• Random Memory : It randomly selects memory segments from historical records under the same memory budget as ConMem. 
+
+• Rule-based Memory : It selects memory segments according to heuristic criteria, including recency and access frequency. 
+
+(iii) External agent memory methods. We further compare Con-Mem with representative memory-augmented LLM frameworks that maintain and retrieve long-term memories. 
+
+• A-MEM [ 31 ]: It constructs structured memories from historical interactions and performs memory retrieval through its official memory organization pipeline. 
+
+• MemoRAG [ 23 ]: It combines retrieval-augmented generation with memory clues to enable efficient long-horizon access. 
+
+• ActMem [ 32 ]: It constructs a structured causal–semantic mem-ory graph from atomic facts extracted from historical interactions, and performs retrieval. 
+
+• Mem0 [ 5 ]: It provides a memory layer that extracts, stores, and re-trieves persistent memories via an LLM-driven extraction pipeline with semantic retrieval over a vector database. 
+
+(iv) ConMem variants. We perform ablations to examine the impact of fine-grained memory valuation and pruning. 
+
+• Record-level SSV : It applies the proposed Shapley-based valua-tion to raw inspection records rather than fine-grained evidence units, assessing the effect of memory granularity. 
+
+• No-pruning Shapley :It keeps all memory units and uses Shapley values only for valuation, removing memory pruning. 
+
+## 5.2 Main Results 
+
+Table 4 reports the overall performance of all compared meth-ods. For RQ1 , ConMem achieves 76.0% accuracy, outperforming Mem0 [ 5] 74.7%, while reducing token overhead by 88.2% and re-sponse time by 86.6% compared to Full RAG. For RQ2 , ConMem exhibits the highest accuracy for high-value anomalies and the low-est time and token consumption, confirming that the priority-based retention can effectively preserve critical information. Besides, Fig. 4 further confirms the robustness of ConMem. Although Mem0 [ 5 ] achieves accuracy and efficiency compara-ble to ConMem when GPT-4o is used as the backbone, this result should be interpreted together with its sensitivity to backbone ca-pability. When GLM-4 [ 7] is used as the backbone, the accuracy of Mem0 decreases substantially to 45.9%, revealing a strong de-pendence on the LLM’s implicit memory-management capability. That’s because Mem0 does not explicitly design a mechanism for re-trieval or storage. Its memory extraction, consolidation, and update decisions are largely delegated to the backbone LLM. In contrast, even under the GLM-4 LLM, the accuracy of ConMem remains 76%. Since its effectiveness is derived not only from the reason-ing capability of the backbone, but also from a model-independent memory-management mechanism. This distinction is particularly important for industrial deployment, where reliance on expensive ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+Table 4: Comprehensive performance comparison on the steel equipment inspection QA task. 
+
+Family Method Memory Budget QA Metrics Efficiency Acc./1K Acc. Input Tok. Tok. Red. Time Time Red. (%) ↑ (%) ↑ (ms) ↓ (%) ↑ ↑
+
+Context / retrieval Naive Context-8K Full 46.0 10086.4 0.0 18760.0 0.0 4.56 Full RAG Top-10 55.0 4496.2 55.4 2934.4 84.4 12.23 Full Event Retrieval Full 72.0 2251.1 77.7 3837.4 79.5 31.98 Heuristic memory Random Memory 10% 31.0 1193.3 88.2 2020.9 89.2 25.98 25% 50.0 1191.7 88.2 2364.9 87.4 41.96 50% 65.0 1189.0 88.2 2340.3 87.5 54.67 Rule-based Memory 10% 40.0 1199.5 88.1 2206.3 88.2 33.35 25% 52.0 1200.5 88.1 2403.3 87.2 43.32 50% 64.0 1196.9 88.1 2414.7 87.1 53.47 External agent memory A-MEM [31] Top-20 62.0 3702.1 63.3 8910.8 52.5 16.75 MemoRAG [23] Top-20 72.0 4404.2 56.3 9977.9 46.8 16.35 ActMem [32] Top-20 73.4 1176.5 88.3 10507.3 44.1 62.39 Mem0 [5] Top-20 74.7 1284.3 87.3 2750.5 85.3 58.16 ConMem / Ablation ConMem 10% 51.0 1191.5 88.2 2031.6 89.2 42.80 25% 76.0 1192.1 88.2 2510.4 86.6 63.75 
+
+50% 72.0 1192.8 88.2 3099.2 83.5 60.36 ConMem Ablation Record-level SSV 32.0 1088.0 89.2 1811.2 90.3 29.41 No-pruning Shapley 52.0 1336.8 86.7 2780.0 85.2 38.90  
+
+> Notes. Tok. Red. denotes token reduction relative to the average input tokens of Naive Context-8K. Acc./1K denotes answer accuracy divided by average input tokens and multiplied by 1000. Bold and underlined entries indicate the best and second-best accuracy values.
+
+proprietary LLM models may be impractical and the memory sys-tem must remain effective across heterogeneous backbone models. 
+
+## 5.3 Ablation Study 
+
+Table 5 presents ablation results to isolate the contribution of each ConMem component. Addressing RQ3 , the 25% ConMem model achieves the best performance. Removing functional-role-aware segmentation degrades accuracy to 32.0%, confirming its critical role in helping fine-grained evidence valuation. Removing Shapley valuation reduces accuracy to 52.0%, while removing importance pruning yields a moderate drop to 66.0%. These results validate that the diminishing marginal utility phenomenon is correctly captured by our Shapley-based valuation. 
+
+Table 5: Ablation study of ConMem components.      
+
+> Configuration Acc.
+> ConMem (25%) 76.0 w/o functional-role-aware seg. 32.0 w/o Shapley valuation 52.0 w/o importance pruning 66.0
+
+## 6 DEPLOYMENT AND CASE STUDY 
+
+We deployed our ConMem in an operational equipment-inspection system by a steel manufacturing industry partner in Northern China. The deployed system connects to the existing inspection plat-form and retrieves inspection records from the previous year as its historical evidence repository. During a 15-day field trial, ConMem assisted with 1,125 inspection tasks conducted over three inspec-tion cycles per day and it served as a decision-support module inte-grated into the existing inspection workflow, where professional inspectors reviewed generated warnings and performed follow-up 
+
+Figure 3: Deployment Cases: On-site inspection. 
+
+examinations when necessary. The deployment queries were gener-ated by professional inspectors based on practical scheduled targets and abnormality concerns encountered in routine operations. We compared ConMem with a conventional threshold-based alarm method and a raw-record RAG baseline under the same de-ployment setting and inspection records. An alert was considered successful when the corresponding abnormality was confirmed through an on-site reinspection conducted within 12 hours to 14 days after the alert. The deployment coverage is summarized in Ta-ble 7. Among the 1,125 inspections, 375 were eventually confirmed as abnormal. ConMem correctly warned of 295 abnormalities and missed 80, achieving a recall of 78.7%, compared with 53% for the threshold-based method and 58% for raw-record RAG. ConMem KDD ’27, August 1–5, 2027, San Jose, CA, USA Liu et al.         
+
+> Naive Context-8K Random Memory Rule-based Memory A-MEM MemoRAG ConMem
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> 66 .573 .7
+> 47 .4
+> 72 .367 .178 .9
+
+(a) Spring, 𝑁 = 19  
+
+> Accuracy (%)
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> 64 .866 .7
+> 44 .4
+> 83 .3
+> 66 .2
+> 88 .9
+
+(b) Summer, 𝑁 = 18 0   
+
+> 20
+> 40
+> 60
+> 80
+> 100
+> 26 .934 .6
+> 57 .750 53 .8
+> 84 .6
+
+(c) Autumn, 𝑁 = 26 0    
+
+> 20
+> 40
+> 60
+> 80
+> 100
+> 37 .840 .5
+> 54 .145 .955 .662 .2
+
+(d) Winter, 𝑁 = 37 
+
+Figure 4: Seasonal accuracy comparison across representative methods. Table 6: Case Study on top-3 retrieval results. Later Confirmation serves as ground truths and are not provided to the models. 
+
+Query: Has the No. 3 conveyor belt shown signs of wear in the past three months? 
+
+Ground Truth Naive Context-8K Rule-based Memory (25%) ConMem (25%) Later confirmation 
+
+04-03: Severe surface wear, peeling, edge delamination, and exposed reinforcement cords were confirmed. 
+
+Top-3 evidence 1. 01-24: Severe belt misalignment. 
+
+2–3. No relevant degradation evidence. 
+
+Answer 
+
+No clear progressive wear. 
+
+Top-3 evidence 1. 02-26: Surface wear with exposed reinforcement cords. 
+
+2. 01-24: Severe belt misalignment. 
+
+3. No relevant degradation evidence. 
+
+Answer 
+
+An isolated wear event; no trend confirmed. 
+
+Top-3 evidence 1. 02-26: Surface wear with exposed reinforcement cords. 
+
+2. 01-24: Severe belt misalignment. 
+
+3. 01-18: Slight belt misalignment. 
+
+Answer 
+
+Yes. Slight misalignment progressed to severe misalignment and surface wear. 
+
+Query: Do recent records indicate early mechanical-seal degradation in the No. 3 trough-front oil pump? 
+
+Ground Truth ActMem [32] Mem0 [5] ConMem (25%) Later confirmation 
+
+06-12: Mechanical-seal wear reached the warning threshold, and replacement parts were recommended. 
+
+Top-3 evidence 1. 05-02: Seal inspection was normal. 
+
+2. 05-27: Inlet/outlet flanges visually inspected. 
+
+3. 05-28: Oil-pump inspection was normal. 
+
+Answer 
+
+No evidence of early seal degradation. 
+
+Top-3 evidence 1. 05-10: Foundation bolts normal. 
+
+2. 05-04: Abnormal noise near the coupling guard. 
+
+3. 05-27: Inlet/outlet flanges visually inspected. 
+
+Answer 
+
+Possible early degradation. 
+
+Top-3 evidence 1. 05-31: Metallic friction noise from the mechanical seal. 
+
+2. 05-29: Recurrent seepage at the pump-body joint. 
+
+3. 05-14: Seal leakage with a noticeable oil-level drop. 
+
+Answer 
+
+Yes. Recurrent leakage followed by metallic friction indicates an emerging degradation pattern. 
+
+Query: Has the reducer exhibited any abnormalities in the past six months? 
+
+Ground Truth ActMem [32] Mem0 [5] ConMem (25%) Later confirmation 
+
+06-10: Temperature is excessively high, measured at 77.8 ◦C, exceeding the standard limit of 65 ◦C. 
+
+Top-3 evidence 1. 05-02: Main shaft bearing normal. 
+
+2. 05-27: Gearbox temperature normal. 
+
+3. 05-27: Appearance normal. 
+
+Answer 
+
+No evidence of reducer anomalies. 
+
+Top-3 evidence 1. 05-02: Main shaft Bearing normal. 
+
+2. 05-27: Gearbox temperature normal. 
+
+3. 05-27: Appearance normal. 
+
+Answer 
+
+No evidence of reducer anomalies. 
+
+Top-3 evidence 1. 04-30: Oil seepage on coupling guard surface. 
+
+2. 03-27: Loosing bolts. 
+
+3. 01-14: Oil seepage on coupling guard surface. 
+
+Answer 
+
+Yes. Oil seepage and loosing bolts. 
+
+generated 136 unconfirmed alerts, indicating that it is more suit-able as a risk-prioritization and decision-support tool than as an automatic replacement for professional inspection. 
+
+Case Study. In real-world deployment, ConMem issued warnings an average of 12 days before the corresponding abnormalities were identified during routine manual inspection. Table 6 reports two successfully predicted cases and one missed case. As in Fig. 3, two successful warnings guided inspectors to perform targeted exam-inations of the corresponding components, and subsequent field tests confirmed the predicted abnormalities. These cases illustrate how ConMem provides actionable early-warning evidence. 
+
+## 7 CONCLUSION 
+
+In this paper, we investigate the memory valuation problem in LLM-assisted equipment inspection scenario and introduce ConMem, a principled and interpretable framework, supporting a human-in-the-loop early-risk screening system. Specifically, we first pro-pose a functional-role-aware segmentation module that parses raw inspection logs into functional evidence units, ensuring critical anomalies like belt peeling and fire extinguisher underpressure remain intact. We also identify a crucial phenomenon called dimin-ishing marginal utility, where the additional benefit of each extra evidence segment decreases rapidly as more historical context is provided. Building upon this finding, we quantify the contribution 
+
+Table 7: Field deployment and online evaluation results. 
+
+Deployment Configuration Deployment period 2026/05/29–2026/06/13 
+
+Inspection duration 15 days 
+
+Inspection frequency Three rounds per day 
+
+Inspection tasks 1,125 
+
+Confirmed abnormalities 375 
+
+Confirmed normal cases 750 
+
+Method TP FP TN FN P. R. Acc. Resp. (ms) Lead (days) 
+
+Threshold-based 197 70 680 178 73.8 52.5 78.0 20000.0 0Raw-log RAG 216 120 630 159 64.3 57.6 75.2 2934.4 1
+
+ConMem 295 136 614 80 68.4 78.7 80.8 2510.4 12 
+
+Notes. P. and R. denote precision and recall, respectively. Resp. denotes average response time. Lead denotes the average time by which correctly predicted abnor-malities were identified earlier than the corresponding threshold-based alarms. 
+
+of each evidence segment via Shapley value and design an efficient approximation algorithm that prunes low-impact combinations, significantly improving storage efficiency while maintaining val-uation accuracy. Finally, we conduct extensive experiments on a real-world steel equipment inspection dataset, demonstrating that ConMem achieves 76.0% early warning accuracy while reducing token overhead by 88.2% and response time by 86.6%, significantly outperforming existing heuristic approaches in storage efficiency, early-warning accuracy, and long-term reasoning capability. ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs KDD ’27, August 1–5, 2027, San Jose, CA, USA 
+
+## References 
+
+[1] Khalid M. Alsaif, Aiiad A. Albeshri, Maher A. Khemakhem, and Fathy E. Eassa. 2024. Multimodal Large Language Model-Based Fault Detection and Diagnosis in Context of Industry 4.0. Electronics 13, 24 (2024). [2] Apiradee Boonmee, Kritsada Wongsuwan, and Pimchanok Sukjai. 2024. Consul-tation on industrial machine faults with large language models. arXiv preprint arXiv:2410.03223 (2024). [3] Xiangang Cao, Wangtao Xu, Jiangbin Zhao, Yong Duan, and Xin Yang. 2024. Research on Large Language Model for Coal Mine Equipment Maintenance Based on Multi-Source Text. Applied Sciences 14, 7 (2024). [4] Jianshu Chao, Ruoyun Liu, Deyu An, Cheng Zhu, Bangjiang Lin, et al . 2026. Semantic segmentation of power equipment guided by multi-modal and multi-level wavelet for UAV inspections. Pattern Recognition 179 (2026), 113914. [5] Prateek Chhikara, Dev Khant, Saket Aryan, Taranjeet Singh, and Deshraj Yadav. 2025. Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory. arXiv preprint arXiv:2504.19413 (2025). [6] Amirata Ghorbani and James Zou. 2019. Data shapley: Equitable valuation of data for machine learning. In ICML . PMLR, 2242–2251. [7] Team Glm, Aohan Zeng, Bin Xu, Bowen Wang, Chenhui Zhang, Da Yin, Dan Zhang, Diego Rojas, Guanyu Feng, Hanlin Zhao, et al . 2024. Chatglm: A fam-ily of large language models from glm-130b to glm-4 all tools. arXiv preprint arXiv:2406.12793 (2024). [8] Daochun Huang, Yiming Wang, and Huipeng Li. 2024. Study on UAV Inspection Safety Distance of Substation High-Voltage and Current-Carrying Equipment Based on Power-Frequency Magnetic Field. IEEE Transactions on Instrumentation and Measurement 73 (2024), 1–8. [9] Aaron Hurst, Adam Lerer, Adam P Goucher, Adam Perelman, Aditya Ramesh, Aidan Clark, AJ Ostrow, Akila Welihinda, Alan Hayes, Alec Radford, et al . 2024. Gpt-4o system card. arXiv preprint arXiv:2410.21276 (2024). [10] Qian Jiang, Yadong Liu, Yingjie Yan, Xianyin Mao, Haoyu Xu, et al . 2024. BIM-Based 3-D Multimodal Reconstruction for Substation Equipment Inspection Images. IEEE Transactions on Instrumentation and Measurement 73 (2024), 1–14. [11] Vladimir Karpukhin, Barlas Oguz, Min, et al . 2020. Dense passage retrieval for open-domain question answering. In EMNLP . 6769–6781. [12] Jingoo Lee, Seungjun Lee, Young-Joo Lee, and Jaebeom Lee. 2025. Virtual sensing of seismic floor responses for rapid prioritization of critical equipment inspection in nuclear power plants. Computer-Aided Civil and Infrastructure Engineering 40, 26 (2025), 4669–4688. [13] Jianming Liu, Duanjiao Li, Ying Zhang, Yun Chen, Shengbo Liu, et al . 2025. Relative Pose Estimation of Substation Equipment for UAV Inspection via Deep Point Cloud Registration. In ICIRA . 483–494. [14] Mincong Liu, Tusongjiang Kari, Aishan Yimamu, Yuanxiang Zhou, and Xiaojing Ma. 2025. MC-YOLOv8: A Hybrid Attention and Adaptive Convolution Model for Power Equipment Fault Inspection: M. Liu et al. Signal, Image and Video Processing 19, 8 (2025), 653. [15] Junru Lu, Siyu An, Mingbao Lin, Gabriele Pergola, Yulan He, et al . 2023. Mem-oChat: Tuning LLMs to Use Memos for Consistent Long-Range Open-Domain Conversation. arXiv preprint arXiv:2308.08239 (2023). [16] Shouyin Lu, Yanping Li, and Tao Zhang. 2009. Design and implement of control system for power substation equipment inspection robot. (2009), 93–96. [17] Weizhi Lu, Qiang Li, Weijian Zhang, Lin Mei, Di Cai, et al . 2024. Management of power equipment inspection informationization through intelligent unmanned aerial vehicles. Artificial Life and Robotics 29, 4 (2024), 579–584. [18] Scott M Lundberg and Su-In Lee. 2017. A unified approach to interpreting model predictions. NeurIPS 30 (2017). [19] Yuya Okada, Hiroki Sugawara, Hiroaki Soya, and Takeshi Hatanaka. 2025. Feasibility-aware hierarchical task assignment for equipment inspection robots with heterogeneous work efficiency. Advanced Robotics 39, 2 (2025), 114–126. [20] Charles Packer, Vivian Fang, Shishir_G Patil, Kevin Lin, Sarah Wooders, and Joseph_E Gonzalez. 2023. MemGPT: towards LLMs as operating systems. (2023). [21] Joon Sung Park, Joseph O’Brien, Carrie Jun Cai, Meredith Ringel Morris, Percy Liang, and Michael S Bernstein. 2023. Generative agents: Interactive simulacra of human behavior. In UIST . 1–22. [22] Yuhuai Peng, Chenlu Wang, Yue Hao, Li Zhen, Guolong Chen, et al . 2024. High-Precision Surface Crack Detection for Rolling Steel Production Equipment in ICPS. IEEE Internet of Things Journal 11, 3 (2024), 4586–4599. [23] Hongjin Qian, Peitian Zhang, Zheng Liu, Kelong Mao, and Zhicheng Dou. 2024. MemoRAG: Moving towards Next-Gen RAG via Memory-Inspired Knowledge Discovery. arXiv preprint arXiv:2409.05591 (2024). [24] Atta Rahman, Fahad Abdullah Alatallah, Abdullah Jafar Almubarak, Haider Ali Alkhazal, Hasan Ali Alzayer, Younis Zaki Shaaban, Nasro Min-Allah, Aghiad Bakry, and Khalid Aloup. 2025. Deep learning-based automated inspection of generic personal protective equipment. Computers, Materials, & Continua 85, 2 (2025), 3507. [25] Preston Rasmussen, Pavlo Paliychuk, Travis Beauvais, Jack Ryan, and Daniel Chalef. 2025. Zep: a temporal knowledge graph architecture for agent memory. 
+
+arXiv preprint arXiv:2501.13956 (2025). [26] Lloyd S Shapley et al. 1953. A value for n-person games. (1953). [27] Jihoon Tack, Jaehyung Kim, Eric Mitchell, Jinwoo Shin, Yee Whye Teh, and Jonathan Richard Schwarz. 2024. Online adaptation of language models with a memory of amortized contexts. NeurIPS 37 (2024), 130109–130135. [28] Bing Wang, Xinnian Liang, Jian Yang, Hui Huang, Zhenhe Wu, ShuangZhi Wu, Zejun Ma, and Zhoujun Li. 2025. Scm: Enhancing large language model with self-controlled memory framework. In International Conference on Database Systems for Advanced Applications . Springer, 188–203. [29] Wenhui Wang, Furu Wei, Li Dong, Hangbo Bao, Nan Yang, and Ming Zhou. 2020. Minilm: Deep self-attention distillation for task-agnostic compression of pre-trained transformers. NeurIPS 33 (2020), 5776–5788. [30] Zora Zhiruo Wang, Jiayuan Mao, Daniel Fried, and Graham Neubig. 2024. Agent Workflow Memory. arXiv:2409.07429 [cs.CL] https://arxiv.org/abs/2409.07429 [31] Wujiang Xu, Zujie Liang, Kai Mei, Hang Gao, Juntao Tan, and Yongfeng Zhang. 2026. A-mem: Agentic memory for llm agents. NeurIPS 38 (2026), 17577–17604. [32] Xiaohui Zhang, Zequn Sun, Chengyuan Yang, Yaqin Jin, Yazhong Zhang, et al .2026. ActMem: Bridging the Gap Between Memory Retrieval and Reasoning in LLM Agents. arXiv preprint arXiv:2603.00026 (2026). [33] Wanjun Zhong, Lianghong Guo, Qiqi Gao, He Ye, and Yanlin Wang. 2024. Mem-orybank: Enhancing large language models with long-term memory. In AAAI ,Vol. 38. 19724–19731. [34] Jiang Zhu, Chonggao Fan, Saisi Li, Keheng Nie, Jianqi Li, et al . 2025. SEDNet: Substation Equipment Detection Network With an Attention Mechanism for UAV Automatic Power Inspection. IEEE Transactions on Instrumentation and Measurement 74 (2025), 1–14. 
+
+## A Theoretical Analysis of ConMem Approximation 
+
+In this appendix, we provide a rigorous theoretical analysis of the approximation bounds of our proposed ConMem framework. We derive the approximation error bound under the diminishing marginal utility assumption. 
+
+## A.1 Preliminaries and Assumptions 
+
+Recall from Section 4.3 that for 𝑚 segments S = {𝑠 1, . . . , 𝑠 𝑚 } ex-tracted from equipment inspection logs, the marginal contribution-based Shapley value for segment 𝑠 𝑖 is defined as: 
+
+𝜙 𝑖 =∑︁ 
+
+𝑇 ⊆ S\{ 𝑠 𝑖 }
+
+𝑈 (𝑀 𝑇 ∪{ 𝑠 𝑖 } ) − 𝑈 (𝑀 𝑇 )
+
+𝑚 ·  𝑚 −1
+
+|𝑇 |
+
+ , (1) where 𝑈 (·) denotes the utility function measuring LLM response quality for representative inspector queries (e.g., “Has the belt shown degradation over the past three months?”), and 𝑀 𝑇 rep-resents the segment set 𝑇 as context. To facilitate theoretical analysis, we make the following standard assumption about the utility function, which is empirically validated on steel inspection data. 
+
+Assumption 1. (Diminishing Marginal Utility). There exists a threshold 𝑘 ∗ and a constant 𝛿 > 0 such that for any segment 𝑠 and any context sets 𝑇 ⊆ 𝑇 ′ with |𝑇 | ≥ 𝑘 ∗, we have: 
+
+𝑈 (𝑀 𝑇 ′∪{ 𝑠 } ) − 𝑈 (𝑀 𝑇 ′ ) ≤ 𝑈 (𝑀 𝑇 ∪{ 𝑠 } ) − 𝑈 (𝑀 𝑇 ) ≤ 𝛿. (2) This assumption is empirically supported by our observation in Section 4.2 that after retrieving the top 3 most valuable segments from steel inspection logs, adding more records yields negligible accuracy improvement. 
+
+Assumption 2. (High-Order Contribution Rank Stability). In our exhaustive-enumeration pilot study, the contribution ranking obtained from coalitions satisfying 𝐾 ≥ 𝑛 − 2 closely matches the exact Shapley ranking, as measured by Spearman correlation and top-K overlap. KDD ’27, August 1–5, 2027, San Jose, CA, USA Liu et al. 
+
+Assumption 3. To quantify the stability of marginal contributions across coalition-size strata, we define the cross-stratum deviation 𝜖 as 
+
+𝜖 = max  
+
+> 1≤𝑖 ≤𝑛
+> 0≤𝑘 <𝑛 −1
+
+𝜇 (𝑘 ) 
+
+> 𝑖
+
+− ˆ𝜙 𝑖 , (3) 
+
+where 𝜇 (𝑘 ) 
+
+> 𝑖
+
+denotes the average marginal contribution of evidence segment 𝑠 𝑖 over context coalitions of size 𝑘 , and ˆ𝜙 𝑖 is its contribution score estimated from the retained high-order strata. By definition, every omitted coalition-size stratum satisfies 
+
+𝜇 (𝑘 ) 
+
+> 𝑖
+
+− ˆ𝜙 𝑖 ≤ 𝜖, 0 ≤ 𝑘 < 𝑛 − 2. (4) 
+
+A smaller 𝜖 indicates that the contribution of an evidence segment is more stable across coalition sizes. 
+
+## A.2 Theorem 1: Approximation Error Bound 
+
+We now state and prove the main approximation error bound of our ConMem valuation module, which appears in Section 4.3 of the main paper. Given 𝑛 evidence segments, ConMem sets 𝑘 ∗ =
+
+𝑛 − 2 and evaluates all utility coalitions 𝐶 ⊆ 𝑆 satisfying |𝐶 | ≥ 𝑘 ∗.Accordingly, the evaluated coalition set is 
+
+Ceval = {𝐶 ⊆ 𝑆 : |𝐶 | ∈ { 𝑛 − 2, 𝑛 − 1, 𝑛 }} . (5) The corresponding number of utility evaluations is 
+
+𝜌 =
+
+> 𝑛
+
+∑︁ 
+
+> 𝐾 =𝑛 −2
+
+𝑛 𝐾 
+
+
+
+=
+
+ 𝑛 𝑛 − 2
+
+
+
++
+
+ 𝑛 𝑛 − 1
+
+
+
++
+
+𝑛 𝑛 
+
+
+
+= 𝑛 (𝑛 − 1)
+
+2 +𝑛 +1 = 𝑂 (𝑛 2).
+
+(6) 
+
+Definition 1. Given context coalition size 𝑘 , the average marginal utility is defined as, 
+
+𝜇 (𝑘 ) 
+
+> 𝑖
+
+= 1
+
+ 𝑛 −1
+
+> 𝑘
+
+∑︁    
+
+> 𝑇 ⊆𝑆 \{ 𝑠 𝑖 }|𝑇 |=𝑘
+
+Δ𝑖 (𝑇 ), (7) 
+
+where, 
+
+Δ𝑖 (𝑇 ) = 𝑈 (𝑀 𝑇 ∪{ 𝑠 𝑖 } ) − 𝑈 (𝑀 𝑇 ). (8) 
+
+The exact Shapley value denotes as, 
+
+𝜙 𝑖 = 1
+
+𝑛 
+
+> 𝑛 −1
+
+∑︁ 
+
+> 𝑘 =0
+
+𝜇 (𝑘 ) 
+
+> 𝑖
+
+. (9) 
+
+Theorem 1 (Approximation Bound of the High-Order Con-Mem Valuation). Let 𝜙 = [𝜙 1, . . . , 𝜙 𝑛 ] denote the exact Shapley values, and let ˆ𝜙 = [ ˆ𝜙 1, . . . , ˆ𝜙 𝑛 ] denote the high-order contribution scores computed from coalition-size strata 𝑛 − 2 and 𝑛 − 1:
+
+ˆ𝜙 𝑖 = 12
+
+
+
+𝜇 (𝑛 −2) 
+
+> 𝑖
+
++ 𝜇 (𝑛 −1)
+
+> 𝑖
+
+
+
+. (10) Under Assumption 3, the approximation error for each evidence segment satisfies 
+
+𝜙 𝑖 − ˆ𝜙 𝑖 ≤ 𝑛 − 2
+
+𝑛 𝜖. (11) Consequently, the vector-level error is bounded by 
+
+𝜙 − ˆ𝜙 2 ≤ 𝑛 − 2
+
+√𝑛 𝜖. (12) 
+
+Proof. Using the coalition-size decomposition of the exact Shap-ley value, we have 
+
+𝜙 𝑖 = 1
+
+𝑛 
+
+> 𝑛 −3
+
+∑︁ 
+
+> 𝑘 =0
+
+𝜇 (𝑘 ) 
+
+> 𝑖
+
++ 𝜇 (𝑛 −2) 
+
+> 𝑖
+
++ 𝜇 (𝑛 −1)
+
+> 𝑖
+
+!
+
+. (13) Since 𝜇 (𝑛 −2) 
+
+> 𝑖
+
++ 𝜇 (𝑛 −1) 
+
+> 𝑖
+
+= 2 ˆ𝜙 𝑖 ,, the approximation error can be written as 
+
+𝜙 𝑖 − ˆ𝜙 𝑖 = 1
+
+𝑛 
+
+> 𝑛 −3
+
+∑︁ 
+
+> 𝑘 =0
+
+
+
+𝜇 (𝑘 ) 
+
+> 𝑖
+
+− ˆ𝜙 𝑖 
+
+
+
+. (14) Applying Assumption 3 gives 
+
+𝜙 𝑖 − ˆ𝜙 𝑖 ≤ 1
+
+𝑛 
+
+> 𝑛 −3
+
+∑︁ 
+
+> 𝑘 =0
+
+𝜇 (𝑘 ) 
+
+> 𝑖
+
+− ˆ𝜙 𝑖 
+
+≤ 𝑛 − 2
+
+𝑛 𝜖. 
+
+(15) Summing the per-segment bounds yields 
+
+𝜙 − ˆ𝜙 2 ≤ √𝑛 𝑛 − 2
+
+𝑛 𝜖 = 𝑛 − 2
+
+√𝑛 𝜖. (16) 
+
+□
+
+## A.3 Corollary: Time Complexity Analysis 
+
+The following corollary directly follows from Theorem 1 and the design of ConMem. 
+
+Corollary 1. (Time Complexity). The time complexity of the Shapley valuation module in ConMem is 𝑂 (𝜌 · 𝜏 ), where 𝜏 denotes the time cost for a single LLM inference. With typical settings where 
+
+𝑘 ∗ ≥ 𝑛 − 2 and 𝑛 ≤ 20 — common in steel inspection where approxi-mately 20 anomaly segments are extracted from each batch — this achieves orders-of-magnitude speedup over exact Shapley computa-tion ( 𝑂 (2𝑛 𝜏 )) while maintaining approximation error within 1% .
+
+Proof. ConMem evaluates exactly 𝜌 segment combinations, each requiring one LLM inference (evaluating the utility function). The time complexity is therefore 𝑂 (𝜌 · 𝜏 ). For 𝑘 ∗ = 𝑛 − 2, we have 
+
+𝜌 = Í𝑛 𝑗 =𝑛 −2
+
+ 𝑛 𝑗 
+
+ = 𝑂 (𝑛 2), which is significantly smaller than 2𝑛 for 
+
+𝑛 ≥ 10 . □ □

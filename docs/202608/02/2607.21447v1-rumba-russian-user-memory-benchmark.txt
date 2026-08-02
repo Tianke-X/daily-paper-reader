@@ -1,0 +1,883 @@
+Title: RUMBA: Russian User Memory Benchmark
+
+URL Source: https://arxiv.org/pdf/2607.21447v1
+
+Published Time: Fri, 24 Jul 2026 01:17:36 GMT
+
+Number of Pages: 34
+
+Markdown Content:
+# RUMBA: Russian User Memory Benchmark 
+
+Elizaveta Shevtsova 1, Inna Glebkina 1, Mark Baushenko 1,Pavel Gulyaev 1, Alena Fenogenova 1
+
+> 1
+
+DAIMLD  
+
+> Correspondence: lisabeth.shevtsova@gmail.com
+
+Abstract 
+
+The ability to handle long-term memory in LLMs is becoming increasingly critical, yet existing benchmarks remain English - centric and rely on aggregate retrieval metrics, fail-ing to capture interactions between long -range context, temporal information, and reasoning. To address this, we introduce RUMBA (Rus-sian User Memory BenchmArk) — a new benchmark for long-term conversational mem-ory that provides a fine -grained taxonomy of memory - centric question types and a unified methodology accounting for semantic type, ses-sion scope, temporal reasoning, and the explic-itness of temporal expressions. RUMBA con-sists of timestamped user–assistant dialogues with QA pairs requiring retrieval, combination, and reasoning across sessions. While designed for Russian, we also provide an aligned En-glish subset under the same methodology. We evaluate contemporary memory systems and long -context models, and show how RUMBA serves as a diagnostic tool to analyze model behavior across benchmark slices and identify strengths and failure modes of different mem-ory mechanisms. 
+
+1 Introduction 
+
+Large language models (LLMs) are increasingly deployed as conversational assistants that must re-tain user-specific information across sessions and remain consistent over time. This requires more than simple retrieval: models must preserve salient details, resolve long-range references, and reason over temporal updates and multi-step dependen-cies. Recent English-centric memory benchmarks (Ma-harana et al., 2024; Wu et al., 2025; Bei et al., 2026) have advanced long-term memory evalua-tion. However, recent work on memory-agent eval-uation notes that existing memory benchmarks are still largely recall- or retrieval-oriented and pro-vide incomplete coverage of memory behaviours required in realistic long-horizon interactions, in-cluding memory updates and consolidation, stale or obsolete information, and forgetting (Du, 2026; Hu et al., 2026; Uddin et al., 2026). As summarizes in Table 1, existing benchmarks also rely on synthetic dialogue construction and offer limited diagnostic granularity through relatively coarse question cat-egories. This makes it difficult to isolate failure factors such as temporal dependencies, conversa-tional span, or query semantics. Meanwhile, Russian benchmarks such as MERA (Fenogenova et al., 2024) and LI-BRA (Churin et al., 2025) evaluate broader model capabilities, including general language understanding and long-context processing, but not conversational memory in a targeted way. This leaves a clear need for a benchmark focused on memory, temporal awareness, and reasoning in long Russian dialogues. To address this gap, we introduce RUMBA 
+
+(Russian User Memory Benchm ark), a benchmark for evaluating long-term conversational memory in Russian. RUMBA is built around long-form dialogue scenarios and a taxonomy of question types covering contextual recall, entity tracking, temporal reasoning, and multi-step reasoning. We provide two test sets (Russian and an aligned En-glish translation) and conduct evaluations under both RAG and full-context scenarios. Our contributions are as follows: • We create and release RUMBA as an open-source benchmark 1, the first benchmark specifically designed to evaluate long-term conversational memory in Russian, accom-panied by an aligned English translation to 
+
+> 1https://huggingface.co/datasets/ai-forever/ RUMBA
+
+1arXiv:2607.21447v1 [cs.CL] 23 Jul 2026 enable cross-lingual diagnostics and repro-ducibility. • We present a fine-grained taxonomy of memory-centric question types along multiple axes, enabling detailed model comparison be-yond aggregate accuracy and simple retrieval. • We implement a unified evaluation pipeline that supports both retrieval-based memory systems and full-context baselines for both languages, which standardizes the evaluation workflow while allowing each method family to operate under its natural memory-access setting 2.• We conduct an extensive empirical analysis of different families of memory solutions and a single-model case study, demonstrating RUMBA as a diagnostic tool for identifying strengths and failure modes across benchmark slices. We hope that RUMBA will serve both as a diagnos-tic benchmark for evaluating memory in Russian-language conversational systems and as a practical resource for developing models that can reliably store, update, and use user-specific information over time. 
+
+2 Related work 
+
+Recent work on evaluating memory capabilities in language models has been shaped by benchmarks such as LoCoMo (Maharana et al., 2024), Long-MemEval (Wu et al., 2025), Mem-Gallery (Bei et al., 2026). These datasets provide a structured starting point for studying long-term memory in conversational systems. In particular, LoCoMo or-ganizes evaluation around reasoning-oriented ques-tion families (e.g., single-hop, multi-hop, temporal, commonsense, adversarial), while LongMemEval defines a set of core memory abilities (e.g., recall, personalization, multi-session reasoning, updates, temporal reasoning, abstention) and operational-izes them through specific question types. Together, these benchmarks establish a useful conceptual and methodological baseline for memory evaluation and, particularly, for the RUMBA taxonomy. However, they have three key limitations (Table 1 shows the overview): (1) flat taxonomies that entan-gle reasoning complexity, temporal structure, and memory access within single question categories; (2) treating temporal reasoning and knowledge up-
+
+> 2https://github.com/ai-forever/RUMBA
+
+dates as isolated task types rather than dimensions that can interact; and (3) ignoring memory control behaviors such as intentional forgetting or validity constraints. Several benchmarks (e.g., TimeBench (Chu et al., 2024), temporal NLI (Vashishtha et al., 2020), and the three - dimensional temporal QA frame-work (Piryani et al., 2026)) evaluate temporal rea-soning in LLMs, covering event ordering, duration, and temporal commonsense. However, they are not designed for long - context settings nor grounded in realistic user–assistant interactions, and thus fail to capture temporally dependent reasoning across extended multi-session conversations. The gap is even more pronounced for Russian: no dedicated benchmark for persistent long - term mem-ory exists. LIBRA (Churin et al., 2025) evaluates long-context understanding, but does not test struc-tured memory usage over time. MERA (Fenogen-ova et al., 2024) focuses on general reasoning and knowledge tasks, without isolating memory-specific abilities. The only partially relevant dataset, ruTiE (Chervyakov et al., 2026), includes conversational evaluation, but operates on short dialogues and does not capture persistent, multi-session memory phenomena. To address all of the above limitations (flat tax-onomies, lack of interactive temporal dimensions, absence of forgetting scenarios, inapplicability to long - context dialogues, and the complete gap for Russian), we propose a benchmark for Russian with an extended taxonomy covering forgetting and broader reasoning types, multi - axis annotations for fine -grained diagnostics, and human - written user turns to reduce synthetic interaction bias. 
+
+3 RUMBA Methodology 
+
+3.1 Overview 
+
+RUMBA was designed around a set of diagnostic research questions that directly address the limi-tations identified in prior work. The goal is not only to produce an aggregate score but to make model evaluation informative about specific mem-ory capabilities and failure modes. Accordingly, dialogues, questions, answers, and evidence con-figurations were created to support controlled com-parisons along the main dimensions of long - term conversational memory. The benchmark supports the following research questions: 2Figure 1: Overview of the proposed benchmark and annotation framework. The figure summarizes dataset-level statistics, representative user–assistant dialogues, example question–answer instances, and the multi-dimensional annotation scheme used to categorize memory questions.                                                             
+
+> Feature LoCoMo LongMemEval Mem-Gallery RUMBA
+> Modality Text/Image Text Text/Image Text Language support English only English only English only Russian + English
+> Context length (chars) 44k–90k S: 455k–514k / M: 4.5M–5.2M 42k–86k RU: 297k–569k / EN: 234k–528k # Annotated Q-A pairs 1,542 500 1,711 1,543 Question taxonomy Flat (5 types) Flat (5 types) Flat (3 types) Orthogonal axes ( 17 ×2×2types)
+> User utterances origin Generated Generated Mixed Human-written
+> Temporal reasoning as independent dimension No No No Yes (✓)Explicit support for "forgetting" No No No Yes (✓)Memory scenario coverage retention, abstention retention, abstention, updating retention, abstention, updating retention, abstention, updating, forgetting
+> Date for each dialogue’s utterances Yes Yes Yes Yes Date for questions No Yes No Yes Failure diagnosis granularity Limited Limited Limited Finer-grained (temporal vs. atemporal)
+
+Table 1: Comparison of memory benchmarks: LoCoMo, LongMemEval, Mem-Gallery, and RUMBA. Modality : content types present in the dialogues; Language support : languages of the dialogues and questions; Context length : dialogue length measured in characters; # Annotated Q-A pairs : number of question-answer pairs associated with each dialogue; Question taxonomy : structure of the question taxonomy, distinguishing Flat taxonomies, where each question is assigned a single type, from Orthogonal axes, where each question receives multiple tags; RUMBA uses semantic × quantitative × temporal axes; User utterances : the primary source of user-side dialogue utterances, distinguishing LLM-generated, mixed-source, and human-written data; RUMBA uses manually written user utterances. Temporal reasoning as an independent dimension :whether one of the assigned tags indicates that a question is temporal or atemporal; Explicit support for “forgetting” : whether the benchmark includes scenarios involving deletion requests, such as “delete this” or “forget this”; Memory scenario coverage :high-level task categories used for memory evaluation; Dates for dialogue utterances and questions : whether each utterance and question is timestamped; Failure diagnosis granularity : the ability to identify which benchmark dimension contributes to question complexity. 
+
+1. Memory scope and semantics. How does performance vary with session scope (single vs. multiple sessions) and with semantic su-pergroups (extraction, reasoning)? 2. Temporal reasoning. How does performance differ between temporal and atemporal ques-tions, and between cases where temporal in-formation is explicit vs. implicit? 3. Retrieval vs. full-context How do retrieval-augmented memory systems, which trade off perfect recall for scalability, compare with full-context baselines that preserve all infor-mation within a finite window but cannot scale indefinitely? Fig.1 shows the overall structure of the proposed benchmark. 
+
+3.2 Taxonomy 
+
+The RUMBA taxonomy is designed to address the limitations discussed in Sec.2 by moving from a flat, benchmark-specific categorization to a multi-dimensional, compositional framework for memory evaluation. Instead of assigning each question to a single class, RUMBA decomposes tasks along several orthogonal axes, including: • the semantic operation required (e.g., recall, update tracking, comparison), • the temporal dimension (temporal vs. atempo-ral), • the number of sessions involved, • the reasoning complexity, • and the memory validity state (e.g., active vs. forgotten information). The questions are categorized according to three 3axes: (1) Semantic axis represents the classifica-tion of questions with respect to their meaning and assessment focus. Broadly, the questions are clas-sified into Information Extraction and Reasoning classes. (2) Quantitative axis indicates the num-ber of sessions required to answer a given ques-tion. Questions are divided into single-session and multi-session classes. (3) Axis of temporality de-notes whether a question is temporal. Questions are divided into temporal and atemporal classes. The summary of the axes and corresponding types of questions is presented in Table 2. This axis-based design enables a more precise char-acterization of model behavior. For example, the same underlying operation (e.g., recall) can be eval-uated in both temporal and atemporal settings, re-vealing different failure modes. Similarly, reason-ing is treated not as a separate category, but as a property that can be combined with different types of memory access, allowing finer-grained analysis of model capabilities. A key strength of RUMBA is its treatment of tem-porality as an independent dimension. Unlike prior benchmarks, where temporal reasoning is isolated as a specific task type, RUMBA allows temporality to interact with all other axes. This makes it pos-sible to systematically study how models handle time-dependent versus time-independent memory queries within the same semantic framework. Another important contribution is the explicit mod-eling of memory control and validity. In addition to standard abilities such as recall and update track-ing, RUMBA introduces evaluation of intentional forgetting, where models must correctly exclude previously stored information after explicit user instructions. The forgetting scenario is supported through user behavior and a dedicated question type, DeleteInfo. Users may trigger it with requests such as “delete this” or “forget it.” The correct re-sponse is “There is no such information” (or simi-lar), indicating that the information has been suc-cessfully forgotten and is no longer retained by the system. This reflects realistic requirements for memory-enabled assistants and introduces a new class of failure modes not captured in prior work. A de-tailed taxonomy is provided in the Appendix A. The taxonomy was designed with close consider-ation of real-world production user behavior in memory-enabled assistant systems. In particular, its structure was informed by observations from a deployed proprietary conversational assistant with long-term memory functionality, including natu-rally occurring user behaviors related to storing, up-dating, correcting, and deleting memories. Ground-ing the taxonomy in authentic interaction patterns allowed us to better capture the diversity and prac-tical characteristics of real conversational memory queries beyond synthetic or narrowly constructed benchmark settings. 
+
+Table 2: RUMBA Taxonomy Summary. Example of ques-tion’s full annotation: Question = What do I like about my job? T ypes = StaticUser, multi, atemporal. Full taxonomy description is available in Table 26 of Appendix.     
+
+> Axis Categories / Types
+> Semantic Extraction class (6 types): StaticUser, UpdatingInfo, Delete-Info, AsstQuery, OpenDomainType, DateExtraction Reasoning class (10 types): SocialRelationship, Ordering, Arithmetic, Comparison, UserQA, CalendarUnderstanding, TemporalCommonsense, TemporallyModifiedGeneralReason-ing, ComplexRelations, OtherReasoning Abstention type: no answer in dialogue Types with subtypes: OtherReasoning, Arithmetic, DateEx-traction, CalendarUnderstanding, TemporalCommonsense, TemporallyModifiedGeneralReasoning, ComplexRelations Quantitative Single-session, Multi-session Temporality Atemporal, Temporal Temporal Expression Tags: explicit / implicit / no temporal expression
+
+3.3 Dataset characteristics 
+
+Table 3 summarized the main characteristics and statistics of the Russian version of the dataset. The instances that comprise the dataset represent textual dialogues between an assistant (LLM) and a user, as well as questions associated with each dialogue that relate to its content. 
+
+Sessions. Each dialogue consists of timestamped sessions, each representing one day of interaction with the assistant. We distinguish evidence ses-sions , which contain information relevant to at least one question, from filler sessions , which include both conversations about the user that are irrele-vant to questions and sessions with no user-related factual information. Evidence sessions constitute 52.77% of all sessions, micro-averaged across dia-logues. This proportion does not alone characterize retrieval difficulty because most content in an ev-idence session may be irrelevant to a particular question. 
+
+Questions. As described above, the question ty-pology is based on three axes and covers different semantic question types. The dataset consists of 4both open-ended and closed-ended questions. The question-level timestamp is of equal importance to the session-level timestamp, given that the correct interpretation of the former is critical to generating an accurate response. 
+
+Dialogues Characters. The dialogue characters represent diverse behavioral scenarios, which in-creases the realism of the user–assistant interac-tions and reflects authentic user behavior. The dialogues also incorporate sociocultural features characteristic of the Russian language and culture. Information about the characters and topics is pre-sented in Subsection B.2 of the Appendix.               
+
+> Feature Value / Description
+> Total dialogues 85 Total questions 1,543 Average dialogue length ≈340,000 characters Utterances per dialogue 180 – 998 Session definition Single interaction with the assistant on a specific day Sessions per dialogue 12 – 85 Evidence sessions 52.77% of all sessions (micro-average) Questions per dialogue 14 – 22 Number of Question Types 17 base types Language Contemporary standard Russian (user specific) Dialogue specifics Include language errors Reflect Russian sociolinguistic worldview Offensive content None (no offensive, insulting, or threatening data)
+> Note: Dialogues are independent of each other.
+
+Table 3: RUMBA Dataset Features and statistics. 
+
+3.4 Dataset creation Russian version. The dataset was developed in multiple stages, including taxonomy design and dialogue construction. Initially, information ex-traction questions — constituting the majority of the dataset — were created, subsequently, reason-ing questions and a category of temporal questions were incorporated. The dialogue creation process involved a total of 26 contributors, comprising staff members and crowd workers (ABC Elementary 3 and Rambler&Co com-panies 4). Each participant received monetary com-pensation according to the terms and conditions specified in their respective employment or contrac-tual agreements. Information about the participants (gender, age, and field of expertise) is presented in Fig.7 of Appendix. Data were collected over 20 working days. The process comprised two main stages: the creation of dialogues and associated questions by the au-
+
+> 3
+
+https://elementary.center 
+
+> 4
+
+https://rambler-co.ru 
+
+Language Dialogue text + roles + answer prompt 
+
+RU 341,103.13 344,758 346,751 EN 320,782.08 324,437 326,430 
+
+Table 4: Context lengths in the Russian and English versions of RUMBA, measured in characters. 
+
+thors, followed by a validation phase conducted by other contributors to ensure quality and consistency. More detailed information about the validation pro-cess can be found in Section B of Appendix. Before the start of data collection, all participants received comprehensive instructions (See Fig. 8 in Appendix), were acquainted with the question taxonomy, and were provided with the matrix. The dialogues were created in real time. User ut-terances were written by human participants, while GigaChat LLM was selected to generate the assis-tant’s responses, as it is specifically designed for the Russian language and Russian-speaking users, and is the only model pretrained on Russian data (Mamedov et al., 2025). The dialogue authors used the web version of GigaChat Max dated July 1–31 and October 21–November 10, 2025. 
+
+English version. We additionally provide an aligned English diagnostic split. Given the large size of the dialogue data, controlled manual trans-lation would be too resource-intensive. Therefore, the English version of the dataset was produced using automated LLM translation, followed by hu-man verification of the translation quality. This follows common practice in machine translation evaluation and multilingual benchmark construc-tion, where full human assessment is costly and machine-translated data is often validated or post-edited on selected subsets (Lo and Knowles, 2023; Singh et al., 2025b; Rajaee et al., 2025). For the assessment of translation quality, 10% of the translated dataset (i.e., 9 dialogues or a total of 185 sessions) was uniformly sampled and evaluated by human annotators. Translation quality was as-sessed using the Critical and Task-specific criteria defined in POLLUX (Martynov et al., 2025), with results summarized in Table 8. All 3,543 translated pairs RU-utterance — EN-utterance of the 9 dia-logues were validated by domain-qualified special-ists. Each evaluator compared the original Russian text with its English translation according to the POLLUX criteria, and every RU-EN pair was as-sessed by three annotators. The overall translation 5quality score was estimated at 0.88 (Table 9). The next stage involved improving the quality of the translated set through a careful validation of the question–answer pairs and the corresponding evi-dence sessions. A total of 1,543 question–answer pairs (3,086 utterances in total) and 2,232 evidence sessions containing responses to the questions were each validated by three annotators. Where neces-sary, corrections were made to the English versions of the question–answer pairs and sessions. This helped preserve the logical and semantic coherence of the question, answer and evidence sessions to the same extent as in the original Russian version. More details on translation and its validation are provided in Appendix C. 
+
+4 Evaluation 
+
+4.1 Baselines 
+
+We evaluate two families of baselines that corre-spond to two common ways of using long interac-tion histories in LLM-based assistants: full-context inference and memory-based retrieval-augmented inference. 
+
+Full-context baselines. The first family repre-sents long-context models that receive the com-plete dialogue history directly in the input context and generate the answer from this full evidence. This setting provides a classic upper-bound-style baseline for memory use. It also tests whether the model can locate and integrate relevant evidence in very long conversational contexts. In our ex-periments, we selected models with context win-dows around or above 1M tokens: fitting the largest dialogue requires context lengths roughly above 400K tokens, while the next practical tier among available long-context models is around 1M to-kens. This constraint excluded Russian-oriented models, for which we did not find suitable context lengths, as well as available open-source models from the Qwen and DeepSeek families. Although 
+
+Qwen3.5-Flash and Qwen3.5-Plus nominally sat-isfy the context-length requirement, provider-side content inspection rejected benchmark in-puts with DataInspectionFailed errors in our setup, so we excluded them from the final eval-uation. Prior long-term memory benchmarks similarly use long-context LLMs as a natural comparison point for evaluating implicit mem-ory mechanisms (Maharana et al., 2024; Wu et al., 2025). We therefore evaluated both propri-etary and open-source long-context models. The proprietary models are gpt-4.1-mini , gpt-5.4 ,
+
+gemini-3.1-flash-lite , grok-4.1-fast , and 
+
+claude-sonnet-4.6 ; the open-weight models are 
+
+llama-4-maverick and minimax-01 .
+
+Memory Agent/RAG baselines. The second family represents retrieval-based memory systems (Lewis et al., 2020). Unlike full-context base-lines, these methods construct a persistent mem-ory representation from the dialogue history dur-ing ingestion stage. At question-answering time, a small set of relevant memories is retrieved and inserted into the answer prompt. The fi-nal answer is generated by the same fixed an-swering model, openai/gpt-4.1-mini , across all memory-based baselines. Thus, whenever we re-fer to an Agent/RAG or memory-based method, we compare memory layers rather than answer-generation models. Performance differences within this family primarily reflect how well each method stores, updates, structures, and retrieves memories for the fixed answering model. Our simple RAG baseline stores original message-pair chunks from the dialogue history and retrieves them directly from a vector database. The other systems go beyond this plain setup: they use LLM-based components to extract, transform, consoli-date, or structure memories before retrieval. We therefore use Agent/RAG as a compact label for retrieval-based memory systems with different de-grees of LLM-mediated memory processing, even though not all of them are agents in the narrow sense. (Singh et al., 2025a; Wang et al., 2024). In our experiments, this family includes simple vector-based RAG as well as dedicated mem-ory frameworks: mem0 (vector-based) and mem0g 
+
+(graph-based) (Chhikara et al., 2025), graphiti 
+
+(open-source zep ) (Rasmussen et al., 2025), 
+
+cortex (Bhattacharjee, 2025), and memOS (Li et al., 2025). We followed the setup described in the corresponding papers and repositories. For repro-ducibility, we integrated the open-source frame-works as git submodules, while mem0(g) was ac-cessed through its hosted commercial API. When a framework allowed replacing the embedding backend, we used language-specific embedding models of comparable dimension and parameter scale: FRIDA (ai-forever, 2024) for Russian and 
+
+Qwen3-Embedding-0.6B (Zhang et al., 2025) for English, selected as strong retrieval-oriented em-6bedding backbones on MTEB benchmark (Muen-nighoff et al., 2023). 
+
+4.2 Evaluation Pipeline 
+
+In addition to the dataset, we provide an evalua-tion methodology and an accompanying pipeline (Fig.10) as a reference protocol for validating memory-based systems. The proposed pipeline follows evaluation practices commonly used in long-context dialogue and memory benchmarks referenced in Sec.2. RUMBA is evaluated using a two-stage pipeline: 
+
+add and eval . In the first add stage, the mem-ory system processes the dialogue data sequen-tially as user–assistant pairs and populates its in-ternal storage by extracting and storing memories (along with their timestamps) from the conversa-tions. Dialogues belonging to different users are processed independently, and the resulting mem-ories are stored in isolated user-specific memory spaces, e.g., database collections. The Russian and English subsets are ingested separately, resulting in distinct language-specific memory stores. This stage is skipped in the full-context evaluation setup. In the eval stage, the system is evaluated using the open-source Lighteval framework (Habib et al., 2023). For each benchmark question, the system first retrieves the top-k = 10 relevant memories from the corresponding store. The re-trieved timestamped 5 memories, along with times-tamped question, are then provided as context to an answer-generation model, which produces a re-sponse based on a fixed language-specific prompt (Fig. 11). The generated answer is evaluated us-ing an LLM-as-Judge procedure that compares the predicted answer with the reference answer. Different judge models are used depending on the evaluation language. For Russian evaluation, we use POLLUX (Martynov et al., 2025), a pre-trained judge model for Russian language, which was selected based on a reported correlation of 
+
+ρ = 0 .704 with expert judgments. For English evaluation, the same scale and criteria are applied, while DeepSeek-R1 is used as a judge model. We discuss the choice of judges in Appendix E.1. The pipeline produces LLM-as-Judge accuracy as the primary metric, with F1 reported as a complemen-  
+
+> 5The mem0g API did not provide timestamps for graph memories. To evaluate the graph-based implementation as is, we did not augment it with timestamped vector memories, resulting in an atemporal graph-based setup.
+
+tary one. The judge assigns labels 0–3; labels 0 and 1 are mapped to incorrect, while labels 2 and 3 are mapped to correct for binary accuracy. F1 is the mean per-question bag-of-words F1 between the generated and reference answers, using the built-in Lighteval implementation: words are split on whitespace and treated as sets, and the maximum F1 is used for questions with multiple references. The full evaluation criteria and judge prompt tem-plates are provided in Appendix E.2. The analysis includes: (1) a family-level compari-son of retrieval-based memory systems against full-context baselines; and (2) a matched-answerer com-parison between the gpt-4.1-mini full-context baseline and Agent/RAG systems; and (3) within-family slice contrasts over different benchmark scopes. Confidence intervals are estimated by boot-strap resampling over questions, and p-values are Holm-corrected within each comparison block. All results are reported separately for Russian and En-glish as well. Because mem0g is atemporal in our setup, we exclude it from Agent/RAG family ag-gregates for temporal, temporal-expression, and scope–temporal analyses. 
+
+5 Results 
+
+We report descriptive overall scores for each method in Table 5 and then analyze performance across the main benchmark axes: session scope, temporal reasoning, temporal-expression explicit-ness, and semantic type. A detailed description of the slice-level analysis and additional results are provided in Appendix F. An example of a single model case study is provided in Appendix G. 
+
+With the answerer controlled, the gpt-4.1-mini 
+
+Full-context baseline exceeds the overall Agent/RAG score by +4.28 points in Russian and +8.64 in English. Method-level results are mixed: cortex, memOS, and simple RAG score signif-icantly higher in Russian; in English, memOS scores significantly higher, while simple RAG is not significantly different (Table 6). Semantic supergroup analysis shows that the ob-served Full-context advantage is concentrated in Reasoning and Extraction questions , but not in Abstention. Across both Agent/RAG and Full-context systems, Extraction questions are signifi-cantly easier than Reasoning questions in both lan-guages, with within-family accuracy gaps ranging from +9 .35 to +14 .24 points (Table 7). 7Method Russian English LLM-as-Judge F1 LLM-as-Judge F1 Agent/RAG Embedder 
+
+mem0g (atemporal) – 34 .93 ± 1.21 20 .52 ± 0.81 35 .26 ± 1.22 24 .27 ± 0.83 
+
+graphiti (open-source zep) FRIDA | Qwen3-Embedding-0.6B 42 .71 ± 1.26 27 .00 ± 0.91 45 .11 ± 1.27 29 .13 ± 0.90 
+
+mem0 – 53 .21 ± 1.27 30 .10 ± 0.95 54 .12 ± 1.27 35 .05 ± 0.95 
+
+cortex FRIDA | Qwen3-Embedding-0.6B 68 .24 ± 1.19 36 .32 ± 0.99 55 .80 ± 1.26 34 .26 ± 0.94 
+
+simple RAG FRIDA | Qwen3-Embedding-0.6B 68 .89 ± 1.18 36 .17 ± 0.98 65 .46 ± 1.21 39 .00 ± 0.96 
+
+memOS FRIDA | Qwen3-Embedding-0.6B 66 .82 ± 1.20 38 .27 ± 1.00 69 .99 ± 1.17 42 .59 ± 0.96 
+
+Full context Context size 
+
+llama-4-maverick 1M tokens 48 .35 ± 1.27 27 .18 ± 0.97 50 .81 ± 1.27 28 .58 ± 0.95 
+
+minimax/minimax-01 1M tokens 56 .71 ± 1.26 31 .99 ± 1.02 57 .42 ± 1.26 31 .68 ± 0.90 
+
+gpt4.1-mini 1M tokens 60 .08 ± 1.25 27 .26 ± 0.87 62 .93 ± 1.23 33 .68 ± 0.89 
+
+gemini-3.1-flash-lite 1M tokens 70 .06 ± 1.17 39 .30 ± 1.06 69 .09 ± 1.18 39 .93 ± 0.97 
+
+x-ai/grok-4.1-fast 2M tokens 76 .22 ± 1.08 34 .40 ± 0.92 79 .59 ± 1.03 23 .34 ± 0.76 
+
+claude-sonnet-4.6 1M tokens 78 .61 ± 1.04 43 .03 ± 1.02 81 .98 ± 0.98 40 .98 ± 1.01 
+
+gpt-5.4 1.05M tokens 83 .60 ± 0.94 40 .43 ± 0.95 83 .99 ± 0.93 40 .75 ± 0.90 
+
+Table 5: Overall RUMBA results for retrieval-based memory systems and full-context baselines. All scores are reported on a 0–100 scale; uncertainty is reported as standard error. 
+
+Agent/RAG Lang. GPT-4.1-mini FC Agent/RAG ∆ [95% CI] 
+
+cortex RU 60.08 68.24 -8.17 [-10.89, -5.44] cortex EN 62.93 55.80 +7.13 [4.41, 9.85] mem0 RU 60.08 53.21 +6.87 [4.02, 9.66] mem0 EN 62.93 54.12 +8.81 [6.03, 11.60] mem0g RU 60.08 34.93 +25.15 [22.29, 28.06] mem0g EN 62.93 35.26 +27.67 [24.89, 30.46] memOS RU 60.08 66.82 -6.74 [-9.46, -4.08] memOS EN 62.93 69.99 -7.06 [-9.66, -4.47] simple RAG RU 60.08 68.89 -8.81 [-11.47, -6.22] simple RAG EN 62.93 65.46 -2.53 [-5.25, 0.13] graphiti (zep) RU 60.08 42.71 +17.37 [14.52, 20.22] graphiti (zep) EN 62.93 45.11 +17.82 [14.91, 20.74] Overall RU 60.08 55.80 +4.28 [2.08, 6.43] Overall EN 62.93 54.29 +8.64 [6.42, 10.77] 
+
+Table 6: Direct matched-answerer comparison of the 
+
+gpt-4.1-mini Full-context baseline with each Agent/RAG system and the overall Agent/RAG family mean. Scores and differences are reported on a 0–100 accuracy-point scale, with 
+
+∆ = gpt-4.1-mini FC − Agent/RAG ; confidence intervals are paired bootstrap 95% CIs over the same 1,543 questions.                                                                                                       
+
+> Contrast Family / Language AB∆[95% CI]
+> Single-session −Multi-session Agent/RAG Russian 63.92 43.18 +20.73 [17.71, 23.83] Single-session −Multi-session Agent/RAG English 62.92 40.87 +22.06 [19.02, 25.14] Single-session −Multi-session Full context Russian 76.65 53.69 +22.96 [20.07, 25.88] Single-session −Multi-session Full context English 78.21 55.70 +22.51 [19.57, 25.50] Atemporal −Temporal Agent/RAG English 60.02 52.87 +7.15 [3.54, 10.70] Atemporal −Temporal Full context Russian 69.39 62.96 +6.43 [3.10, 9.67] Atemporal −Temporal Full context English 70.91 65.30 +5.61 [2.23, 8.93] Explicit time evidence −Implicit time evidence Agent/RAG Russian 63.33 44.35 +18.99 [9.68, 28.61] Explicit time evidence −Implicit time evidence Agent/RAG English 60.20 38.55 +21.65 [11.82, 31.34] Explicit time evidence −Implicit time evidence Full context Russian 76.19 46.17 +30.02 [21.90, 37.77] Explicit time evidence −Implicit time evidence Full context English 76.89 47.00 +29.89 [21.61, 38.35] Extraction −Reasoning Agent/RAG Russian 56.12 41.88 +14.24 [10.26, 18.11] Extraction −Reasoning Agent/RAG English 53.82 41.67 +12.15 [8.32, 16.02] Extraction −Reasoning Full context Russian 69.20 55.02 +14.18 [10.22, 18.19] Extraction −Reasoning Full context English 69.85 60.51 +9.35 [5.48, 13.33]
+
+Note: Agent/RAG temporal contrasts exclude mem0g .
+
+Table 7: Main statistically significant within-family slice-difficulty contrasts. Scores are family-level means of binary LLM-as-judge correctness across methods within each family; scores and differences are reported on a 0–100 accuracy-point scale. 
+
+Among the three main benchmark axes, session scope is the strongest and most consistent diffi-culty driver. Across both method families and both languages, single-session questions are easier than multi-session questions by 20 .73 –22 .96 accuracy points, with all confidence intervals excluding zero (Table 7). Full-context systems stay more accurate on multi-session questions but are not immune to this difficulty. 
+
+Temporal questions are also harder on aver-age , although the effect is smaller and less uni-form than the single-to-multi degradation. Among statistically significant contrasts, the atemporal-to-temporal gap ranges from 5.61 to 7.15 accuracy points depending on language and method family; the Russian Agent/RAG contrast is not significant after correction (Table 7). In English, the Full-context–Agent/RAG gap is +12 .43 on temporal and +10 .89 on atemporal questions. 
+
+Implicit temporal expressions are a particularly strong failure mode. Questions whose support-ing evidence contains explicit temporal expressions are substantially easier for models than questions whose evidence requires resolving implicit tempo-ral expressions, for both method families and both languages (Table 7). The gap is especially large for Full-context systems: +30 .02 accuracy points in Russian and +29 .89 accuracy points in English. 
+
+6 Conclusion 
+
+We introduced RUMBA, the first benchmark for evaluating long-term conversational memory in Russian, together with an aligned English ver-sion. Unlike existing English-centric benchmarks, RUMBA accounts for the cultural and linguistic specifics of Russian, including natural interaction patterns and temporal expressions. We proposed a multilingual methodology with a fine-grained tax-onomy covering contextual recall, entity tracking, 8temporal reasoning, and multi-step integration of evidence. We released RUMBA as an open-source resource 6 and evaluated state-of-the-art LLMs un-der both RAG and full-context scenarios. Our results show that current models struggle signif-icantly with tasks requiring simultaneous memory retention, temporal reasoning, and multi-step inte-gration in Russian. RUMBA thus serves as both a diagnostic tool and a catalyst for developing cultur-ally aware conversational agents with robust long-term memory. Future work includes scaling the dataset, enriching reasoning-heavy examples, and probing internal memory representations beyond QA. 
+
+Limitations 
+
+Data. The dataset size, while adequate for initial benchmarking, is not large enough to introduce sub-stantial difficulties for very long-context models. Scaling up both the number of dialogues and their length would further stress-test long-context capa-bilities. In addition, extraction-oriented questions dominate, whereas complex reasoning and tempo-rally entangled queries are underrepresented. This imbalance reflects practical considerations and en-sures a solid foundation, but it limits evaluation of higher-order memory abilities. Finally, the English version is obtained through automatic translation rather than manual rewriting, with no explicit lo-calization applied. This may make the English split less culturally natural and introduce transla-tion artifacts that can affect model understanding and embedding-based retrieval. 
+
+Evaluation. Our Russian and English evaluations use different LLM judges. Consequently, part of the observed cross-lingual difference may stem from judge-specific calibration rather than model performance alone (Thakur et al., 2025; Fu and Liu, 2025). RUMBA also follows a standard QA pipeline, which enables transparent and repro-ducible evaluation of output correctness but does not directly probe the model’s internal memory rep-resentations. Nevertheless, the benchmark targets memory capabilities by construction: unlike open-domain QA, RUMBA centers on user-specific infor-mation that evolves over time, including repeated updates, corrections, and changes in personal facts. 
+
+Retrieval diagnostics. Our experiments include retrieval-based memory systems, but do not provide 
+
+> 6https://github.com/ai-forever/RUMBA
+
+a systematic diagnostic analysis of retrieval design choices, such as the choice of embedder, ranking method, retrieval depth, etc. This is outside the main scope of the paper: our goal is to compare memory approaches under a unified pipeline and to show how RUMBA can be used for slice-level diagnostics, rather than to optimize a particular retrieval architecture. 
+
+Future work. The rapid development of long-term memory benchmarks and memory-augmented agents suggests several natural directions for fu-ture work. Recent benchmark extensions, such as LongMemEval-V2 (Wu et al., 2026), and on-going updates to memory frameworks 7, appeared after RUMBA creation, illustrate the increasing im-portance of larger-scale, more agentic, and more diagnostic memory evaluation. Looking ahead, fu-ture versions of RUMBA can (i) scale the dataset by adding more dialogues and extending session lengths, (ii) enrich the benchmark with a broader variety of reasoning-intensive and temporally en-tangled examples to improve class diversity, (iii) develop complementary diagnostics for retrieval be-havior, memory retention, consistency, and update tracking across sessions, thereby further strengthen-ing RUMBA’s utility as a comprehensive evaluation framework. 
+
+Ethical consideration 
+
+Data collection and annotation All dialogues, questions, and answers were collected from scratch, without reusing any existing copyrighted or re-stricted datasets. Annotations were performed by native Russian speakers with prior experience in lin-guistic tasks. All annotators were compensated at a rate exceeding the local minimum wage, and par-ticipation was voluntary. Written informed consent was obtained from all annotators, and no personally identifiable information was collected. 
+
+Licensing and accessibility The resulting bench-mark is released under a public license (MIT). The Russian and English subsets are both distributed under the same terms. 
+
+AI assistant usage During the preparation of this manuscript, the authors used AI assistants solely for editing and improving the English language of the text, including grammar correction, phrasing refinement, and vocabulary suggestions. All intel-lectual contributions, benchmark design decisions, 
+
+> 7https://mem0.ai/research
+
+9and interpretations remain the sole responsibility of the authors. 
+
+Acknowledgments 
+
+We thank all those who contributed to the RUMBA dataset. The dialogues were written, edited, and re-viewed by Irina Shamova, Ksenia Kuleshova, Olga Borodina, Maria Avilova, Angelina Pryadko, Elena Dorofeeva, Tatiana Chabanyuk, Anna Plotnikova, Margarita Khurramova, Maksim Anoshin, Pavel Prosyanik, Ksenia Kondrakova, Yulia Piliguzova, Ekaterina Kuryachaya, Allam Atabaev, Inessa Kurevleva, Zakhar Chaichenko, Victoria Niko-laeva, Olga Borisova, Vsevolod Alipov, Danil Vya-zovov, Evgenia Efremova, Timur Shenturk, and Konstantin Gridin. Final validation was performed by Olga Borisova, Taisiya Metelkina, Maria Sabur-baeva, Yulia Piliguzova, Ekaterina Kuryachaya, and Allam Atabaev, and we are especially grateful to Artemy Stankevich for making the validation process possible. The English version was worked on by Ekaterina Kuryachaya, Allam Atabaev, Natalia Chukicheva, Ksenia Kuleshova, Dmitry Kosourov, Eleonora Petrikova, Alena Gubar, Maria Petrova, Lada Kovalchuk, and Daria Panaiotti. Fi-nally, we appreciate the management efforts of Elvira Budaeva, Pavel Kovalev, Anna Kostikova, and Dmitry Bocharov, as well as the overall coor-dination by Yuliya Vasilieva. 
+
+References 
+
+ai-forever. 2024. FRIDA: Full-scale finetuned retrieval model inspired by denoising architecture based on T5. https://huggingface.co/ai-forever/FRIDA .Hugging Face model card. Yuanchen Bei, Tianxin Wei, Xuying Ning, Yanjun Zhao, Zhining Liu, Xiao Lin, Yada Zhu, Hendrik Hamann, Jingrui He, and Hanghang Tong. 2026. Mem-gallery: Benchmarking multimodal long-term con-versational memory for MLLM agents. Preprint ,arXiv:2601.03515. Biswaroop Bhattacharjee. 2025. Cortex: Advanced memory system for ai agents. Nuo Chen, Zhiyuan Hu, Qingyun Zou, Jiaying Wu, Qian Wang, Bryan Hooi, and Bingsheng He. 2025. JudgeLRM: Large reasoning models as a judge. 
+
+Preprint , arXiv:2504.00050. Artem Chervyakov, Ulyana Isaeva, Anton Emelyanov, Artem Safin, Maria Tikhonova, Alexander Kharitonov, Yulia Lyakh, Petr Surovtsev, Denis Shevelev, Vildan Saburov, Vasily Konovalov, Elisei Rykov, Ivan Sviri-dov, Amina Miftakhova, Ilseyar Alimova, Alexander Panchenko, Alexander Kapitanov, and Alena Fenogen-ova. 2026. Multimodal evaluation of Russian-language architectures. In Proceedings of the 19th Conference of the European Chapter of the Association for Com-putational Linguistics (Volume 1: Long Papers) , pages 2114–2161, Rabat, Morocco. Association for Computa-tional Linguistics. Prateek Chhikara, Dev Khant, Saket Aryan, Taranjeet Singh, and Deshraj Yadav. 2025. Mem0: Building production-ready AI agents with scalable long-term memory. arXiv preprint arXiv:2504.19413 .Zheng Chu, Jingchang Chen, Qianglong Chen, Wei-jiang Yu, Haotian Wang, Ming Liu, and Bing Qin. 2024. TimeBench: A comprehensive evaluation of temporal reasoning abilities in large language models. In Pro-ceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,pages 1204–1228, Bangkok, Thailand. Association for Computational Linguistics. Igor Churin, Murat Apishev, Maria Tikhonova, Denis Shevelev, Aydar Bulatov, Yuri Kuratov, Sergei Averkiev, and Alena Fenogenova. 2025. Long context benchmark for the Russian language. In Proceedings of the 6th Workshop on Computational Approaches to Discourse, Context and Document-Level Inferences (CODI 2025) ,pages 1–13, Suzhou, China. Association for Computa-tional Linguistics. Pengfei Du. 2026. Memory for autonomous llm agents: Mechanisms, evaluation, and emerging frontiers. arXiv preprint arXiv:2603.07670 .Alena Fenogenova, Artem Chervyakov, Nikita Mar-tynov, Anastasia Kozlova, Maria Tikhonova, Albina Akhmetgareeva, Anton Emelyanov, Denis Shevelev, Pavel Lebedev, Leonid Sinev, Ulyana Isaeva, Kate-rina Kolomeytseva, Daniil Moskovskiy, Elizaveta Gon-charova, Nikita Savushkin, Polina Mikhailova, Anas-tasia Minaeva, Denis Dimitrov, Alexander Panchenko, and Sergey Markov. 2024. MERA: A comprehensive LLM evaluation in Russian. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 9920–9948, Bangkok, Thailand. Association for Computational Lin-guistics. Xiyan Fu and Wei Liu. 2025. How reliable is multilin-gual LLM-as-a-judge? In Findings of the Association for Computational Linguistics: EMNLP 2025 , pages 11040–11053, Suzhou, China. Association for Compu-tational Linguistics. Nathan Habib, Clémentine Fourrier, Hynek Kydlíˇ cek, Thomas Wolf, and Lewis Tunstall. 2023. Lighteval: A lightweight framework for llm evaluation. Yuanzhe Hu, Yu Wang, and Julian McAuley. 2026. Eval-uating memory in llm agents via incremental multi-turn interactions. In International Conference on Learning Representations .Patrick Lewis, Ethan Perez, Aleksandra Piktus, Fabio Petroni, Vladimir Karpukhin, Naman Goyal, Heinrich Küttler, Mike Lewis, Wen-tau Yih, Tim Rocktäschel, 
+
+10 Sebastian Riedel, and Douwe Kiela. 2020. Retrieval-augmented generation for knowledge-intensive NLP tasks. In Advances in Neural Information Processing Systems 33 .Zhiyu Li, Shichao Song, Hanyu Wang, Simin Niu, Ding Chen, Jiawei Yang, Chenyang Xi, Huayi Lai, Jihao Zhao, Yezhaohui Wang, Junpeng Ren, Zehao Lin, Jiahao Huo, Tianyi Chen, Kai Chen, Kehang Li, Zhiqiang Yin, Qingchen Yu, Bo Tang, and 3 others. 2025. MemOS: An operating system for memory-augmented generation (MAG) in large language models. 
+
+arXiv preprint arXiv:2505.22101 .Chi-kiu Lo and Rebecca Knowles. 2023. Data sampling and (in)stability in machine translation evaluation. In 
+
+Findings of the Association for Computational Linguis-tics: ACL 2023 , pages 13064–13074, Toronto, Canada. Association for Computational Linguistics. Adyasha Maharana, Dong-Ho Lee, Sergey Tulyakov, Mohit Bansal, Francesco Barbieri, and Yuwei Fang. 2024. Evaluating very long-term conversational mem-ory of LLM agents. In Proceedings of the 62nd An-nual Meeting of the Association for Computational Lin-guistics (Volume 1: Long Papers) , pages 13851–13870, Bangkok, Thailand. Association for Computational Lin-guistics. Valentin Mamedov, Evgenii Kosarev, Gregory Leleytner, Ilya Shchuckin, Valeriy Berezovskiy, Daniil Smirnov, Dmitry Kozlov, Sergei Averkiev, Lukyanenko Ivan, Aleksandr Proshunin, Ainur Israfilova, Ivan Baskov, Artem Chervyakov, Emil Shakirov, Mikhail Kolesov, Daria Khomich, Daria Latortseva, Sergei Porkhun, Yury Fedorov, and 14 others. 2025. GigaChat family: Effi-cient Russian language modeling through mixture of experts architecture. In Proceedings of the 63rd Annual Meeting of the Association for Computational Linguis-tics (Volume 3: System Demonstrations) , pages 93–106, Vienna, Austria. Association for Computational Linguis-tics. Nikita Martynov, Anastasia Mordasheva, Dmitriy Gor-betskiy, Danil Astafurov, Ulyana Isaeva, Elina Basy-rova, Sergey Skachkov, Victoria Berestova, Niko-lay Ivanov, Valeriia Zanina, and Alena Fenogenova. 2025. Eye of judgement: Dissecting the evaluation of russian-speaking LLMs with POLLUX. Preprint ,arXiv:2505.24616. Niklas Muennighoff, Nouamane Tazi, Loïc Lorentz, and Nils Reimers. 2023. MTEB: Massive text embedding benchmark. In Proceedings of the 17th Conference of the European Chapter of the Association for Com-putational Linguistics , pages 2014–2037, Dubrovnik, Croatia. Association for Computational Linguistics. Bhawna Piryani, Abdelrahman Abdallah, Jamshid Mozafari, Avishek Anand, and Adam Jatowt. 2026. It’s high time: A survey of temporal question answering. 
+
+Preprint , arXiv:2505.20243. Sara Rajaee, Rochelle Choenni, Ekaterina Shutova, and Christof Monz. 2025. An empirical analysis of machine translation for expanding multilingual benchmarks. In 
+
+Proceedings of the Tenth Conference on Machine Trans-lation , pages 1–30, Suzhou, China. Association for Computational Linguistics. Preston Rasmussen, Pavlo Paliychuk, Travis Beauvais, Jack Ryan, and Daniel Chalef. 2025. Zep: A temporal knowledge graph architecture for agent memory. arXiv preprint arXiv:2501.13956 .Aditi Singh, Abul Ehtesham, Saket Kumar, and Tala Ta-laei Khoei. 2025a. Agentic retrieval-augmented gen-eration: A survey on agentic RAG. arXiv preprint arXiv:2501.09136 .Shivalika Singh, Angelika Romanou, Clémentine Four-rier, David Ifeoluwa Adelani, Jian Gang Ngui, Daniel Vila-Suero, Peerat Limkonchotiwat, Kelly Marchisio, Wei Qi Leong, Yosephine Susanto, Raymond Ng, Shayne Longpre, Sebastian Ruder, Wei-Yin Ko, Antoine Bosselut, Alice Oh, Andre Martins, Leshem Choshen, Daphne Ippolito, and 4 others. 2025b. Global MMLU: Understanding and addressing cultural and linguistic biases in multilingual evaluation. In Proceedings of the 63rd Annual Meeting of the Association for Com-putational Linguistics (Volume 1: Long Papers) , pages 18761–18799, Vienna, Austria. Association for Compu-tational Linguistics. Sijun Tan, Siyuan Zhuang, Kyle Montgomery, William Yuan Tang, Alejandro Cuadron, Chenguang Wang, Raluca Ada Popa, and Ion Stoica. 2025. JudgeBench: A benchmark for evaluating LLM-based judges. In The Thirteenth International Conference on Learning Representations .Aman Singh Thakur, Kartik Choudhary, Venkat Srinik Ramayapally, Sankaran Vaidyanathan, and Dieuwke Hupkes. 2025. Judging the judges: Evaluating align-ment and vulnerabilities in LLMs-as-judges. In Pro-ceedings of the Fourth Workshop on Generation, Eval-uation and Metrics (GEM²) , pages 404–430, Vienna, Austria and virtual meeting. Association for Computa-tional Linguistics. Md Nayem Uddin, Kumar Shubham, Eduardo Blanco, Chitta Baral, and Gengyu Wang. 2026. From recall to forgetting: Benchmarking long-term memory for per-sonalized agents. arXiv preprint arXiv:2604.20006 .Siddharth Vashishtha, Adam Poliak, Yash Kumar Lal, Benjamin Van Durme, and Aaron Steven White. 2020. Temporal reasoning in natural language inference. In 
+
+Findings of the Association for Computational Linguis-tics: EMNLP 2020 , pages 4070–4078, Online. Associa-tion for Computational Linguistics. Lei Wang, Chen Ma, Xueyang Feng, Zeyu Zhang, Hao Yang, Jingsen Zhang, Zhiyuan Chen, Jiakai Tang, Xu Chen, Yankai Lin, Wayne Xin Zhao, Zhewei Wei, and Ji-Rong Wen. 2024. A survey on large language model based autonomous agents. Frontiers of Computer Science , 18(6):186345. Di Wu, Zixiang Ji, Asmi Kawatkar, Bryan Kwan, Jia-Chen Gu, Nanyun Peng, and Kai-Wei Chang. 2026. Longmemeval-v2: Evaluating long-term agent 
+
+11 memory toward experienced colleagues. Preprint ,arXiv:2605.12493. Di Wu, Hongwei Wang, Wenhao Yu, Yuwei Zhang, Kai-Wei Chang, and Dong Yu. 2025. LongMemEval: Benchmarking chat assistants on long-term interactive memory. In The Thirteenth International Conference on Learning Representations .Yanzhao Zhang, Mingxin Li, Dingkun Long, Xin Zhang, Huan Lin, Baosong Yang, Pengjun Xie, An Yang, Dayi-heng Liu, Junyang Lin, Fei Huang, and Jingren Zhou. 2025. Qwen3 embedding: Advancing text embed-ding and reranking through foundation models. arXiv preprint arXiv:2506.05176 .
+
+A Taxonomy details 
+
+Semantic axis. Questions are broadly classified into information-extraction and reasoning ques-tions, based on the information available about the user. A detailed classification of question types, along with their descriptions and illustrative exam-ples, is presented in Table 26. 
+
+Quantitative axis. Questions are classified into two types. Single-session questions : the answer to the question is contained within a single session, whereas in multi-session questions , the answer is distributed across multiple sessions. The distribu-tion of questions on the quantitative axis is depicted in Fig.4. 
+
+Axis of temporality. Questions are classified as 
+
+atemporal , for which comprehension of the dia-logue’s temporal framework is not required, or tem-poral , for which such temporal understanding is essential to answer. The distribution of questions along axis of temporality is presented in Fig.5. The taxonomy of temporal questions is presented in Fig.3. Each temporal question is accompanied by a tag indicating how temporal information was presented in the dialogue: explicit temporal expression (time was indicated explicitly, e.g., a specific day and/or month, year, etc.), implicit temporal expression 
+
+(time was indicated implicitly, e.g., with words yes-terday, 2 days ago , etc.), or no temporal expression 
+
+(no temporal information was provided). Fig.6 presents the distribution of temporal expression tags. 
+
+B Annotation details 
+
+B.1 Dataset Creation 
+
+On average, the development (creation and vali-dation) of a single dialogue and its corresponding set of questions required approximately 2 working days to complete. To standardize the dialogue creation process, a ma-trix was developed containing the required question types for each dialogue. Authors used this matrix during dialogue construction, which ensured diver-sity of question types within each dialogue. 
+
+Dialogue Validation Process. The validation process consisted of three stages. (1) Authors cross-validated dialogues, checking question adequacy, taxonomy alignment, and consistency of dialogue and question dates. Necessary corrections to ques-tions and dates were introduced at this stage. (2) Questions and corresponding sessions were val-idated using an LLM (see the paragraph below 
+
+Evidence annotation ). Based on LLM answers, val-idators — including the seven highest-performing authors and three independent validators — evalu-ated whether (a) the question matched its taxonomy category; (b) all dates were explicit and temporally consistent; (c) the answer was contained in the des-ignated sessions and absent from unrelated ones; and (d) the dialogue was internally consistent and provided sufficient information to answer the ques-tion. Validators also revised questions and sessions when necessary and occasionally added new ses-sions. (3) Final validation was performed after all revisions. Each dialogue was reviewed by three validators who had not previously reviewed that dialogue. Finally, the complete set of question–answer pairs, session dates, question dates, and taxonomy labels was independently validated by human annotators with an overlap of three. 
+
+Evidence annotation. We additionally con-structed an utterance-level evidence annotation to identify where answer-relevant information ap-pears in the dialogues. The input consisted of spreadsheet files with written dialogues, where each row contained a speaker role, an utterance, and a session-boundary marker, together with question-level metadata: the question, its reference answer, and its type. We first reconstructed session identifiers from the boundary markers and extracted the set of questions with their associated answers, types, and source sessions. Then, for each utterance–question pair, we queried 
+
+GigaChat-Max and asked whether the utterance contained explicit or implicit information relevant 12 Figure 2: Overview of RUMBA Taxonomy. 
+
+Figure 3: Overview of temporal questions Taxonomy: distribution by type, with corresponding counts and percentages. 
+
+Figure 4: Distribution across the quantitative axis, reflecting the ratio between single-session and multi-session questions, includ-ing both the number of questions and their percent-age representation. 
+
+Figure 5: Distribution across the axis of temporal-ity, reflecting the ratio be-tween temporal and atem-poral questions, including both the number of ques-tions and their percentage representation. 
+
+Figure 6: Temporal tags: distribution of explicit, im-plicit, non-expressed tempo-ral expressions in the dia-logues, including both the number of expressions and their percentage representa-tion. 
+
+13 Figure 7: Information about the dialogue authors including gender, age and field of expertise distribution, reported in terms of percentages.  
+
+> Figure 8: Author instructions describing the required manuscript components and the requirement to avoid personal data in dialogues.
+
+to answering the question. If no relevant informa-tion was present, the model returned None ; oth-erwise, it returned a concise excerpt or comment describing the relevant evidence. The output was an augmented spreadsheet for each dialogue. It preserved the session_id , speaker role, and utterance text, and added one evidence column per question. Each evidence column en-coded the question, question type, reference an-swer, and associated source sessions in its header, while its cells contained the model-produced evi-dence for each utterance or an empty value when no evidence was detected. This produced a dense utterance-by-question evidence map for subsequent human inspection and diagnostic analysis. The LLM validation prompt for GigaChat Max in Russian (and translated into English) is shown in Fig. 9. 
+
+B.2 Users characters Dialogues Characters. Users characters repre-sented in the dialogues are heterogeneous and mul-tifaceted, and their interactions encompass a range of thematic domains, which enhances the realism of the constructed interactions and brings them closer to authentic user–assistant conversations. The be-havioral scenarios assigned to these characters like-wise reflect real-world user patterns, ranging from memory-related operations (such as storing, forget-ting, and modifying information) to various strate-gies for expressing intent. These include explicit requests to memorize a fact, introducing a fact within a single utterance or anaphorically, and link-ing facts across different sessions, etc. Informa-tion about the characters and topics is presented in 14 Figure 9: Evidence annotation prompt template used during validation of dialogue sessions and their associated questions. The original Russian prompt is shown together with an English translation provided for visualization in the paper. 
+
+> Figure 10: RUMBA validation pipeline.
+
+Fig.12. 
+
+Sociolinguistic Portrait of the Characters. The dialogues reflect sociocultural realities character-istic of Russia and Russian culture, as they in-clude grammatical constructions typical of Rus-sian, along with culture-specific references such as idioms, proverbs, folk sayings, anecdotes, and allusions to canonical and popular Russian liter-ary and cultural works. Dialogues intentionally include spelling, grammar, lexical, stylistic errors to approximate authentic user-generated input. 
+
+C Translation 
+
+Two translation granularities were used. Questions and answers were translated independently at the sentence level. Dialogue messages were translated at the session level, where the full sequence of mes-sages within a session was provided to the model in a single request to preserve conversational context and message ordering. gpt-4.1-mini 8 was used as a translator model. Fig. 13 reports the system prompts and compact user-message schemas used for machine translation. All remaining dataset fields were carried over un-changed, as they were either originally in English or language-independent. 
+
+C.1 Translation validation details 
+
+The translation validation was carried out by spe-cialists who possess relevant academic qualifi-cations in the field (civil law contract workers and crowd workers (ABC Elementary 9 and Ram-bler&Co companies 10 ). 
+
+> 8https://openai.com/index/gpt-4-1/
+> 9https://elementary.center
+> 10 https://rambler-co.ru
+
+15 Figure 11: Answer-generation prompt templates used for Russian and English evaluation. The templates condition the retrieved memories (full dialogues in case of full context evaluation), memory timestamps, the benchmark question, and the question timestamp with its weekday. 
+
+Figure 12: High-level information about RUMBA dialogues. Dialogue characters include male and female adults as well as children. The top 10 conversation topics range from health to music and cinema. The dialogues also extensively reflect Russian discourse, including Russian history and art, social realities, notable figures, and broader societal characteristics. 
+
+16 Validation of translation quality: 10% of the translated dataset. Each evaluator received the original Russian text and its English translation for comparison and assessment of translation quality. Evaluators were provided with translation quality assessment criteria implemented in POLLUX (Mar-tynov et al., 2025). The names of the criteria, their descriptions, and the scoring system are presented in Table 8. The average time required to complete the eval-uation of a single RU-EN pair of utterances was approximately 3 minutes. 
+
+Question-Answer-Evidence Sessions Validation. 
+
+Experts evaluated a triplet: the evidence sessions and associated question–answer pairs. At this stage, it was essential to ensure that: (1) the translated question preserves the meaning and intent of the original question; (2) the translated gold answer to the question is consistent with the original an-swer; (3) the translated gold answer corresponds to the translated evidence session, i.e., the ses-sion indeed contains the information required to answer the question; and (4) the translated ques-tion–answer–session triplet is free of errors and contradictions and remains logically and semanti-cally coherent to the same extent as the original Russian version. All issues were corrected. The average time required to complete the evalua-tion of the triplet was approximately 5 minutes. Non-evidence sessions (irrelevant to questions, filler sessions) were not manually validated by ex-perts. For these sessions, we assume a translation quality score of 0.88, which was obtained through 10%-dataset validation. The evaluators received compensation for each completed task in accordance with the terms stipu-lated in their employment contracts. The validation procedure was carried out using the ABC Elemen-tary 11 platform. 
+
+D Evaluation details 
+
+Fig. 10 shows the RUMBA evaluation pipeline. Language-specific answer-generation prompts are provided in Fig. 11. 
+
+> 11 https://elementary.center/
+
+E Judge details 
+
+E.1 English judge choice 
+
+Our goal was to select an English judge that could be used with the same rubric as POLLUX , so that the English scores would be produced under an evalua-tion procedure as close as possible to the Russian one. We based the selection on JudgeBench (Tan et al., 2025) and its Hugging Face leaderboard 12 .JudgeLRM additionally reports 78.67% agreement between DeepSeek-R1 and human judgments on PandaLM (Chen et al., 2025). Higher-ranked al-ternatives were not suitable for this setup: several fine-tuned judge or reward models are designed for pairwise preference comparison rather than scoring a single answer against a reference; Prometheus-style judges rely on their own scoring scale; and prompted GPT/o-series judges were avoided be-cause GPT-family models are included among our answer-generation baselines. We therefore selected 
+
+DeepSeek-R1 as a strong non-GPT prompted judge compatible with our rubric. We found no single judge with reported human alignment for both lan-guages under comparable conditions and thus used language-specific judges. 
+
+E.2 Judge prompts and verdicts 
+
+To obtain comparable scores for the Russian and English subsets, we used the same POLLUX -style evaluation format in both languages. The only difference is that POLLUX was evaluated with the prompt template and response format it was trained for, while DeepSeek-R1 , being a general-purpose model, required a short task description and a JSON output format. Full templates are presented in Fig. 14. The judge assigned one of 4 rubric labels. This rubric set was selected empirically. Labels 0–2 correspond to the standard POLLUX rubrics for the 
+
+Answer Correctness criterion: incorrect or missing answer, incomplete answer, and answer matching or equivalent to the reference answer. We added label 3 for a frequent borderline case in our bench-mark: the model answers the question correctly in terms of the key meaning, but adds extra details that are not supported by the question or the reference answer and would require checking the original di-alogue. For the final binary accuracy score, labels 0 and 1 were treated as incorrect, while labels 2 
+
+> 12 https://huggingface.co/spaces/ScalerLab/ JudgeBench
+
+17 Table 8: Translation Evaluation Criteria, their descriptions, and the scoring system 
+
+Criteria name Description Scores 
+
+Critical criteria (a) Format violation or (b) Censor block (a) This criterion evaluates whether it is necessary to further grade the LLM’s output based on other criteria or the LLM’s output is unreadable and cannot be graded. (b) The criterion evaluates whether this is the LLM’s output or there is just a placeholder with the text "Unfortunately, generative models cannot discuss such topics" or similar standard text where the LLM avoids answering. 
+
+(a) 0: We read the model’s response and it can be further evaluated based on other criteria. 
+
+1: The model’s response shows excessive looping, or there are many artifacts, or the model’s response is entirely in a different language, or the model simply copied the user’s query. It does not make sense to further evaluate the model’s response. 
+
+(b) 0: The censor did not trigger, the LLM’s output can be evaluated further based on other criteria. 
+
+1: The censor triggered, there is nothing to evaluate. Task-specific criteria Original goal This criterion evaluates whether the communicative purpose of the source text is preserved in the translation: for example, to inform, advertise, accuse, tease, and so on. 
+
+0: In the translation, the source text intent is com-pletely lost. 
+
+1: (a) The source text intent is fully preserved in the translation. (b) In the translation, the source text intent is preserved but slightly blurred (for example, the aim was to teasingly poke fun at the reader, but only the humorous effect remains without the mock-ery). Original tone This criterion evaluates whether the tone of the source text is preserved in the translation. It refers to that part of the expressive plan which consists of the connotatively marked elements of the source text. If events are described with irony, the translator should (at least partially) retain this irony. If the information in the source text is presented neutrally, the translator should convey the same tone. Conversely, if the tone of the source text is not neutral, the translation should (at least partially) convey this as well.(Source: S. V. Tyulenev “Translation Theory”) 
+
+0: The emotional tone of the text was completely lost in the translation. 
+
+1: (a) The LLM completely preserved the tone of the source text. (b) In general, the translation preserved the tone of the source text, but it is somewhat diluted; it could have been handled better. Author viewpoint This criterion evaluates whether the translation distorts the author’s position. The translation should not contradict the author’s position. The author’s position may include the author’s point of view (for example, they may be subtly criti-cizing a product between the lines); ideological stance (often, the ideological position can be inferred from indirect signs); degree of confidence/uncertainty (if the author speaks about something uncertainly, it should not become a statement in the translation), etc. 
+
+0: The author’s position was completely distorted during the translation. 
+
+1: (a) The author’s position is completely preserved, and the LLM conveyed the subtext, if there was any. (b) The author’s position is generally preserved, but there are some issues (for example,the LLM overlooked certain veiled messages). Compliance with functional style This criterion evaluates whether the functional style is pre-served in the translation. When translating, the text should maintain its functional style: literary, journalistic, official business, scientific, or colloquial-everyday, including the linguistic features of each style. 
+
+0: The LLM completely changed the functional style. 
+
+1: (a) The translated text fully corresponds to the functional style in which the source text is written. 
+
+(b) The LLM retained the functional style, but some linguistic features not typical for this functional style appeared in the translation. Language norms This criterion evaluates the compliance with lexical, gram-matical, syntactic and stylistic norms of the target language. The translation should “sound natural”, meaning it should contain appropriate vocabulary and grammar, syntax, and stylistic devices characteristic of the target language. 
+
+0: The LLM made 3 or more errors in compliance with lexical, grammatical, syntactic and stylistic norms of the target language. 
+
+1: (a) The LLM made no errors in compliance with lexical, grammatical, syntactic and stylistic norms of the target language. (b) The LLM made one or two errors in compliance with lexical, grammatical, syntactic and stylistic norms of the target language. Factual accuracy This criterion evaluates the accuracy of conveying the factual information presented in the source text. The LLM should not distort factual (precision) information from the source text. An exception is made for factual information that would definitely not be understood by a native speaker of the target language: in such cases, the factual information should be adapted to convey the tone of the source text and the author’s intent. 
+
+0: The LLM made factual errors, incorrectly convey-ing precise information from the source text. 
+
+1: (a) The LLM conveyed the facts and their related context/subtext completely accurately. (b) The LLM did not make any factual errors but made a slip re-lated, for example, to the subtext concerning some phenomenon or event. 
+
+18 Table 9: Criterion-specific scores obtained from human evaluation of translation quality. 
+
+Criteria Value 
+
+Critical criteria (Format violation or Censor block) 0.99 Task-specific criteria Original goal 0.99 Original tone 0.98 Author viewpoint 0.99 Compliance with functional style 0.99 Language norms 0.9 Factual accuracy 0.97 General score 0.88 
+
+QA-pair translation SYSTEM: You are a professional translator. Translate Russian to natural English. You are given a question-answer pair. Translate both together. Rules: - Preserve exact meaning and the relationship between question and answer. - Keep punctuation and sentence type where possible. - Preserve grammatical cues affecting meaning (gender, number, etc.). - Do not omit, generalize, or add information. - Keep names, titles, and quoted text consistent. - If the answer is an alphabetical list, reorder it to be correct in English while preserving the items. USER: {"question": question_ru, "answer": answer_ru} Dialogue-session translation SYSTEM: You are a professional translator. Translate Russian to natural English. This is a conversation session; messages are context-dependent. Rules: - Preserve messages order and meaning exactly. - Preserve formatting inside each message text: keep newlines, markdown, bullets, code blocks, etc - if any. - Translate ONLY the message text; do not change dia_id. - Output must match the provided schema. USER: {"dia_id": dia_id, "messages": [{"speaker": speaker, "text": text_ru}, ...]} 
+
+Figure 13: Translation message templates used to construct the English split. System prompts are shown verbatim; user messages are shown as compact payload schemas. 
+
+Figure 14: LLM-as-Judge prompt templates used for Russian and English evaluation. Placeholders indicate the inserted benchmark question, reference answer, and model answer. 
+
+19 and 3 were treated as correct. 
+
+E.3 Qualitative Analysis                           
+
+> Judge error type POLLUX DeepSeek-R1
+> Correct answer judged as over-informative 2 (2.6%) 16 (16.7%) Correct answer judged as wrong 2 (2.6%) 1 (1.0%) Correct answer judged as incomplete 19 (24.7%) 9 (9.4%) Over-informative answer judged as correct 8 (10.4%) 3 (3.1%) Over-informative answer judged as wrong 3 (3.9%) 0 (0.0%) Over-informative answer judged as incomplete 13 (16.9%) 1 (1.0%) Wrong answer judged as correct 2 (2.6%) 21 (21.9%) Wrong answer judged as over-informative 19 (24.7%) 11 (11.5%) Wrong answer judged as incomplete 9 (11.7%) 30 (31.2%) Incomplete answer judged as correct 0 (0.0%) 3 (3.1%) Incomplete answer judged as over-informative 0 (0.0%) 1 (1.0%)
+> Total 77 96
+
+Table 10: Manual qualitative classification of LLM judge errors for POLLUX and DeepSeek-R1. The analyzed errors account for 5.0% and 6.2% of all 1,543 benchmark ques-tions, respectively; row percentages are computed within each judge’s error set. 
+
+In addition to the aggregate agreement metrics, we conducted a manual qualitative analysis of judge errors. The goal of this analysis was to identify re-curring failure modes of the LLM-as-a-judge setup and to better understand how these failures may affect the interpretation of the benchmark results. A linguist manually inspected cases in which the automatic judge verdict did not match the human annotation and assigned each case to an error cat-egory. The annotation focused on the direction of the judge error: whether the judge underestimated the answer quality, overestimated it, or made a score-level distinction that did not affect the final binary correctness decision. Table 10 summarizes the resulting error taxonomy. For POLLUX , the analysis includes 77 judge error cases, corresponding to 5.0% of all questions. For 
+
+DeepSeek-R1 , the analysis includes 96 judge er-ror cases after filtering out cases that were ex-cluded from the qualitative analysis, corresponding to 6.2% error rate. The qualitative analysis shows that the two judges have different error profiles. POLLUX tends to be more conservative: among binary-relevant errors, 37 cases correspond to underestimation of answer quality, while 21 cases correspond to overestima-tion. Thus, 63.8% of POLLUX binary-relevant errors are underestimations. The most frequent POLLUX er-ror types are judging correct answers as incomplete and judging wrong answers as over-informative, each accounting for 19 cases. Another frequent failure mode is treating over-informative answers as incomplete, which occurred in 13 cases. 
+
+DeepSeek-R1 shows the opposite tendency. Among binary-relevant errors, 11 cases correspond to underestimation, whereas 36 cases correspond to overestimation. Thus, 76.6% of DeepSeek-R1 
+
+binary-relevant errors are overestimations. The largest category is wrong answers judged as in-complete, with 30 cases. Although this category does not necessarily change the final binary de-cision if both wrong and incomplete answers are mapped to incorrect, it indicates that the judge of-ten recognizes that the answer is imperfect but fails to identify that the semantic content is fundamen-tally wrong. More importantly, DeepSeek-R1 also frequently assigns positive judgments to incorrect answers: 21 wrong answers were judged as cor-rect and 11 wrong answers were judged as over-informative. We further grouped reasoning-level failures into broader categories. For both judges, the dominant source of error is incorrect identification of the se-mantic core of the answer. This accounts for 50 cases for POLLUX and 87 cases for DeepSeek-R1 .In these cases, the judge fails to correctly determine whether the model answer preserves the key mean-ing of the reference answer. POLLUX also shows a relatively larger share of cases where the judge reasoning is mostly plausible but the final verdict is inconsistent with that reasoning. This occurred in 21 cases. In contrast, DeepSeek-R1 rarely dis-torts the rubric explicitly, but more often fails at semantic equivalence judgments. These findings suggest that the judge errors are not random. The Russian judge is biased toward stricter scoring and tends to penalize answers for incompleteness or unsupported extra details. The English judge is more permissive and more often overestimates semantically incorrect answers. 
+
+F Detailed Slice-Level Result Analysis 
+
+This appendix provides the detailed slice-level anal-ysis underlying the summary in Section 5. The purpose of this analysis is to use the full set of benchmark annotations to obtain more fine-grained insights into method behavior. These annotations capture different properties of memory-oriented question answering, including the semantic oper-ation required by the question, the distribution of supporting evidence across sessions, and the need 20 for temporal grounding. Each question belongs to three main axes: semantic type, single-session versus multi-session evidence, and temporal versus atemporal setting. We addi-tionally analyze temporal-expression explicitness, language effects, evidence-position effects, and se-mantic supergroups. Unless stated otherwise, all analyses use LLM-as-Judge accuracy as the pri-mary metric. Let yℓm,q ∈ { 0, 1} denote the binary correctness score of method m on question q in language ℓ.For a method family F , we define the per-question family score as 
+
+sℓF,q = 1
+
+|F |
+
+X
+
+> m∈F
+
+yℓm,q .
+
+For a benchmark slice A with question set QA, the slice-level family score is 
+
+¯sℓF,A = 1
+
+|QA|
+
+X
+
+> q∈QA
+
+sℓF,q .
+
+Family-level comparisons within a slice are com-puted as 
+
+∆ℓ 
+
+> FC −Agent /RAG ,A
+
+= ¯ sℓ 
+
+> FC ,A
+
+− ¯sℓ
+
+> Agent /RAG ,A
+
+,
+
+whereas slice-difficulty contrasts within a family compare two slices A and B as 
+
+∆ℓA−B,F = ¯ sℓF,A − ¯sℓF,B .
+
+Thus, slices of different sizes are compared through their own mean per-question scores rather than raw counts. Confidence intervals are estimated by boot-strap resampling over questions; p-values are Holm-corrected over planned comparisons. Slice-level results are reported separately for Agent/RAG and full-context systems, and all anal-yses are reported independently for Russian and English. We also provide descriptive method-level results to compare individual baselines within and across the two method families. For temporal, temporal-expression, and scope–temporal family aggregates, the Agent/RAG family excludes mem0g ,whose graph-based setup is atemporal; all other aggregates retain the full family. All code used to produce slice -level analyses, sta-tistical tests, tables, and figures is open source. 
+
+F.1 Full Context vs Agent/RAG as Method Families 
+
+Table 11 reports the non-direct family-level com-parison across the main benchmark slices, without matching the answer model. Full-context scores significantly exceed Agent/RAG scores in all listed slices for both languages. The overall gap is larger in English ( +15 .11 accuracy points) than in Russian ( +11 .86 accuracy points). The differ-ence between these two gaps is also significant: 
+
+(∆ EN − ∆RU ) = +3 .25 accuracy points, 95% CI 
+
+[1 .82 , 4.72] . The matched gpt-4.1-mini compar-ison in Table 6 yields smaller overall gaps. 
+
+F.2 Single-Session vs Multi-Session Difficulty 
+
+Table 12 shows that multi-session questions are consistently harder than single-session ques-tions. The single-to-multi degradation ranges from +20 .73 to +22 .96 accuracy points across lan-guages and families. This makes session multiplic-ity the strongest difficulty axis in the benchmark. Importantly, the multi-session penalty is not spe-cific to retrieval-based systems. Full-context sys-tems also show a large degradation from single-session to multi-session questions. Additional inter-action tests show that the degradation difference be-tween full-context and Agent/RAG families is not statistically significant: in Russian, the difference is 
+
++2 .23 accuracy points with 95% CI [−0.69 , 5.13] ;in English, it is +0 .46 accuracy points with 95% CI [−2.42 , 3.42] .
+
+F.3 Temporal vs Atemporal Difficulty 
+
+Table 13 shows that temporal questions are harder on average, but the effect is smaller than the single-to-multi degradation. The atemporal-to-temporal gap ranges from +2 .14 to +7 .15 accu-racy points. The largest temporal penalty appears for English Agent/RAG systems, while the Rus-sian Agent/RAG contrast is not significant after correction. In English, the Full-context–Agent/RAG gap is 
+
++12 .43 accuracy points on temporal questions and 
+
++10 .89 on atemporal questions. In Russian, the corresponding gaps are +4 .55 and +8 .84 , respec-tively. 
+
+F.4 Joint Scope–Temporal Intersections 
+
+Table 14 reports the four intersections of the scope and temporal axes. The hardest setting is the multi-session + temporal intersection. The multi-session 21 Slice Lang. Full context Agent/RAG ∆ 95% CI Holm p                                                                                                            
+
+> Overall RU 67.66 55.80 +11.86 [10.56, 13.17] <0.001 Overall EN 69.40 54.29 +15.11 [13.80, 16.42] <0.001 Single RU 76.65 63.92 +12.73 [11.12, 14.36] <0.001 Single EN 78.21 62.92 +15.29 [13.66, 16.91] <0.001 Multi RU 53.69 43.18 +10.51 [8.27, 12.75] <0.001 Multi EN 55.70 40.87 +14.83 [12.61, 17.10] <0.001 Atemporal RU 69.39 60.55 +8.84 [7.27, 10.39] <0.001 Atemporal EN 70.91 60.02 +10.89 [9.32, 12.40] <0.001 Temporal RU 62.96 58.41 +4.55 [1.77, 7.32] 0.001 Temporal EN 65.30 52.87 +12.43 [9.54, 15.28] <0.001 Single + atemporal RU 78.61 69.00 +9.62 [7.77, 11.50] <0.001 Single + atemporal EN 80.11 70.03 +10.08 [8.18, 11.91] <0.001 Multi + atemporal RU 55.49 47.82 +7.67 [4.91, 10.39] <0.001 Multi + atemporal EN 57.05 44.93 +12.11 [9.40, 14.80] <0.001 Single + temporal RU 71.54 67.20 +4.34 [0.83, 7.93] 0.027 Single + temporal EN 73.29 60.38 +12.91 [9.28, 16.53] <0.001 Multi + temporal RU 48.42 43.51 +4.92 [0.56, 9.30] 0.029 Multi + temporal EN 51.76 40.13 +11.63 [6.75, 16.57] <0.001
+
+Table 11: Family-level comparison between Full context and Agent/RAG across the main benchmark slices. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ = Full context − Agent/RAG. Agent/RAG temporal and scope–temporal aggregates exclude mem0g .
+
+Family Lang. Single Multi ∆ 95% CI Holm p
+
+Agent/RAG RU 63.92 43.18 +20.73 [17.71, 23.83] <0.001 Agent/RAG EN 62.92 40.87 +22.06 [19.02, 25.14] <0.001 Full context RU 76.65 53.69 +22.96 [20.07, 25.88] <0.001 Full context EN 78.21 55.70 +22.51 [19.57, 25.50] <0.001 
+
+Table 12: Single-session versus multi-session difficulty within method families. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ = Single − Multi. 
+
+penalty is significant within both atemporal and temporal questions. Within single-session ques-tions, the temporal penalty is significant for English Agent/RAG and both full-context languages, but not for Russian Agent/RAG. Within multi-session questions, it is not significant for Agent/RAG in either language or for English full context after correction. 
+
+F.5 Temporal-Expression Explicitness 
+
+Table 16 first reports the Full context versus Agent/RAG comparison (in a non-answerer-fixed setting) within each temporal expression tag. The gap is significant for explicit expressions in both languages and for all English tags; the Russian implicit and no-expression gaps are small and not significant after correction. Table 17 shows that implicit temporal expressions are much harder than explicit temporal expressions. This is one of the strongest slice-level findings. For full-context systems, the explicit-to-implicit gap is approximately 30 .02 accuracy points in Russian and 29 .89 accuracy points in English. Thus, simply providing the full dialogue does not eliminate the difficulty of implicit temporal grounding. Questions with no explicit temporal expression oc-cupy an intermediate regime: they are significantly easier than questions with implicit temporal evi-dence, but for full-context systems they are signifi-cantly harder than questions with explicit temporal evidence. 
+
+F.6 Language Effects 
+
+Table 18 reports English–Russian differences. 
+
+These comparisons should be interpreted cau-tiously because Russian and English runs use language-specific judges. At the family level, lan-guage effects are statistically detectable but small: Agent/RAG systems perform slightly better in Rus-sian overall, whereas full-context systems perform slightly better in English overall. The clearest language-conditioned difference for Agent/RAG appears on temporal questions and implicit/no-expression temporal tags, where Russian scores are higher. For full-context systems, the largest language effect appears in the Reasoning semantic supergroup. 
+
+F.7 Semantic Supergroups 
+
+We collapse the first category axis into three se-mantic "supergroups": Extraction, Reasoning, and 22 Family Lang. Atemporal Temporal ∆ 95% CI Holm p                        
+
+> Agent/RAG RU 60.55 58.41 +2.14 [-1.55, 5.74] 0.259 Agent/RAG EN 60.02 52.87 +7.15 [3.54, 10.70] <0.001 Full context RU 69.39 62.96 +6.43 [3.10, 9.67] <0.001 Full context EN 70.91 65.30 +5.61 [2.23, 8.93] 0.004
+
+Table 13: Atemporal versus temporal difficulty within method families. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ = Atemporal − Temporal . Agent/RAG aggregates exclude mem0g .                         
+
+> Family Lang. Single + Atemporal Multi + Atemporal Single + Temporal Multi + Temporal
+> Agent/RAG RU 69.00 47.82 67.20 43.51 Agent/RAG EN 70.03 44.93 60.38 40.13 Full context RU 78.61 55.49 71.54 48.42 Full context EN 80.11 57.05 73.29 51.76
+
+Table 14: Family-level accuracy on the 4 scope–temporal intersections. Scores are family-level means of binary LLM-as-judge correctness and are reported on a 0–100 accuracy-point scale. The table shows how session scope and temporal reasoning jointly affect performance within each method family and language. Agent/RAG aggregates exclude mem0g .
+
+Abstention (Table 2). Table 19 shows that Abstention is comparatively saturated: Agent/RAG systems and full-context systems perform similarly (in a setting without a matched answer model), and the gap is not sta-tistically significant in either language. In con-trast, full-context systems significantly outperform Agent/RAG systems on both Reasoning and Ex-traction. Reasoning is the hardest supergroup for both families. Table 20 reports the within-family semantic-supergroup difficulty contrasts. Extraction is con-sistently easier than Reasoning. Abstention is easier than both Extraction and Reasoning, espe-cially relative to Reasoning. These contrasts show that the semantic grouping captures a robust diffi-culty gradient rather than only a difference between method families. 
+
+F.8 Reasoning vs Temporal Reasoning 
+
+As a more focused reasoning analysis, we compare non-temporal Reasoning categories against Tem-poral Reasoning categories from Fig.2. Table 21 reports the planned contrasts. The observed differences are small and not sta-tistically significant after Holm correction. More-over, the direction of the difference is not consistent across languages and method families: Temporal Reasoning is slightly higher for Agent/RAG in Rus-sian, whereas general Reasoning is slightly higher in the other three settings. Although we do not observe a significant aggregate effect in this comparison, the two groups differ conceptually and may still reveal model-specific patterns for individual model/methods. 
+
+F.9 Semantic-Type Heatmaps 
+
+Figures 15 and 16 show method-level heatmaps by semantic type. These figures are intended as de-scriptive visualizations rather than statistical com-parisons, since semantic categories vary in sample size. 
+
+F.10 Lost-in-the-Middle Proxy 
+
+We also test whether performance drops when the evidence is located in the middle of the dialogue. Since exact token positions in the final prompt are not used here, this is a session-level proxy (thus, it cannot adjudicate token-level lost-in-the-middle ef-fects): questions with evidence near the beginning or end are grouped as edge, and compared against questions with evidence in the middle. Table 22 shows no statistically significant edge-versus-middle effect for either method family or language. Thus, we do not detect a lost-in-the-middle pattern under this proxy. Because evidence-position effects can be con-founded by multi-session questions, we also repeat the same edge-versus-middle analysis on single-session questions only. Table 23 shows the same conclusion: no statistically significant lost-in-the-middle effect is detected after restricting to single-session questions. 23 Contrast Family / Lang. A B ∆ 95% CI Holm p                                                                                                                                
+
+> Single+Atemporal −Multi+Atemporal Agent/RAG RU 69.00 47.82 +21.17 [17.18, 25.03] <0.001 Single+Atemporal −Multi+Atemporal Agent/RAG EN 70.03 44.93 +25.10 [21.13, 28.97] <0.001 Single+Atemporal −Multi+Atemporal Full context RU 78.61 55.49 +23.12 [19.62, 26.42] <0.001 Single+Atemporal −Multi+Atemporal Full context EN 80.11 57.05 +23.06 [19.53, 26.54] <0.001 Single+Temporal −Multi+Temporal Agent/RAG RU 67.20 43.51 +23.70 [17.67, 29.77] <0.001 Single+Temporal −Multi+Temporal Agent/RAG EN 60.38 40.13 +20.25 [14.10, 26.33] <0.001 Single+Temporal −Multi+Temporal Full context RU 71.54 48.42 +23.12 [17.50, 28.64] <0.001 Single+Temporal −Multi+Temporal Full context EN 73.29 51.76 +21.53 [15.69, 27.33] <0.001 Single+Atemporal −Single+Temporal Agent/RAG RU 69.00 67.20 +1.79 [-2.30, 6.02] 0.406 Single+Atemporal −Single+Temporal Agent/RAG EN 70.03 60.38 +9.65 [5.33, 14.05] <0.001 Single+Atemporal −Single+Temporal Full context RU 78.61 71.54 +7.08 [3.32, 10.67] <0.001 Single+Atemporal −Single+Temporal Full context EN 80.11 73.29 +6.82 [3.29, 10.47] <0.001 Multi+Atemporal −Multi+Temporal Agent/RAG RU 47.82 43.51 +4.32 [-1.58, 10.15] 0.207 Multi+Atemporal −Multi+Temporal Agent/RAG EN 44.93 40.13 +4.80 [-0.96, 10.57] 0.207 Multi+Atemporal −Multi+Temporal Full context RU 55.49 48.42 +7.07 [1.61, 12.38] 0.045 Multi+Atemporal −Multi+Temporal Full context EN 57.05 51.76 +5.29 [-0.46, 10.84] 0.206
+
+Table 15: Within-family contrasts over the scope–temporal intersections. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ computed as the first slice minus the second slice in each contrast. Agent/RAG aggregates exclude mem0g .                                           
+
+> Temporal-expression tag Lang. Full context Agent/RAG ∆95% CI Holm p
+> Explicit RU 76.19 63.33 +12.86 [8.07, 17.79] <0.001 Explicit EN 76.89 60.20 +16.69 [11.93, 21.60] <0.001 Implicit RU 46.17 44.35 +1.82 [-3.60, 7.16] 0.692 Implicit EN 47.00 38.55 +8.45 [1.41, 15.40] 0.017 No temporal expression RU 62.18 60.33 +1.85 [-1.89, 5.70] 0.692 No temporal expression EN 65.63 53.85 +11.78 [7.88, 15.71] <0.001
+
+Table 16: Family-level comparison between Full context and Agent/RAG by temporal expression tags. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with 
+
+∆ = Full context − Agent/RAG. Agent/RAG aggregates exclude mem0g .
+
+F.11 Best-Observed Methods 
+
+For practical interpretation, we also report the best observed method in each family. This is an upper-bound comparison and is not used as the main sta-tistical evidence for family-level claims. Across most full-context slices, the strongest ob-served model is GPT-5.4. For Agent/RAG sys-tems, the strongest Russian results are typically ob-tained by simple RAG, cortex, or memOS depend-ing on the slice; in English, memOS is the strongest Agent/RAG method across most major slices. These comparisons characterize the strongest ob-served upper bounds, not a controlled effect of the memory-access mechanism; the matched-answerer results in Table 6 show that individual Agent/RAG systems can exceed the gpt-4.1-mini full-context baseline. 
+
+G Case study: Claude Sonnet 4.6 
+
+In this section, we demonstrate how RUMBA can be used to profile a single selected model rather than for benchmarking different methods. For this case study, we choose 
+
+anthropic/claude-sonnet-4.6 , the second-best system in the full-context setting in both language versions of our evaluation, reaching 78.61 accu-racy points in Russian and 81.98 accuracy points in English. Using the same diagnostic axes and statistical procedure as in the preceding appendix analyses, we examine where this model is robust, where it degrades, and which benchmark dimen-sions explain its main failure modes. Table 24 reports descriptive slice-level scores. Claude Sonnet 4.6 is strongest on Abstention and Extraction-oriented questions, while its weaker re-gions are multi-session questions, implicit tempo-ral expressions, and Reasoning-oriented questions. This profile is broadly consistent across languages, although English is generally stronger than Rus-sian. Table 25 summarizes the statistically significant contrasts. All deltas are reported in accuracy points on a 0–100 scale. We omit non-significant contrasts from the table to keep the case study focused on the model’s main diagnostic failure modes. The clearest degradation is caused by session scope. As shown in Table 24, accuracy drops from 83.49 to 71.03 in Russian and from 88.60 to 71.69 in English when moving from single-session to multi-session 24 Contrast Family / Lang. A B ∆ 95% CI Holm p                                                                                                
+
+> Explicit −Implicit Agent/RAG RU 63.33 44.35 +18.99 [9.68, 28.61] <0.001 Explicit −Implicit Agent/RAG EN 60.20 38.55 +21.65 [11.82, 31.34] <0.001 Explicit −Implicit Full context RU 76.19 46.17 +30.02 [21.90, 37.77] <0.001 Explicit −Implicit Full context EN 76.89 47.00 +29.89 [21.61, 38.35] <0.001 No expression −Explicit Agent/RAG RU 60.33 63.33 -3.01 [-9.69, 3.82] 0.387 No expression −Explicit Agent/RAG EN 53.85 60.20 -6.34 [-13.05, 0.61] 0.153 No expression −Explicit Full context RU 62.18 76.19 -14.01 [-19.94, -7.71] <0.001 No expression −Explicit Full context EN 65.63 76.89 -11.26 [-17.02, -5.20] <0.001 No expression −Implicit Agent/RAG RU 60.33 44.35 +15.98 [7.33, 24.95] <0.001 No expression −Implicit Agent/RAG EN 53.85 38.55 +15.30 [6.73, 24.30] <0.001 No expression −Implicit Full context RU 62.18 46.17 +16.01 [8.75, 23.20] <0.001 No expression −Implicit Full context EN 65.63 47.00 +18.63 [11.05, 26.59] <0.001
+
+Table 17: Temporal-expression explicitness analysis within method families. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ computed as the first tag minus the second tag in each contrast. Agent/RAG aggregates exclude mem0g .                                                                                                                               
+
+> Slice Family English Russian EN–RU 95% CI Holm p
+> Overall Agent/RAG 54.29 55.80 -1.51 [-2.78, -0.24] 0.019 Overall Full context 69.40 67.66 +1.74 [0.72, 2.74] 0.001 Single Agent/RAG 62.92 63.92 -0.99 [-2.59, 0.57] 0.217 Single Full context 78.21 76.65 +1.57 [0.27, 2.85] 0.042 Multi Agent/RAG 40.87 43.18 -2.32 [-4.42, -0.19] 0.040 Multi Full context 55.70 53.69 +2.01 [0.35, 3.62] 0.040 Atemporal Agent/RAG 60.02 60.55 -0.53 [-2.16, 1.06] 0.524 Atemporal Full context 70.91 69.39 +1.52 [0.35, 2.66] 0.025 Temporal Agent/RAG 52.87 58.41 -5.54 [-8.05, -3.08] <0.001 Temporal Full context 65.30 62.96 +2.34 [0.31, 4.41] 0.023 Implicit time Agent/RAG 38.55 44.35 -5.80 [-10.72, -0.87] 0.049 Implicit time Full context 47.00 46.17 +0.83 [-3.73, 5.38] 0.762 No temporal expression Agent/RAG 53.85 60.33 -6.48 [-9.75, -3.20] <0.001 No temporal expression Full context 65.63 62.18 +3.45 [0.88, 6.09] 0.010 Extraction Agent/RAG 53.82 56.12 -2.30 [-3.83, -0.77] 0.005 Extraction Full context 69.85 69.20 +0.65 [-0.62, 1.89] 0.325 Reasoning Agent/RAG 41.67 41.88 -0.22 [-3.12, 2.63] 0.884 Reasoning Full context 60.51 55.02 +5.48 [3.18, 7.83] <0.001 Abstention Agent/RAG 83.01 81.60 +1.41 [-1.62, 4.44] 0.382 Abstention Full context 84.14 82.28 +1.86 [-0.56, 4.36] 0.294
+
+Table 18: Language comparison. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ = English − Russian . Agent/RAG temporal and temporal-expression aggregates exclude mem0g . Note that Russian and English evaluations use different LLM judges. 
+
+questions. The corresponding contrasts in Table 25 are significant in both languages, with gaps of 12.47 and 16.92 accuracy points. This degradation also remains significant inside both atemporal and tem-poral subsets. The hardest scope–temporal intersec-tion is multi-session temporal questioning, where the model reaches 66.88 in Russian and 66.23 in English. This suggests that the main structural weakness is not temporal grounding alone, but the combination of temporal grounding with evidence distributed across multiple sessions. Temporal questions as a broad category are not the strongest explanation of the model’s failures. The atemporal–temporal contrast is not significant af-ter Holm correction in either language. However, the temporal-expression analysis reveals a more specific failure mode. Claude handles explicit tem-poral expressions well, with accuracy of 85.29 in Russian and 84.31 in English, but drops sharply on implicit temporal expressions, reaching only 57.97 and 60.87. The explicit–implicit gaps are large and significant in both languages: 27.32 accuracy points in Russian and 23.44 in English. Implicit temporal expressions are also significantly harder than questions with no temporal expression. The semantic profile shows another major weak-ness. Claude is strong on Abstention, especially in Russian, where it reaches 90.26 accuracy points, and it is also relatively strong on Extraction. Rea-soning is substantially weaker: 65.16 in Russian and 76.77 in English. The Extraction–Reasoning contrast is significant in both languages, while Reasoning–Abstention is even larger, especially in Russian, where the gap is -25.10 accuracy points. This indicates that the model is reliable when it must retrieve or reject unknown user information, 25 Semantic supergroup Lang. Full context Agent/RAG ∆ 95% CI Holm p
+
+Abstention RU 82.28 81.60 +0.68 [-2.69, 4.13] 0.694 Abstention EN 84.14 83.01 +1.13 [-1.73, 4.00] 0.455 Reasoning RU 55.02 41.88 +13.14 [10.21, 16.12] <0.001 Reasoning EN 60.51 41.67 +18.84 [15.71, 22.07] <0.001 Extraction RU 69.20 56.12 +13.09 [11.45, 14.70] <0.001 Extraction EN 69.85 53.82 +16.04 [14.43, 17.60] <0.001 
+
+Table 19: Family-level comparison between Full context and Agent/RAG by semantic supergroup from Figure 2. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ = Full context − Agent/RAG.                                                                                                        
+
+> Contrast Family / Lang. AB∆95% CI Holm p
+> Extraction −Reasoning Agent/RAG RU 56.12 41.88 +14.24 [10.26, 18.11] <0.001 Extraction −Reasoning Agent/RAG EN 53.82 41.67 +12.15 [8.32, 16.02] <0.001 Extraction −Reasoning Full context RU 69.20 55.02 +14.18 [10.22, 18.19] <0.001 Extraction −Reasoning Full context EN 69.85 60.51 +9.35 [5.48, 13.33] <0.001 Extraction −Abstention Agent/RAG RU 56.12 81.60 -25.48 [-29.65, -21.31] <0.001 Extraction −Abstention Agent/RAG EN 53.82 83.01 -29.19 [-33.52, -24.73] <0.001 Extraction −Abstention Full context RU 69.20 82.28 -13.08 [-17.17, -9.01] <0.001 Extraction −Abstention Full context EN 69.85 84.14 -14.28 [-18.47, -9.95] <0.001 Reasoning −Abstention Agent/RAG RU 41.88 81.60 -39.72 [-44.85, -34.48] <0.001 Reasoning −Abstention Agent/RAG EN 41.67 83.01 -41.34 [-46.58, -36.15] <0.001 Reasoning −Abstention Full context RU 55.02 82.28 -27.26 [-32.25, -22.08] <0.001 Reasoning −Abstention Full context EN 60.51 84.14 -23.63 [-28.71, -18.46] <0.001
+
+Table 20: Within-family difficulty contrasts between semantic supergroups from Figure 2. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ computed as the first supergroup minus the second supergroup in each contrast. 
+
+but less reliable when the answer requires combin-ing, comparing, or transforming it. Temporal Reasoning is not the uniquely problem-atic group for Claude Sonnet 4.6. In Russian, Tem-poral Reasoning is numerically higher than general Reasoning, 69.57 versus 60.40 accuracy points. In English, the direction reverses: General Reasoning reaches 78.52, while Temporal Reasoning reaches 75.16. The within-language Reasoning–Temporal Reasoning contrast is not significant after correc-tion in either language. However, the English– Russian gap is significant for general Reasoning, with English outperforming Russian by 18.12 ac-curacy points, while the corresponding language gap for Temporal Reasoning is not significant. This suggests that Claude’s Russian weakness is concen-trated more in general memory reasoning opera-tions than in Temporal Reasoning specifically. The language comparison also reveals a targeted rather than uniform gap. English is significantly better overall by 3.37 accuracy points, but the largest language differences occur in Reasoning-heavy slices. The English–Russian gap is 11.61 accuracy points for the Reasoning supergroup and 18.12 accuracy points for General Reasoning. By contrast, multi-session questions, temporal ques-tions as a whole, implicit temporal expressions, Abstention, and Temporal Reasoning do not show significant English–Russian differences. Therefore, Claude’s Russian weakness is concentrated primar-ily in General Reasoning rather than in memory retrieval or temporal grounding overall. Finally, the evidence-position analysis does not support a clear lost-in-the-middle explanation for this model. The edge–middle contrast is not signif-icant in either language, including when restricting the analysis to single-session questions. For all questions, edge–middle differences are -0.30 ac-curacy points in Russian and 3.54 in English; for single-session questions only, they are -2.78 and 0.83 accuracy points, respectively. Consequently, the dominant failure modes are better explained by multi-session integration, implicit temporal in-ference, and Reasoning operations than by the ab-solute position of the supporting evidence in the dialogue. 26 Contrast Family / Lang. A B ∆ 95% CI Holm p
+
+Reasoning − TR Agent/RAG RU 39.49 44.10 -4.61 [-11.54, 2.35] 0.792 Reasoning − TR Agent/RAG EN 42.62 40.79 +1.83 [-4.86, 8.68] 1.000 Reasoning − TR Full context RU 55.99 54.13 +1.87 [-5.16, 8.95] 1.000 Reasoning − TR Full context EN 62.42 58.74 +3.68 [-2.94, 10.18] 0.868 
+
+Table 21: General Reasoning versus Temporal Reasoning (TR) categories defined in Figure 2. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ computed as General Reasoning minus Temporal Reasoning. 
+
+Family Lang. Edge Middle Edge–Middle 95% CI Holm p
+
+Agent/RAG RU 55.62 56.13 -0.51 [-3.68, 2.66] 0.986 Agent/RAG EN 55.37 52.36 +3.01 [-0.20, 6.26] 0.270 Full context RU 68.08 66.90 +1.18 [-1.96, 4.30] 0.986 Full context EN 69.97 68.37 +1.60 [-1.60, 4.83] 0.986 
+
+Table 22: Lost-in-the-middle proxy analysis by evidence position in the dialogue. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ computed as Edge minus Middle. Edge combines questions whose evidence is located near the beginning or end of the dialogue. 
+
+Figure 15: Agent/RAG heatmaps by semantic type. 
+
+27 Figure 16: Full-context heatmaps by semantic type. 
+
+Family Lang. Edge Middle Edge–Middle 95% CI Holm p
+
+Agent/RAG RU 63.87 64.01 -0.14 [-4.04, 3.64] 1.000 Agent/RAG EN 64.11 60.41 +3.70 [-0.28, 7.72] 0.289 Full context RU 76.11 77.79 -1.68 [-5.13, 1.90] 1.000 Full context EN 77.83 79.02 -1.19 [-4.73, 2.47] 1.000 
+
+Table 23: Lost-in-the-middle proxy analysis restricted to single-session questions. Scores are family-level means of binary LLM-as-judge correctness; scores and differences are reported on a 0–100 accuracy-point scale, with ∆ computed as Edge minus Middle. 
+
+28 Axis Slice n Russian English 
+
+Overall All questions 1543 78.61 81.98 Scope Single-session 939 83.49 88.60 Multi-session 604 71.03 71.69 Temporal grounding Atemporal 1128 79.79 83.24 Temporal 415 75.42 78.55 Scope × time Single + atemporal 678 84.66 89.68 Multi + atemporal 450 72.44 73.56 Single + temporal 261 80.46 85.82 Multi + temporal 154 66.88 66.23 Temporal expression Explicit 102 85.29 84.31 Implicit 69 57.97 60.87 No temporal expression 244 76.23 81.15 Semantic supergroup Extraction 1079 80.82 82.58 Reasoning 310 65.16 76.77 Abstention 154 90.26 88.31 Reasoning supergroup General Reasoning 149 60.40 78.52 Temporal Reasoning 161 69.57 75.16 
+
+Table 24: Single-model diagnostic profile for Claude Sonnet 4.6 across benchmark axes and slices. Values are LLM-as-judge accuracy points on a 0–100 scale; n denotes the number of questions in each slice. 
+
+Block Contrast Lang. ∆ 95% CI Holm p
+
+Scope Single − multi RU 12.47 [8.21, 16.77] < 0.001 
+
+Single − multi EN 16.92 [12.82, 21.02] < 0.001 
+
+Scope × time Single+atemporal − multi+atemporal RU 12.22 [7.40, 17.02] < 0.001 
+
+Single+atemporal − multi+atemporal EN 16.12 [11.47, 20.71] < 0.001 
+
+Single+temporal − multi+temporal RU 13.58 [4.93, 22.39] 0.003 Single+temporal − multi+temporal EN 19.59 [11.27, 28.12] < 0.001 
+
+Temporal expression Explicit − implicit RU 27.32 [13.68, 40.79] < 0.001 
+
+Explicit − implicit EN 23.44 [9.85, 36.62] 0.001 No expression − implicit RU 18.26 [5.43, 31.30] 0.005 No expression − implicit EN 20.28 [7.67, 32.91] 0.003 Semantic supergroup Extraction − Reasoning RU 15.65 [9.84, 21.62] < 0.001 
+
+Extraction − Reasoning EN 5.80 [0.55, 11.06] 0.030 Extraction − Abstention RU -9.44 [-14.55, -3.97] 0.003 Reasoning − Abstention RU -25.10 [-32.20, -17.66] < 0.001 
+
+Reasoning − Abstention EN -11.54 [-18.33, -4.42] 0.002 English − Russian Overall – 3.37 [1.23, 5.44] < 0.001 
+
+Single-session – 5.11 [2.77, 7.56] < 0.001 
+
+Atemporal – 3.46 [1.15, 5.76] 0.006 Single+atemporal – 5.01 [2.21, 7.82] < 0.001 
+
+Single+temporal – 5.36 [0.38, 10.34] 0.049 Reasoning supergroup – 11.61 [6.77, 16.45] < 0.001 
+
+General Reasoning – 18.12 [10.07, 25.50] < 0.001 
+
+Table 25: Significant single-model diagnostic contrasts for Claude Sonnet 4.6 across benchmark axes. Differences are reported as LLM-as-judge accuracy points on a 0–100 scale; ∆ is computed as the first slice minus the second slice in each contrast, except for the language block where ∆ = English − Russian. 
+
+29 Table 26: Question taxonomy: detailed description of question types and subtypes according to the semantic axis, with illustrative examples. 
+
+Category&Type Type Description Example 
+
+NON-TEMPORAL INFORMATION EXTRACTION 
+
+StaticUser (a) The fact to which the question refers remains un-changed across all sessions, both qualitatively and quan-titatively. 
+
+(b) The facts to which the question refers are complemen-tary and do not constitute a qualitative or quantitative change of the same fact across sessions. 
+
+User: Our dog’s name is Losyash. 
+
+Question: What’s my dog’s name? 
+
+Answer: Losyash. 
+
+UpdatingInfo The fact to which the question refers undergoes qualita-tive or quantitative changes within one or more sessions. 
+
+Condition: Pick the most up-to-date answer within one or across two or more sessions. 
+
+User: I love roses. [...] 
+
+User: I really love cacti now, I’m tired of roses. [...] 
+
+User: I don’t like cacti anymore, lilies are my favorite now. 
+
+Question: What are my favorite plants? 
+
+Answer: Lilies. 
+
+DeleteInfo The fact to which the question refers is deleted by the user within one or more sessions. 
+
+Condition: Pick the most up-to-date answer within one or across two or more sessions. 
+
+AnswerStandard: The correct answer is “No such in-formation” (or similar). 
+
+User: I don’t want to be a poor peasant woman, I want to be a noble lady. ... 
+
+User: Delete the information about what I want to be. 
+
+Question: What do I want to be? 
+
+Answer: No such information. 
+
+AsstQuery The fact to which the question refers is contained in the assistant’s response. In this case, the response con-stitutes advice, a recommendation, or an answer to an instructional request. Important: the fact does not concern the assistant’s per-sona and does not disclose attributes such as age, gender, personality, name, etc. 
+
+User: Who should I read from the 20th century? 
+
+Assistant: [List]... Bulgakov, Pasternak, Dovlatov, Or-well, Joyce... 
+
+Question: Which Russian 20th-century writers did you recommend? 
+
+Answer: Bulgakov, Pasternak, Dovlatov. Continuation 
+
+30 Category&Type Type Description Example OpenDomain Type 
+
+The fact to which the question refers pertains to widely known entities (events—past or recent—objects, public figures, etc.) and is characterized by the fact that a correct or approximate answer can be obtained from publicly available sources without consulting the session history. 
+
+User: In Attack on Titan, my favorite pairing is Jean and Mikasa. 
+
+Question: What’s my favorite Attack on Titan pairing? 
+
+Answer: Jean and Mikasa. REASONING 
+
+Social Relationship 
+
+The fact to which the question refers reveals the nature of the relationship between individuals. Important: the social role is not explicitly stated in the dialogue and must be inferred through reasoning. 
+
+User: I don’t have many relatives, my mom only has one sister, Lera. 
+
+Question: Who is Lera to me? 
+
+Answer: Your aunt. 
+
+Ordering The entities to which the question refers share a com-mon attribute. To answer the question, these entities (objects, features, etc.) must be arranged in a specific order according to a given parameter. 
+
+User: My sisters’ names are Ira, Vasilisa, and Alisa. 
+
+Question: List my sisters in alphabetical order. 
+
+Answer: Alisa, Ira, Vasilisa. 
+
+Arithmetic The fact to which the question refers requires arithmetic computation: (a) sum — calculation of the total; (b) less / more — calculation of the difference; (c) average — calculation of the mean value; (d) other — other mathematical operations. AnswerStandard: The answer should include a number. 
+
+User: I have a guitar, a domra, and my grandma’s piano at home. But I only play the guitar and domra. 
+
+Question: How many musical instruments do I have? 
+
+Answer: Three. 
+
+Comparison The fact to which the question refers requires qualita-tive or quantitative comparison of two or more entities. The question reflects an understanding of comparative, superlative, and equivalence relations between entities: (a) comparative — direct comparison (A is more X than B); (b) superlative — identification of the most X within a set; (c) equivalence — A is equal to B. 
+
+User: We have two cats: Musya (5 years old) and Kusya (5 months old). 
+
+Question: Which pet is older? 
+
+Answer: Musya. 
+
+UserQA The fact to which the question refers requires an un-derstanding not only of the information about the user contained in the dialogue but also of specific or common world knowledge. 
+
+User: I professionally study German folklore. 
+
+Question: Am I a Germanist? 
+
+Answer: Yes. 
+
+OtherReasoning Other categories of reasoning tasks. 
+
+Causal Reasoning 
+
+The fact to which the question refers requires an under-standing of causal relationships: why / due to what / what was the cause / what was the effect. Important: both the cause and the effect are present in the text across different sessions and must be correlated. Condition: To answer a question about the user, it is nec-essary to integrate information from multiple sessions. 
+
+User: I got into a car accident, the car is wrecked. [...] 
+
+User: I’m in the hospital, good thing the airbag worked. 
+
+Question: Why was I in the hospital? 
+
+Answer: Because you got into a car accident. 
+
+MultiStep The fact to which the question refers requires multi-step reasoning. 
+
+User: I bought my first houseplants — four violets. [...] 
+
+User: One violet died, Lena gave me her ficus (she had two), and my grandma gave me one big aloe and one small one. [...] 
+
+User: My grandma gave Lena two snake plants because she only had ficuses. 
+
+Question: How many more plants do I have than Lena? 
+
+Answer: By 3. TEMPORAL INFORMATION EXTRACTION 
+
+DateExtraction Types of questions involving the extraction of an event date and/or questions containing a specific date. Continuation 
+
+31 Category&Type Type Description Example ExplicitTE Condition Question (a) The user’s utterance explicitly contains a date, month, year, or time interval related to an event. 
+
+(b) The question either includes a specific date (day, month, year) and/or refers to such a date. The cor-responding subsubtypes: date-question, month/year-question, span-question, date-answer, month/year-answer, span-answer 
+
+[16.09.2025] User: I worked at a swimming pool on July 15. [20.12.2025] Question: Where did I work on July 15? [20.12.2025] Answer: At a swimming pool. 
+
+NonTE Condition Question (a) The user’s utterance does not explicitly mention the time of the event and contains no temporal reference. 
+
+(b) The question either includes a specific date (day, month, year) and/or refers to such a date. The cor-responding subsubtypes: date-question, month/year-question, span-question, date-answer, month/year-answer, span-answer 
+
+[01.03.2025] User: Come up with a rap nickname for me. [01.03.2025] Assistant: [List]... Vupsen... [06.06.2025] Question: Do you remember what nick-name you gave me in March? 
+
+Answer: Vupsen. REASONING 
+
+CalendarUnderstanding Types of questions in which it is necessary to correctly understand and interpret calendrical information: terminology and structure, as well as the units used in calendars. 
+
+ImplicitTE Condition Question (a) The user’s utterance contains an implicit temporal reference ( yesterday, today, this month, recently, the other day, etc.). 
+
+(b) A question aimed at identifying and extracting the time of an event. The corresponding subsubtypes: 
+
+date-question, month/year-question, span-question, date-answer, month/year-answer, span-answer 
+
+[23.11.2025] User: Yesterday I had a singing lesson, today I have a domra lesson. [24.11.2025] Question: What lesson did I have on November 23? 
+
+Answer: Domra. 
+
+RelativeTime Understanding 
+
+A question aimed at understanding relative time, ex-pressed in relation to the moment of speaking (i.e., when the question is asked). [23.11.2025] User: I’m baking a charlotte, but it fell apart. [24.11.2025] Question: What did I bake yesterday? 
+
+Answer : Charlotte. 
+
+Weekday Understanding 
+
+A question concerning the correspondence between a date and a day of the week. [24.11.2025] User: I baked a charlotte on November 20. [25.11.2025] Question: What did I bake on Thursday? 
+
+Answer: Charlotte 
+
+DateQA A question concerning calendar periods, production cal-endars, and the properties of the calendar as a system. [23.11.2025] User: I baked a charlotte on November 13, and today I’m making muffins. [05.12.2025] Question: What did I bake in the second half of November? 
+
+Answer: Muffins. 
+
+TemporalCommonsense A class of questions that fundamentally requires an understanding of the temporal structure of the world. 
+
+(Event)Ordering (a) A question concerning the sequence of events: what occurred before/after/between, as well as ordinal posi-tion: first/second/last. 
+
+(b) A question involving entities sharing a common at-tribute, based on an understanding of event timing and/or the time of questioning. To answer, these entities must be ordered according to a specified parameter. [21.05.2025] User: I have graduation coming up, and my thesis defense already happened. [...] [11.09.2025] User: I started working as a waitress before my thesis defense. [11.12.2025] Question: Did I start working as a waitress before graduation? 
+
+Answer: Yes. 
+
+EventFrequency A question concerning event frequency: how often does an event occur? The minimum unit of measurement is one day. [06.04.2025] User: Cucumber for breakfast. [...] [17.04.2025] User: Salad with cucumbers. [...] [25.04.2025] User: Smashed cucumbers for dinner. [01.05.2025] Question: How often do I eat cucumbers? 
+
+Answer: 3 times a month. 
+
+EventDuration A question concerning event duration: how long did X last? how long before did Y occur? how many days after did A take place? The minimum unit of measurement is one day. [20.10.2025] User: I started painting the walls. [...] [25.10.2025] User: I got divorced. [30.12.2025] Question: How many days before the di-vorce did I start painting? 
+
+Answer: 5 days. 
+
+TemporallyModifiedGeneralReasoning Reasoning questions complicated by temporal constraints. Continuation 
+
+32 Category&Type Type Description Example Arithmetic The fact to which the question refers requires arithmetic computation based on an understanding of event timing and/or the time of questioning. [11.09.2025] User: I weigh 65 kg. [11.10.2025] Question: How much do I weigh now if last month I weighed 5 kg less? 
+
+Answer: 70 kg. 
+
+Comparison The fact to which the question refers requires qualitative or quantitative comparison based on an understanding of event timing and/or the time of questioning. [11.09.2025] User: Today I leg pressed 145 kg, last week it was 148 and 150 kg. [30.10.2025] Question: What was my best result that month? 
+
+Answer: 150 kg. 
+
+UserQA The fact to which the question refers requires an under-standing not only of dialogue-based information but also of general or domain-specific knowledge, in the context of event timing and/or the time of questioning. [15.03.2025] User: It’s my birthday today. [...] [15.07.2025] User: My husband’s 40th birthday is to-morrow. [25.10.2025] Question: What zodiac signs are me and my husband? 
+
+Answer: Pisces and Cancer. 
+
+Causal Reasoning 
+
+The fact to which the question refers requires an under-standing of causal relationships in the context of event timing and/or the time of questioning. Condition: To answer a question about the user, it is necessary to syn-thesize information from multiple sessions. [15.10.2025] User: I argued with my mom, I’m so mad, how do I leave home? [...] [22.10.2025] User : We argued again about homework, same as last week. [22.12.2025] Question: Why did we argue on October 15? 
+
+Answer: Because of homework. 
+
+MultiStep The fact to which the question refers requires multi-step reasoning in the context of event timing and/or the time of questioning. [01.09.2025] User: I got back from vacation, I was there from the 15th. [...] [15.11.2025] User: I’ll have a short vacation next month (5 days), and a small one this month from the 1st to the 4th. [30.11.2025] Question: How long was my second vaca-tion? 
+
+Answer: 4 days. ComplexRelations 
+
+EventEvent Time Understanding 
+
+The fact to which the question refers is revealed only through another event and requires an understanding of event timing and/or the time of questioning. At least two interrelated events are required. [15.11.2025] User: Vasya and Petya came over. [...] [17.11.2025] User: My birthday was the day before yesterday. [30.11.2025] Question: Who came over on my birth-day? 
+
+Answer: Vasya and Petya. 
+
+During Reasoning 
+
+A question concerning the overlap of events. At least two events are required. [20.10.2025] User: I started painting the walls. [...] [21.10.2025] User: I went for a walk with my nephew Vanya. [...] [22.10.2025] User: I’m hanging out with Vanya. [...] [25.10.2025] User: I finished painting the walls. [...] [30.10.2025] User: I’m with my nephew again, every-thing’s good. [20.11.2025] Question: How many times did I see my nephew while painting the walls? 
+
+Answer: 2 times. Continuation 
+
+33 Category&Type Type Description Example Trends The fact to which the question refers changes over the course of the dialogue. The question is posed to deter-mine how a particular event or fact evolved over time. [20.01.2025] User: I smoke 15 cigarettes a day. [...] [21.02.2025] User: I smoke 10 cigarettes a day. [...] [22.03.2025] User: I smoke 5 cigarettes a day. [...] [25.04.2025] User: I smoke 1 cigarette a day. [...] [30.05.2025] User: I smoke 15 cigarettes a day. [21.09.2025] Question: How did my daily smoking change? 
+
+Answer: First it decreased from 15 cigarettes to 1, then increased sharply back to 15 cigarettes. OTHER TYPES 
+
+Abstention The dialogue does not contain an answer to this question. This is a control (trick) question intended to prevent hallucinations. The answer to the question is: No such information and similar. 
+
+User: I’m 17 and I have a boyfriend. 
+
+Question: How old is my boyfriend? 
+
+Answer: There’s no information about that. 
+
+34

@@ -6,110 +6,89 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-07-30
-- 运行时间：2026-07-30 21:46:43 UTC
+- 最新运行日期：2026-08-02
+- 运行时间：2026-08-02 21:28:53 UTC
 - 运行状态：成功
-- 本次总论文数：30
-- 精读区：17
+- 本次总论文数：23
+- 精读区：10
 - 速读区：13
 
 ### 今日简报（AI）
-今日精读17篇、速读13篇，重点推荐RAG向Agentic演进与归纳逻辑编程推理修补。最值得关注的方向：可信高效数据集成（Naïve→Agentic RAG）与基于归纳逻辑编程的上下文推理。建议普通读者后续关注知识图谱强化学习搜索及其在长期状态业务流程中的应用。
-- 详情：[/202607/30/README](/202607/30/README)
+今日共筛选23篇论文，其中10篇精读、13篇速读，核心聚焦AI记忆与问答系统。最值得关注的是两篇高分工作：无训练多跳问答的图-文本记忆协同进化，以及AI代理长上下文中的可寻址记忆压缩。若时间有限，可优先精读这两篇，并浏览速读中的SHIFT检索与LLM故障诊断作为补充。
+- 详情：[/202608/02/README](/202608/02/README)
 
 ### 精读区论文标签
-1. [Towards Trustworthy and Cost-Efficient Data Integration: From Naïve RAG to Agentic RAG](/202607/30/2607.22319v1-towards-trustworthy-and-cost-efficient-data-integration-from-nave-rag-to-agentic-rag)  
+1. [Co-Evolving Graph and Text Memory for Training-Free Multi-Hop Question Answering](/202608/02/2607.23278v1-co-evolving-graph-and-text-memory-for-training-free-multi-hop-question-answering)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：综述从经典RAG到GraphRAG和KG-RAG的演进
-2. [Reason Popper-ly: Patching In-Context Reasoning with Inductive Logic Programming](/202607/30/2607.23019v1-reason-popper-ly-patching-in-context-reasoning-with-inductive-logic-programming)  
+   evidence：免训练图-文记忆协同演化的多跳问答
+2. [Addressable Recall Compaction for Long Context-Window Control in AI Agents](/202608/02/2607.25066v1-addressable-recall-compaction-for-long-context-window-control-in-ai-agents)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：用可寻址回忆压缩将档案存储与活动上下文分离，为大语言模型智能体引入长期记忆
+3. [Raven: High-Recall Sequence Modeling with Sparse Memory Routing](/202608/02/2607.25357v1-raven-high-recall-sequence-modeling-with-sparse-memory-routing)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：稀疏记忆路由提升长上下文高召回，直接解决序列模型中的长期记忆问题
+4. [Bridging Inference-Time Scaling and Episodic Memory with Action-Centric Graphs](/202608/02/2607.27415v1-bridging-inference-time-scaling-and-episodic-memory-with-action-centric-graphs)  
    标签：评分：9.0/10、query:pwt
-   evidence：使用归纳逻辑编程修补思维链推理的神经符号框架
-3. [Co-Evolving Graph and Text Memory for Training-Free Multi-Hop Question Answering](/202607/30/2607.23278v1-co-evolving-graph-and-text-memory-for-training-free-multi-hop-question-answering)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：无需训练的多跳问答，图-文本协同演化记忆
-4. [ACM: Agentic Context Management for Long Horizon Tasks](/202607/30/2607.23809v1-acm-agentic-context-management-for-long-horizon-tasks)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：受人类记忆启发的智能体上下文管理框架
-5. [MemChain: Learning Interpretable Memory Traces for Memory-Augmented LLM Agents](/202607/30/2607.24097v1-memchain-learning-interpretable-memory-traces-for-memory-augmented-llm-agents)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：记忆增强语言模型技术
-6. [DynaCalKV: Key-Value Cache Compression via Head Grouping and Adaptive Rank Allocation](/202607/30/2607.24331v1-dynacalkv-key-value-cache-compression-via-head-grouping-and-adaptive-rank-allocation)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：KV缓存压缩使能处理更长上下文窗口，直接解决大模型长期记忆问题
-7. [Unsupervised Graph Representation Learning with Complementary View Alignment](/202607/30/2607.24338v1-unsupervised-graph-representation-learning-with-complementary-view-alignment)  
+   evidence：基于行动中心图的记忆与推理解耦，提升智能体推理并降低成本
+5. [OptGraph: Large Language Models Enhanced Evolutionary Optimization Via Graph Retrieval-Augmented Generation](/202608/02/2607.27918v1-optgraph-large-language-models-enhanced-evolutionary-optimization-via-graph-retrieval-augmented-generation)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：保留全频段频谱的图嵌入新方法
-8. [DeCoRAG: Cognitive Decoupling and Semantic-Aware Cropping for Complex Document Understanding](/202607/30/2607.24554v1-decorag-cognitive-decoupling-and-semantic-aware-cropping-for-complex-document-understanding)  
+   evidence：基于图检索增强生成，构建类型化经验图并利用邻域检索
+6. [Memory Decoder at Scale: A Pretrained, Parametric Long-Term Memory](/202608/02/2607.27919v1-memory-decoder-at-scale-a-pretrained-parametric-long-term-memory)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：面向解码器LLM的参数化长期记忆模块
+7. [ConMem: Contribution-Aware Memory for Long-Horizon Manufacturing Inspection Logs](/202608/02/2607.28126v1-conmem-contribution-aware-memory-for-long-horizon-manufacturing-inspection-logs)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：提出面向检索增强生成的贡献感知记忆框架，用于长期检验日志
+8. [Understanding Is Done Early: A Depth Division of Labor in Large Language Models and Its Use for Unbounded-Context Memory](/202608/02/2607.28263v1-understanding-is-done-early-a-depth-division-of-labor-in-large-language-models-and-its-use-for-unbounded-context-memory)  
+   标签：评分：9.0/10、query:llm-memory
+   evidence：基于深度分工实现无界上下文记忆且主干冻结，直接改善大模型长上下文记忆
+9. [GLM-RAG: Graph Language Models for Graph-Based Retrieval-Augmented Generation](/202608/02/2607.28397v1-glm-rag-graph-language-models-for-graph-based-retrieval-augmented-generation)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：针对图RAG提出DeCoRAG，包含认知解耦和语义感知裁剪
-9. [Eviction as Estimation: A Fixed-Lag Smoothing View of Test-Time Memory, and When Measuring Beats Accumulating](/202607/30/2607.24667v1-eviction-as-estimation-a-fixed-lag-smoothing-view-of-test-time-memory-and-when-measuring-beats-accumulating)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：从固定滞后平滑视角研究LLM记忆驱逐，直接考察长上下文记忆利用机制
-10. [HVM-GraphRAG: Holistic-View Multimodal Graph Retrieval-Augmented Generation on Complex Document](/202607/30/2607.24861v1-hvm-graphrag-holistic-view-multimodal-graph-retrieval-augmented-generation-on-complex-document)  
+   evidence：提出基于图语言模型的检索器用于图检索增强生成，比较不同检索器在多跳与单跳场景的表现
+10. [DualG-MRAG: Decoupling Macro-Reasoning and Micro-Matching for Multimodal Retrieval-Augmented Generation](/202608/02/2607.28580v1-dualg-mrag-decoupling-macro-reasoning-and-micro-matching-for-multimodal-retrieval-augmented-generation)  
    标签：评分：9.0/10、query:power-ticket
-   evidence：多模态图检索增强生成
-11. [Addressable Recall Compaction for Long Context-Window Control in AI Agents](/202607/30/2607.25066v1-addressable-recall-compaction-for-long-context-window-control-in-ai-agents)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：面向AI智能体的可寻址召回压缩技术
-12. [Raven: High-Recall Sequence Modeling with Sparse Memory Routing](/202607/30/2607.25357v1-raven-high-recall-sequence-modeling-with-sparse-memory-routing)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：提出稀疏记忆路由以实现长上下文高召回序列建模
-13. [Memory for Large Language Models](/202607/30/2607.25380v1-memory-for-large-language-models)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：LLM记忆机制的全面分类体系
-14. [Penelope: Localized Latent Recurrence for Efficient Structured Reasoning](/202607/30/2607.25915v1-penelope-localized-latent-recurrence-for-efficient-structured-reasoning)  
-   标签：评分：9.0/10、query:pwt
-   evidence：替代思维链推理的方法
-15. [CMT-RAG: Complementary Memory Traces for Multi-turn Multi-hop RAG](/202607/30/2607.26470v1-cmt-rag-complementary-memory-traces-for-multi-turn-multi-hop-rag)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：多轮多跳RAG中的互补记忆轨迹
-16. [A Graph-Native Bitemporal Memory Store for Conversational AI Agents](/202607/30/2607.26520v1-a-graph-native-bitemporal-memory-store-for-conversational-ai-agents)  
-   标签：评分：9.0/10、query:pwt
-   evidence：面向对话AI代理的图原生记忆存储
-17. [KAMR: Grounding Generation via Knowledge-Aligned Multi-hop Retrieval](/202607/30/2607.27136v1-kamr-grounding-generation-via-knowledge-aligned-multi-hop-retrieval)  
-   标签：评分：9.0/10、query:power-ticket
-   evidence：图上知识对齐的多跳检索用于检索增强生成
+   evidence：图增强多模态检索增强生成，解耦宏观推理与微观匹配以支持多跳推理
 
 ### 速读区论文标签
-1. [Search-on-Graph-R1: Training Large Language Models to Search Knowledge Graphs with Reinforcement Learning](/202607/30/2607.18481v1-search-on-graph-r1-training-large-language-models-to-search-knowledge-graphs-with-reinforcement-learning)  
-   标签：评分：8.0/10、query:pwt
-   evidence：基于强化学习的知识图谱搜索与推理
-2. [Graph-Based Agentic AI with LangGraph: Workflow Pathways for Long-Running Stateful Business Processes](/202607/30/2607.19297v1-graph-based-agentic-ai-with-langgraph-workflow-pathways-for-long-running-stateful-business-processes)  
+1. [SHIFT: Self-reconstruction Harnesses Implicit Fine-grained Thinking for Retrieval](/202608/02/2607.21333v1-shift-self-reconstruction-harnesses-implicit-fine-grained-thinking-for-retrieval)  
    标签：评分：8.0/10、query:power-ticket
-   evidence：基于图的Agentic检索增强生成工作流
-3. [Selective State-Space Adaptation and Retrieval for Language Model Reasoning](/202607/30/2607.19326v1-selective-state-space-adaptation-and-retrieval-for-language-model-reasoning)  
+   evidence：具有隐式推理的检索增强生成框架
+2. [RUMBA: Russian User Memory Benchmark](/202608/02/2607.21447v1-rumba-russian-user-memory-benchmark)  
    标签：评分：8.0/10、query:llm-memory
-   evidence：选择性检索与状态空间自适应推理
-4. [ChronoStitch: Training-Free Composition of Visual KV Memories for Long-Horizon Temporal Reasoning](/202607/30/2607.19547v1-chronostitch-training-free-composition-of-visual-kv-memories-for-long-horizon-temporal-reasoning)  
+   evidence：长期对话记忆评估基准
+3. [Leveraging Resolved Incident History for LLM-Assisted Software Bug Diagnosis](/202608/02/2607.21911v1-leveraging-resolved-incident-history-for-llm-assisted-software-bug-diagnosis)  
+   标签：评分：8.0/10、query:llm-memory
+   evidence：基于结构化三元组的检索增强生成
+4. [RIS-Kernel: A Model-Agnostic Architecture for Long-Context LLM Inference via Sparse Attention](/202608/02/2607.21927v1-ris-kernel-a-model-agnostic-architecture-for-long-context-llm-inference-via-sparse-attention)  
+   标签：评分：8.0/10、query:llm-memory
+   evidence：稀疏注意力用于长上下文LLM推理
+5. [ConsistencyGate: Preventing Memory Contamination in LLM Agents via Self-Consistency Admission Control](/202608/02/2607.22962v1-consistencygate-preventing-memory-contamination-in-llm-agents-via-self-consistency-admission-control)  
    标签：评分：8.0/10、query:pwt
-   evidence：无需训练的视频KV记忆组合用于长时推理
-5. [GRADRAG: Cross-Component Prompt Adaptation for Coordinated Multi-Agent RAG](/202607/30/2607.21324v1-gradrag-cross-component-prompt-adaptation-for-coordinated-multi-agent-rag)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：将RAG管道建模为计算图进行协调的提示适应
-6. [EvoThink: Evolving Thinking in Large Reasoning Models via Self-Pruning and Aha-Moment Preference Optimization](/202607/30/2607.19962v1-evothink-evolving-thinking-in-large-reasoning-models-via-self-pruning-and-aha-moment-preference-optimization)  
-   标签：评分：7.0/10、query:pwt
-   evidence：EvoThink剪枝冗余推理步骤，提供了思维链的替代方案
-7. [ArbiGraph: Arbitrarily Scalable Verifiable Task Graphs for Evaluating Context Management](/202607/30/2607.20764v1-arbigraph-arbitrarily-scalable-verifiable-task-graphs-for-evaluating-context-management)  
+   evidence：写入时准入控制防止LLM代理记忆污染
+6. [MemVLN: Episodic and Procedural Memory for Vision-and-Language Navigation](/202608/02/2607.23504v1-memvln-episodic-and-procedural-memory-for-vision-and-language-navigation)  
    标签：评分：7.0/10、query:llm-memory
-   evidence：用于评估多跳推理任务中上下文管理的基准生成器，直接与多跳推理和长上下文相关
-8. [PrefReward: Learning User Preference Matrix for Personalized Text Generation](/202607/30/2607.21067v1-prefreward-learning-user-preference-matrix-for-personalized-text-generation)  
-   标签：评分：7.0/10、query:llm-memory
-   evidence：提出偏好矩阵作为显式记忆实现文本生成的个性化
-9. [Beyond Episodic Evaluation: Memory Architectural Bottlenecks in Sequential Embodied Question Answering](/202607/30/2607.21571v1-beyond-episodic-evaluation-memory-architectural-bottlenecks-in-sequential-embodied-question-answering)  
-   标签：评分：7.0/10、query:pwt
-   evidence：记忆架构分析在顺序推理任务中的应用
-10. [CLARK: Closed-loop Learning for Adaptive Reasoning over Knowledge Graphs](/202607/30/2607.19996v1-clark-closed-loop-learning-for-adaptive-reasoning-over-knowledge-graphs)  
-   标签：评分：6.0/10、query:pwt
-   evidence：知识图谱推理框架，结合规则挖掘
-11. [From Static Bibliometrics to Dynamic Knowledge Graphs: An LLM-Powered Framework for Modernizing Science, Technology, and Innovation (STI) Analytics](/202607/30/2607.21327v1-from-static-bibliometrics-to-dynamic-knowledge-graphs-an-llm-powered-framework-for-modernizing-science-technology-and-innovation-sti-analytics)  
+   evidence：结合大语言模型的片段记忆与程序记忆，支持长时程代理导航推理
+7. [TRWH: A Text-Driven Random Walk Heterogeneous GNN for Semantic-Aware Sparse Recommendation](/202608/02/2607.25471v1-trwh-a-text-driven-random-walk-heterogeneous-gnn-for-semantic-aware-sparse-recommendation)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：文本驱动的随机游走异构图神经网络用于语义感知稀疏推荐，是一种图嵌入方法
+8. [Tools Are Not Islands: Set-Level Tool Retrieval for LLM Agents via Query-Conditioned Hyperedge Prediction](/202608/02/2607.25718v1-tools-are-not-islands-set-level-tool-retrieval-for-llm-agents-via-query-conditioned-hyperedge-prediction)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：在工具共现超图上进行查询条件超边预测，实现面向LLM智能体的集合级工具检索
+9. [VITAL-RAG: Invariance Race for Context Allocation in Coding Agents](/202608/02/2607.26937v1-vital-rag-invariance-race-for-context-allocation-in-coding-agents)  
+   标签：评分：7.0/10、query:power-ticket
+   evidence：面向编码智能体的RAG上下文分配方法，可迁移至工作票检索增强生成
+10. [CALMRec: Causally Aligned Language Memory for Long-Horizon Recommendation](/202608/02/2607.23647v1-calmrec-causally-aligned-language-memory-for-long-horizon-recommendation)  
+   标签：评分：6.0/10、query:llm-memory
+   evidence：冻结LLM将证据转为语义原子并维护短期、长期与曝光记忆，属于记忆增强语言模型技术
+11. [Do Current Retrievers Cover All the Evidence? A Controlled Study of Conjunctive Cross-Page Retrieval](/202608/02/2607.24165v1-do-current-retrievers-cover-all-the-evidence-a-controlled-study-of-conjunctive-cross-page-retrieval)  
    标签：评分：6.0/10、query:power-ticket
-   evidence：提出从学术数据构建动态知识图谱的框架，涉及图结构学习
-12. [Alleviating Regional Shortcuts for Few-Shot Class-Incremental Learning](/202607/30/2607.22072v1-alleviating-regional-shortcuts-for-few-shot-class-incremental-learning)  
-   标签：评分：6.0/10、query:pwt
-   evidence：少样本增量学习中的区域捷径分析与缓解
-13. [EGR: Embedding-Native Generative Retrieval with a Shared LLM](/202607/30/2607.23038v1-egr-embedding-native-generative-retrieval-with-a-shared-llm)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：使用共享LLM的嵌入式原生生成式检索
+   evidence：面向跨页合取检索的证据覆盖受控研究
+12. [Do Current Retrievers Cover All the Evidence? A Controlled Study of Conjunctive Cross-Page Retrieval](/202608/02/2607.24165v2-do-current-retrievers-cover-all-the-evidence-a-controlled-study-of-conjunctive-cross-page-retrieval)  
+   标签：评分：6.0/10、query:llm-memory
+   evidence：多条件跨页证据检索，与多跳推理证据覆盖相关
+13. [KAP: Bridging the Knowledge Selection-Runtime Consumption Gap in LLM Systems](/202608/02/2607.24260v1-kap-bridging-the-knowledge-selection-runtime-consumption-gap-in-llm-systems)  
+   标签：评分：6.0/10、query:llm-memory
+   evidence：利用知识选择结构减少LLM推断时全长KV缓存的内存开销
 
 
 <div class="dpr-home-promo-card">
