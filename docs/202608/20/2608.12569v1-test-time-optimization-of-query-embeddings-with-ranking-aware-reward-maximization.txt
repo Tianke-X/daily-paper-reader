@@ -1,0 +1,963 @@
+Title: Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+URL Source: https://arxiv.org/pdf/2608.12569v1
+
+Published Time: Fri, 14 Aug 2026 00:13:02 GMT
+
+Number of Pages: 19
+
+Markdown Content:
+> 2026-08-11
+
+# Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization 
+
+Tianyu Chen 1 and Jiaxing Wu 2 
+
+> 1The University of Texas at Austin, 2Google DeepMind
+
+Dense retrievers rank documents using vector similarity between a frozen encoder and a precomputed index. While test-time ranking rewards from a reranker or LLM judge can improve results, existing methods discard this signal after a single query. Updating the retriever’s weights makes rewards reusable, but this requires parameter access—which is unavailable for closed-source models—and is computationally prohibitive. We propose TTT-Embed (Test-Time Tuning of Embeddings), a framework that distills ranking rewards into a lightweight, learned vector within the output embedding space of a frozen model. This vector is optimized purely from scalar ranking scores assigned to the retriever’s own candidate documents, requiring no access to model weights, ground-truth labels, or modifications to index. A single scope parameter controls rewards reuse (global, task, or query), enabling a principled trade-off between reusability and specificity under a fixed reward computation budget. We demonstrate that as the available reward budget scales, the optimal sharing scope shifts dynamically from global-wise to task-wise and finally to query-wise. Evaluated across five embedding models and 15 MTEB retrieval tasks, TTT-Embed improves test-time retrieval by up to +8.36 nDCG@10. Crucially, the learned states generalize effectively to unseen queries (up to +8.57 nDCG@10) and unseen tasks (up to +4.71 nDCG@10). Furthermore, TTT-Embed successfully resolves catastrophic forgetting: by leaving base weights entirely frozen, it recovers degraded general capabilities (up to +8.00 nDCG@10, even surpassing the original base model) while preserving in-domain specialization. These results establish ranking rewards as a reusable test-time state, enabling budget-efficient adaptation for any embedding model, including closed-source APIs. 
+
+Keywords: test-time optimization, retrieval system, embeddings, ranking rewards, knowledge distillation 
+
+1. Introduction 
+
+Dense retrievers encode queries and documents independently, ranking them by vector similar-ity (Karpukhin et al., 2020; Xiong et al., 2020). Their efficiency stems from a frozen encoder and a precomputed document index. While a reranker provides a stronger relevance signal at test time (Nogueira and Cho, 2019), this signal is typically consumed only once. Because direct reranking and query-specific optimization update only the current result list or representation, the ranking rewards is discarded after the query is served. Model updates offer the opposite trade-off: they preserve information across queries but re-quire access to the retriever’s parameters. This is undesirable when deployments rely on cached embeddings, and impossible for closed-source APIs. Moreover, recent embedding models inherit the immense scale of foundation models, such as the 0.6B–8B parameter Qwen3-Embedding or the Gemini family (Lee et al., 2025; Shanbhogue et al., 2026; Vera et al., 2025; Zhang et al., 2025). Consequently, updating these systems is compu-tationally prohibitive—even when weights are available—and necessitates curating additional training data. Test-time optimization offers a complementary solution: spending additional computation on deployed inputs while keeping the base model frozen. This paradigm—already successful in dis-tribution shift adaptation and scaling LLM infer-ence (Liu et al., 2021; Snell et al., 2024; Sun et al., 2020)—achieves performance gains without re-quiring model weights or new training data. Utilizing ranking rewards from rerankers dur-                                                  
+
+> Corresponding author(s): jxwu@google.com This work was done during Tianyu Chen’s internship at Google DeepMind.
+> © 2026 Google. All rights reserved arXiv:2608.12569v1 [cs.IR] 12 Aug 2026 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization x̃q=xq+αgvg
+> renormalized; the only mutable point
+> αg=n g/(n g+1) · pick one scope: All queries
+> Global-wise · 1 vector
+> Task-wise ·Tvectors
+> Query-wise ·Nvectors
+> query q
+> Frozen encoder fQ
+> no weights, hidden states, or gradients
+> xq
+> x̃qANN index
+> cached document embeddings, unchanged top-K
+> Reward model reranker or LLM judge teacher pT
+> reward scores KL student pS
+> embedding sim. learn vgso that pSmatches pT
+> update
+> vg
+
+Figure 1 | TTT-Embed keeps ranking rewards as a reusable learned vector in the embedding space. A query is encoded once by the frozen encoder, the learned vector 𝒗 𝑔 is added to the re-turned query vector. The vector 𝒗 𝑔 is the only up-dated quantity. An external reward model scores the retrieved candidates; the induced teacher dis-tribution 𝑝 T is the target that 𝒗 𝑔 is trained to match with the student distribution 𝑝 S read off the embeddings. The sharing scope 𝑔 determines how broadly each 𝒗 𝑔 is reused, and is the only de-gree of freedom that changes between our three variants. Nothing inside the embedding system is modified. ing test time holds significant promise for re-trieval tasks. However, computing a cross-encoder or LLM judge for every query–document pair in-troduces prohibitive latency and computational costs (Hui et al., 2022). In practice, real-world systems operate under finite budgets, selecting only a subset of queries for relevance annotation or using cost-aware API cascades (Chen et al., 2023; Wang et al., 2024). We provide additional discussion of related work in the Appendix. To address this deployment bottleneck, we ask a cen-tral question: How can we best utilize test-time ranking rewards under a fixed computational budget by sharing signals across queries, with-out accessing or updating model weights? 
+
+To answer this, we propose TTT-Embed ( Test-Time Tuning of Embeddings ), a framework that dis-tills ranking rewards into a lightweight, reusable state in the output embedding space. Given an initial embedding 𝒙 𝑞 for query 𝑞 , we learn a resid-ual vector 𝒗 𝑔 and retrieve with e𝒙 𝑞 = 𝒙 𝑞 + 𝛼 𝑔 𝒗 𝑔 
+
+(Figure 1). The scope 𝑔 determines which queries share this learned rewards. We investigate three sharing scopes: global-wise (across all queries), task-wise (restricted to a specific task), and query-wise (private to one query). Because each 𝒗 𝑔 is learned using scalar scores from a reward model applied solely to the query representation, the encoder and ANN index remain entirely frozen. The resulting test-time 𝒗 𝑔 is inexpensive to store and fully compatible with closed-source APIs. Through extensive experiments across five em-bedding models on the MTEB benchmark (com-prising 15 retrieval tasks) and SKILLRET, we ad-dress the following research questions: • RQ1: Does TTT-Embed improve retrieval performance, particularly its ability to gen-eralize to unseen queries and zero-rewards tasks? • RQ2: To what extent can TTT-Embed re-cover degraded general performance while preserving the in-domain specialization of a fine-tuned model? • RQ3: What are the optimal strategies for real-world deployment regarding rewards budgets, sharing scopes, the breadth-versus-depth trade-off, and tuning-free magnitude computation? Our contributions are threefold: 1. A Novel Test-Time Tuning Framework: We propose TTT-Embed, which introduces a the-oretically grounded, vector-based adaptation interface ( 𝒙 𝑞 + 𝛼 𝑔 𝒗 𝑔 ) with flexible sharing scopes. Operating entirely on output embed-dings and off-the-shelf reward feedback, it re-quires no access to model weights or ground-truth labels, making it suited for both open-source and API-based models. 2. Generalization and Forgetting Recovery: 
+
+We empirically demonstrate that TTT-Embed yields significant gains on standard bench-marks and generalizes effectively to unseen queries and tasks. Furthermore, by keeping model weights entirely frozen, it resolves the trade-off between specialization and gener-alizability—recovering the degraded general 
+
+> 2Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+capabilities of fine-tuned models without sac-rificing their in-domain expertise. 3. Deployment Optimization Guidelines: We provide a thorough analysis of how fixed com-putational budgets dictate deployment strate-gies, offering concrete guidelines for select-ing the optimal sharing scope, navigating the breadth-versus-depth trade-off, and automati-cally determining the application magnitude (𝛼 𝑔 ) to eliminate manual tuning. 
+
+2. TTT-Embed: Reusable Test-Time Tuning in Embedding Space 
+
+TTT-Embed converts scalar ranking rewards into a learned query-side vector outside a frozen em-bedding model. Its learning rule is unchanged across sharing scopes; only which rewards queries learn one 𝒗 𝑔 and which served queries reuse it differ. 
+
+2.1. Problem Setup and Reward Budget 
+
+Let a potentially closed-source embedding sys-tem provide a query encoder 𝑓 Q and document encoder 𝑓 D, which may be the same underly-ing model. Then for any nonzero vector 𝒂 , let unit (𝒂 ) := 𝒂 /∥ 𝒂 ∥ denote its ℓ2 normalization. For a query 𝑞 and document 𝑑 , we write 𝒙 𝑞 =
+
+unit   𝑓 Q (𝑞 ) and 𝒛 𝑑 = unit ( 𝑓 D (𝑑 )) , with base re-trieval score 𝑠 (𝑞, 𝑑 ) = 𝒙 ⊤ 
+
+> 𝑞
+
+𝒛 𝑑 . The document em-beddings {𝒛 𝑑 }𝑑 ∈ D are computed once and stored in an approximate nearest-neighbor (ANN) index. We require only vector outputs from the embed-ding system; its parameters, hidden states, and gradients are never accessed. Let 𝐸 be a workload of 𝑁 = |𝐸 | queries and let 
+
+F ⊆ 𝐸 contain the queries selected for rewards. For each 𝑞 ∈ F , the base retriever returns top-K documents C𝑞 = {𝑑 𝑞 1, . . . , 𝑑 𝑞𝑘 𝑞 }, and an external reward model—such as a cross-encoder reranker or an LLM judge—assigns each pair a scalar rel-evance score 𝑟 𝑞𝑖 . A larger value denotes greater predicted relevance. We count one scored query– document pair as one atomic reward, giving total and normalized budgets 
+
+𝐵 =∑︁ 
+
+> 𝑞 ∈ F
+
+|C 𝑞 |, 𝑏 = 𝐵 𝑁 . (1) 
+
+Algorithm 1 Learning and Deploying Scoped Vec-tors 
+
+Require: Frozen embeddings {𝒙 𝑞 } and {𝒛 𝑑 };scoped rewards groups {F 𝑔 } with candidates 
+
+C𝑞 and rewards 𝑟 𝑞𝑖 
+
+Ensure: Stored test-time state {( 𝒗 ∗
+
+> 𝑔
+
+, 𝛼 𝑔 )}  
+
+> 1:
+
+for each rewards group 𝑔 induced by the cho-sen scope do  
+
+> 2:
+
+Form 𝑝 T 
+
+> 𝑞
+
+= softmax (𝑟 𝑞 /𝜏 T) for every 𝑞 ∈ F 𝑔  
+
+> 3:
+
+Initialize 𝒗 𝑔 ← 0 and optimize Equa-tion (4)  
+
+> 4:
+
+Set 𝑛 𝑔 ← |F 𝑔 | and 𝛼 𝑔 ← 𝑛 𝑔 /( 𝑛 𝑔 + 1) 
+
+> 5:
+
+Store (𝒗 ∗
+
+> 𝑔
+
+, 𝛼 𝑔 ) outside the embedding model  
+
+> 6:
+
+end for  
+
+> 7:
+
+for each served query 𝑞 with an applicable group 𝑔 do  
+
+> 8:
+
+e𝒙 𝑞 ← unit 
+
+
+
+𝒙 𝑞 + 𝛼 𝑔 𝒗 ∗
+
+> 𝑔
+
+ 
+
+> 9:
+
+Retrieve with e𝒙 𝑞 from the unchanged ANN index  
+
+> 10:
+
+end for  
+
+> 11:
+
+Queries without an applicable state use their base embedding 𝒙 𝑞 
+
+Thus, 𝑏 is the average number of external rewards available per query, even when they are not allo-cated uniformly. The budget excludes the base embedding and ANN-search costs shared by all systems. Ground-truth relevance labels are used only for evaluation, never to select rewards or learn 𝒗 𝑔 .
+
+2.2. Learning 𝒗 𝑔 from Ranking Rewards 
+
+For now, let 𝑔 denote any group of rewarded queries F𝑔 ⊆ F whose rewards are used to learn one vector 𝒗 𝑔 ∈ ℝ𝑝 ; the next subsection instanti-ates the possible groups. A query assigned to 𝑔 
+
+is represented as e𝒙 𝑞 (𝒗 𝑔 ) = unit  𝒙 𝑞 + 𝛼 𝑔 𝒗 𝑔 
+
+, where 
+
+𝛼 𝑔 ∈ [ 0, 1] controls how strongly 𝒗 𝑔 is applied. This additive form preserves the retrieval inter-face. For a fixed query, normalization is a positive constant across documents, so e𝒙 𝑞 (𝒗 𝑔 )⊤ 𝒛 𝑑 ranks them exactly as the base score 𝒙 ⊤ 
+
+> 𝑞
+
+𝒛 𝑑 plus the addi-tive term 𝛼 𝑔 𝒗 ⊤ 
+
+> 𝑔
+
+𝒛 𝑑 . At deployment, we use e𝒙 𝑞 as the query vector for a new search over the unchanged ANN index. It has the same dimensionality and 
+
+> 3Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+uses the same similarity function as 𝒙 𝑞 , so neither the indexed document embeddings nor the in-dex structure needs to be modified. This second retrieval may retrieve documents outside the orig-inal reward set C𝑞 . Appendix proves the ranking equivalence and states its implementation details. We distill the reward model’s scores over each candidate set. First, we form the teacher distribu-tion 
+
+𝑝 T 
+
+> 𝑞𝑖
+
+= exp (𝑟 𝑞𝑖 /𝜏 T)
+
+Í𝑘 𝑞  
+
+> 𝑗 =1
+
+exp (𝑟 𝑞 𝑗 /𝜏 T)
+
+. (2) For a candidate vector 𝒗 , we define the induced student distribution as 𝒙 𝑞 (𝒗 ) = unit  𝒙 𝑞 + 𝒗 
+
+𝑝 S 
+
+> 𝑞𝑖
+
+(𝒗 ) =
+
+exp 
+
+
+
+𝒙 𝑞 (𝒗 )⊤ 𝒛 𝑑 𝑞𝑖 /𝜏 S
+
+Í𝑘 𝑞  
+
+> 𝑗 =1
+
+exp 
+
+
+
+𝒙 𝑞 (𝒗 )⊤ 𝒛 𝑑 𝑞 𝑗 /𝜏 S
+
+ . (3) We learn 𝒗 𝑔 by knowledge distillation with ridge regularization: 
+
+𝒗 ∗ 
+
+> 𝑔
+
+= arg min 
+
+> 𝒗 ∈ℝ𝑝
+
+∑︁ 𝑞 ∈ F 𝑔 
+
+𝑤 𝑞 KL 
+
+
+
+𝑝 T 
+
+> 𝑞
+
+𝑝 S 
+
+> 𝑞
+
+(𝒗 )
+
+
+
++ 𝜆 ∥𝒗 ∥2 (4) where Í𝑞 ∈ F 𝑔 𝑤 𝑞 = 1. Equation (4) is a listwise soft-label knowledge distillation objective (Cao et al., 2007; Hinton et al., 2015): it retains the reward model’s relative scores within a candi-date set rather than constructing binary positive– negative pairs or updating the encoder with an in-batch contrastive loss. Our contribution lies in the learned vector and its reuse across scopes. Analysis section compares alternative objectives, and theoretical analysis of the objective and defi-nition of 𝑤 𝑔 are deferred to the appendix. 
+
+2.3. Sharing Scopes for Learned Vectors 
+
+The group assignment determines the persistence of the learned state: • Global-wise: one 𝒗 𝑔 pools rewards across tasks and is reused by every query served by the same embedding model. • Task-wise: one 𝒗 𝑔 pools and reuses rewards within each retrieval task. • Query-wise: one 𝒗 𝑔 is learned for each re-warded query and remains private to that query. For a global-wise state, the weights 𝑤 𝑞 in Equa-tion (4) first average queries within each task and then average tasks uniformly. For a task-wise state, they reduce to the ordinary average over queries; for a query-wise state, they reduce to a single-query loss. Appendix gives the unified formula. When every query receives rewards for 𝑏 re-trieved documents, F = 𝐸 and 𝐵 = 𝑁𝑏 , yielding the standard full-coverage setting. All scopes then use the same query–document rewards and differ only in which queries share a common state 𝒗 𝑔 .Under a limited budget, F may cover only a sub-set of 𝐸 , and the reward depth 𝑏 𝑞 may vary across queries. A global 𝒗 𝑔 can be applied to all queries, while a task-wise 𝒗 𝑔 can be applied to queries within the same task. In contrast, a query-wise state affects only queries in F ; queries without rewards retain their base embeddings. TTT-Embed does not prescribe which queries or documents receive rewards; it accepts any ex-ternally selected set of rewarded query–document pairs. For controlled evaluation, we use a task-balanced water-filling allocation with nested bud-gets, ensuring that every sharing scope and base-line receives the same reward pairs at each bud-get. The full protocol is provided in the Appendix. 
+
+2.4. Confidence-Aware Magnitude for Deploy-ment 
+
+Equation (4) first learns 𝒗 ∗ 
+
+> 𝑔
+
+. At deployment, its ap-propriate magnitude depends on estimation con-fidence, which increases with the reward budget. Let 𝑛 𝑔 denote the number of rewarded queries used to learn state 𝒗 𝑔 . We apply the evidence-adaptive scaling rule 
+
+𝛼 𝑔 = 𝑛 𝑔 
+
+𝑛 𝑔 + 1 , (5) and deploy 𝛼 𝑔 𝒗 ∗
+
+> 𝑔
+
+. The following proposition pro-vides a Bayesian justification for this label-free rule. Table 3 confirms its practical benefits: with-out tuning on evaluation labels, it achieves the lowest average regret (0.11) to the oracle, com-pared with 0.17 for the unshrunk choice 𝛼 = 1. 
+
+Proposition 1 (Evidence-adaptive vector shrink-age) . Let 𝒖 𝑔 ∈ ℝ𝑝 be a latent transferable vector 
+
+> 4Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+and 𝚺 ≻ 0. If 𝒖 𝑔 ∼ N ( 0, 𝚺 ) and 𝒗 ∗ 
+
+> 𝑔
+
+| 𝒖 𝑔 , 𝑛 𝑔 ∼N ( 𝒖 𝑔 , 𝚺 /𝑛 𝑔 ) for 𝑛 𝑔 ≥ 1, then the Bayes estimator under squared error is 
+
+𝔼 [𝒖 𝑔 | 𝒗 ∗
+
+> 𝑔 , 𝑛 𝑔
+
+] = 𝑛 𝑔  
+
+> 𝑛 𝑔
+
++ 1 𝒗 ∗  
+
+> 𝑔 .
+
+(6) 
+
+Proof. The prior and likelihood precisions are 𝚺 −1
+
+and 𝑛 𝑔 𝚺 −1. Hence the posterior precision is (𝑛 𝑔 +
+
+1)𝚺 −1 and its information vector is 𝑛 𝑔 𝚺 −1𝒗 ∗ 
+
+> 𝑔
+
+, giving Equation (6). □
+
+This normal-means model motivates uncer-tainty calibration but is not assumed when opti-mizing Equation (4). The scaling factor 𝛼 𝑔 shrinks toward 0 .5 for small 𝑛 𝑔 and approaches 1 as more rewarded queries are pooled. Shared states count all rewarded queries within their scope, whereas a query-wise state has 𝑛 𝑔 = 1 and thus 𝛼 𝑔 = 0.5. We fix this rule a priori and never tune it on eval-uation labels. Algorithm 1 summarizes the complete proce-dure. The learning and deployment rules are identical for all three scopes; changing the scope changes only which rewarded queries share a group 𝑔 and hence one stored state (𝒗 ∗
+
+> 𝑔 , 𝛼 𝑔
+
+).
+
+3. Experimental Setup 
+
+3.1. Tasks and Embedding Models 
+
+We evaluate our approach on 15 English retrieval tasks from the MTEB benchmark (Muennighoff et al., 2022), spanning question answering, fact verification, duplicate detection, argument re-trieval, and scientific and financial search. In to-tal, the suite comprises 12 ,263 test queries (rang-ing from 43 to 1,595 per task) and 1 ,661 ,208 corpus entries (ranging from 8 ,674 to 303 ,732 per task). To prevent large datasets from skew-ing the results, we average performance equally across all tasks. Since real-world deployments fre-quently utilize query classification components tailored to specific business needs, MTEB’s pre-defined task boundaries serve as an appropriate proxy for our task-wise evaluation. We additionally use SKILLRET Cho et al. (2026), an agent-skill retrieval benchmark com-prising 4,997 queries and 6,660 candidate skill cards, as the specialization corpus in the degraded-performance recovery experiment de-scribed in the preceding section. SKILLRET was released after the training-data cutoffs of all em-bedding and reward models used in our exper-iments, allowing us to evaluate whether TTT-Embed can recover performance degraded by domain-specific fine-tuning while minimizing the risk of benchmark contamination. We use five embedding models: Qwen3-Embedding-0.6B, Qwen3-Embedding-4B, EmbeddingGemma-300M, Gemini Embedding 1, and Gemini Embedding 2 (Lee et al., 2025; Shanbhogue et al., 2026; Vera et al., 2025; Zhang et al., 2025). The first three expose their weights, whereas the two Gemini models are accessed only through their embedding APIs. Document embeddings and the search index remain fixed. 
+
+3.2. Metrics 
+
+We report nDCG@10 and its matched change from the raw-query retriever, ΔnDCG@10. To summarize a full budget curve, we also report the area under the gain–budget curve (AUBC), and details defer to Appendix. 
+
+3.3. Reward Models 
+
+Our reward model is Qwen3-Reranker-4B Zhang et al. (2025). For each query–document pair, we compute its score from the raw forward-pass logits of the Yes and No tokens: 
+
+> 𝑟
+
+(𝑞, 𝑑 ) = 𝑃 (Yes | 𝑞, 𝑑 ) = exp (ℓYes )
+
+exp (ℓYes ) + exp (ℓNo ) ∈ [ 0, 1].
+
+(7) This computation is deterministic and does not sample text. For the general-purpose judges, we instead use a fixed 0–5 relevance rubric. Their fi-nal numeric grade is mapped to [0, 1]. Appendix specifies the prompts, score extraction, and gener-ation settings for each reward model. Section 5.3 compares the resulting reward models on the same candidate pairs. 
+
+3.4. Baselines 
+
+For an evaluation set of 𝑁 queries, we report the normalized reward budget 𝑏 = 𝐵 /𝑁 , where 𝐵 
+
+> 5Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+Table 1 | Representative scope-optimal operating points across budget regimes. Entries are gains over raw retrieval in ΔnDCG@10 ×100. The three columns select the best TTT-Embed scope on the average curve at representative low, intermediate, and high budgets in Figure 2. Direct reranking is evaluated at the same column-specific budget; exact grid construction is given in Appendix 12.                                  
+
+> TTT-Embed state scope Embedding model Global Task Query Budget 𝑏 10 −210 100 Qwen3-Embedding-0.6B 1.37 7.12 10.92 Qwen3-Embedding-4B 2.82 6.67 6.89 EmbeddingGemma-300M 2.81 8.76 12.67 Gemini Embedding 1 0.66 5.62 6.69 Gemini Embedding 2 −1.54 3.63 4.66
+> TTT-Embed Average 1.23 6.36 8.36
+> Direct rerank −0.01 3.21 7.80 TTT-Embed −direct +1.23 +3.15 +0.56
+
+is the total number of judgments and 𝑏 is the average number of rewards per query. We allo-cate rewards using a task-balanced water-filling schedule with nested budgets, as detailed in the Appendix. All methods receive exactly the same rewarded query–document pairs. We compare the following methods. 
+
+Raw retrieval uses no rewards and ranks the corpus according to 𝒙 ⊤ 
+
+> 𝑞
+
+𝒛 𝑑 . Direct rerank-ing reorders the rewarded portion of each se-lected query’s retrieved candidate list according to 𝑟 (𝑞, 𝑑 ). Query-wise TTT-Embed learns a sep-arate state 𝒗 𝑞 from the rewards associated with each query and reranks its candidates using the adapted query embedding 𝒙 𝑞 + 𝛼 𝒗 𝑞 . Task-wise and global TTT-Embed pool rewards at the task or global level to learn a shared state 𝒗 𝑔 , which is applied to all queries within the corresponding scope. Under partial query coverage, only the shared variants can adapt rankings for queries that receive no rewards. None of the methods updates the encoder parameters or document em-beddings. 
+
+4. Results 
+
+4.1. Performance Gains and Optimal Sharing Scope Across Reward Budgets 
+
+Figure 2 presents the main results of TTT-Embed across 15 MTEB retrieval tasks, three sharing scopes, and a range of normalized reward bud-gets. Results are averaged over five embed-ding models: Qwen3-Embedding-0.6B, Qwen3-Embedding-4B, EmbeddingGemma-300M, Gem-ini Embedding 1, and Gemini Embedding 2. The results reveal a clear progression from broad reuse to query-specific specialization. On our dis-crete budget grid, global sharing performs best for 
+
+𝑏 ∈ [ 0.003 , 0.012 ], as a state learned from even limited rewards can be applied to the entire query population. Task-wise sharing performs best from 
+
+𝑏 = 0.024 through 𝑏 = 10, whereas query-wise optimization becomes optimal at 𝑏 = 30 and re-mains so at 𝑏 = 100. While these operating points should not be interpreted as universal thresholds. The model-specific panels also reveal differences in different embedding models. Nevertheless, the upper envelope across the three sharing scopes remains above direct reranking throughout the av-erage budget curve. When integrated over the full log-budget range, task-wise sharing also achieves the highest gain AUBC@100 for all five embed-ding models (see Appendix). At 𝑏 = 10, corresponding to an average of ten judgments per query, task-wise TTT-Embed improves nDCG@10 over raw retrieval by 6.36 points on average (Figure 2). The improvement is positive for every embedding model, ranging from 3.63 to 8.76 points. Using the same rewarded pairs, direct reranking yields an average improve-ment of only 3.21 points, giving the learned task-wise state a 3.15-point advantage. At 𝑏 = 100, query-wise optimization achieves an 8.36-point gain and continues to outperform direct reranking by 0.56 points. These results show that the ben-efit does not arise solely from applying reward-model scores to retrieved candidates. Distilling these scores into the query embeddings enables corpus-wide retrieval improvements beyond those obtained by using the scores only to reorder the original candidate list. Table 1 highlights three representative points                   
+
+> 6Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization 10 −3 10 −2 10 −1 10 010 110 2
+> normalized budget b=B/N(judgments per query)
+> 02468
+> gain over raw retrieval ( ΔnDCG@10  ×100 )
+> cold start  global-wise task-wise query-wise
+> best sharing scope on the frozen grid
+> all queries at depth 10
+> (a) Average (5 models)
+> +6.36 vs. raw +3.15 vs. rerank 0510
+> (b) Qwen3-Embedding-0.6B
+> 05
+> Qwen3-Embedding-4B
+> 010
+> EmbeddingGemma-300M
+> 05
+> Gemini Embedding 1
+> 10 −2 10 010 2
+> b=B/N
+> 0.0 2.5 5.0
+> Gemini Embedding 2
+> dotted line: all queries at k= 10
+> Global-wise Task-wise Query-wise Direct rerank
+
+Figure 2 | TTT-Embed improves retrieval, and the optimal scope changes with the budget. Panel (a) reports the performance gain over raw retrieval across different normalized budgets, averaged over five embedding models. The background shading indicates the best sharing scope for each sampled budget regime. Panel (b) details these results for each individual embedding model. The dotted line marks full query coverage at depth 10. At this threshold, task-wise TTT-Embed improves raw retrieval by 6.36 nDCG@10 points and outperforms cost-matched direct reranking by 3.15 points. Rewards are from Qwen3-Reranker-4B. from the scope transition shown in Figure 2. At 
+
+𝑏 = 10 −2, global sharing is the best-performing scope on the average curve, improving nDCG@10 by 1.23 points, compared with a −0.01-point change from direct reranking. At 𝑏 = 10, task-wise sharing yields a 6.36-point gain and outper-forms direct reranking by 3.15 points. At 𝑏 = 100, query-wise optimization achieves an 8.36-point gain while retaining a 0.56-point advantage over direct reranking. Thus, the best sharing scope for each budget regime consistently outperforms cost-matched direct reranking at all three repre-sentative operating points. 
+
+4.2. Generalization to Unseen Queries and Tasks 
+
+In the previous section, at budget 𝐵 , we denote the queries with rewards by 𝑆 𝐵 and the remain-ing queries by 𝑈 𝐵 = 𝐸 \ 𝑆 𝐵 . We learn 𝒗 𝑔 at each sharing scope using rewards from 𝑆 𝐵 and evaluate it on the full query set 𝐸 . The fixed-population curves establish strong utility under a standard deployment budget. To ensure this performance translates smoothly to real-world deployments—where the system must handle en-tirely unseen queries, we conduct two stricter transfer experiments to evaluate generalization to unseen queries and tasks. For global and task-wise transfer , we learn a shared 𝒗 𝑔 using rewards from 𝑆 𝐵 and evaluate it exclusively on the unseen queries 𝑈 𝐵 . Because queries in 𝑈 𝐵 contribute no rewards during optimization, any improvement on this subset must arise from information shared within tasks or globally. For cross-task transfer , we learn a global state 𝒗 𝑔 from 14 tasks and apply it to the remaining task without using any rewards from the target task. We repeat this procedure with each of the 15 tasks serving as the held-out task. Table 2 shows positive held-out-query endpoint gains for both shared scopes and all five embed-ding models. When 80% queries has 10 rewards coverage and remaining 20% queries are un-seen, the task-wise state improves the untouched 
+
+> 7Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+Table 2 | The learned 𝒗 𝑔 improves retrieval on held-out queries and tasks. Entries report gains over raw retrieval in ΔnDCG@10 × 100. The first two columns evaluate global and task-wise shar-ing when 80% of the queries each provide 10 rewards, with performance measured on the re-maining 20% of unseen queries. The final col-umn reports the leave-one-task-out (LOTO) gain achieved by a global 𝒗 𝑔 learned from the other 14 tasks.                       
+
+> Held-out query Held-out task Embedding model Global Task LOTO Qwen3-Embedding-0.6B 4.88 6.03 4.36 Qwen3-Embedding-4B 4.93 6.14 4.16 EmbeddingGemma-300M 6.42 8.57 4.71 Gemini Embedding 1 2.40 3.95 1.36 Gemini Embedding 2 1.49 3.17 0.85 Average 4.02 5.57 3.09
+
+queries by 3.17–8.57 points (5.57 on average), despite those queries never being scored; global-wise sharing also gains 4.02 points on average. The stronger leave-one-task-out (LOTO) test is positive on average for every model, including both closed Gemini models: a state learned on the other 14 tasks improves the held-out task by 0.85–4.71 points, with a 3.09-point average gain. These results directly establish that the learned state stores reusable information rather than merely fitting the queries that produced it. Full transfer curves and per-task results appear in Appendix. 
+
+4.3. General Capability Gain While Preserving Domain Specialization 
+
+Although domain-specific fine-tuning can reli-ably improve in-domain performance, it often degrades performance on broader benchmarks, creating a trade-off between specialization and generalization. TTT-Embed provides a elegant solution to this trade-off: it can recover lost capa-bilities at test time without modifying the under-lying model parameters. In Figure 3, we demonstrate this utilizing the SKILLRET task Cho et al. (2026). Specifically, we evaluate SKILLRET-SFT-0.6B, a model fine-tuned on top of the base Qwen3-Embedding-0.6B. While Original After SKILLRET SFT Direct rerank Task-wise TTT-Embed 45 50 53   
+
+> MTEB Average nDCG@10 (×100)
+> −4.49 +6.16 +8.00
+> MTEB recovery ( b= 10)
+> 49.90 45.42 51.58 53.42
+
+Figure 3 | TTT-Embed recovers perfor-mance lost during domain specialization with-out weight updates. Fine-tuning Qwen3-Embedding-0.6B on SKILLRET improves in-domain nDCG@10 from 52.24 to 66.21 but re-duces the 15-task MTEB average from 49.90 to 45.42. With 𝑏 = 10, task-wise TTT-Embed raises the frozen model’s MTEB score to 53.42, exceeding both the base model (49.90) and direct reranking (51.58), while preserving the special-ized model weights. Scores are nDCG@10 ×100. this specialization yields target-domain improve-ments, it suffers out-of-domain generalization, showing a 4.49-point degradation across the 15 MTEB tasks. TTT-Embed can not only recover this performance degradation, but also surpass the original, unspecialized model. It yields an 8.00-point absolute improvement that elevates the MTEB score to 53.42—exceeding the origi-nal base model by 3.51 points and outperform-ing direct reranking by 1.84 points. Crucially, TTT-Embed achieves these generalization gains while fully maintaining in-domain specializa-tion , since the underlying model weights are en-tirely frozen. Comprehensive global-wise, task-wise, and query-wise results, alongside direct reranking baselines, are detailed in Appendix. 
+
+5. Analysis 
+
+5.1. Breadth vs Depth for a Fixed Reward Bud-get 
+
+For a fixed reward budget 𝑏 , allocation within a given sharing scope involves a trade-off be-tween two strategies: a breadth-primary ap-proach, which distributes rewards across a larger number of queries with fewer judged documents         
+
+> 8Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization Global Task Query
+> 02468
+> (a) b= 2
+> 100% × 2 40% × 5 20% × 10
+> Global Task Query
+> (b) b= 10
+> 100% × 10 20% × 50 10% × 100
+> ΔnDCG@10 ( ×100 )
+
+Figure 4 | Reward allocation at a fixed budget. 
+
+At the smaller budget 𝑏 = 2, panel (a) shows that rewards depth is more valuable than maximal query coverage. At the bigger budget 𝑏 = 10, panel (b) shows that broader coverage becomes more beneficial. Results are averaged gains over raw retrieval in ΔnDCG@10 × 100. per query, and a depth-primary approach, which concentrates rewards on more documents per query across a smaller subset of queries. Formally, let 𝜌 = 𝑚 /𝑁 denote the fraction of queries re-ceiving rewards (characterizing breadth), and let 
+
+𝑘 denote the number of documents judged per selected query (characterizing depth). The total budget allocation is therefore defined as 𝑏 = 𝜌𝑘 .Figure 4 demonstrates that the optimal balance between breadth and depth is budget-dependent. Under a small budget ( 𝑏 = 2, Panel a), a depth-primary allocation yields superior performance across all three scopes, suggesting that rewards must encompass a critical mass of documents per query to provide reliable ranking signals. Con-versely, with a larger budget ( 𝑏 = 10, Panel b), a breadth-primary allocation proves more ef-fective. This highlights diminishing returns for depth: once a sufficient number of pairs have pro-vided rewards, expanding query coverage yields greater performance gains than gathering deeper rewards. 
+
+5.2. Tuning-Free Evidence-Adaptive Magni-tude 
+
+We evaluate whether the evidence-adaptive mag-nitude in Eq (5) performs competitively with man-ually tuned alternatives. Specifically, we compare 
+
+𝛼 (𝑛 ) = 𝑛 /( 𝑛 + 1) with seven fixed values ranging from 0 .1 to 1. For each task, we learn a task-wise state 𝒗 𝑔 from 𝑛 ∈ { 1, 16 , 128 , all } rewarded Table 3 | Evidence-adaptive dosing avoids per-budget label tuning. Entries are task-wise 
+
+ΔnDCG@10 × 100, averaged over five embedding models and 15 tasks. Oracle regret is the average gap over the four displayed evidence levels to the best dose in the complete sweep at each level (lower is better). Bold and underlining mark the best and second-best reported values in each col-umn, respectively, determined before rounding; tied values share the same rank.                                          
+
+> 𝛼 𝑛 =1𝑛 =16 𝑛 =128 𝑛 =all Oracle regret ↓
+> 𝛼 =0.10.30 0.96 1.12 1.17 3.30
+> 𝛼 =0.20.53 1.73 2.14 2.21 2.53
+> 𝛼 =0.50.93 3.43 4.43 4.70 0.81
+> 𝛼 =10.84 3.22 5.59 6.39 0.17
+> 𝑛 /( 𝑛 +1)0.93 3.40 5.59 6.38 0.11
+
+Table 4 | In-domain reward-model selection. 
+
+Every configuration scores and reorders the same 307,319 MTEB query–document pairs. Scores and changes from raw retrieval are average nDCG@10 ×100 over five embedding models and 15 tasks.                
+
+> Reward model Average Δraw None (raw retrieval) 53.84 —Qwen3-Reranker-4B 57.09 +3.25 Gemini 3.1 Pro 56.57 +2.73 Gemini 3.5 Flash 55.94 +2.10 Qwen3-VL-30B-A3B-Instruct 50.52 −3.32 Qwen3-8B-Instruct 48.97 −4.87
+
+queries, each with 10 rewards, and evaluate it on the full query set. As shown in Table 3, the evidence-adaptive 𝛼 achieves the best average per-formance across the four reward budgets, avoid-ing the need for budget-specific tuning. 
+
+5.3. Reward Model Selection 
+
+We compare reward models by using each one to score and reorder the same frozen top-10 can-didate sets. Qwen3-Reranker-4B supplies the normalized probability of Yes computed from its Yes /No logits (Equation (7)). Each general-purpose LLM instead returns a 0–5 relevance score for the same query–document pair. Ap-pendix provides the details. Table 4 shows that reward-model specialization 
+
+> 9Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+Table 5 | Objective ablation at 𝑏 = 10 (full depth-10 coverage). Entries are ΔnDCG@10 × 100 av-eraged over five embedding models. Knowledge distillation leads at both shared scopes.             
+
+> Objective Global Task Query Knowledge Distillation 4.00 6.38 5.26 Reverse KL variant 3.72 4.66 5.30
+> Softmax-GRPO 2.07 3.13 3.27
+
+matters. The retrieval-specific Qwen3-Reranker-4B performs best, improving raw retrieval by 3.25 points and outperforming the strongest general-purpose judge by 0.52 points. Nevertheless, ca-pable general-purpose LLMs can provide useful ranking rewards: Gemini 3.1 Pro and Gemini 3.5 Flash improve raw retrieval by 2.73 and 2.10 points, respectively. They therefore provide prac-tical alternatives when a specialized reranker is unavailable. In contrast, the two general-purpose Qwen models underperform raw retrieval, demon-strating that not every off-the-shelf LLM is an effective reward model. 
+
+5.4. Compatibility with Different Learning Ob-jectives 
+
+TTT-Embed is compatible with other test-time learning objectives. We compare the knowledge-distillation objective in Equation (4) with a reverse-KL variant and a GRPO-based objective. Softmax-GRPO adapts Retrieval-GRPO (Liu et al., 2025): the ten candidate documents form a group, their embedding similarities define the pol-icy, and standardized reward-model scores serve as document-level advantages. All objectives use the same Reranker-4B re-wards, candidate sets, zero initialization, ridge regularization, and 300 Adam steps. Each of the 
+
+𝑁 queries receives 𝑏 = 10 reward scores. Ta-ble 5 compares the objectives across three sharing scopes and five embedding models at this bud-get, while Appendix reports the complete nested-budget sweep. As shown in Table 5, knowledge distillation achieves the strongest performance on average. The other objectives also yield positive gains, demonstrating that TTT-Embed is compatible with and robust across different test-time learning objectives. We therefore use knowledge distilla-tion as the default objective for the shared-state setting central to this work. The appendix formal-izes its relationship to reverse KL and Softmax-GRPO and presents the details. 
+
+6. Conclusions 
+
+We presented TTT-Embed, a framework that treats ranking rewards as a reusable test-time state by distilling it into a lightweight vector added to frozen query embeddings. This ap-proach requires no access to model weights or modifications to document indexes. We demon-strate that vectors learned from a subset of queries not only improve overall performance and gener-alize to unseen queries and tasks, but also success-fully recover from catastrophic forgetting during test time. Furthermore, the reward budget gov-erns the optimal sharing scope. Future work will extend this framework to multimodal domains, develop more strategic scope-selection mecha-nisms for deployment, and introduce dynamic adaptation based on query complexity. 
+
+7. Acknowledgment 
+
+We extend our sincere gratitude to Mingyuan Zhou, Shanfeng Zhang, Mojtaba Seyedhosseini, Howard Zhou, and Tom Duerig for providing es-sential resources, alongside their invaluable guid-ance and support throughout this project. Addi-tionally, we thank Tanmaya Dabral for reviewing the manuscript and offering insightful technical feedback. 
+
+References 
+
+M. Bilgic and P. N. Bennett. Active query selection for learning rankers. In Proceedings of the 35th international ACM SIGIR conference on Research and development in information retrieval , pages 1033–1034, 2012. Z. Cao, T. Qin, T.-Y. Liu, M.-F. Tsai, and H. Li. Learning to rank: from pairwise approach to listwise approach. In Proceedings of the 24th international conference on Machine learning ,pages 129–136, 2007. 
+
+> 10 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+S. Chaudhuri and A. T. Tewari. Online learning to rank with feedback at the top. In Artificial In-telligence and Statistics , pages 277–285. PMLR, 2016. L. Chen, M. Zaharia, and J. Zou. Frugalgpt: How to use large language models while reducing cost and improving performance. arXiv preprint arXiv:2305.05176 , 2023. H. Cho, R. Kang, and Y. Kim. Skillret: A large-scale benchmark for skill retrieval in llm agents. 
+
+arXiv preprint arXiv:2605.05726 , 2026. R. Gangi Reddy, P. Dasigi, M. A. Sultan, A. Cohan, A. Sil, H. Ji, and H. Hajishirzi. A large-scale study of reranker relevance feedback at infer-ence. In Proceedings of the 48th International ACM SIGIR Conference on Research and Devel-opment in Information Retrieval , pages 3010– 3014, 2025. G. Hinton, O. Vinyals, and J. Dean. Distilling the knowledge in a neural network. arXiv preprint arXiv:1503.02531 , 2015. K. Hui, H. Zhuang, T. Chen, Z. Qin, J. Lu, D. Bahri, J. Ma, J. Gupta, C. dos Santos, Y. Tay, et al. Ed2lm: Encoder-decoder to language model for faster document re-ranking inference. In 
+
+Findings of the Association for Computational Linguistics: ACL 2022 , pages 3747–3758, 2022. T. Joachims, A. Swaminathan, and T. Schnabel. Unbiased learning-to-rank with biased feed-back. In Proceedings of the tenth ACM interna-tional conference on web search and data mining ,pages 781–789, 2017. V. Karpukhin, B. Oguz, S. Min, P. Lewis, L. Wu, S. Edunov, D. Chen, and W.-t. Yih. Dense pas-sage retrieval for open-domain question an-swering. In Proceedings of the 2020 conference on empirical methods in natural language pro-cessing (EMNLP) , pages 6769–6781, 2020. D. P. Kingma and J. Ba. Adam: A method for stochastic optimization. arXiv preprint arXiv:1412.6980 , 2014. J. Lee, F. Chen, S. Dua, D. Cer, M. Shanbhogue, I. Naim, G. H. Ábrego, Z. Li, K. Chen, H. S. Vera, et al. Gemini embedding: Generaliz-able embeddings from gemini. arXiv preprint arXiv:2503.07891 , 2025. X. Liu, D. Li, T. Wen, J. Wan, G. Ling, F. Lv, D. Ou, and H. Tang. Taosearchemb: A multi-objective reinforcement learning framework for dense retrieval in taobao search. arXiv preprint arXiv:2511.13885 , 2025. Y. Liu, P. Kothari, B. Van Delft, B. Bellot-Gurlet, T. Mordan, and A. Alahi. Ttt++: When does self-supervised test-time training fail or thrive? 
+
+Advances in Neural Information Processing Sys-tems , 34:21808–21820, 2021. N. Muennighoff, N. Tazi, L. Magne, and N. Reimers. Mteb: Massive text embedding benchmark. arXiv preprint arXiv:2210.07316 ,2022. R. Nogueira and K. Cho. Passage re-ranking with bert. arXiv preprint arXiv:1901.04085 , 2019. R. G. Reddy, P. Dasigi, M. A. Sultan, A. Cohan, A. Sil, H. Ji, and H. Hajishirzi. Refit: Rele-vance feedback from a reranker during infer-ence. arXiv preprint arXiv:2305.11744 , 2023. N. Reimers and I. Gurevych. Sentence-bert: Sen-tence embeddings using siamese bert-networks. In Proceedings of the 2019 conference on empiri-cal methods in natural language processing and the 9th international joint conference on natu-ral language processing (EMNLP-IJCNLP) , pages 3982–3992, 2019. M. Shanbhogue, Z. Li, S. Zhang, G. H. Ábrego, S.-C. Huang, A. Jain, D. Salz, S. Goenka, C. Hegde, J. Ma, et al. Gemini embedding 2: A native mul-timodal embedding model from gemini. arXiv preprint arXiv:2605.27295 , 2026. C. Snell, J. Lee, K. Xu, and A. Kumar. Scaling llm test-time compute optimally can be more effective than scaling model parameters. arXiv preprint arXiv:2408.03314 , 2024. Y. Sun, X. Wang, Z. Liu, J. Miller, A. Efros, and M. Hardt. Test-time training with self-supervision for generalization under distribu-tion shifts. In International conference on ma-chine learning , pages 9229–9248. PMLR, 2020. 
+
+> 11 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+M. Sung, J. Park, J. Kang, D. Chen, and J. Lee. Optimizing test-time query representations for dense retrieval. In Findings of the Association for Computational Linguistics: ACL 2023 , pages 5731–5746, 2023. O. Uzan, A. Yehudai, E. Shnarch, A. Gera, et al. Guided query refinement: Multimodal hybrid retrieval with test-time optimization. arXiv preprint arXiv:2510.05038 , 2025. H. S. Vera, S. Dua, B. Zhang, D. Salz, R. Mullins, S. R. Panyam, S. Smoot, I. Naim, J. Zou, F. Chen, et al. Embeddinggemma: Powerful and lightweight text representations. arXiv preprint arXiv:2509.20354 , 2025. Q. Wang, H. Li, H. Xiong, W. Wang, J. Bian, Y. Lu, S. Wang, Z. Cheng, D. Dou, and D. Yin. A simple yet effective framework for active learning to rank. Machine Intelligence Research , 21(1):169– 183, 2024. L. Xiong, C. Xiong, Y. Li, K.-F. Tang, J. Liu, P. Ben-nett, J. Ahmed, and A. Overwijk. Approximate nearest neighbor negative contrastive learn-ing for dense text retrieval. arXiv preprint arXiv:2007.00808 , 2020. H. Yu, C. Xiong, and J. Callan. Improving query representations for dense retrieval with pseudo relevance feedback. In Proceedings of the 30th ACM International Conference on Information & Knowledge Management , pages 3592–3596, 2021. Y. Zhang, M. Li, D. Long, X. Zhang, H. Lin, B. Yang, P. Xie, A. Yang, D. Liu, J. Lin, et al. Qwen3 embedding: Advancing text embedding and reranking through foundation models. arXiv preprint arXiv:2506.05176 , 2025. H. Zhuang, Z. Qin, R. Jagerman, K. Hui, J. Ma, J. Lu, J. Ni, X. Wang, and M. Bendersky. Rankt5: Fine-tuning t5 for text ranking with ranking losses. arXiv preprint arXiv:2210.10634 , 2022. 
+
+> 12 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+8. Related Work 
+
+Dense retrieval and reranking. Bi-encoder retrievers embed queries and documents inde-pendently, enabling document representations to be indexed before queries arrive (Karpukhin et al., 2020; Reimers and Gurevych, 2019; Xiong et al., 2020). Cross-encoder rerankers instead score a query and document jointly, usually improving precision at the cost of one expen-sive inference per candidate pair (Nogueira and Cho, 2019). Hard-negative training improves bi-encoders, while listwise objectives improve rerankers (Xiong et al., 2020; Zhuang et al., 2022); both rely on offline parameter updates. Our focus is complementary: retaining ranking feedback after deployment while leaving both the encoder and document index fixed. 
+
+Budgeted ranking feedback and inference. 
+
+Resource constraints have been studied around retrieval, although not as persistent state in an embedding space. Active learning-to-rank se-lects which queries to annotate under a finite labeling budget (Bilgic and Bennett, 2012; Wang et al., 2024); online learning-to-rank updates a ranker from restricted top-𝑘 feedback, and coun-terfactual methods learn from logged interactions even when queries do not repeat (Chaudhuri and Tewari, 2016; Joachims et al., 2017). Neural reranking work reduces the per-pair cost of cross-encoder feedback (Hui et al., 2022), while API routing allocates expensive model calls selectively across queries (Chen et al., 2023). These lines of work motivate a workload-level feedback bud-get, but solve a different problem: they update a ranker or routing policy, or spend an expensive prediction on the current query. They do not re-tain relevance feedback as external state in the returned embedding space, compare global-wise, task-wise, and query-wise persistence, or preserve a potentially closed encoder and its existing in-dex. We study this missing budgeted test-time regime for embedding retrieval. 
+
+Pseudo-relevance feedback and query adapta-tion. Pseudo-relevance feedback traditionally uses initially retrieved documents to refine a query. In neural dense retrieval, ANCE-PRF trains a separate query encoder that consumes the query and its top-ranked documents, sharing what is learned through the encoder parame-ters while keeping the document index fixed (Yu et al., 2021). More closely related to our set-ting, TOUR directly optimizes an instance-level query representation from cross-encoder pseudo-labels (Sung et al., 2023), and ReFIT distills a reranker’s candidate scores into the test query vector before a second retrieval pass (Reddy et al., 2023). A subsequent large-scale study evaluates this query-level distillation across domains, lan-guages, modalities, update counts, and candi-date depths (Gangi Reddy et al., 2025). GQR similarly refines a test-query embedding, using scores supplied by a complementary retriever in multimodal retrieval (Uzan et al., 2025). These methods establish that external scores can im-prove a query representation at inference time, and some characterize how much compute to spend on that query, but their optimized state remains query-private. We instead study whether output-space feedback can persist across queries, at which scope it should persist, and how that decision changes under a global feedback budget. 
+
+Test-time training and inference-time com-pute. Test-time training adapts a deployed model using unlabeled test inputs, commonly by updating weights with a self-supervised objective (Liu et al., 2021; Sun et al., 2020). A parallel line of work allocates additional inference-time computation to individual language-model inputs (Snell et al., 2024). Our setting differs in both the adaptation signal and the state being retained: the scarce resource is an external relevance judg-ment, and the adapted state is an additive vec-tor outside the frozen embedding model. This makes test-time adaptation possible even with a closed-source model, provided that it returns embeddings and the user controls downstream vector search. 
+
+> 13 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+9. Ranking Equivalence of Vector Addi-tion 
+
+We formalize the ranking equivalence stated in the method section. The result concerns the exact score-induced ordering; approximate search and candidate truncation are discussed afterward. 
+
+Proposition 2 (Additive-vector ranking equiva-lence) . Let 𝒙 , 𝒗 ∈ ℝ𝑝 , let 𝛼 ∈ ℝ, and assume 
+
+𝒙 + 𝛼 𝒗 ≠ 0. Let every document be represented by a unit-normalized vector 𝒛 𝑑 ∈ ℝ𝑝 , and score documents by inner product with the normalized corrected query 
+
+e𝒙 = unit (𝒙 + 𝛼 𝒗 ) . (8) 
+
+Define the additive score 
+
+𝑆 add (𝑑 ) = 𝒙 ⊤ 𝒛 𝑑 + 𝛼 𝒗 ⊤ 𝒛 𝑑 . (9) 
+
+Then, for any two documents 𝑑 𝑎 and 𝑑 𝑏 ,
+
+e𝒙 ⊤ 𝒛 𝑑 𝑎 ≥ e𝒙 ⊤ 𝒛 𝑑 𝑏 ⇐⇒ 𝑆 add (𝑑 𝑎 ) ≥ 𝑆 add (𝑑 𝑏 ).
+
+(10) 
+
+Consequently, the two scoring rules induce the same pairwise order and the same ties. Proof. Define 𝑐 = ∥𝒙 + 𝛼 𝒗 ∥. The nonzero-query assumption gives 𝑐 > 0. The score difference between any two documents is 
+
+e𝒙 ⊤ 𝒛 𝑑 𝑎 − e𝒙 ⊤ 𝒛 𝑑 𝑏 = (𝒙 + 𝛼 𝒗 )⊤ (𝒛 𝑑 𝑎 − 𝒛 𝑑 𝑏 )
+
+𝑐 (11) 
+
+= 𝑆 add (𝑑 𝑎 ) − 𝑆 add (𝑑 𝑏 )
+
+𝑐 . (12) Multiplication by the positive constant 1 /𝑐 pre-serves whether this difference is positive, zero, or negative. This proves Equation (10) and therefore preserves every pairwise ordering and tie. □
+
+Scope and implementation limits. The propo-sition establishes equality of rankings, not equal-ity of absolute scores: normalization rescales ev-ery score for a fixed query by 1 /𝑐 . For a shared scope 𝑔 , the term 𝑏 𝑔 (𝑑 ) = 𝒗 ⊤ 
+
+> 𝑔
+
+𝒛 𝑑 is independent of the query and may be cached as a per-document bias. However, adding this bias only to documents in the original top-𝑘 list need not recover the exact global top-𝑘 , because 𝒗 𝑔 can promote a document that the base query did not retrieve. To target the global corrected ranking, one should instead issue a new search over the existing inner-product or cosine ANN index using e𝒙 𝑞 as the query vector. The indexed document vectors, vector dimension-ality, and similarity function remain unchanged, although an approximate ANN algorithm may naturally return an approximation to the exact score-induced ranking. 
+
+10. Scope-Balanced Query Weights 
+
+We now specify the weights in Equation (4). Let 
+
+𝑡 (𝑞 ) denote the task of query 𝑞 , and define the feedback queries from task 𝑡 within scope 𝑔 as 
+
+F𝑔,𝑡 = {𝑞 ∈ F 𝑔 | 𝑡 (𝑞 ) = 𝑡 }. (13) Let T + 
+
+> 𝑔
+
+= {𝑡 : |F 𝑔,𝑡 | > 0} be the tasks that con-tribute at least one feedback query to state 𝑔 . We assign 
+
+𝑤 𝑞 = 1
+
+|T + 
+
+> 𝑔
+
+| |F 𝑔,𝑡 (𝑞 ) | . (14) These weights are normalized because ∑︁ 
+
+> 𝑞 ∈ F 𝑔
+
+𝑤 𝑞 = 1
+
+|T + 
+
+> 𝑔
+
+|∑︁ 𝑡 ∈ T +
+
+> 𝑔
+
+1
+
+|F 𝑔,𝑡 |∑︁ 𝑞 ∈ F 𝑔,𝑡 
+
+1 = 1. (15) Substituting Equation (14) into Equation (4) yields the equivalent nested average 
+
+L𝑔 (𝒗 ) = 1
+
+|T + 
+
+> 𝑔
+
+|∑︁ 𝑡 ∈ T +
+
+> 𝑔
+
+1
+
+|F 𝑔,𝑡 |∑︁ 𝑞 ∈ F 𝑔,𝑡 
+
+KL 
+
+
+
+𝑝 T 
+
+> 𝑞
+
+𝑝 S 
+
+> 𝑞
+
+(𝒗 )
+
+
+
++𝜆 ∥𝒗 ∥2 .
+
+(16) For a global-wise state, Equation (16) first aver-ages within each active task and then across tasks, matching evaluation that averages tasks equally and preventing a large task from dominating 𝒗 𝑔 .For a task-wise state, |T + 
+
+> 𝑔
+
+| = 1, so 𝑤 𝑞 = 1/|F 𝑔 |.For a query-wise state, |T + 
+
+> 𝑔
+
+| = |F 𝑔 | = 1, so 𝑤 𝑞 = 1. Finally, when every active task contributes the same number 𝑛 of queries, |F 𝑔 | = |T + 
+
+> 𝑔
+
+|𝑛 and Equa-tion (14) also reduces to the flat query weight 
+
+𝑤 𝑞 = 1/|F 𝑔 |. The distinction matters only when tasks contribute different numbers of feedback queries. 
+
+> 14 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+11. Bayesian Interpretation of Deploy-ment Shrinkage 
+
+We generalize Proposition 1 to unequal prior and per-query noise scales. This surrogate formal-izes the uncertainty of a vector estimate; it is not an additional assumption used to optimize Equation (4). 
+
+Proposition 3 (Bayesian vector shrinkage) . Let 
+
+𝒖 𝑔 ∈ ℝ𝑝 be a latent transferable vector and let 𝚺 be positive definite. Suppose 
+
+𝒖 𝑔 ∼ N ( 0, 𝜎 20𝚺 ), 𝒗 ∗ 
+
+> 𝑔
+
+| 𝒖 𝑔 , 𝑛 𝑔 ∼ N 
+
+
+
+𝒖 𝑔 , 𝜎 2
+
+𝑛 𝑔 
+
+𝚺 
+
+
+
+,
+
+(17) 
+
+for 𝑛 𝑔 ≥ 1. Then the posterior mean is 
+
+𝔼 [𝒖 𝑔 | 𝒗 ∗
+
+> 𝑔
+
+, 𝑛 𝑔 ] = 𝑛 𝑔 
+
+𝑛 𝑔 + 𝜅 𝒗 ∗
+
+> 𝑔
+
+, 𝜅 = 𝜎 2
+
+𝜎 20
+
+. (18) 
+
+In particular, equal prior and per-query noise scales give 𝜅 = 1 and recover Equation (5) .Proof. Gaussian conjugacy gives posterior preci-sion 
+
+1
+
+𝜎 20
+
++ 𝑛 𝑔 
+
+𝜎 2
+
+!
+
+𝚺 −1. (19) Multiplying its inverse by the likelihood precision times 𝒗 ∗ 
+
+> 𝑔
+
+yields 
+
+𝔼 [𝒖 𝑔 | 𝒗 ∗
+
+> 𝑔
+
+, 𝑛 𝑔 ] = 1
+
+𝜎 20
+
++ 𝑛 𝑔 
+
+𝜎 2
+
+! −1 𝑛 𝑔 
+
+𝜎 2 𝒗 ∗ 
+
+> 𝑔
+
+(20) 
+
+= 𝑛 𝑔 𝜎 20
+
+𝜎 2 + 𝑛 𝑔 𝜎 20
+
+𝒗 ∗ 
+
+> 𝑔
+
+= 𝑛 𝑔 
+
+𝑛 𝑔 + 𝜎 2/𝜎 20
+
+𝒗 ∗ 
+
+> 𝑔
+
+.
+
+(21) 
+
+□
+
+The 1 /𝑛 𝑔 variance in Equation (17) treats each feedback query as one independent unit of evi-dence about transfer. It therefore explains why 
+
+𝑛 𝑔 counts queries rather than the number of doc-uments scored within a query. Giving the zero-centered prior the precision of one feedback query sets 𝜅 = 1—equivalently, it adds one zero-valued pseudo-query—and produces the parameter-free rule in Equation (5). Defining 𝛼 𝑔 = 0 at 𝑛 𝑔 = 0 re-covers the no-adaptation state. The shared covari-ance shape in Equation (17) is what makes the posterior shrinkage scalar rather than dimension-specific. 
+
+12. Additional Experimental Details 
+
+Embedding and retrieval protocol. All query and document outputs are ℓ2 normalized, and retrieval uses inner product, equivalently cosine similarity. We initialize every 𝒗 𝑔 at zero. After learning, evaluation issues a new search with the adapted query against the complete, unchanged document index; it is not restricted to reordering the rewarded candidates. 
+
+Retrieval tasks. The 15-task suite consists of ArguAna, CQADupstackGamingRetrieval, CQADupstackUnixRetrieval, ClimateFEVERHard-Negatives, DBPediaHardNegatives, FEVERHard-Negatives, FiQA2018, HotpotQAHardNegatives, MSMARCOHardNegatives, NQHardNegatives, QuoraRetrievalHardNegatives, SCIDOCS, TRECCOVID, TopiOCQAHardNegatives, and Touche2020Retrieval.v3. We use the frozen test query identifiers and task revisions recorded in the experiment manifest. Across these tasks, the evaluation population contains 𝑁 = 12 ,263 queries (43–1 ,595 per task). The task-specific corpora contain 1 ,661 ,208 entries in aggregate and range from 8 ,674 to 303 ,732 entries. 
+
+Reward-model scoring interfaces. Every re-ward model scores the same frozen query– document pairs independently. All models receive the same generic retrieval instruction, “Given a web search query, retrieve relevant passages that answer the query,”. For Qwen3-Reranker-4B, the system message asks whether the document meets the require-ments of the query and instruction and restricts the response to yes or no . Following the model’s native reranking template, we append an empty thinking block and take the raw next-token logits without sampling text. Its reward is the normal-ized Yes probability in Equation (7). Inputs are truncated to the model’s 8,192-token limit. The four general-purpose LLMs receive the fol-lowing shared relevance rubric: 5, perfectly rel-
+
+> 15 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+Table 6 | Evaluation-set size for each MTEB re-trieval task. “HN” abbreviates the HardNegatives revision. The final row is the pooled count; re-ported performance nevertheless averages the 15 tasks equally.                                   
+
+> Task Queries Corpus entries ArguAna 1,406 8,674 CQA Gaming 1,595 45,301 CQA Unix 1,072 47,382 ClimateFEVER-HN 1,000 47,416 DBPedia-HN 400 90,070 FEVER-HN 1,000 163,698 FiQA2018 648 57,638 HotpotQA-HN 1,000 225,621 MSMARCO-HN 43 8,812 NQ-HN 1,000 198,779 Quora-HN 1,000 177,163 SCIDOCS 1,000 25,657 TRECCOVID 50 171,332 TopiOCQA-HN 1,000 89,933 Touche2020 v3 49 303,732 Total 12,263 1,661,208
+
+evant and directly and completely satisfies the query; 4, highly relevant but incomplete in de-tail or coverage; 3, partially relevant, providing a partial or indirect answer that requires infer-ence; 2, marginally relevant and on topic but not answering the query; 1, barely related through background or terminology; and 0, unrelated. We convert the decoded final grade to 
+
+𝑟 (𝑞, 𝑑 ) = 𝑠 (𝑞, 𝑑 )
+
+5 , 𝑠 (𝑞, 𝑑 ) ∈ { 0, 1, . . . , 5}.
+
+(22) Qwen3-8B-Instruct and Qwen3-VL-30B-A3B-Instruct run with model thinking disabled and are instructed to reason briefly before ending with exactly Score: X. We decode that ter-minal digit from one sample generated with the official non-thinking configuration (tempera-ture 0 .7, top-𝑝 0.8, top-𝑘 20), a 512-token limit, and seed 1234. Gemini 3.1 Pro is queried with 
+
+thinkingLevel=low ; its internal thought con-tent is discarded and only the decoded final digit is retained. Because Table 4 uses each reward model only to order its own scored candidate set, dividing the grade by five does not change the reported ranking. 
+
+Candidate and budget construction. The allo-cation rule is an evaluation protocol, not a com-ponent of TTT-Embed; the method accepts any externally selected reward set. We use a task-balanced water-filling schedule. Within task 𝑡 ,queries follow a permutation generated with seed 1000 + 𝑡 , where 𝑡 is the task’s position in the fixed 15-task list. Water filling cycles through the active tasks and adds one query from each task in turn; exhausted tasks drop out. Within a query, candidates follow its own base-retrieval or-der. This produces nested prefixes, so increasing a budget never removes a previously rewarded query–document pair. The main depth-10 breadth grid uses 
+
+𝑚 ∈ { 1, 2, 4, 8, 15 , 30 , 60 , 120 ,
+
+240 , 480 , 960 , 1920 , 3840 , 7680 , 12263 },
+
+(23) where 𝑚 is the total number of rewarded queries and each contributes its first ten candidates, hence 𝐵 = 10 𝑚 and 𝑏 = 10 𝑚 /𝑁 . After all queries reach depth 10, the curve adds full-coverage depths 30 and 100. Consequently, all scopes and baselines see exactly the same prefix of query– document pairs at a given budget. Every selected candidate has a real reward-model score; no miss-ing value is masked or imputed. For the confidence factor, 𝑛 𝑔 is the number of distinct rewarded queries used to learn a vector: 
+
+𝑛 𝑔 = 𝑚 for the global vector, the task-specific rewarded-query count for each task vector, and 
+
+𝑛 𝑔 = 1 for every query-wise vector. A scope with no rewarded query has no learned vector and applies zero correction. For direct reranking, re-warded candidates are stably sorted by reward within their original slots; unrewarded slots and queries remain in base-retrieval order. The main curves and objective ablation evaluate the fixed population of all 𝑁 = 12 ,263 queries. The held-out transfer experiments instead use disjoint re-ward and evaluation queries. For readability, Table 1 denotes the low-budget 
+
+𝑚 = 15, depth-10 operating point as 𝑏 = 10 −2;its exact normalized budget on the frozen grid is 
+
+𝑏 = (15 × 10 )/ 12 ,263 = 0.0122. 
+
+> 16 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization
+
+Area under the budget curve. For a matched gain curve Δ(𝑏 ), we define AUBC Δ [𝑏 min , 𝑏 max ] =
+
+∫ log 𝑏 max   
+
+> log 𝑏 min
+
+Δ(𝑒 𝑢 ) d𝑢 
+
+log 𝑏 max − log 𝑏 min 
+
+. (24) We use trapezoidal integration on the frozen log-budget grid. The zero-budget base point is ex-cluded because log 0 is undefined. AUBC@100 uses 𝑏 min = 10 /𝑁 and 𝑏 max = 100; AUBC@8 uses the corresponding common grid up to 𝑏 = 8. 
+
+13. Full-Curve Budget Results 
+
+Table 7 reports the model-level summary under-lying Figure 2. Although query-private optimiza-tion attains the best high-budget endpoint, task-wise sharing is the most robust choice when per-formance is integrated over the full log-budget range. Table 7 | Gain AUBC@100 ( ×100) for the com-plete budget curves. Higher is better. Each value integrates the matched ΔnDCG@10 curve uni-formly in log budget.                         
+
+> Embedding model Global-wise Task-wise Query-wise Direct rerank Qwen3-Embedding-0.6B 3.65 4.17 2.98 2.28 Qwen3-Embedding-4B 3.85 4.10 1.70 1.18 EmbeddingGemma-300M 3.84 5.45 3.42 2.70 Gemini Embedding 1 1.53 3.09 2.01 1.34 Gemini Embedding 2 0.48 1.69 1.15 0.71
+
+14. Full Transfer Curves 15. Same-Budget Specialization Recov-ery Results 
+
+Table 8 separates the specialization tradeoff from the subsequent recovery experiment. The recov-ery states in panel (b) are learned and activated only on the 15 MTEB tasks; the SKILLRET score in panel (a) therefore remains the specialized model’s raw retrieval score. If a state were learned on SKILLRET alone, global-wise and task-wise sharing would coincide because SKILLRET con-tains a single retrieval task. They differ in panel (b) because global-wise recovery pools feedback across all 15 MTEB tasks, whereas task-wise re-covery learns one state per MTEB task. Table 8 | Complete matched-budget recovery comparison. Scores are nDCG@10 ×100. Panel (a) evaluates embedding-only retrieval before test-time feedback. Panel (b) freezes SKILLRET-SFT-0.6B and gives every method the same 𝑏 = 10 Reranker-4B feedback pairs; gains are relative to its 45.42 MTEB score. 
+
+(a) Specialization tradeoff 
+
+Model SKILLRET MTEB Average Qwen3-Embedding-0.6B 52.24 49.90 SKILLRET-SFT-0.6B 66.21 45.42 
+
+(b) MTEB recovery on SKILLRET-SFT-0.6B 
+
+Deployment state MTEB Average Gain Global-wise TTT-Embed 50.38 +4.97 Task-wise TTT-Embed 53.42 +8.00 Query-wise TTT-Embed 53.83 +8.42 Direct rerank 51.58 +6.16 
+
+16. Connections Between Distillation, Reverse KL, and Softmax-GRPO 
+
+We analyze the data-fitting terms below; all three reported objectives add the same ridge penalty on 𝒗 . For one query, omit the query index and let 
+
+𝑝 𝑖 = exp (𝑟 𝑖 /𝜏 T)
+
+Í𝐾 𝑗 =1 exp (𝑟 𝑗 /𝜏 T) , 𝜋 𝑖 = exp (ℓ𝑖 )
+
+Í𝐾 𝑗 =1 exp (ℓ𝑗 )
+
+(25) denote the reward-model teacher distribution and the policy induced by the corrected query embed-ding, respectively. Here ℓ𝑖 includes the student-side temperature, and 𝐾 = 10 in the objective ablation. 
+
+Knowledge distillation. The objective used by TTT-Embed is 
+
+LKD = KL ( 𝑝 || 𝜋 ) (26) 
+
+= −
+
+> 𝐾
+
+∑︁ 
+
+> 𝑖 =1
+
+𝑝 𝑖 log 𝜋 𝑖 − 𝐻 ( 𝑝 ). (27) Because the teacher entropy 𝐻 ( 𝑝 ) is constant, this is precisely soft-target knowledge distillation (Hinton et al., 2015), instantiated listwise over retrieved documents as in listwise learning to rank (Cao et al., 2007). Its gradient with respect to each student logit is 
+
+𝜕 LKD 
+
+𝜕ℓ 𝑖 
+
+= 𝜋 𝑖 − 𝑝 𝑖 . (28) 
+
+> 17
+
+Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization 15 100 1000 10k                      
+
+> 2
+> 02468nDCG@10 ×100
+> on queries without feedback
+> Qwen3-Embedding-0.6B
+> task-wise untouched queries
+> global-wise untouched queries
+> global-wise (14 tasks) held-out task (LOTO)
+> 15 100 1000 10k
+> Qwen3-Embedding-4B
+> 15 100 1000 10k
+> queries given feedback m(log scale)
+> EmbeddingGemma-300M
+> 15 100 1000 10k
+> Gemini Embedding 1
+> 15 100 1000 10k
+> Gemini Embedding 2 Transfer of shared feedback: untouched queries (k=10, 0.8/task, paired base on shrunken UB) and held-out tasks (LOTO Average) -- Reranker-4B teacher, (n) = n/( n+1)
+
+Figure 5 | Transfer of shared feedback for each embedding model. Red and blue curves evaluate task-wise and global-wise states only on held-out queries, using a paired raw-query baseline on the same shrinking set. Purple curves learn a global-wise 𝒗 𝑔 from 14 tasks and evaluate it on the held-out fifteenth task. All curves use Reranker-4B feedback and the fixed dose 𝛼 (𝑛 ) = 𝑛 /( 𝑛 + 1).Thus every scored document contributes a de-terministic, bounded correction, and the teacher distribution is the exact target whenever it is rep-resentable by the 𝒗 parameterization. 
+
+Reverse KL as entropy-regularized reward maximization. Substituting 𝑝 𝑖 = exp (𝑟 𝑖 /𝜏 T)/ 𝑍 T
+
+gives 
+
+LRKL = KL (𝜋 || 𝑝 ) (29) 
+
+= −𝐻 (𝜋 ) − 1
+
+𝜏 T
+
+𝔼 𝑖 ∼𝜋 [𝑟 𝑖 ] + log 𝑍 T. (30) Minimizing reverse KL is therefore exactly equiva-lent to maximizing 𝔼 𝜋 [𝑟 𝑖 ] + 𝜏 T 𝐻 (𝜋 ). In this sense, reverse KL is closer to entropy-regularized policy optimization than to teacher-weighted distilla-tion. Its logit gradient, 
+
+𝜕 LRKL 
+
+𝜕ℓ 𝑖 
+
+= 𝜋 𝑖 
+
+
+
+log 𝜋 𝑖 
+
+𝑝 𝑖 
+
+− KL (𝜋 || 𝑝 )
+
+
+
+, (31) weights discrepancies by the student’s current probability. It can therefore concentrate updates on modes already favored by the student, whereas Equation (28) directly corrects every teacher– student probability mismatch. 
+
+Connection to Softmax-GRPO. Our budget-controlled adaptation of Retrieval-GRPO (Liu et al., 2025) treats the 𝐾 documents as actions. Let 𝜋 0
+
+𝑖 be the policy induced by the unmodified query, define 
+
+𝐴 𝑖 = 𝑟 𝑖 − 𝑟 𝜎 𝑟 + 𝛿 , 𝜌 𝑖 = 𝜋 𝑖 
+
+𝜋 0
+
+𝑖 
+
+, (32) and note that Í𝑖 𝐴 𝑖 = 0. The clipped document-level objective is 
+
+LSG = − 1
+
+𝐾 
+
+𝐾 ∑︁ 
+
+𝑖 =1
+
+min {𝜌 𝑖 𝐴 𝑖 , clip (𝜌 𝑖 , 1 − 𝜖, 1 + 𝜖 ) 𝐴 𝑖 } .
+
+(33) Unlike offline Retrieval-GRPO, we freeze the en-coder and candidate set, optimize only 𝒗 , and use the native query policy as the fixed reference. At initialization, 𝜋 = 𝜋 0, the ratio is one and clipping is inactive. Differentiating Equation (33) yields 
+
+𝜕 LSG 
+
+𝜕ℓ 𝑖 𝜋 =𝜋 0
+
+= − 𝐴 𝑖 
+
+𝐾 . (34) This exposes a local connection to knowledge dis-tillation. If the reference policy is approximately uniform and the reward spread is small relative to 𝜏 T, then 
+
+𝑝 𝑖 = 1
+
+𝐾 + 𝑟 𝑖 − 𝑟 𝐾𝜏 T
+
++ 𝑂 ∥𝑟 − 𝑟 1∥2
+
+𝜏 2T
+
+!
+
+. (35) Equations (28) and (34) are then proportional to the same centered-reward direction. Away from this local regime, however, knowledge distillation retains the calibrated teacher probabilities and has 𝑝 as its explicit target. Softmax-GRPO stan-dardizes away reward magnitude and performs a clipped step relative to 𝜋 0; it need not converge to 𝑝 . This distinction explains how both objec-tives can learn useful directions while knowledge distillation remains more consistent when one direction is pooled across queries. 
+
+18 Test-Time Optimization of Query Embeddings with Ranking Aware Reward Maximization 
+
+17. Full Optimization-Objective Abla-tion 
+
+Table 9 reports the average across five models at all four tested feedback breadths. Knowledge distillation has the strongest global-wise average at every budget and the strongest task-wise av-erage at all three points with 𝑏 ≥ 0.196; reverse KL is slightly better query-wise in that regime. At the underlying model level, knowledge dis-tillation wins 40 of 60 comparisons and all 15 corresponding task-wise cells. Reverse KL wins 16 cells and Softmax-GRPO wins four. All can-didates in this ablation have real reward-model scores; this complete support avoids conflating an objective’s behavior with an arbitrary score assigned to missing candidates. Table 9 | Complete objective ablation averaged over five embedding models ( ΔnDCG@10 × 100). Each selected query has ten judged candidates. With 𝑚 feedback queries among 𝑁 = 12 ,263 total queries, the normalized budget is 𝑏 = 10 𝑚 /𝑁 . 
+
+> 𝑏
+
+Objective Global-wise Task-wise Query-wise 0.012 Knowledge Distillation 1.24 0.93 0.006 
+
+Softmax-GRPO 0.78 0.28 0.005 Reverse KL −2.47 1.13 0.002 0.196 Knowledge Distillation 3.27 3.40 0.64 Softmax-GRPO 1.76 1.84 0.41 Reverse KL 2.10 −0.92 0.68 
+
+3.13 Knowledge Distillation 3.99 6.07 2.92 Softmax-GRPO 2.07 3.03 1.94 Reverse KL 3.71 4.17 2.99 
+
+10 Knowledge Distillation 4.00 6.38 5.26 Softmax-GRPO 2.07 3.13 3.27 Reverse KL 3.72 4.66 5.30 
+
+17.1. Optimization Details 
+
+We zero-initialize each 𝒗 𝑔 and optimize Equa-tion (4) for 300 full-batch Adam steps (Kingma and Ba, 2014), using learning rate 0 .01, 𝜆 = 0.3, 
+
+𝜏 T = 0.02, and 𝜏 S = 0.05. These settings are fixed across embedding models, tasks, scopes, and budgets. Reverse KL uses the same teacher and student temperatures. Softmax-GRPO uses policy temperature 0 .05, the policy at 𝒗 = 0 as its fixed reference, ratio clipping 𝜖 = 0.2, and an advantage-standard-deviation floor of 10 −4. All objectives use the same rewarded candidates and the same 300-step optimizer budget.
