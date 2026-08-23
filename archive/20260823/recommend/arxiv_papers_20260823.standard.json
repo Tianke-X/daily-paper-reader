@@ -1,0 +1,973 @@
+{
+  "mode": "standard",
+  "generated_at": "2026-08-23T19:59:45.252620+00:00",
+  "stats": {
+    "mode": "standard",
+    "tag_count": 3,
+    "deep_divecandidates": 28,
+    "deep_cap": 8,
+    "deep_selected": 8,
+    "quick_candidates": 50,
+    "quick_skim_target": 13,
+    "quick_selected": 13
+  },
+  "deep_dive": [
+    {
+      "id": "2608.15008v1",
+      "source": "arxiv",
+      "title": "Harness the Memory: A Holistic Evaluation of Memory Substrates in Memory Agents",
+      "abstract": "Memory is becoming core infrastructure for long-horizon LLM agents, yet existing evaluations offer limited guidance on which memory substrate, namely the underlying medium in which memory is represented and stored, should be used under different operating regimes. We present a controlled harness evaluation of memory substrates for memory-augmented agents, covering dense and sparse indices, text records, structural stores, hierarchical stores, refinement-based memories, parametric updates, and activation-compatible context mechanisms. Across three backbone models and four benchmark suites spanning user-centric question answering and agent-centric decision-making, we instrument 26 performance and efficiency metrics under a unified harness. Our results show that no single substrate consistently dominates: broad retrieval benefits long-context factual QA, while excessive retrieval can harm sequential decision-making by shifting attention away from action-critical context. Scalability introduces a further routing axis, as substrates that perform well at moderate history lengths can become costly or brittle at longer horizons. These findings motivate substrate routing as a necessary component of adaptive agent memory systems and provide empirical guidance for designing efficient, reliable, and regime-aware long-term memory for LLM agents. Code will be made available upon acceptance.",
+      "authors": [
+        "Wei-Chieh Huang",
+        "Weizhi Zhang",
+        "Yuchen Wu",
+        "Yankai Chen",
+        "Eric Hanchen Jiang",
+        "Wooseong Yang",
+        "Yiwei Yang",
+        "Henry Peng Zou",
+        "Hanrong Zhang",
+        "Ying Nian Wu",
+        "Haolun Wu",
+        "Kai-Wei Chang",
+        "Philip S. Yu",
+        "Xue Liu",
+        "Aylin Caliskan"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-15T03:29:48+00:00",
+      "link": "https://arxiv.org/pdf/2608.15008v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "holistic evaluation of memory substrates for memory-augmented agents, directly on memory-augmented language model techniques",
+      "llm_evidence_cn": "记忆增强智能体记忆基板的全方位评估，直接对应记忆增强语言模型技术",
+      "llm_evidence": "记忆增强智能体记忆基板的全方位评估，直接对应记忆增强语言模型技术",
+      "canonical_evidence": "记忆增强智能体记忆基板的全方位评估，直接对应记忆增强语言模型技术",
+      "llm_tldr_en": "A controlled harness evaluates 10 memory substrates for memory agents across 3 models and 4 benchmarks, with 26 metrics, guiding memory choice for long-horizon tasks.",
+      "llm_tldr_cn": "论文对记忆智能体中的记忆基板进行受控评估，覆盖稠密/稀疏索引、文本记录、结构化/层级存储、精炼记忆、参数更新与上下文兼容机制等。基于三个骨干模型和四套基准，统一测量26项性能与效率指标，为不同运行场景选择合适记忆介质提供实证指导。",
+      "llm_tldr": "论文对记忆智能体中的记忆基板进行受控评估，覆盖稠密/稀疏索引、文本记录、结构化/层级存储、精炼记忆、参数更新与上下文兼容机制等。基于三个骨干模型和四套基准，统一测量26项性能与效率指标，为不同运行场景选择合适记忆介质提供实证指导。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "memory augmented language model techniques",
+      "matched_requirement_id": "req-20",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.16114v1",
+      "source": "arxiv",
+      "title": "HyperSkill: Self-Evolving LLM Agents via Hypergraph-Structured Skill Memory",
+      "abstract": "As agentic tasks grow in complexity, LLM agents increasingly rely on experiential memory to reuse procedural knowledge across tasks. Effective memory design must jointly address what to store, how memory is structured and retrieved, and how memory evolves. Existing systems tackle each only partially: they store trajectories, insights, or workflows as isolated entries, discarding compositional relationships among subtasks and reusable skills; retrieve by flat embedding similarity that ignores relational signals; and maintain memory without leveraging its relational structure. We propose HyperSkill, a hypergraph-based memory framework that jointly improves all three. HyperSkill represents memory as a hypergraph with two node types, subtask steps and reusable skills, where each hyperedge links the subtasks and skills from a single trajectory. Dual-path retrieval queries both subtask and trajectory levels, ranking skills by co-occurrence across retrieved trajectories. Periodic structure-informed maintenance prunes low-utility nodes and merges redundant skills via quality-weighted propagation. Across xBench, GAIA, and WebWalkerQA with GPT-4o and Qwen3-30B-A3B, HyperSkill outperforms ten memory baselines, yielding gains of up to +11.51 on GAIA and +11.18 on WebWalkerQA.",
+      "authors": [
+        "Ruiyao Xu",
+        "Tiankai Yang",
+        "Wei-Chieh Huang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-17T05:10:27+00:00",
+      "link": "https://arxiv.org/pdf/2608.16114v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "hypergraph-structured skill memory for self-evolving LLM agents, directly relevant to agent memory for reasoning improvement",
+      "llm_evidence_cn": "面向自进化LLM智能体的超图技能记忆，直接相关于用智能体记忆提升推理",
+      "llm_evidence": "面向自进化LLM智能体的超图技能记忆，直接相关于用智能体记忆提升推理",
+      "canonical_evidence": "面向自进化LLM智能体的超图技能记忆，直接相关于用智能体记忆提升推理",
+      "llm_tldr_en": "HyperSkill stores agent memory as a hypergraph of subtask steps and skills, with relational retrieval and self-evolution, improving procedural knowledge reuse across tasks.",
+      "llm_tldr_cn": "论文针对智能体经验记忆孤立存储、忽视组合关系的问题，提出HyperSkill超图记忆框架。它将子任务步骤和技能建模为超图节点，利用关系检索和自进化机制共同优化存储、检索与演化。该框架改善了跨任务程序性知识的复用，提升智能体任务表现。",
+      "llm_tldr": "论文针对智能体经验记忆孤立存储、忽视组合关系的问题，提出HyperSkill超图记忆框架。它将子任务步骤和技能建模为超图节点，利用关系检索和自进化机制共同优化存储、检索与演化。该框架改善了跨任务程序性知识的复用，提升智能体任务表现。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.16515v1",
+      "source": "arxiv",
+      "title": "When Context Misleads: Intent-Guided Decoding for Robust Retrieval-Augmented Generation",
+      "abstract": "Retrieval-augmented generation (RAG) improves large language models by grounding generation in external evidence, but it also introduces a source trust problem: retrieved context may be useful, irrelevant, or even misleading. Existing RAG systems often apply a fixed trust policy toward retrieved evidence, which can either over-trust incorrect context or underuse context when the user explicitly asks for context-following behavior. Therefore, we propose Intent-Guided Decoding (IGD), a framework that arbitrates between retrieved context and parametric memory according to user intent. IGD uses answer-level filtering and token-level correction to steer the final decoding trajectory between retrieved context and parametric memory. We evaluate IGD on three faithful QA benchmarks and three factual-conflict benchmarks across five LLMs, IGD substantially improves factual recovery, achieving gains of up to 65.4 percentage points on factual-conflict benchmarks over Direct RAG, while preserving or improving strict context-following behavior, this findings highlight the importance of balancing factuality and faithfulness in RAG.",
+      "authors": [
+        "Haolin Jin",
+        "Pengyue Yang",
+        "Huaming Chen"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI"
+      ],
+      "published": "2026-08-17T12:56:43+00:00",
+      "link": "https://arxiv.org/pdf/2608.16515v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 9.0,
+      "llm_evidence_en": "RAG with parametric memory arbitration via intent-guided decoding",
+      "llm_evidence_cn": "通过意图引导解码在检索上下文与参数记忆间仲裁的RAG",
+      "llm_evidence": "通过意图引导解码在检索上下文与参数记忆间仲裁的RAG",
+      "canonical_evidence": "通过意图引导解码在检索上下文与参数记忆间仲裁的RAG",
+      "llm_tldr_en": "Proposes Intent-Guided Decoding (IGD) to arbitrate between retrieved context and parametric memory for robust RAG, filtering and correcting tokens according to user intent.",
+      "llm_tldr_cn": "针对检索增强生成中上下文可能误导模型的问题，本文提出意图引导解码（IGD），根据用户意图在检索上下文与参数记忆之间进行仲裁，并通过答案级过滤和词元级修正来引导解码轨迹。该方法缓解了固定信任策略带来的过度信任错误上下文或忽略有用上下文的问题。实验表明IGD能够提升RAG系统在多样化检索质量下的鲁棒性。",
+      "llm_tldr": "针对检索增强生成中上下文可能误导模型的问题，本文提出意图引导解码（IGD），根据用户意图在检索上下文与参数记忆之间进行仲裁，并通过答案级过滤和词元级修正来引导解码轨迹。该方法缓解了固定信任策略带来的过度信任错误上下文或忽略有用上下文的问题。实验表明IGD能够提升RAG系统在多样化检索质量下的鲁棒性。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "retrieval augmented generation with memory",
+      "matched_requirement_id": "req-22",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.15962v1",
+      "source": "arxiv",
+      "title": "SEER: Long-Context Reasoning via Selective Visual-Text Compression",
+      "abstract": "Long-context reasoning remains computationally expensive for large language models due to the quadratic complexity of attention over text tokens. Visual-text compression offers a promising alternative by rendering text into images and processing them with vision-language models, often reducing token usage. However, existing approaches apply uniform compression regardless of query relevance, potentially sacrificing precision where detailed extraction is required. We present SEER, a framework that learns to select query-relevant images through visual scanning and retrieve textual content only where needed, combining the efficiency of visual compression with the precision of text-based reasoning. Through supervised fine-tuning on tool-interaction trajectories, SEER learns adaptive tool invocation for selection and retrieval. Experiments on long-context benchmarks show that SEER improves extraction precision through selective text retrieval while retaining average prompt-token savings relative to full-text baselines. On LongBench, SEER achieves 51.11% average accuracy, outperforming the visual-text baseline Glyph-9B by 2.33 points and Qwen3-8B by 3.49 points. Code can be accessed at https://github.com/jiaweixu98/SEER",
+      "authors": [
+        "Jiawei Xu",
+        "Zhilin Zhai",
+        "Jinrui Fang",
+        "Ruohan Xu",
+        "Mingfei Lu",
+        "Yi Zhang",
+        "Guanchu Wang",
+        "Tianlong Chen",
+        "Ying Ding"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.CV"
+      ],
+      "published": "2026-08-16T23:30:41+00:00",
+      "link": "https://arxiv.org/pdf/2608.15962v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "long-context reasoning with selective visual-text compression",
+      "llm_evidence_cn": "通过选择性视觉文本压缩实现长上下文推理",
+      "llm_evidence": "通过选择性视觉文本压缩实现长上下文推理",
+      "canonical_evidence": "通过选择性视觉文本压缩实现长上下文推理",
+      "llm_tldr_en": "Presents SEER, a framework for long-context reasoning that selects query-relevant images and retrieves text selectively, balancing visual compression efficiency with reasoning precision.",
+      "llm_tldr_cn": "长上下文推理因注意力二次复杂度而昂贵，视觉文本压缩可减少token但通常无差别压缩。SEER通过视觉扫描选择与查询相关的图像，并仅在需要处检索文本，兼顾压缩效率和推理精度。在有监督微调的工具交互轨迹上进行训练后，长上下文推理任务效率提升且保持准确性。这为长上下文推理提供了查询相关的选择性压缩思路，也为文档检索生成中的长文档处理带来实用手段。",
+      "llm_tldr": "长上下文推理因注意力二次复杂度而昂贵，视觉文本压缩可减少token但通常无差别压缩。SEER通过视觉扫描选择与查询相关的图像，并仅在需要处检索文本，兼顾压缩效率和推理精度。在有监督微调的工具交互轨迹上进行训练后，长上下文推理任务效率提升且保持准确性。这为长上下文推理提供了查询相关的选择性压缩思路，也为文档检索生成中的长文档处理带来实用手段。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "Long context reasoning techniques in large language models",
+      "matched_requirement_id": "req-19",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.15055v1",
+      "source": "arxiv",
+      "title": "TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning",
+      "abstract": "Hypergraphs effectively model higher-order groupwise relationships beyond pairwise interactions, while pretrained language models (PLMs) and large language models (LLMs) provide rich semantic understanding from textual attributes. However, research on combining language models with hypergraph learning remains limited due to the lack of public text-attributed hypergraph benchmarks. To address this limitation, we present TAHB (Text-Attributed Hypergraph Benchmark), the first public benchmark integrating hypergraph structures and raw textual attributes. TAHB contains 10 real-world datasets from four domains - e-commerce, academia, movies, and politics networks - enabling systematic evaluation of text-aware hypergraph representation learning. Experimental results show that TAHB preserves key structural properties of real-world hypergraphs and consistently reproduces performance tendencies observed in existing benchmarks. Furthermore, experiments under both LLM-as-Enhancer and LLM-as-Predictor settings demonstrate that LLM-enhanced textual semantics improve hypergraph learning performance, while structural and textual information jointly provide the best setting for LLM-based prediction. Our benchmark provides a foundation for future research at the intersection of hypergraph learning and language models.",
+      "authors": [
+        "David Yoon Suk Kang",
+        "JungHyun Kim",
+        "Juhyun Jeon",
+        "Sang-Wook Kim"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-15T06:02:20+00:00",
+      "link": "https://arxiv.org/pdf/2608.15055v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "First public benchmark integrating hypergraph structures with raw textual attributes, enables text-aware graph structure learning and graph embedding.",
+      "llm_evidence_cn": "首个融合超图结构与原始文本属性的公开基准，支持文本感知的图结构学习与图嵌入研究",
+      "llm_evidence": "首个融合超图结构与原始文本属性的公开基准，支持文本感知的图结构学习与图嵌入研究",
+      "canonical_evidence": "首个融合超图结构与原始文本属性的公开基准，支持文本感知的图结构学习与图嵌入研究",
+      "llm_tldr_en": "TAHB is the first public text-attributed hypergraph benchmark containing 10 real-world datasets from e-commerce, academia, movies, and politics, integrating hypergraph structures and raw textual attributes to enable systematic evaluation of text-aware hypergraph representation learning.",
+      "llm_tldr_cn": "针对缺乏文本属性超图公开基准、限制语言模型与超图学习结合研究的问题，本文提出TAHB基准，包含来自电商、学术、电影和政治网络的10个真实数据集。TAHB整合超图结构与原始文本属性，支持系统评估文本感知的超图表示学习方法。该基准填补了空白，为图结构学习和图嵌入研究提供了标准化的测试平台，有助于后续方法的发展。",
+      "llm_tldr": "针对缺乏文本属性超图公开基准、限制语言模型与超图学习结合研究的问题，本文提出TAHB基准，包含来自电商、学术、电影和政治网络的10个真实数据集。TAHB整合超图结构与原始文本属性，支持系统评估文本感知的超图表示学习方法。该基准填补了空白，为图结构学习和图嵌入研究提供了标准化的测试平台，有助于后续方法的发展。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "graph structure learning",
+      "matched_requirement_id": "req-4",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.15145v1",
+      "source": "arxiv",
+      "title": "ACTS-SQL: Agentic and Critic-Oriented Tree-Structured SQL Correctness with Large Language Models",
+      "abstract": "Large Language Models (LLMs) have been increasingly adopted in Text-to-SQL systems, yet SQL errors remain a major obstacle in real-world Text-to-SQL inference pipelines. Existing SQL correction approaches either rely on large-scale, high-quality training data with substantial overhead, or adopt single-path agentic workflows that are brittle to early mistakes and prone to error propagation.   To develop a practical SQL correctness system for industrial scenarios, we present a training-free framework that formulates SQL correction as a plan-guided, tree-structured debugging process. By maintaining multiple correction strategies and enabling backtracking, the framework mitigates error accumulation during iterative refinement. We further integrate execution-based verification and clause-level diagnostic tools to support strategy pruning and precise error localization.   We evaluate the system on the BIRD-Critic benchmark and observe consistent accuracy gains over strong LLM backbones and representative agent-based baselines, achieving a 9.42% improvement over the previous state-of-the-art method. The framework is also deployed in the Torch Log Service (TLS) of Volcano Engine to support an online Text-to-TLS API. In production, it improves execution accuracy from 36.77% to 53.61% on real user queries with a representative strong LLM backbone (GPT-5). These results demonstrate the effectiveness and stability of our approach in real-world deployments.",
+      "authors": [
+        "Xinmei Huang",
+        "Jie Song",
+        "Peng Li",
+        "Fuxin Jiang",
+        "Jing Zhang",
+        "Tieying Zhang",
+        "Jianjun Chen",
+        "Chenming Liu",
+        "Tao Yang",
+        "Maoyin Liu",
+        "Wenda Li",
+        "Hong Chen",
+        "Cuiping Li"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-15T09:43:57+00:00",
+      "link": "https://arxiv.org/pdf/2608.15145v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Training-free plan-guided tree-structured debugging as an agentic alternative to single-path CoT reasoning",
+      "llm_evidence_cn": "免训练的规划引导树状调试，作为单路径思维链的智能体式替代",
+      "llm_evidence": "免训练的规划引导树状调试，作为单路径思维链的智能体式替代",
+      "canonical_evidence": "免训练的规划引导树状调试，作为单路径思维链的智能体式替代",
+      "llm_tldr_en": "Presents ACTS-SQL, a training-free tree-structured agentic framework with multiple correction strategies and backtracking, improving LLM SQL correctness; method is a viable general alternative to chain-of-thought for structured generation.",
+      "llm_tldr_cn": "针对大模型在文本转SQL任务中纠错依赖大规模训练数据或单一路径易错误传播的问题，本文提出免训练的 ACTS-SQL 框架，将 SQL 纠错建模为规划引导的树状调试过程，维护多种修正策略并支持回溯。该方法能缓解迭代修正中的错误累积，在工业场景中提升 SQL 正确性。其多路径、批判式的推理组织方式为不使用思维链的智能体推理提供了可迁移范例。",
+      "llm_tldr": "针对大模型在文本转SQL任务中纠错依赖大规模训练数据或单一路径易错误传播的问题，本文提出免训练的 ACTS-SQL 框架，将 SQL 纠错建模为规划引导的树状调试过程，维护多种修正策略并支持回溯。该方法能缓解迭代修正中的错误累积，在工业场景中提升 SQL 正确性。其多路径、批判式的推理组织方式为不使用思维链的智能体推理提供了可迁移范例。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch"
+    },
+    {
+      "id": "2608.12627v3",
+      "source": "arxiv",
+      "title": "EgoCITE: Context-Augmented Indexing and Time-Aware Retrieval for Long-Horizon Egocentric Memory",
+      "abstract": "Long-horizon egocentric memory transforms continuous first-person video and audio into a searchable record of past experiences. We demonstrate two bottlenecks in existing systems: indices built from context-poor captions are unreliable for agentic search, while retrieval ignores a question's temporal intent. To address both bottlenecks, we introduce EgoCITE (Egocentric Context-augmented Indexing and Time-aware Evidence retrieval), a long-horizon agentic memory framework for egocentric QA. EgoCITE comprises three components. EgoScheme uses local multimodal context to turn fragmentary video captions and speech transcripts into self-contained atomic memory indices. EgoIndex organizes complementary action, activity, utterance, and conversation representations into searchable multi-view memory indices at multiple granularities. EgoRetrv combines semantic search with question-conditioned temporal relevance scoring and curation of retrieved evidence. We evaluate EgoCITE on EgoLifeQA, EgoMem, and EgoR1-Bench in terms of answer accuracy and target-event retrieval alignment. EgoCITE improves accuracy over agentic memory baselines by at least 4.4--14.2% while achieving 36$\\times$ lower cost than long-context LLM agents.",
+      "authors": [
+        "Le Zhang",
+        "Hao Chen",
+        "Vlad Roznyatovskiy",
+        "Jianzhong Zhang",
+        "Ke Sun"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV",
+        "cs.AI",
+        "cs.CL",
+        "cs.HC"
+      ],
+      "published": "2026-08-12T22:20:29+00:00",
+      "link": "https://arxiv.org/pdf/2608.12627v3",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "long-horizon agentic memory, context-augmented indexing and time-aware retrieval",
+      "llm_evidence_cn": "长时程智能体记忆框架，上下文增强索引与时间感知检索",
+      "llm_evidence": "长时程智能体记忆框架，上下文增强索引与时间感知检索",
+      "canonical_evidence": "长时程智能体记忆框架，上下文增强索引与时间感知检索",
+      "llm_tldr_en": "EgoCITE is a long-horizon agentic memory framework that uses local multimodal context to build atomic memory indices and time-aware retrieval, addressing unreliable context-poor captions and temporal intent in egocentric QA.",
+      "llm_tldr_cn": "长时程自我中心记忆系统常因索引缺乏上下文和检索忽略时间意图而性能不佳；EgoCITE通过局部多模态上下文将碎片化视频字幕和语音转写转换为自包含的原子记忆索引，并设计时间感知检索，使智能体能够按时间意图准确查找证据。实验证明其能显著提升长时程QA的可靠性，为智能体长期记忆构建提供新方法。",
+      "llm_tldr": "长时程自我中心记忆系统常因索引缺乏上下文和检索忽略时间意图而性能不佳；EgoCITE通过局部多模态上下文将碎片化视频字幕和语音转写转换为自包含的原子记忆索引，并设计时间感知检索，使智能体能够按时间意图准确查找证据。实验证明其能显著提升长时程QA的可靠性，为智能体长期记忆构建提供新方法。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "methods for incorporating long term memory into large language models",
+      "matched_requirement_id": "req-24",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.12627v3"
+    },
+    {
+      "id": "2608.13200v1",
+      "source": "arxiv",
+      "title": "GEM: A Generative Embedding Model Bridging Reasoning and Retrieval",
+      "abstract": "Modern LLMs excel at reasoning and instruction following, enabling users to express complex and diverse information needs. However, conventional retrievers largely rely on surface-level matching between queries and documents, resulting in a growing gap between how users express their needs and how retrievers interpret them. In this paper, we present GEM, a generative embedding model that augments retrieval through its own knowledge by explicitly reasoning about user intent and relevance criteria. GEM unifies generation and embedding within a single model: it first reasons over the query, then appends an embedding token to encode the enriched context for retrieval. \\zhili{Evaluated on reasoning-intensive and instruction-following retrieval tasks, GEM demonstrates the effectiveness of its reasoning-augmented retrieval, outperforming its non-reasoning variant and matching baselines using substantially larger models.} Furthermore, GEM's generative nature allows test-time compute scaling via prompting to further enhance retrieval performance. Our code is available at: https://anonymous.4open.science/r/GEM.",
+      "authors": [
+        "Zhili Shen",
+        "Craig Macdonald"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR"
+      ],
+      "published": "2026-08-13T13:03:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.13200v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "unifies generation and embedding for retrieval, reasoning-augmented RAG",
+      "llm_evidence_cn": "将生成与嵌入统一用于检索，在查询上推理以增强检索增强生成",
+      "llm_evidence": "将生成与嵌入统一用于检索，在查询上推理以增强检索增强生成",
+      "canonical_evidence": "将生成与嵌入统一用于检索，在查询上推理以增强检索增强生成",
+      "llm_tldr_en": "GEM unifies generation and embedding by reasoning over query intent and appending an embedding token, bridging reasoning and retrieval to improve performance on reasoning-intensive and instruction-following retrieval tasks.",
+      "llm_tldr_cn": "传统检索器依赖查询与文档表面匹配，难以理解用户复杂意图。GEM将生成与嵌入统一到单一模型，先对查询进行推理以明确意图和相关性标准，再追加嵌入标记编码丰富上下文用于检索。在推理密集和指令跟随检索任务上，GEM显著优于传统检索器，展示了生成式上下文理解对检索增强生成的增益。",
+      "llm_tldr": "传统检索器依赖查询与文档表面匹配，难以理解用户复杂意图。GEM将生成与嵌入统一到单一模型，先对查询进行推理以明确意图和相关性标准，再追加嵌入标记编码丰富上下文用于检索。在推理密集和指令跟随检索任务上，GEM显著优于传统检索器，展示了生成式上下文理解对检索增强生成的增益。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.13200v1"
+    }
+  ],
+  "quick_skim": [
+    {
+      "id": "2608.12888v1",
+      "source": "arxiv",
+      "title": "When Your Agent Opens the Chat App: Agent-Controlled Search over Raw Chat Logs Rivals Structured Memory",
+      "abstract": "Agent-memory systems increasingly buy retrieval quality with structure, transforming raw conversation histories into summaries, embeddings, trees, or knowledge graphs before any question is asked. We ask how much of that benefit comes from the structure itself, rather than from competent retrieval over the raw history. We present ReFind, an agent-controlled search interface that builds no semantic structure at all: it leaves the conversation archive unmodified, indexes it lexically at turn granularity, and combines a generic iterative keyword-search loop with four chat-native controls grounded in empirical refinding work: session-aware rank fusion, local context expansion, temporal narrowing, and skipping already-inspected sessions. A separate reasoning stage answers from the collected evidence. Across a broad suite of conversational-memory tasks (single- and multi-hop QA, event ordering, and fact consolidation), roughly 2,800 questions on precise-retrieval and fact-tracking capabilities evaluated under the incremental multi-turn setting of MemoryAgentBench, ReFind attains the highest mean accuracy (58.2) of any system compared, above the strongest graph- and tree-based memory systems (HippoRAG 2, 53.2), all under a GPT-4o-mini backbone matched to every reused baseline. Controlled comparisons to single-shot BM25, a matched generic-agentic BM25 control, component removals, and agentic dense/hybrid variants separately support the roles of agent control, chat-native controls, and lexical retrieval. On LongMemEval-S/M, the same interface reaches 93.2 +/- 3.3 and 89.3 +/- 6.0 with GPT-5-mini. The results indicate that for precise, evidence-grounded questions over chat archives, much of the benefit credited to elaborate memory structures is recoverable by giving an agent controllable search over the unmodified record, with no LLM-based index construction at all.",
+      "authors": [
+        "Ruizhe Li",
+        "Licheng Zhang",
+        "Benfeng Xu",
+        "Mingxuan Du",
+        "Zheren Fu",
+        "Weidong Chen"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-13T07:10:22+00:00",
+      "link": "https://arxiv.org/pdf/2608.12888v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "agent-controlled lexical search over raw chat logs rivals structured memory",
+      "llm_evidence_cn": "原始聊天日志上的智能体控制搜索对比结构化记忆",
+      "llm_evidence": "原始聊天日志上的智能体控制搜索对比结构化记忆",
+      "canonical_evidence": "原始聊天日志上的智能体控制搜索对比结构化记忆",
+      "llm_tldr_en": "ReFind shows that agent-controlled lexical search over raw chat logs, with session-aware ranking and local context controls, can rival or match structured memory approaches, questioning the need for pre-built semantic structure.",
+      "llm_tldr_cn": "针对智能体记忆系统普遍依赖结构化预处理的问题，提出ReFind接口。它不对原始会话日志做语义结构改动，仅按轮次建立词法索引，并组合通用迭代关键词搜索与四个聊天原生控制操作。实验表明，这种搜索在记忆检索任务上与结构化记忆方法相当甚至更优，说明高质量搜索可能替代昂贵的结构构建。",
+      "llm_tldr": "针对智能体记忆系统普遍依赖结构化预处理的问题，提出ReFind接口。它不对原始会话日志做语义结构改动，仅按轮次建立词法索引，并组合通用迭代关键词搜索与四个聊天原生控制操作。实验表明，这种搜索在记忆检索任务上与结构化记忆方法相当甚至更优，说明高质量搜索可能替代昂贵的结构构建。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "contextual memory recall for language models",
+      "matched_requirement_id": "req-21",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.12888v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.15032v1",
+      "source": "arxiv",
+      "title": "Handoff-H1: An Orchestrated Vision-Agent System for Material Quantity Takeoff from Construction Blueprints",
+      "abstract": "Converting a set of architectural blueprints into a complete material quantity takeoff requires visual perception across drawing sheets, dimensional and multi-hop reasoning, and grounding in construction conventions that the drawings never state. We present Handoff-H1, a takeoff system built from three layers: purpose-built computer-vision models that extract primitives; tool-using agents equipped with image operations and in-house visual-task tools, including CV-model-backed counting, detection and plan decomposition; and a persistent, hierarchically structured project foundation, grounded in a curated construction knowledge base. We evaluate on the Construction Blueprint Takeoff Benchmark: 10 real residential blueprint sets paired with consensus-validated expert takeoffs - 2,009 verified line items, restricted for scoring to the 1,348 primary-tier materials that drive an estimate - scored per trade by an LLM judge on material coverage and quantity Precision@25% (P@.25) and combined into a weighted composite. Under identical scoring from the raw PDF, seven frontier and open-weight models span composites of 35-61, and independent professional estimators - scored against the same reconciled gold standard - post 77.6% (65.5% coverage, 87.9% P@.25). Handoff-H1, working end-to-end from the raw PDF, reaches 81.6% (86.1% coverage, 78.8% P@.25): roughly 20 points above the strongest frontier agent, and above the independent estimators by pairing near-human quantity precision with coverage they do not reach. The evaluation harness is public for the open harbor framework; the blueprint sets and ground truth are available upon request for research use.",
+      "authors": [
+        "Bruno Chicelli",
+        "Henrique Alves",
+        "Rodrigo Anselmo",
+        "Joshua Weinberg",
+        "Felipe Lemos",
+        "Jan Baryla"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.CV"
+      ],
+      "published": "2026-08-15T04:34:51+00:00",
+      "link": "https://arxiv.org/pdf/2608.15032v1",
+      "tags": [
+        "keyword:llm-memory"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "persistent hierarchical project foundation as agent memory to improve multi-hop visual reasoning",
+      "llm_evidence_cn": "持久化分层项目基座作为智能体记忆，用于改进多跳视觉推理",
+      "llm_evidence": "持久化分层项目基座作为智能体记忆，用于改进多跳视觉推理",
+      "canonical_evidence": "持久化分层项目基座作为智能体记忆，用于改进多跳视觉推理",
+      "llm_tldr_en": "Handoff-H1 is a vision-agent system for construction quantity takeoff that combines CV models, tool-using agents, and a persistent hierarchical project foundation, evaluated on a residential blueprint benchmark.",
+      "llm_tldr_cn": "针对建筑蓝图到材料数量算量任务需要跨图纸视觉感知、多维推理与施工惯例基础的问题，本文提出Handoff-H1系统。系统由专用视觉模型、工具使用智能体与持久化分层项目基座构成，并注入定制施工知识库。在真实住宅蓝图基准上的评估展示了该记忆增强式智能体架构的有效性，为需要长程结构化记忆的智能推理应用提供了可迁移方法。",
+      "llm_tldr": "针对建筑蓝图到材料数量算量任务需要跨图纸视觉感知、多维推理与施工惯例基础的问题，本文提出Handoff-H1系统。系统由专用视觉模型、工具使用智能体与持久化分层项目基座构成，并注入定制施工知识库。在真实住宅蓝图基准上的评估展示了该记忆增强式智能体架构的有效性，为需要长程结构化记忆的智能推理应用提供了可迁移方法。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.15851v1",
+      "source": "arxiv",
+      "title": "Dense Expands, Sparse Anchors: Channel-Asymmetric Query Expansion for Hybrid Retrieval",
+      "abstract": "LLM-based query expansion improves retrieval by generating document-like passages. In hybrid retrieval, however, most evaluations fuse fixed top-$L$ dense and sparse rankings. Because the cutoff controls both which cross-channel contributions enter fusion and how much of each ranking is accessed, gains measured at one $L$ can change or reverse at another. We separate these effects by evaluating retrieval effectiveness under complete-list fusion and recording the policy-specific per-channel replay stopping depths at which its ordered top-$K$ is certified. We then introduce DESA (Dense Expansion and Sparse Anchoring), a channel-asymmetric query expansion method. An LLM generates complementary reference passages; orthogonal residual expansion adds their new semantic directions to the dense query, while score-product anchoring incorporates their lexical cues into sparse retrieval without broadening the original query's lexical support. Across seven BEIR datasets, DESA improves nDCG@10 and Recall@20 over the unexpanded query by 3.82% and 2.38%, while reducing dense and sparse access depths by 36.90% and 36.56%. With equal dataset weighting, 63.31% of queries become shallower in both channels. However, both depths increase with Contriever on Touché-2020. These results support channel-specific integration of generated passages and joint evaluation of retrieval effectiveness and access depth.",
+      "authors": [
+        "Chunran Zhang"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR",
+        "cs.CL"
+      ],
+      "published": "2026-08-16T16:43:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.15851v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "LLM-based channel-asymmetric query expansion for hybrid retrieval; transferable to power document retrieval",
+      "llm_evidence_cn": "面向混合检索的LLM通道非对称查询扩展，可迁移至电力文档检索",
+      "llm_evidence": "面向混合检索的LLM通道非对称查询扩展，可迁移至电力文档检索",
+      "canonical_evidence": "面向混合检索的LLM通道非对称查询扩展，可迁移至电力文档检索",
+      "llm_tldr_en": "Introduces DESA, a channel-asymmetric query expansion method for hybrid retrieval, separating fusion cutoff effects and improving retrieval effectiveness; useful for document retrieval in RAG pipelines.",
+      "llm_tldr_cn": "针对混合检索中固定截断导致稠密与稀疏排序融合效果不稳定的问题，本文提出 DESA 通道非对称查询扩展：由大模型生成互补参考段落，并用正交残差扩展增强稠密通道，同时以稀疏锚定控制检索深度。在完整列表融合下评估了各通道的停止深度，证明该方法能在不同截断下保持稳定增益。该工作可直接支撑检索增强生成中的文档检索环节，但对电力工作票领域无特定适配。",
+      "llm_tldr": "针对混合检索中固定截断导致稠密与稀疏排序融合效果不稳定的问题，本文提出 DESA 通道非对称查询扩展：由大模型生成互补参考段落，并用正交残差扩展增强稠密通道，同时以稀疏锚定控制检索深度。在完整列表融合下评估了各通道的停止深度，证明该方法能在不同截断下保持稳定增益。该工作可直接支撑检索增强生成中的文档检索环节，但对电力工作票领域无特定适配。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "power system document retrieval and generation",
+      "matched_requirement_id": "req-3",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.12888v2",
+      "source": "arxiv",
+      "title": "When Your Agent Opens the Chat App: Agent-Controlled Search over Raw Chat Logs Rivals Structured Memory",
+      "abstract": "Agent-memory systems increasingly buy retrieval quality with structure, transforming raw conversation histories into summaries, embeddings, trees, or knowledge graphs before any question is asked. We ask how much of that benefit comes from the structure itself, rather than from competent retrieval over the raw history. We present ReFind, an agent-controlled search interface that builds no semantic structure at all: it leaves the conversation archive unmodified, indexes it lexically at turn granularity, and combines a generic iterative keyword-search loop with four chat-native controls grounded in empirical refinding work: session-aware rank fusion, local context expansion, temporal narrowing, and skipping already-inspected sessions. A separate reasoning stage answers from the collected evidence. Across a broad suite of conversational-memory tasks (single- and multi-hop QA, event ordering, and fact consolidation), roughly 2,800 questions on precise-retrieval and fact-tracking capabilities evaluated under the incremental multi-turn setting of MemoryAgentBench, ReFind attains the highest mean accuracy (58.2) of any system compared, above the strongest graph- and tree-based memory systems (HippoRAG 2, 53.2), all under a GPT-4o-mini backbone matched to every reused baseline. Controlled comparisons to single-shot BM25, a matched generic-agentic BM25 control, component removals, and agentic dense/hybrid variants separately support the roles of agent control, chat-native controls, and lexical retrieval. On LongMemEval-S/M, the same interface reaches 93.2 +/- 3.3 and 89.3 +/- 6.0 with GPT-5-mini. The results indicate that for precise, evidence-grounded questions over chat archives, much of the benefit credited to elaborate memory structures is recoverable by giving an agent controllable search over the unmodified record, with no LLM-based index construction at all.",
+      "authors": [
+        "Ruizhe Li",
+        "Licheng Zhang",
+        "Benfeng Xu",
+        "Mingxuan Du",
+        "Zheren Fu",
+        "Weidong Chen"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-13T07:10:22+00:00",
+      "link": "https://arxiv.org/pdf/2608.12888v2",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "agent-controlled lexical search over raw chat logs rivals structured memory",
+      "llm_evidence_cn": "智能体控制的原始聊天日志词法搜索可媲美结构化记忆",
+      "llm_evidence": "智能体控制的原始聊天日志词法搜索可媲美结构化记忆",
+      "canonical_evidence": "智能体控制的原始聊天日志词法搜索可媲美结构化记忆",
+      "llm_tldr_en": "ReFind shows that agent-controlled lexical search over raw chat logs can rival structured memory systems, suggesting the benefit of structure comes from competent retrieval rather than structure itself.",
+      "llm_tldr_cn": "现有智能体记忆系统偏向预先将对话历史转换为摘要、嵌入、树或知识图谱，以提升检索质量，但这一做法耗时且可能丢弃原始信息。本文提出ReFind，通过词法级索引和智能体控制的迭代关键词搜索，配合会话感知融合、局部上下文扩展、时间收窄与跳读控制，在不构建语义结构的情况下检索原始聊天日志。实验表明，该方法可与结构化记忆系统相媲美，说明结构带来的收益可能源于检索能力而非结构本身，对记忆增强推理设计具有启示意义。",
+      "llm_tldr": "现有智能体记忆系统偏向预先将对话历史转换为摘要、嵌入、树或知识图谱，以提升检索质量，但这一做法耗时且可能丢弃原始信息。本文提出ReFind，通过词法级索引和智能体控制的迭代关键词搜索，配合会话感知融合、局部上下文扩展、时间收窄与跳读控制，在不构建语义结构的情况下检索原始聊天日志。实验表明，该方法可与结构化记忆系统相媲美，说明结构带来的收益可能源于检索能力而非结构本身，对记忆增强推理设计具有启示意义。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "agent memory for reasoning improvement",
+      "matched_requirement_id": "req-12",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.12888v2",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.15191v1",
+      "source": "arxiv",
+      "title": "When Deep Research Agents Stagnate: Enhancing Reasoning with Retrieval-Aware Agent Control",
+      "abstract": "In this paper, we analyze the reasoning trajectories of a variety of DRAs and show that existing agents often suffer from reasoning stagnation: the majority of iterations contribute little or no improvement to final performance, while agents lack awareness of their trajectories and are therefore ineffective at adapting their search strategies or determining when to terminate. To address this issue, we introduce a set of unsupervised signals and a Retrieval-Aware Agent Controller (RAAC), which assists the agent in selecting optimal actions at each stage of the research process. RAAC incorporates key information retrieval principles, namely search novelty and information coverage, resulting in more effective reasoning trajectories that improve overall performance while reducing unnecessary iterations, and consequently cost and latency. Specifically on BrowseComp-Plus and across a large set of DRAs, adding RAAC reduces the number of search calls by an average of 14, significantly improves the best-performing DRA on recall and accuracy, and achieves an accuracy gain of up to 10% (3% on average).",
+      "authors": [
+        "Heydar Soudani",
+        "Elizabeth Lingg",
+        "Faegheh Hasibi",
+        "Navid Rekabsaz"
+      ],
+      "primary_category": "cs.IR",
+      "categories": [
+        "cs.IR"
+      ],
+      "published": "2026-08-15T12:14:38+00:00",
+      "link": "https://arxiv.org/pdf/2608.15191v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "retrieval-aware agent control to enhance reasoning trajectories",
+      "llm_evidence_cn": "检索感知的智能体控制以增强推理轨迹",
+      "llm_evidence": "检索感知的智能体控制以增强推理轨迹",
+      "canonical_evidence": "检索感知的智能体控制以增强推理轨迹",
+      "llm_tldr_en": "Identifies reasoning stagnation in deep research agents and introduces retrieval-aware control using novelty and coverage to improve reasoning trajectories.",
+      "llm_tldr_cn": "针对深度研究智能体在推理过程中多数迭代对性能提升甚微、且无法感知自身轨迹的问题，提出一组无监督信号与检索感知智能体控制器(RAAC)。该控制器利用检索新颖性和信息覆盖率等检索原则，帮助智能体在每阶段选择最优动作，从而形成更有效的推理轨迹并提升最终性能。为检索增强生成中的智能体推理控制提供了通用方法。",
+      "llm_tldr": "针对深度研究智能体在推理过程中多数迭代对性能提升甚微、且无法感知自身轨迹的问题，提出一组无监督信号与检索感知智能体控制器(RAAC)。该控制器利用检索新颖性和信息覆盖率等检索原则，帮助智能体在每阶段选择最优动作，从而形成更有效的推理轨迹并提升最终性能。为检索增强生成中的智能体推理控制提供了通用方法。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "retrieval augmented generation with memory",
+      "matched_requirement_id": "req-22",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.15879v1",
+      "source": "arxiv",
+      "title": "When Less Is Enough: Context Selection and Prompting Strategies for Bengali News Headline Generation",
+      "abstract": "Large language models (LLMs) have shown strong performance in text generation tasks, yet their effectiveness on headline generation remains sensitive to how input context is selected and presented. In this work, we investigate Bengali news headline generation as a document-level generation task that requires effective selection and presentation of salient contextual information from long-form articles. Using Gemini-2.0-Flash, Llama-3.3-70B, and GPT-4o, we systematically study the effects of context selection, prompting strategies, and in-context learning (i.e., few-shot) on the quality of headline generation. Our experiments show that providing the full article does not necessarily improve performance; instead, using selected lead paragraphs of the article can maintain, and in some cases improve, headline generation quality. We further compare Bengali Native Prompting (BNaP) and Cross-Lingual Prompting (XLP), and examine how each interacts with context-enriched prompt templates incorporating auxiliary contextual cues. Results demonstrate that prompting strategies substantially influence generation quality: XLP often yields stronger performance, particularly when combined with contextual enrichment, but its benefits are model-dependent. Additionally, few-shot prompting substantially improves Gemini, with most of the gain obtained from a single demonstration, whereas Llama shows limited benefit from additional examples. Overall, our findings highlight that effective Bengali news headline generation depends more on context relevance and prompt design than on increasing input length, offering practical insights for multilingual and low-resource LLM applications.",
+      "authors": [
+        "Muhammad Ashad Kabir",
+        "Kawsar Ahmed",
+        "Md. Osama"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-16T18:05:44+00:00",
+      "link": "https://arxiv.org/pdf/2608.15879v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "context selection and few-shot prompting for document-level generation; method transferable to RAG for work tickets",
+      "llm_evidence_cn": "文档级生成中的上下文选择与少样本提示，对工作票检索增强生成有方法借鉴",
+      "llm_evidence": "文档级生成中的上下文选择与少样本提示，对工作票检索增强生成有方法借鉴",
+      "canonical_evidence": "文档级生成中的上下文选择与少样本提示，对工作票检索增强生成有方法借鉴",
+      "llm_tldr_en": "Investigates how context selection, prompting, and few-shot examples affect Bengali headline generation with Gemini, Llama, and GPT-4o, finding that selective context rather than full articles improves quality for long-document generation.",
+      "llm_tldr_cn": "论文针对大语言模型在文档级标题生成中对输入上下文敏感的问题，以孟加拉新闻标题生成为案例，研究了上下文选择、提示策略和少样本学习的影响。实验使用Gemini-2.0-Flash、Llama-3.3-70B和GPT-4o，发现提供全文不一定优于选择关键上下文，适当的裁剪和提示能显著改善生成质量。研究为长文档生成中的上下文组织提供了可迁移的经验。",
+      "llm_tldr": "论文针对大语言模型在文档级标题生成中对输入上下文敏感的问题，以孟加拉新闻标题生成为案例，研究了上下文选择、提示策略和少样本学习的影响。实验使用Gemini-2.0-Flash、Llama-3.3-70B和GPT-4o，发现提供全文不一定优于选择关键上下文，适当的裁剪和提示能显著改善生成质量。研究为长文档生成中的上下文组织提供了可迁移的经验。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.12990v1",
+      "source": "arxiv",
+      "title": "LycheeMemory V2: Efficient Long-Term Memory for LLM Agents via Semantic Segment-Level Consolidation",
+      "abstract": "Long-horizon LLM agents must preserve information from past interactions to support future tasks. Existing memory systems typically rely on eager consolidation, invoking LLMs after each interaction to extract, summarize, or update memories. This design makes memory construction increasingly costly as conversations grow. Coarse summarization can reduce construction cost but risks discarding fine-grained contextual evidence, whereas larger retrieval contexts or multi-hop LLM reasoning shift the overhead to query time. We present LycheeMemory V2, an efficient long-term memory framework that replaces turn-level consolidation with semantic segment-level consolidation. Instead of consolidating every interaction, LycheeMemory batches multiple exchanges into segments and encodes each finalized segment into context-independent typed memory records. Segment-level batching lowers LLM encoding frequency, while semantic boundary detection helps preserve coherent event-level and temporal evidence compared with fixed-window batching. The resulting records are organized with lightweight structured indexes for query-planned evidence retrieval. Experiments using GPT-4.1-Mini show that LycheeMemory achieves state-of-the-art performance, reaching 89.22% on LoCoMo and 92.20% on LongMemEval-S. Compared with A-Mem, it reduces construction tokens by 86.0% on LoCoMo and 75.9% on LongMemEval-S without increasing query-time token usage. More broadly, our results suggest that the accuracy--cost trade-off of long-term agent memory depends not only on what information is retained, but also on the granularity at which it is consolidated.",
+      "authors": [
+        "Dongfang Li",
+        "Zixuan Liu",
+        "Junmai Wang",
+        "Jiahe Huang",
+        "Fuhao Li",
+        "Bonian Jia",
+        "Baotian Hu",
+        "Min Zhang"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-13T09:13:15+00:00",
+      "link": "https://arxiv.org/pdf/2608.12990v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "efficient long-term memory framework via semantic segment-level consolidation for LLM agents",
+      "llm_evidence_cn": "通过语义片段级整合为LLM智能体构建高效长期记忆框架",
+      "llm_evidence": "通过语义片段级整合为LLM智能体构建高效长期记忆框架",
+      "canonical_evidence": "通过语义片段级整合为LLM智能体构建高效长期记忆框架",
+      "llm_tldr_en": "Proposes LycheeMemory V2, an efficient long-term memory framework for LLM agents that consolidates memories at semantic segment level rather than per-turn, reducing construction cost while preserving fine-grained contextual evidence and managing multi-hop retrieval cost.",
+      "llm_tldr_cn": "针对现有LLM智能体记忆系统在每次交互后急切整合导致成本高的问题，本文提出LycheeMemory V2，将逐轮整合替换为语义片段级整合，按批处理而非每一轮，从而降低记忆构造开销，同时保留细粒度上下文证据，并平衡检索上下文与多跳推理的查询时开销。实验证明该方法在长时程任务中更高效且保持记忆质量。",
+      "llm_tldr": "针对现有LLM智能体记忆系统在每次交互后急切整合导致成本高的问题，本文提出LycheeMemory V2，将逐轮整合替换为语义片段级整合，按批处理而非每一轮，从而降低记忆构造开销，同时保留细粒度上下文证据，并平衡检索上下文与多跳推理的查询时开销。实验证明该方法在长时程任务中更高效且保持记忆质量。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "methods for incorporating long term memory into large language models",
+      "matched_requirement_id": "req-24",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.12990v1",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.15303v1",
+      "source": "arxiv",
+      "title": "Divergent-Convergent Reasoning: Scaling Test-Time Compute through Structured Solution Synthesis",
+      "abstract": "Test-time compute can substantially improve Large Language Model (LLM) reasoning performance, yet how and when additional compute helps remains poorly understood. We study Divergent-Convergent Reasoning (DCR), a simple two-phase primitive consisting of an exploration phase that generates multiple candidate solutions followed by a convergent reconciliation phase. We present three core results. First, we show that even a single reconciliation step can reliably amplify correct minority reports: across datasets, DCR often recovers the correct answer when correct exploration outputs are in the minority, a regime where majority voting fails. Second, we introduce recursive DCR, an autoregressive reconciliation system that iteratively analyzes disagreements and allocates additional test-time compute. Recursive DCR achieves higher accuracy than fixed-compute baselines-reaching 93.3% on AIME 2024 and 92.0% on AIME 2025-while using roughly 27% less compute on average, demonstrating that attentive resource allocation is superior to uniform scaling. Third, we analyze disagreement among exploration outputs via a simple, training-free dispersion metric. Dispersion reveals a structured relationship between disagreement and test-time gains: in regimes where DCR is effective, higher disagreement among exploration outputs is associated with larger accuracy improvements from reconciliation. Together, these results show that disagreement, often viewed as noise, can be systematically exploited to improve test-time reasoning and reveal emerging scaling laws for agentic LLM systems.",
+      "authors": [
+        "Bo Wen",
+        "Yuhao Chen",
+        "Erhan Bilal",
+        "Carla Agurto Rios",
+        "Chen Wang",
+        "Junchen Jiang"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-15T16:13:06+00:00",
+      "link": "https://arxiv.org/pdf/2608.15303v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "divergent-convergent reasoning as alternative to chain-of-thought",
+      "llm_evidence_cn": "发散-汇聚推理作为思维链的替代方案",
+      "llm_evidence": "发散-汇聚推理作为思维链的替代方案",
+      "canonical_evidence": "发散-汇聚推理作为思维链的替代方案",
+      "llm_tldr_en": "Introduces DCR, a two-phase reasoning primitive of exploration and reconciliation, which amplifies correct minority answers and scales test-time compute without chain-of-thought.",
+      "llm_tldr_cn": "大模型推理扩展计算时机尚不明确，多数投票在少数正确场景失效。该文提出发散-汇聚推理，先探索多个候选解再汇聚整合。实验表明单次汇聚即可放大正确少数派，并支持递归汇聚，为替代思维链的测试时计算扩展提供新思路。",
+      "llm_tldr": "大模型推理扩展计算时机尚不明确，多数投票在少数正确场景失效。该文提出发散-汇聚推理，先探索多个候选解再汇聚整合。实验表明单次汇聚即可放大正确少数派，并支持递归汇聚，为替代思维链的测试时计算扩展提供新思路。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.15956v1",
+      "source": "arxiv",
+      "title": "Navigation-Informed Embeddings: Dense-Retriever Adaptation from Agent Search Traces",
+      "abstract": "Agentic retrieval workflows produce query, retrieval, and stopping traces as a byproduct of answering questions. We study how these traces can adapt a deployed dense retriever to changing workflow distributions without new relevance labels, synthetic queries, or LLM judgments. We introduce Navigation-Informed Embeddings (NIE), a family of trace-derived objectives. NIE-Stop turns the stopping document into a soft positive; NIE-Path additionally uses preceding path documents as hard comparisons and imposes ordinal constraints with geometric decay. A BGE encoder adapted from retained source trajectories improves support Recall@20 on an independent target benchmark from 72.2 to 78.0 overall. NIE-Stop reaches 76.9 overall and 52.3 on long paths; NIE-Path raises long-path performance to 55.4, compared with 46.7 for the unadapted encoder. A shuffled-order control under the full path objective loses 3.2 points. Without public-benchmark training, the same adapter also improves nDCG@10 by 1.9 points on standard BEIR HotpotQA. NIE therefore provides a lightweight adaptation channel for settings where trajectories are already retained, with zero incremental labeling cost.",
+      "authors": [
+        "Shrey Shah",
+        "Levent Ozgur"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-16T23:07:44+00:00",
+      "link": "https://arxiv.org/pdf/2608.15956v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Trace-derived objectives adapt dense retrievers from agent search traces, improving retrieval without new labels, relevant to RAG for work tickets.",
+      "llm_evidence_cn": "从智能体搜索轨迹中提取目标来适配稠密检索器，无需新标注即可提升检索质量，与工单场景的RAG相关",
+      "llm_evidence": "从智能体搜索轨迹中提取目标来适配稠密检索器，无需新标注即可提升检索质量，与工单场景的RAG相关",
+      "canonical_evidence": "从智能体搜索轨迹中提取目标来适配稠密检索器，无需新标注即可提升检索质量，与工单场景的RAG相关",
+      "llm_tldr_en": "Navigation-Informed Embeddings (NIE) adapt a deployed dense retriever from agent search traces using NIE-Stop and NIE-Path objectives, lifting support Recall@20 on a target benchmark from 72.2 to 78.0 without new relevance labels, thereby improving the retrieval component of RAG pipelines.",
+      "llm_tldr_cn": "针对动态检索工作流中检索器需持续适配但缺乏相关性标注的问题，本文提出导航信息嵌入（NIE），利用智能体搜索轨迹构造优化目标：NIE-Stop把停止文档当作软正例，NIE-Path进一步利用路径文档施加序数约束。在BGE编码器上适配后，独立目标基准的support Recall@20从72.2升至78.0，长路径上亦明显改善。该方法无需人工标注即能增强检索增强生成系统的检索质量，具有实用价值。",
+      "llm_tldr": "针对动态检索工作流中检索器需持续适配但缺乏相关性标注的问题，本文提出导航信息嵌入（NIE），利用智能体搜索轨迹构造优化目标：NIE-Stop把停止文档当作软正例，NIE-Path进一步利用路径文档施加序数约束。在BGE编码器上适配后，独立目标基准的support Recall@20从72.2升至78.0，长路径上亦明显改善。该方法无需人工标注即能增强检索增强生成系统的检索质量，具有实用价值。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.13200v2",
+      "source": "arxiv",
+      "title": "GEM: A Generative Embedding Model Bridging Reasoning and Retrieval",
+      "abstract": "Modern LLMs excel at reasoning and instruction following, enabling users to express complex and diverse information needs. However, conventional retrievers largely rely on surface-level matching between queries and documents, resulting in a growing gap between how users express their needs and how retrievers interpret them. In this paper, we present GEM, a generative embedding model that augments retrieval through its own knowledge by explicitly reasoning about user intent and relevance criteria. GEM unifies generation and embedding within a single model: it first reasons over the query, then appends an embedding token to encode the enriched context for retrieval. Evaluated on reasoning-intensive and instruction-following retrieval tasks, GEM demonstrates the effectiveness of its reasoning-augmented retrieval, outperforming its non-reasoning variant and matching baselines using substantially larger models. Furthermore, GEM's generative nature allows test-time compute scaling via prompting to further enhance retrieval performance. Our code is available at: https://anonymous.4open.science/r/GEM.",
+      "authors": [
+        "Zhili Shen",
+        "Craig Macdonald"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL",
+        "cs.AI",
+        "cs.IR"
+      ],
+      "published": "2026-08-13T13:03:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.13200v2",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Unifies generation and embedding, using LLM reasoning over query to enrich retrieval context for RAG",
+      "llm_evidence_cn": "统一生成与嵌入，利用大模型对查询进行推理来丰富检索上下文，用于检索增强生成",
+      "llm_evidence": "统一生成与嵌入，利用大模型对查询进行推理来丰富检索上下文，用于检索增强生成",
+      "canonical_evidence": "统一生成与嵌入，利用大模型对查询进行推理来丰富检索上下文，用于检索增强生成",
+      "llm_tldr_en": "GEM bridges reasoning and retrieval by generating enriched representations through query reasoning within a single model.",
+      "llm_tldr_cn": "用户的信息需求日益复杂，但传统检索器仍主要依赖表面匹配，难以捕捉查询背后的真实意图。GEM提出将生成与嵌入统一在同一个模型中，先让模型对查询进行显式推理，再用嵌入token编码推理后的丰富上下文参与检索。在推理密集和指令遵循检索任务上，GEM展示了这种结合带来的增益。该工作为检索增强生成中的查询理解提供了一种有效的统一建模方法。",
+      "llm_tldr": "用户的信息需求日益复杂，但传统检索器仍主要依赖表面匹配，难以捕捉查询背后的真实意图。GEM提出将生成与嵌入统一在同一个模型中，先让模型对查询进行显式推理，再用嵌入token编码推理后的丰富上下文参与检索。在推理密集和指令遵循检索任务上，GEM展示了这种结合带来的增益。该工作为检索增强生成中的查询理解提供了一种有效的统一建模方法。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.13200v2",
+      "quick_tier": "8plus"
+    },
+    {
+      "id": "2608.15517v2",
+      "source": "arxiv",
+      "title": "GLaQ: Grounding Latent Queries in Visual Evidence for Multimodal Reasoning",
+      "abstract": "Chain-of-thought reasoning has substantially improved the problem-solving capabilities of multimodal large language models. Fine-grained visual evidence, however, remains difficult to preserve and reuse across text-based reasoning steps. To address this limitation, tool-augmented thinking-with-images methods maintain visual access externally by revisiting or manipulating the image, but require predefined tools and additional inference-time processing. As an internal alternative, continuous visual latent reasoning retains intermediate computation in hidden states. However, its prevailing autoregressive construction makes each latent state depend on its predecessors, so later states may repeat information already present in the latent sequence rather than capture complementary visual details. We introduce GLaQ, a grounded latent-query framework that replaces sequential latent rollout with a fixed set of context-conditioned queries grounded in the original visual tokens. The grounded queries are reinjected for answer generation, providing direct and coordinated access to source visual evidence. We train GLaQ with localized-view supervision followed by reinforcement learning under task-level rewards. Across five benchmarks for fine-grained visual understanding and perception, GLaQ-7B gains 5.99--9.66\\% over its base model and leads all compared visual latent methods, suggesting that direct query-to-image grounding can recover localized evidence from the full image without external visual operations or autoregressive latent rollouts.",
+      "authors": [
+        "Zesheng Yang",
+        "Lingling Zhang",
+        "Xinyu Zhang",
+        "Cheng Zhang",
+        "Pengyu Li",
+        "Heng Wang",
+        "Lin Wu"
+      ],
+      "primary_category": "cs.CV",
+      "categories": [
+        "cs.CV"
+      ],
+      "published": "2026-08-16T04:01:08+00:00",
+      "link": "https://arxiv.org/pdf/2608.15517v2",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 7.0,
+      "llm_evidence_en": "Proposes latent query grounding as an alternative to chain-of-thought in multimodal reasoning",
+      "llm_evidence_cn": "提出用潜在查询基础替代思维链推理，提升多模态推理的视觉证据保持",
+      "llm_evidence": "提出用潜在查询基础替代思维链推理，提升多模态推理的视觉证据保持",
+      "canonical_evidence": "提出用潜在查询基础替代思维链推理，提升多模态推理的视觉证据保持",
+      "llm_tldr_en": "GLaQ replaces autoregressive chain-of-thought reasoning with grounded latent queries that preserve fine-grained visual evidence, avoiding redundancy and improving multimodal reasoning without extra tools.",
+      "llm_tldr_cn": "多模态大语言模型的思维链推理难以在文本步中保留并复用细粒度视觉证据，工具式方法需要预定义工具和额外推理开销。GLaQ提出基于视觉证据的潜在查询基础方法，在隐状态中维护中间计算，避免自回归潜在状态的冗余。该方法无需外部工具即可保留视觉证据，提升了多模态推理的能力，是思维链的一种有效替代方案。",
+      "llm_tldr": "多模态大语言模型的思维链推理难以在文本步中保留并复用细粒度视觉证据，工具式方法需要预定义工具和额外推理开销。GLaQ提出基于视觉证据的潜在查询基础方法，在隐状态中维护中间计算，避免自回归潜在状态的冗余。该方法无需外部工具即可保留视觉证据，提升了多模态推理的能力，是思维链的一种有效替代方案。",
+      "llm_tags": [
+        "query:pwt"
+      ],
+      "matched_query_tag": "query:pwt",
+      "matched_query_text": "alternative to chain of thought reasoning",
+      "matched_requirement_id": "req-13",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "7"
+    },
+    {
+      "id": "2608.16417v1",
+      "source": "arxiv",
+      "title": "D2-ScaleAgent: Dual-Dimensional Scaling for Long Document Understanding",
+      "abstract": "Multi-modal retrieval-augmented generation (RAG) is a key technique for visually rich long document understanding. Existing multi-modal RAG methods are progressively advancing toward multi-agent systems: they first retrieve relevant pages based on a query, and then iteratively understand information within those pages. However, these methods typically rely on fixed workflows and lack the ability to dynamically scale computation at test time, often leading to insufficient evidence. To address this, we propose D2-ScaleAgent, an agentic framework that introduces a dual-dimensional scaling paradigm for retrieval and reasoning. The core of D2-ScaleAgent is a Verifier agent-driven dynamic routing loop based on the intrinsic difficulty of the query, centered around a continuously updated evidence bank that serves as the agent's dynamic working memory: when retrieval needs to be expanded, the agent routes outward (retrieval scaling), decomposing the query into attributes and performing parallel page retrieval, followed by adaptive pruning to ensure comprehensive evidence coverage. When fine-grained reasoning is required, the agent routes inward (reasoning scaling), dynamically selecting sub-agents with varying granularity and count to extract evidence from pages. Finally, D2-ScaleAgent achieves logical closure over the evidence chain. Extensive experiments demonstrate that D2-ScaleAgent is effective on long and visually rich document benchmarks like MMLongBench-Doc, LongDocURL, etc.",
+      "authors": [
+        "Hao Zhang",
+        "Longrong Yang",
+        "Lunhao Duan",
+        "Ziyang Wang",
+        "Qing-Guo Chen",
+        "Shanshan Zhao"
+      ],
+      "primary_category": "cs.CL",
+      "categories": [
+        "cs.CL"
+      ],
+      "published": "2026-08-17T11:15:27+00:00",
+      "link": "https://arxiv.org/pdf/2608.16417v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:power-ticket",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:power-ticket",
+        "query:pwt"
+      ],
+      "llm_score": 6.0,
+      "llm_evidence_en": "Multi-modal RAG agent framework for long-document understanding; relevant to RAG-based work ticket pipelines",
+      "llm_evidence_cn": "多模态RAG智能体框架，面向长文档理解，可与工单检索增强生成流程相关联",
+      "llm_evidence": "多模态RAG智能体框架，面向长文档理解，可与工单检索增强生成流程相关联",
+      "canonical_evidence": "多模态RAG智能体框架，面向长文档理解，可与工单检索增强生成流程相关联",
+      "llm_tldr_en": "D2-ScaleAgent introduces a Verifier-driven dual-dimensional scaling loop for retrieval and reasoning in multi-modal RAG, dynamically allocating computation based on query difficulty to improve long-document understanding.",
+      "llm_tldr_cn": "面向视觉丰富长文档的多模态检索增强生成（RAG）中，现有方法使用固定流程且无法在测试时动态扩展计算量，导致证据不足。D2-ScaleAgent提出基于验证器驱动的动态路由循环，沿检索和推理两个维度按查询难度扩展计算资源，从而更充分收集证据并提升长文档理解。该方法在长文档理解任务上验证了动态扩展范式的有效性，为检索增强生成系统提供了新的扩展思路。",
+      "llm_tldr": "面向视觉丰富长文档的多模态检索增强生成（RAG）中，现有方法使用固定流程且无法在测试时动态扩展计算量，导致证据不足。D2-ScaleAgent提出基于验证器驱动的动态路由循环，沿检索和推理两个维度按查询难度扩展计算资源，从而更充分收集证据并提升长文档理解。该方法在长文档理解任务上验证了动态扩展范式的有效性，为检索增强生成系统提供了新的扩展思路。",
+      "llm_tags": [
+        "query:power-ticket"
+      ],
+      "matched_query_tag": "query:power-ticket",
+      "matched_query_text": "retrieval augmented generation for work tickets",
+      "matched_requirement_id": "req-2",
+      "selection_source": "fresh_fetch",
+      "quick_tier": "6"
+    },
+    {
+      "id": "2608.14290v1",
+      "source": "arxiv",
+      "title": "Intern-S2-Mobius: Foundation Model with Decoupled Knowledge and Reasoning",
+      "abstract": "We introduce Mobius-v0, an architecture that comprises a globally shared Memory (FFN) that stores knowledge vectors and multiple Reasoners (Self-Attn) that iteratively achieve compositional reasoning. Using hidden states as cache and carrier, reasoners repeatedly query memory for required knowledge-vectors, while the knowledge is transmitted back to reasoning operators. Through this knowledge-reasoning-separation architecture, Mobius achieves better knowledge compression and reasoning efficiency. Built upon Mobius-v0 architecture: 1) Our 7B model trained-from-scratch achieves similar downstream score as a 7B Transformer baseline with 62.6% of baseline's training data. 2) Our Intern-S2-Mobius, continually-pretrained from Qwen3.5-35B, achieves similar downstream score while delivering nearly 4x end-to-end inference speedup.",
+      "authors": [
+        "Kai Chen",
+        "Jifeng Ding",
+        "Ning Ding",
+        "Jiaye Ge",
+        "Lixin Gu",
+        "Yicheng Gu",
+        "Qipeng Guo",
+        "Ermo Hua",
+        "Haian Huang",
+        "Haozheng Hou",
+        "Jie Hou",
+        "Xiangyu Hong",
+        "Che Jiang",
+        "Minxi Jin",
+        "Cheng Liang",
+        "Dahua Lin",
+        "Dawei Liu",
+        "Kuikun Liu",
+        "Chengqi Lv",
+        "Haijun Lv",
+        "Han Lv",
+        "Ningsheng Ma",
+        "Biqing Qi",
+        "Jianmin Qian",
+        "Shiya Su",
+        "Youbang Sun",
+        "Huanze Tang",
+        "Zhongbo Tian",
+        "Hanjing Wang",
+        "Rui Wang",
+        "Ting Wang",
+        "Yi Wang",
+        "Baiting Wu",
+        "Jun Xu",
+        "Bowen Yang",
+        "Hui Wang",
+        "Weida Wang",
+        "Haochen Ye",
+        "Jiashuo Yu",
+        "Shan Yu",
+        "Xiaoyi Yu",
+        "Qirui Zeng",
+        "Qi Zhang",
+        "Ming Zhang",
+        "Wenwei Zhang",
+        "Bowen Zhou",
+        "Xinyu Zhou"
+      ],
+      "primary_category": "cs.AI",
+      "categories": [
+        "cs.AI"
+      ],
+      "published": "2026-08-14T13:21:49+00:00",
+      "link": "https://arxiv.org/pdf/2608.14290v1",
+      "tags": [
+        "keyword:llm-memory",
+        "keyword:pwt",
+        "query:llm-memory",
+        "query:pwt"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "decoupled memory and reasoning, memory-augmented language model architecture",
+      "llm_evidence_cn": "记忆与推理解耦的大语言模型架构，共享记忆增强推理",
+      "llm_evidence": "记忆与推理解耦的大语言模型架构，共享记忆增强推理",
+      "canonical_evidence": "记忆与推理解耦的大语言模型架构，共享记忆增强推理",
+      "llm_tldr_en": "This work introduces a foundation model architecture that decouples knowledge storage in a shared FFN memory from compositional reasoning in self-attention reasoners, improving knowledge compression, reasoning efficiency, and data efficiency.",
+      "llm_tldr_cn": "传统Transformer将知识存储与推理耦合在一起，导致知识压缩和推理效率受限；本文提出Mobius架构，由全局共享的FFN记忆存储知识向量，多个自注意力推理器迭代查询记忆并完成组合推理。实验显示7B模型仅用基线62.6%的训练数据即达到相近的下游分数，并持续预训练出性能接近Qwen3.5-35B的模型，展示了知识-推理解耦的优势。",
+      "llm_tldr": "传统Transformer将知识存储与推理耦合在一起，导致知识压缩和推理效率受限；本文提出Mobius架构，由全局共享的FFN记忆存储知识向量，多个自注意力推理器迭代查询记忆并完成组合推理。实验显示7B模型仅用基线62.6%的训练数据即达到相近的下游分数，并持续预训练出性能接近Qwen3.5-35B的模型，展示了知识-推理解耦的优势。",
+      "llm_tags": [
+        "query:llm-memory"
+      ],
+      "matched_query_tag": "query:llm-memory",
+      "matched_query_text": "memory augmented language model techniques",
+      "matched_requirement_id": "req-20",
+      "selection_source": "carryover_cache",
+      "paper_id": "2608.14290v1",
+      "quick_tier": "8plus"
+    }
+  ]
+}

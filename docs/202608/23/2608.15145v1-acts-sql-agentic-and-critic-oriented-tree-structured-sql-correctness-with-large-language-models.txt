@@ -1,0 +1,474 @@
+Title: ACTS-SQL: Agentic and Critic-Oriented Tree-Structured SQL Correctness with Large Language Models
+
+URL Source: https://arxiv.org/pdf/2608.15145v1
+
+Published Time: Tue, 18 Aug 2026 00:33:13 GMT
+
+Number of Pages: 14
+
+Markdown Content:
+# ACTS-SQL: Agentic and Critic-Oriented Tree-Structured SQL Correctness with Large Language Models 
+
+# Xinmei Huang 
+
+Renmin University of China huangxinmei@ruc.edu.cn 
+
+# Jie Song 
+
+ByteDance Inc. jie.song@bytedance.com 
+
+# Peng Li 
+
+ByteDance Inc. peng.li01@bytedance.com 
+
+# Fuxin Jiang 
+
+ByteDance Inc. jiangfuxin@bytedance.com 
+
+# Jing Zhang 
+
+Renmin University of China zhang-jing@ruc.edu.cn 
+
+# Tieying Zhang 
+
+ByteDance Inc. tieying.zhang@bytedance.com 
+
+# Jianjun Chen 
+
+ByteDance Inc. jianjun.chen@bytedance.com 
+
+# Chenming Liu 
+
+ByteDance Inc. liuchenming.123@bytedance.com 
+
+# Tao Yang 
+
+ByteDance Inc. yangtao.alan@bytedance.com 
+
+# Maoyin Liu 
+
+ByteDance Inc. liumaoyin@bytedance.com 
+
+# Wenda Li 
+
+ByteDance Inc. liwenda.wonder@bytedance.com 
+
+# Hong Chen 
+
+Renmin University of China chong@ruc.edu.cn 
+
+# Cuiping Li 
+
+Renmin University of China licuiping@ruc.edu.cn 
+
+## ABSTRACT 
+
+Large Language Models (LLMs) have been increasingly adopted in Text-to-SQL systems, yet SQL errors remain a major obstacle in real-world Text-to-SQL inference pipelines. Existing SQL correction approaches either rely on large-scale, high-quality training data with substantial overhead, or adopt single-path agentic workflows that are brittle to early mistakes and prone to error propagation. To develop a practical SQL correctness system for industrial scenarios, we present a training-free framework that formulates SQL correction as a plan-guided, tree-structured debugging pro-cess. By maintaining multiple correction strategies and enabling backtracking, the framework mitigates error accumulation during iterative refinement. We further integrate execution-based verifica-tion and clause-level diagnostic tools to support strategy pruning and precise error localization. We evaluate the system on the BIRD-Critic benchmark and ob-serve consistent accuracy gains over strong LLM backbones and representative agent-based baselines, achieving a 9.42% improve-ment over the previous state-of-the-art method. The framework is also deployed in the Torch Log Service (TLS) of Volcano Engine to support an online Text-to-TLS API. In production, it improves exe-cution accuracy from 36.77% to 53.61% on real user queries with a representative strong LLM backbone (GPT-5). These results demon-strate the effectiveness and stability of our approach in real-world deployments. 
+
+PVLDB Reference Format: 
+
+Xinmei Huang, Jie Song, Peng Li, Fuxin Jiang, Jing Zhang, Tieying Zhang, Jianjun Chen, Chenming Liu, Tao Yang, Maoyin Liu, Wenda Li, Hong Chen, and Cuiping Li. ACTS-SQL: Agentic and Critic-Oriented Tree-Structured SQL Correctness with Large Language Models. PVLDB, 14(1): XXX-XXX, 2020. doi:XX.XX/XXX.XX 
+
+PVLDB Artifact Availability: 
+
+The source code, data, and/or other artifacts have been made available at URL_TO_YOUR_ARTIFACTS. 
+
+## 1 INTRODUCTION 
+
+Relational databases underpin modern data-driven applications, with SQL serving as the primary interface for querying structured data. However, writing correct SQL remains difficult even for ex-perienced users. Beyond syntactic proficiency, it requires precise reasoning over complex schemas, join relationships, aggregation semantics, and predicate logic. In large real-world databases, minor mistakes—such as incorrect join conditions or misplaced filters—can silently produce logically incorrect results. Large Language Models (LLMs) have substantially advanced Text-to-SQL systems, significantly reducing the burden of manual query writing. However, generating correct SQL in a single pass remains challenging. Even strong base and fine-tuned models fre-quently produce syntax errors, incorrect join paths, aggregation mismatches, and other semantic inconsistencies. For example, on the Text-to-SQL benchmark Spider2.0 [21], a strong base model such as Claude-4 [3] achieves only 25.78% accuracy. In industrial products, such as Torch Log Service (TLS) on Volcano Engine, where 
+
+> This work is licensed under the Creative Commons BY-NC-ND 4.0 International License. Visit https://creativecommons.org/licenses/by-nc-nd/4.0/ to view a copy of this license. For any use beyond those covered by this license, obtain permission by emailing info@vldb.org. Copyright is held by the owner/author(s). Publication rights licensed to the VLDB Endowment. Proceedings of the VLDB Endowment, Vol. 14, No. 1 ISSN 2150-8097. doi:XX.XX/XXX.XX arXiv:2608.15145v1 [cs.AI] 15 Aug 2026
+
+Figure 1: A failure mode of linear SQL correction, illustrating how early implicit assumptions and error accumulation lead to semantic drift, causing the final query to deviate from the user’s intent. 
+
+databases are highly heterogeneous and customized SQL dialects are common, such errors occur even more frequently. These challenges highlight the necessity of SQL correction be-yond one-pass generation. Recent agentic approaches attempt to address this issue by incorporating multi-round interaction and execution-guided correction into the inference process [22, 40]. However, the correction module in these approaches typically rely on execution-guided refinement or agent-style self-debugging, but often follow single-path reasoning and are vulnerable to early er-rors or limited generalization. As a result, achieving reliable and scalable SQL issue resolution remains an open problem. 
+
+Real-World Deployment: Applications & Constraints. With the growing adoption of large language models (LLMs) for Text-to-SQL [15, 22, 24], SQL correctness has become critical module in real-world pipelines of Text-to-SQL applications based on LLMs. In industrial LLM-based Text-to-SQL systems in ByteDance, au-tomated SQL correction is critical in two stages. During training, large-scale datasets are frequently synthesized or augmented using LLM-generated SQL, where uncorrected errors directly degrade data quality. During inference, correcting imperfect SQL outputs before returning to users substantially improves the reliability and usability of online Text-to-SQL APIs. Therefore, effective SQL cor-rection is essential for both training data quality and end-to-end system performance. Additionally, although training on large-scale in-domain data can significantly enhance LLM performance in specific domains [23, 24], such approaches face challenges in real-world SQL correctness sys-tems. First, collecting high-quality supervision for SQL correctness is costly and time-consuming, as it requires realistic user intents, diverse database schemas, and verified ground-truth SQL queries. Second, real-world deployments typically involve multiple SQL dialects, whereas models fine-tuned on limited dialects often ex-hibit degraded generalization when transferred to unseen ones. For example, we observe that the Xiyan model [30], trained on the main-tain dialect such as MySQL, PostgreSQL and so on, achieves 13.40% accuracy on our real-world Torch Log Service (TLS) benchmark, while the corresponding base model without additional fine-tuning (GPT-5 [1]) attains 36.77%. These limitations substantially hinder the scalability and practicality of training-based solutions, motivat-ing the need for a training-free SQL correctness framework that can robustly adapt to diverse SQL environments. 
+
+Limitations of Existing Methods. Recent training-free SQL cor-rection methods commonly adopt agent-based workflows, where LLMs iteratively refine SQL queries based on execution feedback [7, 12, 16, 37, 40, 43]. In this line of work, the correction process typ-ically follows a linear refinement paradigm, in which the agent revises a single SQL candidate step by step, guided by runtime errors or execution results. However, this paradigm inherently con-strains the agent to a single correction trajectory. As a consequence, the overall process becomes fragile, as it heavily depends on early decisions, and unreliable, since errors introduced at early stages tend to accumulate and persist throughout subsequent iterations. We illustrate the intrinsic limitations of linear refinement through the following example. Example. Figure 1 presents a representative failure mode of linear, single-path SQL correction. The task is to extract a numeric quan-tity and classify product types from textual descriptions following an “ 𝑀 × 𝑁 ” pattern, where 𝑀 denotes a number and 𝑁 denotes a product type string. Notably, the user intent only requires identify-ing products whose descriptions contain the keyword “Electronics”, rather than enforcing an exact or canonicalized match (see the correct SQL in the figure). This illustrates the limitations of linear refinement: 
+
+(1) Fragility caused by early implicit assumptions. In the first correction step, the model implicitly assumes that identifying “Elec-tronics” requires an exact string match. Once this assumption is adopted, all subsequent revisions operate within the same restricted hypothesis space, focusing on refining string normalization and matching strictness without reconsidering whether exact equality is semantically appropriate. As a result, alternative plausible in-terpretations—such as substring containment—are never explored. This example shows that linear refinement is highly sensitive to early assumptions: a single misinterpretation can dominate the entire correction process. Thus, the linear refinement process could be fragile due to the sensitivity of such implicit assumptions. 
+
+(2) Unreliability due to error accumulation and irreversibility. As illustrated by this example, the model progressively introduces increasingly restrictive constraints, such as string normalization 
+
+> 2
+
+(lowercasing and trimming) and regex-based exact matching. These modifications are cumulatively applied to the SQL query, causing the revised query to deviate substantially from its original structure and intent. In SQL tasks, seemingly local changes—such as adding a filtering condition or tightening a predicate—often have global semantic implications, since they directly affect the result set pro-duced by query execution. When such clause-level modifications are repeatedly layered on top of the SQL query being modified, the compounded effect can cause the final query to drift significantly away from the user’s true intent and initial SQL query. As a result, linear, iterative correction processes are highly susceptible to error accumulation and semantic drift, which fundamentally undermines their reliability for SQL debugging. 
+
+Our Proposal. The limitations discussed above highlight a fun-damental requirement for SQL correction: once semantic devia-tions are introduced, the system must be able to revert to earlier steps, rather than continuing refinement along a single irreversible path. To meet this requirement, we adopt tree-based reasoning as an alternative to linear SQL refinement. Specifically, we formu-late SQL correction as a tree-structured debugging process, where different critic strategies and semantic hypotheses are explicitly modeled as separate branches, and earlier modification nodes can be revisited when errors are detected. This formulation mitigates both the fragility caused by early assumptions and the unreliability arising from error accumulation in linear refinement. Such a tree-structured process relies on two key mechanisms. (1) Branching 
+
+preserves alternative correction strategies when multiple revision plans are plausible, for example under ambiguous user intent or underspecified natural language queries. (2) Backtracking enables the system to discard erroneous paths once inconsistencies are identified, instead of propagating their effects forward through the entire correction trajectory. Effectively realizing these mechanisms places higher demands on the model’s reasoning and verification capabilities. In particular, tree-based SQL debugging requires the LLM to support the follow-ing capabilities. Capability (i) Proposing multiple candidate correction paths , which is essential for branching, as the quality and diversity of proposed alternatives directly determine whether the correct solution space is preserved. This includes recognizing potential ambiguities in user intent and enumerating reasonable interpretations instead of committing to a single implicit assump-tion. Capability (ii) Accurately assessing SQL correctness is critical for backtracking, since identifying semantic mismatches and determining when a branch should be abandoned form the core of recovering from erroneous paths. Notably, syntactically valid SQL may still fail to satisfy user intent, making execution success alone insufficient for reliable validation. Capability (iii) Rapidly recovering from syntactic errors while preserving semantic consistency ensures that tree exploration can proceed without being stalled by non-executable intermediate queries. Ef-ficient syntactic repair allows the framework to resume semantic verification and branching decisions promptly, thereby maintaining the effectiveness of both branching and backtracking. To enable tree-structured SQL debugging, we propose Agentic and Critic-Oriented Tree-Structured SQL Correctness (ACTS-SQL ), a framework that organizes SQL correction as a plan-guided ex-ecution process and provides a set of specialized tools to support efficient and robust debugging. Given a user query and a faulty SQL, the LLM first generates a revision plan that decomposes the correction process into a sequence of tool invocations. This plan is structured as a tree, where each node corresponds to a specific diag-nostic or correction operation, and branching points are introduced whenever multiple plausible interpretations or revision strategies arise. Serving as a high-level blueprint, the tree-structured plan enables systematic exploration of alternative hypotheses and con-trolled rollback when semantic deviations are detected. The tree-based formulation naturally supports the LLM in propos-ing multiple candidate correction paths. To further enhance this capability (Capability (i)), we introduce a Detect Ambiguities tool that explicitly analyzes underspecified user intents and enumerates multiple plausible semantic hypotheses as branches of the tree. In addition, accurately assessing SQL correctness (Capability (ii)) re-quires grounding validation in concrete database instances rather than relying solely on LLM reasoning. In SQL tasks, the correctness of joins, filters, and aggregation strategies often depend on data distributions or formats. To address this, we equip the framework with database-interaction tools, including Run SQL for execution-based validation and schema-aware inspection operators such as 
+
+Inspect Columns . Finally, to enable rapid recovery from syntactic failures (Capability (iii)), we introduce a Split and Fix Syntax Error SQL tool that decomposes erroneous queries into clause-level com-ponents and precisely localizes syntax errors. By repairing syntax errors at the clause level instead of regenerating the entire query, the framework restores executability with minimal disruption to previously validated semantics. 
+
+Evaluation & Application. We evaluate our framework on the BIRD-Critic benchmark, a comprehensive dataset covering multiple SQL dialects and diverse levels of query errors. Experimental results demonstrate that our method achieves state-of-the-art performance, surpassing the previous best system by 9.42%. Beyond public benchmarks, we further validate our approach on a real-world Text-to-TLS dataset collected from an industrial log analytics system in Volcano Engine. In production deployment within the Text2TLS pipeline, using a representative strong LLM backbone (GPT-5), our framework improves execution accuracy by 16.84 percentage points on real user queries under practical latency and cost constraints. Similar improvement trends are observed across other LLM backbones, indicating that the effectiveness of our framework generalizes beyond a specific model. These results demonstrate the robustness and deployability of our approach in real-world environments. 
+
+Contributions. Our main contributions are summarized as fol-lows: 
+
+• We introduce a revision-plan–based debugging paradigm that structures the SQL correction process into a hierarchical, decision-guided plan. This paradigm better aligns with human debug-ging behavior and significantly enhances interpretability and efficiency. 
+
+• We design an enriched operator space comprising specialized tool interfaces for ambiguity detection, sub-query decomposition, and schema inspection. These operators effectively assist LLMs 
+
+> 3
+
+in addressing both syntactic and semantic challenges frequently encountered in real-world SQL debugging. 
+
+• We conduct extensive experiments on the BIRD-Critic bench-mark, demonstrating that our approach achieves state-of-the-art performance, outperforming the previous best fine-tuned model by 9.42%, thus validating the effectiveness of our frame-work. Moreover, when deployed in an industrial Text-to-TLS system with a representative strong LLM backbone (GPT-5), our framework improves execution accuracy from 36.77% to 53.61%, demonstrating the robustness and general applicability of our method in real-world settings. 
+
+## 2 RELATED WORK 2.1 Text-to-SQL System 
+
+Recent research has explored agentic reasoning and test-time scal-ing for Text-to-SQL systems. The recent survey [15] finds that both reasoning-specialized and general-purpose LLMs consistently bene-fit from test-time scaling strategies such as divide-and-conquer [41], few-shot prompting, and ReAct-style reasoning [45], leading to ro-bust performance improvements across different model families. Several works, including LearNAT [26], MAG-SQL [44], MAC-SQL [39], and CoE-SQL [46], adopt a compositional reasoning par-adigm in which each Common Table Expression (CTE) or subquery corresponds to an intermediate reasoning step. These approaches decompose SQL generation into hierarchical subgoals, improving interpretability and controllability. Although these approaches in-corporate SQL refinement or revision modules, the refinement pro-cess itself typically follows a one-pass or linear trajectory. Alpha-SQL [22] also introduces a tree-structured framework, modeling schema linking, SQL generation, SQL revision and other sub-tasks as nodes in a hierarchical reasoning process. However, its tree structure primarily organizes generation stages rather than exploring alternative correction branches. In particular, its revision component refines SQL along a single trajectory. 
+
+## 2.2 SQL Revision 
+
+SQL debugging approaches can be broadly categorized into static analysis and AI-based refinement. Traditional static tools—such as UPM [32], Visual Expert [5], SQLFluff [4], and SQLCheck [11]—apply rule-based analysis on Abstract Syntax Trees (ASTs) to identify anti-patterns, type inconsistencies, and inefficient query structures. While these systems provide reliable diagnostics, they lack semantic awareness of user intent and cannot adaptively repair queries. In contrast, AI-based refinement methods leverage LLMs to itera-tively inspect, execute, and modify SQL queries [8, 10, 36]. SQLFixA-gent [7] employs a “rubber-duck debugging” paradigm, generating perturbed query variants to explore diverse semantic hypotheses. CSC-SQL [37] improves candidate selection through collaborative training between a SQL generator and a merger guided by exe-cution feedback. To enhance correction precision, recent studies introduce decomposition-based refinement: 
+
+Tool-based decomposition. Tool-Assisted Agent [43] defines modular functions for modifying SQL clauses (e.g., JOIN, WHERE, GROUP) and provides validity feedback for each action; CoE-SQL [46] mod-els AST editing as sequential reasoning steps; Qr-Hint [16] intro-duces actionable hints for error localization. 
+
+Clause-based decomposition. SQLCritic [8] contrasts incorrect–correct clause pairs to train a critic model for clause-level quality assess-ment. 
+
+Subtask-based decomposition. DAC [40] decomposes the overall refinement process into entity linking, skeleton parsing, and SQL validation, aligning task-specific feedback with the final correction. Despite these advances, most existing frameworks rely on linear refinement loops, which suffer from error propagation and limited exploration capability when debugging complex queries. 
+
+## 2.3 Code Revision 
+
+The idea of iterative self-improvement has been widely studied in the code refinement domain. Systems such as PAG [20], CYCLE [9], LeDex [19], QualityFlow [17], AdaCoder [51], RefineCoder [50], and CodeCoR [35] employ cyclic refinement pipelines in which the model repeatedly executes, inspects, and revises generated code. These frameworks demonstrate the effectiveness of execution-guided feedback and self-reflective reasoning, but their repair tra-jectories remain single-threaded and prone to cumulative errors. To enhance controllability, several works incorporate external tool integration: RepairAgent [6], CodeAgent [47], and LANTERN [31] enable the LLM to decide when to invoke specialized repair or veri-fication tools. Notably, MGDebugger [38] constructs a hierarchical debugging tree (syntax → function → algorithm) that progressively refines the program through structured iterations, while Divide & Conquer Revision [41] separates error localization from repair. However, when directly applied to SQL debugging, these frame-works face additional challenges: SQL’s symbolic compositionality and semantic dependencies (e.g., among SELECT, JOIN, and WHERE clauses) make single-path refinement unstable. This motivates our approach, which introduces an explicit revision plan to organize the debugging process into a tree-structured reasoning space, enabling multi-branch exploration, dynamic tool feedback integration, and interpretable refinement trajectories. ›
+
+## 3 SYSTEM OVERVIEW 
+
+SQL correction in practical environments is challenging due to the tightly coupled structure of SQL queries, the complexity and variability of real-world database schemas, and the inherent ambi-guity in user intent etc. Our framework addresses these challenges by structuring SQL correction as a revision-plan–guided process and equipping the model with specialized operators for ambiguity detection, sub-query decomposition, and schema inspection etc. This design enables systematic debugging, improves correction reliability across diverse scenarios, and reduces the human effort re-quired in both development workflows and Text-to-SQL production systems. 
+
+## 3.1 Workflow 
+
+The system operates through a structured, plan-driven workflow which begins with the LLM first producing an initial revision plan 
+
+> 4
+
+Figure 2: Overview of our framework. 
+
+according to the given user query and the faulty SQL. The plan can be described as a tree, each node of the tree specifies a tool invoca-tion and potential branching paths depending on the tool’s return signals. This plan acts as a high-level blueprint that decomposes the debugging process into interpretable and actionable steps. After producing an initial plan, the system executes it by calling predefined tools and allowing the Central Agent to decide the next branch based on returned tool results. The plan can expand dy-namically whenever a tool introduces new decision points. When a tool returns multiple candidate branches—for example, ambiguity hypotheses from the detect-ambiguities tool—the controller selects the most credible one and continues execution along that path. Once a complete SQL candidate is generated, the Central Agent evaluates its correctness based on the histories and execution feed-back. If it is incorrect, the system performs a bottom-up rollback to explore alternative paths. The process ends when the controller finds a correct SQL. 
+
+## 3.2 Components 
+
+Our framework consists of two main components— Central Agent 
+
+and Tools , which including five main useful tools Detect Ambigu-ous , Inspect Columns , Run SQL , Split and Fix Syntax Error SQL and 
+
+Generate SQL . These components collaboratively perform the SQL refinement task as follows: 
+
+Central Agent . Central Agent serves as the “brain” of our frame-work. It is responsible for generating the initial revision plan, se-lecting the appropriate branch whenever the plan diverges, and evaluating the correctness of the produced SQL. The agent takes as input the user query, database schema, issue SQL, and relevant execution history, and outputs decisions that drive each stage of the correction process. Through these responsibilities, the Central Agent coordinates the entire system, ensuring that SQL refine-ment progresses coherently and converges toward a correct or high-confidence solution. 
+
+Tools. Tools define the operator space of our framework, provid-ing the actionable steps through which the Central Agent refines SQL. The tools include: LLM-based tools such as for users’ intent interpretation, execution tools for running SQLs and returning feedback, and hybrid tools that combine reasoning with execution. Together, they provide the exploration space that enables iterative and reliable SQL correction. 
+
+Detect Ambiguous(LLM-based tool). User queries often contain am-biguous expressions. For example, in the StackOverflow database, the term “active users” could refer to users who post, users who answer, or pre-mine users. This tool takes the raw user query as input and uses an LLM to identify potentially ambiguous phrases, along with plausible interpretive assumptions for each. 
+
+Inspect Columns(execution tool). Column values can guide SQL correction by revealing actual data patterns, which aids in crafting precise matching predicates. This tool provides an interface to retrieve sample values from specified database columns. 
+
+Run SQL(execution tool). In practice, human data analysts often execute sub-SQLs to inspect intermediate query results or run sim-plified queries to validate SQL syntax. This tool provides flexibility by allowing the execution of any given SQL query and returning the corresponding execution result, supporting the debugging process by facilitating query validation. 
+
+Split and Fix Syntax Error SQL(hybrid tool). To improve the efficiency of fixing syntax errors, this tool leverages the LLM to decompose error SQL into smaller, independent subqueries. These subqueries can then be executed in parallel, reducing the time spent on error identification and correction. The execution results, along with the subqueries, are subsequently fed back into the LLM for further refinement, ultimately returning a revised SQL query free from syntax errors. 
+
+Generate SQL(hybrid tool). This tool appears as a leaf node in the tree-structured revision plan to output the final SQL. After reason-ing by the Central Agent and the execution of intermediate tools, the accumulated history, along with the user query, original SQL, and database schema are provided to the LLM. The LLM generates the corrected SQL query and returns both the revised query and its execution result, completing the SQL correction process. 
+
+> 5
+
+Figure 3: An example of the tree-based SQL correction pro-cess. Starting from ambiguity detection, the system branches into alternative semantic interpretations of “overlapping”. The incorrect interpretation (total booking count) is pruned after semantic validation based on evidence obtained from the inspect_columns tool, triggering backtracking. The cor-rect branch (concurrent time overlap) proceeds through SQL generation and syntax repair, ultimately producing a vali-dated query. Each node corresponds to a tool invocation, and branching, backtracking, and acceptance decisions are made by Central Agent based on execution feedback. 
+
+## 4 ACTS-SQL 
+
+In this section, we introduce our plan-guided revision framework. We first detail how the system generates, expands, and executes the tree-structured revision plan. We then introduce the Central Agent , including its input prompt design and the outputs that orchestrate the overall correction process. 
+
+## 4.1 Plan Generation and Execution 
+
+The non-linear debugging workflow in our framework is repre-sented as a tree in which each node corresponds to a tool invocation and each edge denotes a potential follow-up action. The overall procedure is summarized in Algorithm 1. 
+
+4.1.1 Plan Generation. Given the user issue, SQL dialect, database schema, problematic SQL query, and its execution result, the system first constructs an initial revision plan (line 1). This plan specifies the root diagnostic operation and enumerates major branches, each representing a distinct interpretation of the error or a plausible 
+
+Algorithm 1: Tree-Structured SQL Debugging 
+
+Input: User issue 𝑈 , initial SQL 𝑆 0, database schema 𝐷 
+
+Output: Corrected SQL 𝑆 ∗ 
+
+> 1
+
+𝑇 ← GenerateInitialPlan (𝑈 , 𝑆 0, 𝐷 ) ; 
+
+> 2
+
+𝑛 ← 𝑇 . root ;  
+
+> 3
+
+while True do  
+
+> 4
+
+𝑟𝑒𝑠𝑢𝑙𝑡 ← Execute (𝑛 ) ; 
+
+> 5
+
+if 𝑛. tool = detect_ambiguities then  
+
+> 6
+
+𝑛 ← ExpandTree (𝑇 , 𝑟𝑒𝑠𝑢𝑙𝑡 ) ; 
+
+> 7
+
+end  
+
+> 8
+
+if |𝑛. children | > 1 then  
+
+> 9
+
+𝑛 ← SelectNextNode (𝑟𝑒𝑠𝑢𝑙𝑡 ) ; 
+
+> 10
+
+continue ; 
+
+> 11
+
+end  
+
+> 12
+
+if 𝑛. tool = generate_sql then  
+
+> 13
+
+if ValidSQL(result) then  
+
+> 14
+
+return 𝑟𝑒𝑠𝑢𝑙𝑡 ; 
+
+> 15
+
+end  
+
+> 16
+
+else  
+
+> 17
+
+𝑛 ← Rollback (𝑇 , 𝑛 ) ; 
+
+> 18
+
+continue ; 
+
+> 19
+
+end  
+
+> 20
+
+end  
+
+> 21
+
+if |𝑛. children | = 1 then  
+
+> 22
+
+𝑛 ← 𝑛. children [0] ; 
+
+> 23
+
+end  
+
+> 24
+
+end 
+
+repair direction. The debugging process then starts from the root node (line 2). 
+
+4.1.2 Dynamic plan expansion. When the current tool detects am-biguity in the user’s natural-language query, it expands the current node by generating additional child branches that represent alter-native hypotheses (lines 5–7). Each child node corresponds to one such hypothesis, and Central Agent then selects the most plausi-ble branch for continued reasoning, following the same decision mechanism described in the next subsection. 
+
+4.1.3 Choose Next Node to Execute. During execution, the system iteratively selects the next node to traverse based on the outcomes of previously executed steps. When the current node contains multiple child nodes, Central Agent chooses the most promising one accord-ing to the intermediate results produced at that node (lines 8–11). This iterative cycle of traversal and selective expansion enables the system to adapt its reasoning path as additional evidence is gathered. 
+
+4.1.4 Terminal of the Execution. Execution terminates when a leaf node yields a SQL candidate that satisfies the Central Agent ’s validation checks. Once the generate_sql tool is invoked, a candi-date SQL is produced and Central Agent evaluates its correctness (line 13). If the candidate passes validation, the debugging process terminates. Otherwise, Central Agent may backtrack to any node in the plan and continue the revision process. 
+
+> 6
+
+## 4.2 Central Agent 
+
+As the “brain” of our framework, Central Agent serves as the central agent responsible for generating and orchestrating the execution of the revision plan. Figure 3 illustrates an example of the overall work-flow. Specifically, Central Agent generates the initial revision plan, selects branches at 𝑁𝑂𝐷𝐸 0, and evaluates the SQL produced at 
+
+𝑁𝑂𝐷𝐸 2, 𝑁𝑂𝐷𝐸 3, and 𝑁𝑂𝐷𝐸 4 to determine whether to continue, backtrack, or accept the result. To support these responsibilities, we design the prompt for Central Agent to include the following components to provide comprehensive information: 
+
+• Task Overview & Instruction. This section defines the agent’s core objectives and responsibilities, outlining high-level prin-ciples such as when to construct an initial plan, how to select subsequent nodes, and how to determine termination conditions. 
+
+• Available Tools. We provide detailed specifications for all tools accessible during debugging, including their purposes, recom-mended usage scenarios, and input–output formats. This enables Central Agent to reason over a well-defined operator space when revising queries. 
+
+• Output Format. The Central Agent is responsible for three core tasks: (i) constructing the tree-structure revision plan, (ii) select-ing the next node to execute when branching occurs, and (iii) determining whether the SQL candidate is correct upon reach-ing a leaf node. To unify these control actions, we formalize the entire process as operations over a JSON object. The initial plan generation corresponds to producing this JSON structure, whereas intermediate decisions correspond to updating it. Each plan node—corresponding to a single tool invocation—is repre-sented as a dictionary containing a unique node identifier, a short textual description, the tool name, the tool input, and a list of child nodes representing possible follow-up actions. To enable dynamic control flow, we introduce a global cursor field that marks the node currently being executed; Central Agent perform task (ii) by updating this field to point to the next selected node. 
+
+• Input Information. Central Agent receives comprehensive con-textual information to support accurate, stateful reasoning. This includes the SQL dialect, database schema, user-issued problem description, the problematic SQL, and its execution results. We also provide the complete interaction history—the current plan (in JSON form) and the outputs of previously executed nodes. Ex-ecuted nodes are annotated with their corresponding execution results, and the cursor is updated accordingly to reflect the most recent execution event, ensuring coherent and context-aware reasoning throughout the revision process. 
+
+## 4.3 Details of Tools 
+
+The tool set defines the actionable space through which Central Agent explores and refines the debugging trajectory. To address the limitations in resolving syntax and semantic error SQLs of existing methods mentioned in Section 1, we construct a tool space that accelerate syntax error SQL fixing and detect semantic mismatches. Specifically, tools such as Detect Ambiguities, Run SQL, and In-spect Column Format allow the agent to systematically probe the mismatch between user intent and SQL behavior, providing crucial signals for resolving semantic inconsistencies. Meanwhile, Split Syntax Error SQL decomposes faulty queries into clause-level substructures, enabling parallel validation and rapid localization of multiple syntax issues within a single iteration. This section presents the tools used in our framework. We first describe tools for detecting semantic ambiguity, followed by tools that execute or inspect SQL behavior. We then introduce tools de-signed for structural decomposition of syntax error SQL, and finally, the Generate SQL tool that generate corrected SQL candidates. 
+
+## 4.4 Detect Ambiguities 
+
+The Detect Ambiguities tool is an LLM-based semantic diag-nostic module that identifies unclear or underspecified phrases in the user’s natural-language request. Specifically, the prompt in-cludes task description, an example and input information including database schema, user issue and wrong SQL. Thanks to that, the tool highlights ambiguous intent terms and provides 2–3 plausible schema-grounded interpretations for each. These interpretations become semantic branches in the debug-ging tree (e.g., NODE 0 in Figure 3), enabling the agent to explore and verify different meanings during later execution. By making implicit ambiguities explicit, this tool provides the foundation for resolving semantic errors that cannot be detected by SQL execution alone. 
+
+## 4.5 Execution Tools 
+
+The execution tools allow Central Agent to directly interact with the database and obtain reliable behavioral feedback during debugging. They provide the signals needed to validate assumptions, evaluate intermediate hypotheses, and other that cannot be inferred from static SQL analysis. Run SQL. This tool executes any SQL statement proposed by Central Agent and returns the resulting tuples in list form. It en-ables the agent to test semantic assumptions, validate sub-queries, and check whether a candidate SQL behaves consistently with the intended logic and so on. Inspect Column Format. To support lightweight schema prob-ing, this tool takes a table name and column name provided by Central Agent and fills them into a fixed query template (e.g., SE-LECT ‘column‘ FROM ‘table‘). It then returns the sampled values in that column. This allows the agent to get data format without manually constructing full queries. 
+
+## 4.6 Split and Fix Syntax Error SQL 
+
+The Split and Fix Syntax Error SQL tool is invoked when a syntactic error is detected in the generated SQL (e.g., NODE 4 in Figure 3). It decomposes a syntactically invalid SQL query into a set of minimal, independently executable sub-SQL units. We first prompt the LLM to rewrite the faulty query into primitive relational forms—such as table projection, table filtering, table join, or table aggregation—each consisting of exactly one flat SELECT statement without nested structures. This decomposition preserves the original semantics while ex-posing an explicit dependency structure among the generated sub-SQLs. Since this tool focuses solely on syntax validation, we create empty temporary tables to enable parallel execution. For instance, if SQL 𝐵 depends on SQL 𝐴 , we create a temporary table named 
+
+> 7
+
+𝐴 whose schema matches the output columns of SQL 𝐴 , allowing both statements to be executed independently for syntax checking. Importantly, the generated sub-SQL statements together with their execution results (e.g., syntax errors or validation signals) are fed back to the LLM as structured diagnostic feedback. Based on this fine-grained clause-level information, the LLM synthesizes a revised SQL statement that resolves the detected syntax errors while preserving the intended semantics. By isolating syntax violations at the clause level and exposing intermediate relational structures, this tool provides precise diagnostic signals that guide the subsequent correction process toward generating a syntactically valid final query. 
+
+## 4.7 Generate SQL 
+
+The Generate SQL tool is invoked to produce a candidate corrected SQL query and typically serves as a leaf node in the correction tree (e.g., NODE 2 and NODE 4 in Figure 3). After generation, the SQL is automatically executed, and the SQL is evaluated by Central Agent to determine whether to accept the query or trigger further refinement (e.g., backtracking or syntax repair). To generate the repaired SQL, the LLM receives the full contextual state—including the user’s intent description, the database schema, the problematic SQL, execution feedback, and diagnostic signals accumulated during earlier tool invocations from root to current node—and produces a revised SQL query that is both syntactically valid and semantically aligned with the user’s goal. In this tool, the LLM is instructed to minimally edit the original query, avoid speculative assumptions, and ground its modifications strictly in the provided evidence. This design ensures that the fi-nal output is a faithful, precise correction rather than an overly rewritten or hallucinated alternative. Once generated, the SQL can-didate is executed to confirm correctness, completing the debugging workflow. 
+
+## 5 EXPERIMENTAL EVALUATION 
+
+We evaluate the proposed system through a comprehensive set of experiments designed to assess its effectiveness, robustness, and practicality. We first report benchmark results to quantify over-all performance gains, followed by ablation studies to analyze the contribution of key components. We then present results on a real-world Text-to-SQL (TLS) benchmark to demonstrate performance under practical system constraints. In addition, we provide repre-sentative case studies to illustrate the system’s correction behavior in complex scenarios, analyze runtime cost and latency characteris-tics, and finally discuss its application in a real-world production deployment. 
+
+## 5.1 Evaluation on Benchmarks 
+
+In this section, we evaluate ACTS-SQL on the public BIRD-CRITIC benchmark [25] and compare it with representative baselines to validate its effectiveness in SQL debugging. 
+
+5.1.1 Evaluation Settings. We describe the benchmarks, baselines, and evaluation metrics used in this experiments below. 
+
+Benchmark - BIRD-CRITIC. We evaluate ACTS-SQL on BIRD-CRITIC , a benchmark for SQL issue debugging built from real-world user-reported SQL errors [25]. It contains a PostgreSQL sub-set (BIRD-CRITIC-PG) and a multi-dialect subset spanning four database dialects. The benchmark is highly challenging and targets systematic SQL debugging rather than SQL generation. We report results on both the PostgreSQL and the open multi-dialect subsets. 
+
+Baselines. We compare our approach with representative baselines covering different SQL tasks. 
+
+• Raw Models. We evaluate several strong general-purpose LLMs as raw baselines, including GPT-o3 [34], GPT-5 [1], and DeepSeek-R1 [13]. These models are prompted to directly perform SQL cor-rection without any additional training or external tools. For all raw models, we use official inference APIs and adopt consistent decoding configurations, with temperature set to 0.1, top-𝑝 set to 0.95, and a maximum input length of 8K tokens. 
+
+• SQL Correction Agents. We include SQLFixAgent [7], a trained agent-based method that performs semantic mismatch diagnosis and candidate generation using a rubber-duck debugging strat-egy. We also evaluate two training-free SQL correction frame-works, DAC [40] and MapleRepair [36], which diagnose and repair SQL errors through sub-task comparison and rule-based symptom detection, respectively, with optional LLM-based regen-eration. All these methods follow a predominantly linear refine-ment paradigm, where correction decisions are made sequentially without explicitly preserving alternative revision branches. 
+
+• Fine-tuned Text-to-SQL Models. We include XiYan-SQL , a strong fine-tuned Text-to-SQL model trained with multi-task objectives across diverse SQL formats and database dialects [30]. XiYan-SQL has demonstrated state-of-the-art performance on standard Text-to-SQL benchmarks such as BIRD and Spider. For fair comparison, we adopt the same prompting protocol as used in the Bird-Critic leaderboard for evaluating raw models, and apply it consistently across the fine-tuned baselines. 
+
+Implementation Details. All methods are evaluated under the same experimental settings. For agent-based approaches, we follow the official implementations and configurations released by the authors. Unless otherwise specified, large language models are used with deterministic decoding settings to reduce randomness during evalu-ation. SQL correctness is determined by execution-based evaluation, where a predicted SQL query is considered correct if it produces the same result as the ground-truth query under the target database. 
+
+5.1.2 Results on Benchmark. We evaluate ACTS-SQL on the BIRD-CRITIC benchmark, which is specifically designed for SQL debug-ging and correction across multiple SQL dialects. Table 1 summa-rizes the results on both the BIRD-CRITIC-Open (multi-dialect) and BIRD-CRITIC-PG settings and we have the following findings: 
+
+Compared with raw LLMs, ACTS-SQL consistently outper-forms strong raw and reasoning-based LLMs on both BIRD-CRITIC-PG and the multi-dialect setting. We attribute this improvement to the fact that SQL debugging is inherently a structured program repair task, which requires precise error localization and itera-tive verification rather than one-shot generation. While powerful foundation models exhibit strong reasoning abilities, they typi-cally perform implicit, end-to-end correction, making them brittle 
+
+> 8
+
+Table 1: Main results on the BIRD-CRITIC benchmark.                                                        
+
+> Methods Bird-critic Open Bird-critic PG
+> PostgreSQL MySQL SQLServer Oracle Raw model Deepseek-R1 [13] 36.96% 38.78% 32.65% 19.39% 39.62% GPT-o3 [34] 41.30% 26.53% 32.65% 18.37% 38.87% GPT-5 [1] 39.13% 28.57% 29.59% 23.71% 35.85% grok-4 [2] 39.49% 35.71% 33.67% 15.31% 39.06% Agents SQLFixAgent [7] 21.38% 22.79% 33.12% 17.68% 40.56% DAC [40] 19.00% 16.00% 18.00% 3.00% 31.32% RepairAgent [6] 34.94% 33.67% 34.20% 28.12% 35.27% MapleRepair [36] 44.20% 37.76% 39.79% 22.45% 37.74% Xiyan Model [30] 49.28% 45.92% 43.88% 28.57% 44.53%
+> ACTS-SQL 58.70% 64.29% 53.06% 33.67% 45.85%
+
+Table 2: Ablation study of ACTS-SQL on the BIRD-CRITIC benchmark.                             
+
+> Variants Bird-critic Open Bird-critic PG
+> PostgreSQL MySQL SQLServer Oracle Full Method ACTS-SQL (Full) 58.70% 64.29% 53.06% 33.67% 45.85%
+> Plan Structure w/ Linear Plan 45.81% 36.93% 38.88% 20.47% 36.56% Tools w/o Execution Tool 39.84% 32.66% 29.85% 21.48% 37.92% w/o Ambiguity Detection 43.89% 27.37% 31.28% 25.67% 38.45%
+
+when facing complex or compositional SQL errors. In contrast, our approach externalizes the debugging process into a sequence of structured steps, allowing the model to explicitly test intermediate hypotheses through execution-based feedback and revise SQL in a controlled manner. These results suggest that better task struc-turing and feedback integration, rather than stronger base models alone, are crucial for effective SQL issue debugging. 
+
+Compared with existing agent-based SQL correction meth-ods, our approach achieves consistently better performance on BIRD-CRITIC. Although prior agents are also able to execute SQL and leverage execution feedback, they typically follow a linear re-finement process. In practice, linear correction often commits to an early semantic assumption about the error. When this assumption is incorrect, subsequent edits tend to accumulate errors or repeat-edly apply local fixes without addressing the root cause. ACTS-SQL avoids this issue by structuring SQL correction as a plan-guided process that allows alternative hypotheses to be explored and re-vised based on execution feedback. This design makes our agent more robust to misleading intermediate results and better suited for complex SQL debugging scenarios. 
+
+Compared with a Text-to-SQL model fine-tuned on pub-lic SQLite-based datasets. While the fine-tuned model achieves strong performance on standard Text-to-SQL benchmarks, it shows limited effectiveness on BIRD-CRITIC, particularly in the multi-dialect setting. This suggests that fine-tuning on a single dialect and generation-oriented task does not readily transfer to SQL de-bugging scenarios involving diverse dialects and error patterns. In contrast, ACTS-SQL improves SQL correctness through a training-free, execution-guided correction process at inference time, mak-ing it less dependent on dialect-specific supervision. This results in more consistent performance across PostgreSQL, MySQL, SQL Server, and Oracle, demonstrating good transferability in practical multi-dialect environments. Overall, ACTS-SQL consistently outperforms strong base models, representative agent-based approaches, and a fine-tuned Text-to-SQL model on BIRD-CRITIC. The results indicate that structured, execution-guided correction is more effective than linear refinement or dialect-specific fine-tuning, and generalizes better across diverse SQL dialects. 
+
+## 5.2 Ablation Study 
+
+We conduct ablation studies on both the BIRD-CRITIC Open and PG subsets to analyze the contribution of key components in our framework. By selectively removing or simplifying individual com-ponents, we examine how the planning structure and critical tools affect overall performance. 
+
+5.2.1 Ablation on Planning Structure. We conduct an ablation study to examine the role of structured planning in our SQL critic frame-work. As the full method allows the model to generate a tree-structured refinement plan and supports branching and rollback during execution process of the plan, we introduce a linear variant that restricts the refinement process to a single sequential path. Specifically, the LLM is only allowed to calling tools and generating SQLs step-by-step in this variant. This design allows us to isolate the effect of tree-structured planning. Removing the tree-structured planning mechanism and con-straining the refinement process to a linear, step-by-step correction results in a substantial performance drop on both BIRD-CRITIC Open and PG subsets (Table 2). This performance degradation high-lights the importance of structured planning with branching and rollback in SQL correction. Without the ability to explore alternative refinement paths, the linear variant is forced to commit to a single correction hypothesis at each step. Once an incorrect intermedi-ate decision is made, subsequent refinements are restricted to this 
+
+> 9
+
+Table 3: Performance of different critic strategies on the TLS dataset. Accuracy (Acc., %, ↑) measures exact-match correctness. Latency (Lat., seconds, ↓) reports the average end-to-end runtime.                                                       
+
+> Base Model Critic Strategy No Critic LLM Critic DAC [40] MapleRepair [36] ACTS-SQL Acc. ↑Lat. ↓Acc. ↑Lat. ↓Acc. ↑Lat. ↓Acc. ↑Lat. ↓Acc. ↑Lat. ↓
+> GPT-5 [1] 36.77% 6.31 47.42% 26.52 37.74% 72.51 46.83% 15.51 53.61% 218.91 GPT-o3 [34] 40.55% 18.17 51.89% 35.40 40.55% 139.25 50.41% 17.49 56.36% 277.41 DeepSeek-R1 [13] 22.68% 6.04 22.96% 13.24 22.68% 96.04 22.68% 14.55 23.85% 38.65 Xiyan [30] 13.40% 7.01 13.40% 15.67 13.40% 76.54 13.40% 18.90 13.75% 42.56
+
+flawed trajectory, leading to error accumulation or premature con-vergence to suboptimal corrections. In contrast, the tree-structured plan enables the model to defer commitment, recover from invalid intermediate decisions, and maintain robustness against early-stage mistakes. 
+
+5.2.2 Ablation on Key Tools. We further perform ablation studies on the key tools integrated into our framework to evaluate their individual contributions during refinement. Specifically, we remove the SQL execution tool (including run SQL and inspect columns) and the user query ambiguity detection tool, respectively. These ablations aim to quantify the importance of execution-based feed-back and ambiguity handling in guiding reliable SQL correction, with results summarized in Table 2. As shown in Table 2, removing either the SQL execution tool or the user query ambiguity detection tool consistently degrades performance on both the BIRD-CRITIC Open and PG subsets, con-firming the importance of both execution-based feedback and ex-plicit ambiguity handling for reliable SQL correction. In particular, removing the SQL execution tool results in a substantially larger performance drop. This suggests that execution feedback plays a critical role during refinement by providing an interface for the LLM to inspect data distributions or intermediate results. Without such an interface, the evidence available for branch selection and roll-back becomes significantly weaker, preventing the tree-structured debugging process from fully exercising its advantages. In contrast, the ambiguity detection tool primarily affects early-stage user in-tent disambiguation. Its removal increases the likelihood that the refinement process proceeds along correction paths based on misin-terpreted user intent, which in turn leads to degraded performance. 
+
+## 5.3 Evaluation on Real-world Data 
+
+In this section, we evaluate ACTS-SQL on a real-world industrial dataset and compare it with representative baselines, aiming to assess its effectiveness and efficiency in practical deployment sce-narios. 
+
+5.3.1 Evaluation Settings. We describe the real-world dataset, task formulation, and evaluation criteria used in our experiments below. 
+
+Real-world Dataset - TLS. We evaluate ACTS-SQL on a real-world Text-to-SQL dataset collected from an industrial log analytics ser-vice, referred to as TLS . TLS is a SQL-like domain-specific query language for large-scale log analysis, which differs substantially from mainstream SQL dialects such as PostgreSQL and SQLite 1.Due to its non-standard syntax and domain specificity, TLS is not covered by existing Text-to-SQL benchmarks and has limited pub-licly available training data. The dataset consists of real user-issued natural language queries and their corresponding ground-truth TLS queries executed in the production system. It spans 288 TLS topics (tables), with an average of 21.33 columns per table, reflecting sub-stantial schema diversity. Unlike SQL correction benchmarks, the TLS dataset does not provide erroneous SQL as input; instead, each method must directly generate a TLS query from the user request, making this a pure Text-to-TLS generation task. 
+
+Task Definition and Evaluation Criteria. Given a natural language user query, each method first generates an initial TLS query, which is then executed against the target log system. A prediction is considered correct if its execution result matches that of the ground-truth TLS query. When critic-based or agent-based methods are applied, they iteratively diagnose and refine the initially generated TLS query based on execution feedback, rather than correcting a pre-existing erroneous query. We report both the initial accuracy of the generated TLS queries and the final accuracy after refinement. In addition, we measure the end-to-end latency introduced by different critic modules, covering the complete refinement process, to assess their practical usability in real-world systems. 
+
+Baselines. We evaluate multiple Text-to-TLS generation backbones, including strong general-purpose LLMs and fine-tuned Text-to-SQL/Text-to-TLS models. To study the impact of different correc-tion strategies, we further equip these backbones with various critic mechanisms, including LLM-based critics and representa-tive agent-based SQL correction methods. Notably, the agent-based baselines used in this setting are consistent with those evaluated on BIRD-CRITIC, allowing us to examine their effectiveness when transferred to a real-world Text-to-TLS scenario. This design en-ables a controlled comparison of different critic modules under the same generation and execution conditions. 
+
+5.3.2 Results on Real-world Data. We further analyze the effective-ness of ACTS-SQL on the TLS dataset, which represents a real-world Text-to-TLS task collected from an industrial log analytics system. Experimental results are shown in table 3, we have the following findings: 
+
+Effectiveness. ACTS-SQL consistently achieves the highest ac-curacy on the TLS dataset across all evaluated settings. Compared with the initial Text-to-TLS generation, the introduction of our 
+
+> 1TLS syntax documentation: https://www.volcengine.com/docs/6470/1335024?lang=zh, https://www.volcengine.com/docs/6470/73638?lang=zh
+> 10
+
+Figure 4: Comparison between linear refinement and our tree-structured debugging on a representative SQL correction case. Linear refinement method iteratively applies local fixes under a fixed but incorrect semantic assumption, leading to repeated failure. ACTS-SQL branches on ambiguous interpretations, validates each branch independently, and backtracks from invalid paths, successfully correcting the SQL. 
+
+critic mechanism leads to significant performance improvements, indicating that execution-aware refinement is highly effective in real-world scenarios. In addition, our approach outperforms exist-ing LLM-based critics and agent-based baselines, demonstrating its stronger ability to identify and correct semantic and logical issues in generated TLS queries. These results confirm that ACTS-SQL can substantially enhance end-to-end Text-to-TLS performance on realistic user queries. 
+
+Efficiency. We further report the runtime latency of different critic-based methods to assess their practical usability. Although our approach performs iterative refinement, its additional latency remains moderate and comparable to other agent-based baselines. Importantly, the observed performance gains are achieved without introducing prohibitive execution overhead, suggesting that ACTS-SQL strikes a favorable balance between effectiveness and efficiency. This makes it suitable for deployment in real production systems where both accuracy and response time are critical. 
+
+Robustness. The effectiveness of ACTS-SQL is consistently ob-served across multiple LLM backbones, indicating that the proposed refinement mechanism does not rely on a specific model architec-ture or training condition. Moreover, ACTS-SQL remains effective in the pure Text-to-TLS setting, where queries are generated from scratch rather than corrected from pre-existing erroneous inputs. These results suggest that our approach is robust to both backbone variations and task settings, and can reliably improve generation quality in realistic scenarios where no explicit error signals are provided upfront. 
+
+5.3.3 Discussion. The results on the TLS dataset indicate that our critic-based framework is both effective and practical for real-world Text-to-TLS systems, supporting its deployment in industrial pipelines. During training and data construction , LLM-generated queries are commonly used for dataset synthesis and augmentation, where uncorrected errors directly affect data quality. ACTS-SQL offers a training-free correction mechanism that consistently improves the correctness of generated queries across different backbones, making it suitable for automated data cleaning without additional annotation or fine-tuning costs. During online inference , imperfect query generation remains unavoidable even with strong LLMs. The observed accuracy gains and moderate latency overhead show that our critic can be inte-grated as a post-generation refinement module, improving system reliability while satisfying practical efficiency requirements. More-over, its stable performance across multiple backbones suggests that it can function as a general-purpose correction layer, rather than being tied to a specific model. 
+
+## 5.4 Case Study 
+
+We present a representative real-world case to illustrate how our tree-structured debugging framework resolves semantic ambigui-ties that systematically trap linear refinement-based agents. The user query asks for the top-3 products with the highest monthly sales in 2022 for each product category. While seemingly simple, the phrase “monthly sales” is underspecified and admits multiple plausible interpretations, making it a common failure mode for SQL correction systems. 
+
+5.4.1 Failure of Linear Refinement. As shown in Figure 4 (left), the base model generates an initial SQL query that aggregates sales over the entire year 2022 and directly ranks products by the aggregated value. This reflects an implicit assumption that “monthly sales” can be derived from annual aggregation, without explicitly modeling month-level granularity. Linear refinement-based agents inherit this early semantic com-mitment. Although execution feedback indicates incorrect results, the agent never revisits the interpretation of “monthly sales”. In-stead, it repeatedly applies local modifications—such as changing 
+
+> 11
+
+Figure 5: Screenshot of the Text-to-TLS API interface and error TLS repair copilot in the production environment. 
+
+aggregation functions, adjusting grouping keys, or relaxing tempo-ral filters—while preserving the same flawed assumption. Despite modifying different SQL components across iterations, all refinements remain constrained to the same annual-aggregation view. As a result, the agent repeatedly produces syntactically valid but semantically incorrect SQL and fails to recover after multiple execution-feedback cycles. 
+
+5.4.2 Tree-Structured Debugging with Backtracking. In contrast, ACTS-SQL explicitly identifies “monthly sales” as an ambiguous semantic decision point and branches the debugging process ac-cordingly, as shown in Figure 4 (right). The agent explores multiple alternative hypotheses in parallel. One branch follows the annual-aggregation interpretation adopted by linear methods, while another introduces explicit month-level aggregation before computing product-level statistics. Each branch is independently validated through SQL execution. When the annual-aggregation branch produces inconsistent re-sults, the system backtracks to the ambiguity node and continues exploration along the alternative path. By validating and prun-ing semantic hypotheses early, the agent successfully converges to the correct interpretation and generates the correct SQL. This branching-and-backtracking mechanism enables recovery from erroneous early commitments that fundamentally limit linear re-finement approaches. 
+
+## 5.5 Cost Analysis 
+
+We analyze the runtime cost of ACTS-SQL on a real-world business benchmark, where we measure the number of LLM API calls, end-to-end latency, and token consumption. Our evaluation includes both reasoning and non-reasoning LLMs. For token accounting, we only report the visible output tokens returned by the API, excluding internal reasoning tokens that are not exposed to users, which ensures a consistent and practical measurement across different model types. Overall, ACTS-SQL invokes the LLM API 4.97 times per instance on average, with a mean visible token consumption of 8,984.5 to-kens (measured with GPT-o3). The API calls mainly arise from the central agent’s decision-making steps, LLM-based tools such as user query ambiguity detection, and iterative SQL generation during refinement. Despite the use of multiple tools, the total number of in-teraction rounds remains moderate, reflecting a compact workflow design. In terms of latency, the average end-to-end runtime is around 3 minutes when using non-reasoning models such as GPT-5, and increases to approximately 4–5 minutes with reasoning models such as GPT-o3. This latency difference is primarily attributed to the model-side inference time of reasoning models, rather than additional API calls or tool interactions introduced by our frame-work. SQL execution and validation also contribute to the overall runtime but account for a relatively small portion compared to LLM inference. These results indicate that the higher latency ob-served with reasoning models is largely a property of the models themselves, while our workflow does not introduce substantial additional overhead. 
+
+## 5.6 Application 
+
+ACTS-SQL has been integrated into the Text2TLS interface of Vol-cengine Log Service and is currently deployed in production to support real-world log analysis queries. In particular, the TLS re-pair capability shown in Figure 5 incorporates our proposed tree-structured debugging framework to automatically correct erro-neous TLS queries during execution. Its online effectiveness is reflected by the results on the Text2TLS benchmark reported in Section 5.3. 
+
+## 6 CONCLUSION 
+
+In this paper, we present a training-free SQL correction framework that formulates debugging as a tree-structured, plan-guided pro-cess, enabling systematic exploration of alternative repair strategies and recovery from incorrect decisions. By integrating lightweight diagnostic tools for ambiguity analysis, execution feedback, and clause-level validation, our approach improves the reliability of SQL correction without requiring additional supervision or model fine-tuning. We evaluate our method on the public BIRD-Critic benchmark and observe state-of-the-art performance across multiple SQL di-alects. Beyond offline benchmarks, we deploy the framework in a real-world industrial Text-to-SQL pipeline, where it significantly improves end-to-end execution accuracy with practical latency and cost. The results demonstrate that our approach is robust across dif-ferent LLM backbones and suitable for production use, supporting both online SQL generation and large-scale training data curation. Overall, this work shows that structured, plan-based SQL correction provides an effective and deployable solution for improving SQL correctness in real-world LLM-based systems. 
+
+> 12
+
+## REFERENCES 
+
+[1] 2025. GPT-5 Official Release. https://openai.com/zh-Hans-CN/gpt-5/. Accessed: 2026-02-27. [2] 2025. Grok 4: The Most Intelligent AI Model from xAI. https://x.ai/news/grok-4. Accessed: 2026-02-27. [3] 2026. Claude 4: Your Intelligent Conversational AI. https://claude4.net/. Accessed: 2026-02-27. [4] 2026. SQLFluff: The SQL Linter for Humans. https://www.sqlfluff.com/. Accessed: 2026-02-27. [5] 2026. Static Analysis and Impact Analysis of PL/SQL Code with Visual Ex-pert. https://www.visual-expert.com/EN/stored-procedure-pl-sql-oracle-plsql/ code-function-analysis-impact-source_wpve.html. Accessed: 2026-02-27. [6] Islem Bouzenia, Premkumar Devanbu, and Michael Pradel. 2025. Repairagent: An autonomous, llm-based agent for program repair. In 2025 IEEE/ACM 47th International Conference on Software Engineering (ICSE) . IEEE, 2188–2200. [7] Jipeng Cen, Jiaxin Liu, Zhixu Li, and Jingjing Wang. 2025. Sqlfixagent: Towards semantic-accurate text-to-sql parsing via consistency-enhanced multi-agent collaboration. In Proceedings of the AAAI Conference on Artificial Intelligence ,Vol. 39. 49–57. [8] Jikai Chen, Leilei Gan, Ziyu Zhao, Zechuan Wang, Dong Wang, and Chenyi Zhuang. 2025. SQLCritic: Correcting text-to-SQL generation via clause-wise critic. arXiv preprint arXiv:2503.07996 (2025). [9] Yangruibo Ding, Marcus J Min, Gail Kaiser, and Baishakhi Ray. 2024. Cycle: Learn-ing to self-refine the code generation. Proceedings of the ACM on Programming Languages 8, OOPSLA1 (2024), 392–418. [10] Zhongjun Ding, Yin Lin, and Tianjing Zeng. 2025. Ambisql: Interactive ambiguity detection and resolution for text-to-sql. arXiv preprint arXiv:2508.15276 (2025). [11] Prashanth Dintyala, Arpit Narechania, and Joy Arulraj. 2020. SQLCheck: Auto-mated detection and diagnosis of SQL anti-patterns. In Proceedings of the 2020 ACM SIGMOD international conference on management of data . 2331–2345. [12] Yue Gong, Chuan Lei, Xiao Qin, Kapil Vaidya, Balakrishnan Narayanaswamy, and Tim Kraska. 2025. SQLENS: An end-to-end framework for error detection and correction in text-to-SQL. arXiv preprint arXiv:2506.04494 (2025). [13] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Peiyi Wang, Qihao Zhu, Runxin Xu, Ruoyu Zhang, Shirong Ma, Xiao Bi, et al. 2025. Deepseek-r1: Incen-tivizing reasoning capability in llms via reinforcement learning. arXiv preprint arXiv:2501.12948 (2025). [14] Daya Guo, Qihao Zhu, Dejian Yang, Zhenda Xie, Kai Dong, Wentao Zhang, Guanting Chen, Xiao Bi, Yifan Wu, YK Li, et al. 2024. DeepSeek-Coder: when the large language model meets programming–the rise of code intelligence. arXiv preprint arXiv:2401.14196 (2024). [15] Jiajing Guo, Kenil Patel, Jorge Piazentin Ono, Wenbin He, and Liu Ren. 2025. Rethinking Agentic Workflows: Evaluating Inference-Based Test-Time Scaling Strategies in Text2SQL Tasks. arXiv preprint arXiv:2510.10885 (2025). [16] Yihao Hu, Amir Gilad, Kristin Stephens-Martinez, Sudeepa Roy, and Jun Yang. 2024. Qr-hint: actionable hints towards correcting wrong sql queries. Proceedings of the ACM on Management of Data 2, 3 (2024), 1–27. [17] Yaojie Hu, Qiang Zhou, Qihong Chen, Xiaopeng Li, Linbo Liu, Dejiao Zhang, Amit Kachroo, Talha Oz, and Omer Tripp. 2025. Qualityflow: An agentic work-flow for program synthesis controlled by llm quality checks. arXiv preprint arXiv:2501.17167 (2025). [18] Xinmei Huang, Haoyang Li, Jing Zhang, Xinxin Zhao, Zhiming Yao, Yiyan Li, Tieying Zhang, Jianjun Chen, Hong Chen, and Cuiping Li. 2024. E2etune: End-to-end knob tuning via fine-tuned generative language model. arXiv preprint arXiv:2404.11581 (2024). [19] Nan Jiang, Xiaopeng Li, Shiqi Wang, Qiang Zhou, Soneya B Hossain, Baishakhi Ray, Varun Kumar, Xiaofei Ma, and Anoop Deoras. 2024. Ledex: Training LLMs to better self-debug and explain code. Advances in Neural Information Processing Systems 37 (2024), 35517–35543. [20] Yuhua Jiang, Yuwen Xiong, Yufeng Yuan, Chao Xin, Wenyuan Xu, Yu Yue, Qianchuan Zhao, and Lin Yan. 2025. Pag: Multi-turn reinforced llm self-correction with policy as generative verifier. arXiv preprint arXiv:2506.10406 (2025). [21] Fangyu Lei, Jixuan Chen, Yuxiao Ye, Ruisheng Cao, Dongchan Shin, Hongjin Su, Zhaoqing Suo, Hongcheng Gao, Wenjing Hu, Pengcheng Yin, et al. 2024. Spider 2.0: Evaluating language models on real-world enterprise text-to-sql workflows. 
+
+arXiv preprint arXiv:2411.07763 (2024). [22] Boyan Li, Jiayi Zhang, Ju Fan, Yanwei Xu, Chong Chen, Nan Tang, and Yuyu Luo. 2025. Alpha-sql: Zero-shot text-to-sql using monte carlo tree search. arXiv preprint arXiv:2502.17248 (2025). [23] Haoyang Li, Shang Wu, Xiaokang Zhang, Xinmei Huang, Jing Zhang, Fuxin Jiang, Shuai Wang, Tieying Zhang, Jianjun Chen, Rui Shi, et al. 2025. Omnisql: Synthesizing high-quality text-to-sql data at scale. arXiv preprint arXiv:2503.02240 
+
+(2025). [24] Haoyang Li, Jing Zhang, Hanbing Liu, Ju Fan, Xiaokang Zhang, Jun Zhu, Renjie Wei, Hongyan Pan, Cuiping Li, and Hong Chen. 2024. Codes: Towards build-ing open-source language models for text-to-sql. Proceedings of the ACM on Management of Data 2, 3 (2024), 1–28. [25] Jinyang Li, Xiaolong Li, Ge Qu, Per Jacobsson, Bowen Qin, Binyuan Hui, Shuzheng Si, Nan Huo, Xiaohan Xu, Yue Zhang, et al. 2025. Swe-sql: Illuminating llm pathways to solve user sql issues in real-world applications. arXiv preprint arXiv:2506.18951 (2025). [26] Weibin Liao, Xin Gao, Tianyu Jia, Rihong Qiu, Yifan Zhu, Yang Lin, Xu Chu, Jun-feng Zhao, and Yasha Wang. 2025. LearNAT: Learning NL2SQL with AST-guided Task Decomposition for Large Language Models. arXiv preprint arXiv:2504.02327 
+
+(2025). [27] Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang, Bochao Wu, Chengda Lu, Cheng-gang Zhao, Chengqi Deng, Chenyu Zhang, Chong Ruan, et al. 2024. Deepseek-v3 technical report. arXiv preprint arXiv:2412.19437 (2024). [28] Xinyu Liu, Shuyu Shen, Boyan Li, Peixian Ma, Runzhi Jiang, Yuxin Zhang, Ju Fan, Guoliang Li, Nan Tang, and Yuyu Luo. 2025. A Survey of Text-to-SQL in the Era of LLMs: Where are we, and where are we going? IEEE Transactions on Knowledge and Data Engineering (2025). [29] Xinyu Liu, Shuyu Shen, Boyan Li, Nan Tang, and Yuyu Luo. 2025. Nl2sql-bugs: A benchmark for detecting semantic errors in nl2sql translation. In Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V. 2. 5662–5673. [30] Yifu Liu, Yin Zhu, Yingqi Gao, Zhiling Luo, Xiaoxia Li, Xiaorong Shi, Yuntao Hong, Jinyang Gao, Yu Li, Bolin Ding, et al. 2026. Xiyan-sql: A novel multi-generator framework for text-to-sql. IEEE Transactions on Knowledge and Data Engineering (2026). [31] Wenqiang Luo, Jacky Wai Keung, Boyang Yang, Jacques Klein, Tegawende F Bissyande, Haoye Tian, and Bach Le. 2025. Unlocking LLM Repair Capabili-ties Through Cross-Language Translation and Multi-Agent Refinement. arXiv preprint arXiv:2503.22512 (2025). [32] Daniel Ohayon. 2022. Enabling Static Analysis of SQL Queries at Meta. https://engineering.fb.com/2022/11/30/data-infrastructure/static-analysis-sql-queries/. Accessed: 2026-02-27. [33] OpenAI. 2024. Introducing OpenAI o1: A New Series of Reasoning Models. https://openai.com/zh-Hans-CN/o1/. Accessed: 2026-02-27. [34] OpenAI. 2025. Introducing OpenAI o3 and o4-mini: Advanced Reasoning Models. https://openai.com/zh-Hans-CN/index/introducing-o3-and-o4-mini/. Accessed: 2026-02-27. [35] Ruwei Pan, Hongyu Zhang, and Chao Liu. 2025. Codecor: An llm-based self-reflective multi-agent framework for code generation. arXiv preprint arXiv:2501.07811 (2025). [36] Jiawei Shen, Chengcheng Wan, Ruoyi Qiao, Jiazhen Zou, Hang Xu, Yuchen Shao, Yueling Zhang, Weikai Miao, and Geguang Pu. 2025. A study of in-context-learning-based text-to-sql errors. arXiv preprint arXiv:2501.09310 (2025). [37] Lei Sheng and Xu Shuai Shuai. 2025. Csc-sql: Corrective self-consistency in text-to-sql via reinforcement learning. In Proceedings of the 14th International Joint Conference on Natural Language Processing and the 4th Conference of the Asia-Pacific Chapter of the Association for Computational Linguistics . 1473–1496. [38] Yuling Shi, Songsong Wang, Chengcheng Wan, Min Wang, and Xiaodong Gu. 2024. From code to correctness: Closing the last mile of code generation with hierarchical debugging. arXiv preprint arXiv:2410.01215 (2024). [39] Bing Wang, Changyu Ren, Jian Yang, Xinnian Liang, Jiaqi Bai, Linzheng Chai, Zhao Yan, Qian-Wen Zhang, Di Yin, Xing Sun, et al. 2025. Mac-sql: A multi-agent collaborative framework for text-to-sql. In Proceedings of the 31st International Conference on Computational Linguistics . 540–557. [40] Dingzirui Wang, Longxu Dou, Xuanliang Zhang, Qingfu Zhu, and Wanxiang Che. 2024. DAC: decomposed automation correction for text-to-SQL. arXiv preprint arXiv:2408.08779 (2024). [41] Shangwen Wang, Bo Lin, Liqian Chen, and Xiaoguang Mao. 2025. Divide-and-conquer: Automating code revisions via localization-and-revision. ACM Transactions on Software Engineering and Methodology 34, 3 (2025), 1–26. [42] Yaqing Wang, Quanming Yao, James T Kwok, and Lionel M Ni. 2020. Generalizing from a few examples: A survey on few-shot learning. ACM computing surveys (csur) 53, 3 (2020), 1–34. [43] Zhongyuan Wang, Richong Zhang, Zhijie Nie, and Jaein Kim. 2024. Tool-assisted agent on sql inspection and refinement in real-world scenarios. arXiv preprint arXiv:2408.16991 (2024). [44] Wenxuan Xie, Gaochen Wu, and Bowen Zhou. 2024. Mag-sql: Multi-agent generative approach with soft schema linking and iterative sub-sql refinement for text-to-sql. arXiv preprint arXiv:2408.07930 (2024). [45] Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik R Narasimhan, and Yuan Cao. 2022. React: Synergizing reasoning and acting in language models. In The eleventh international conference on learning representations .[46] Hanchong Zhang, Ruisheng Cao, Hongshen Xu, Lu Chen, and Kai Yu. 2024. Coe-sql: In-context learning for multi-turn text-to-sql with chain-of-editions. 
+
+arXiv preprint arXiv:2405.02712 (2024). [47] Kechi Zhang, Jia Li, Ge Li, Xianjie Shi, and Zhi Jin. 2024. Codeagent: Enhancing code generation with tool-integrated agent systems for real-world repo-level coding challenges. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) . 13643–13658. 
+
+> 13
+
+[48] Yuxin Zhang, Meihao Fan, Ju Fan, Mingyang Yi, Yuyu Luo, Jian Tan, and Guoliang Li. 2025. Reward-sql: Boosting text-to-sql via stepwise reasoning and process-supervised rewards. arXiv preprint arXiv:2505.04671 (2025). [49] Xinxin Zhao, Haoyang Li, Jing Zhang, Xinmei Huang, Tieying Zhang, Jianjun Chen, Rui Shi, Cuiping Li, and Hong Chen. 2025. Llmidxadvis: Resource-efficient index advisor utilizing large language model. arXiv preprint arXiv:2503.07884 
+
+(2025). [50] Changzhi Zhou, Xinyu Zhang, Dandan Song, Xiancai Chen, Wanli Gu, Huipeng Ma, Yuhang Tian, Mengdi Zhang, and Linmei Hu. 2025. Refinecoder: Iterative improving of large language models via adaptive critique refinement for code generation. arXiv preprint arXiv:2502.09183 (2025). [51] Yueheng Zhu, Chao Liu, Xuan He, Xiaoxue Ren, Zhongxin Liu, Ruwei Pan, and Hongyu Zhang. 2025. Adacoder: An adaptive planning and multi-agent framework for function-level code generation. IEEE Transactions on Software Engineering (2025). [52] Yizhang Zhu, Liangwei Wang, Chenyu Yang, Xiaotian Lin, Boyan Li, Wei Zhou, Xinyu Liu, Zhangyang Peng, Tianqi Luo, Yu Li, et al. 2025. A Survey of Data Agents: Emerging Paradigm or Overstated Hype? arXiv preprint arXiv:2510.23587 
+
+(2025).

@@ -1,0 +1,702 @@
+Title: TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning
+
+URL Source: https://arxiv.org/pdf/2608.15055v1
+
+Published Time: Tue, 18 Aug 2026 00:27:18 GMT
+
+Number of Pages: 12
+
+Markdown Content:
+# TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning 
+
+# David Yoon Suk Kang 
+
+dyskang@cbnu.ac.kr Chungbuk National University South Korea 
+
+# JungHyun Kim 
+
+rlawjdgus246@hanyang.ac.kr Hanyang University South Korea 
+
+# Juhyun Jeon 
+
+jjh1012@hanyang.ac.kr Hanyang University South Korea 
+
+# Sang-Wook Kim ∗
+
+wook@hanyang.ac.kr Hanyang University South Korea 
+
+## Abstract 
+
+Hypergraphs effectively model higher-order groupwise relation-ships beyond pairwise interactions, while pretrained language mod-els (PLMs) and large language models (LLMs) provide rich semantic understanding from textual attributes. However, research on com-bining language models with hypergraph learning remains limited due to the lack of public text-attributed hypergraph benchmarks. To address this limitation, we present TAHB (Text-Attributed Hy-pergraph Benchmark), the first public benchmark integrating hy-pergraph structures and raw textual attributes. TAHB contains 10 real-world datasets from four domains—e-commerce, academia, movies, and politics networks—enabling systematic evaluation of text-aware hypergraph representation learning. Experimental re-sults show that TAHB preserves key structural properties of real-world hypergraphs and consistently reproduces performance ten-dencies observed in existing benchmarks. Furthermore, experi-ments under both LLM-as-Enhancer and LLM-as-Predictor settings demonstrate that LLM-enhanced textual semantics improve hy-pergraph learning performance, while structural and textual infor-mation jointly provide the best setting for LLM-based prediction. Our benchmark provides a foundation for future research at the intersection of hypergraph learning and language models. 
+
+## CCS Concepts 
+
+• Computing methodologies → Machine learning .
+
+## Keywords 
+
+Text-attributed hypergraphs, benchmark datasets, hypergraph learn-ing, large language models 
+
+> ∗Corresponding author. Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page. Copyrights for components of this work owned by others than the author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee. Request permissions from permissions@acm.org.
+> CIKM ’XX, Woodstock, NY
+> © 2018 Copyright held by the owner/author(s). Publication rights licensed to ACM. ACM ISBN 978-1-4503-XXXX-X/2018/06 https://doi.org/XXXXXXX.XXXXXXX
+
+ACM Reference Format: 
+
+David Yoon Suk Kang, JungHyun Kim, Juhyun Jeon, and Sang-Wook Kim. 2018. TAHB : A Comprehensive Benchmark for Text-Attributed Hypergraph Learning. In Proceedings of Make sure to enter the correct conference title from your rights confirmation email (CIKM ’XX). ACM, New York, NY, USA, 12 pages. https://doi.org/XXXXXXX.XXXXXXX 
+
+## 1 Introduction 
+
+Background and Motivation. Graphs have been widely adopted to represent relational and structural information across diverse do-mains [12, 16, 27, 43, 45, 50], and graph-based learning models have achieved remarkable success in numerous real-world applications. However, conventional graph learning research has primarily focused on topological structures, while recent studies suggest that structural information alone is often insufficient for capturing rich semantic relationships in real-world graphs [40, 44, 52]. As a result, increasing attention has been devoted to incorporating auxiliary semantic information such as node attributes [44], edge signs [20], textual semantics [17], and multimodal signals [30]. In particular, whereas earlier studies represented textual attributes using rela-tively simple techniques such as one-hot encoding, TF–IDF, and Word2Vec [19, 25], recent advances in large language models (LLMs) have enabled highly expressive semantic representations [2, 31, 34]. This paradigm shift has stimulated active research on text-attributed graphs (TAGs) [18, 42, 48], where jointly leveraging graph struc-tures and textual semantics consistently outperforms structure-only approaches. Despite these advances, conventional graphs fundamentally rely on pairwise , limiting their ability to model high-order interactions among multiple entities [7, 49, 51]. Hypergraphs address this limi-tation by allowing a single hyperedge to connect multiple nodes, thereby effectively preserving groupwise relationships [7, 51]. Lever-aging this expressive capability, hypergraph-based methods have achieved superior performance across various applications [5, 9, 10, 35, 46]. Nevertheless, the integration of LLMs into hypergraph learn-ing remains severely limited [5, 9, 10, 35, 46], primarily due to the scarcity of real-world hypergraph datasets enriched with textual attributes. The absence of standardized text-attributed hypergraph benchmarks has therefore become a major bottleneck for systemat-ically developing and evaluating LLM-driven hypergraph learning approaches. arXiv:2608.15055v1 [cs.AI] 15 Aug 2026 CIKM ’XX, June 03–05, 2018, Woodstock, NY Trovato et al. (b)  Learning  paradigms in TAHB (a) Example of  TMDB  dataset in TAHB                     
+
+> Movie E
+> Movie B Movie F
+> Overview :Twice -
+> divorced mother of
+> three who sees an …
+> Actor 1
+> Actor 2
+> Actor 3
+> Downstream Task
+> Text -attribute Hypergraph Topology
+> Movie A
+> Movie C
+> Movie D
+> Overview : A ticking
+> time bomb insomniac
+> and aslippery soap …
+> LL MGNN GNN+LLM
+> A twice-divorced mother of three who sees an injustice, takes on the bad guy
+> ticking-time-bomb insomniac and a slippery soap salesman
+
+Figure 1: Overview of TAHB .Proposed Benchmark. Motivated by this challenge, we propose 
+
+TAHB (Text-Attributed Hypergraph Benchmark) , the first pub-licly available benchmark that jointly incorporates textual attributes and hypergraph structures. TAHB consists of 10 real-world hyper-graph datasets (Figure 1-(a)) spanning four domains: e-commerce, academia, movies, and politics. Nodes represent entities such as papers, products, movies, and bills, while hyperedges capture natu-rally occurring groupwise relationships, including co-authorship, shared reviewers, common actors, and co-sponsorship relations. In addition, each node is associated with rich raw text informa-tion, such as paper abstracts, product descriptions and reviews, movie metadata, and bill contents. Consequently, TAHB provides a standardized evaluation framework for benchmarking both tra-ditional hypergraph models and LLM-based approaches on key downstream tasks, including node classification and hyperedge prediction (Figure 1-(b)). To validate the reliability of TAHB , we conduct extensive exper-iments from multiple perspectives. Our results show that TAHB 
+
+preserves structural characteristics consistent with existing hyper-graph benchmarks (having no text-attributes), while its text infor-mation exhibits distributions similar to those of established TAG datasets [42]. We further verify strong text–node semantic consis-tency, demonstrating that the associated text accurately describes its corresponding nodes. Finally, downstream task experiments re-veal that performance trends on TAHB are highly consistent with those observed on existing hypergraph benchmarks (having no text-attributes), validating its reliability and practical utility as a standardized benchmark for text-attributed hypergraph learning. 
+
+Potential of Integration with LLMs. Furthermore, we inves-tigate the integration of hypergraph representation learning and LLMs from two complementary perspectives [17]: LLM-as-Predictor ,where LLMs directly perform downstream tasks using hypergraph topology and textual semantics as input, and LLM-as-Enhancer ,where LLM-generated semantic augmentation is incorporated into existing HGNNs as enhanced input features. Experimental results show that, in the LLM-as-Predictor setting, jointly leveraging hypergraph topology and textual semantics con-sistently achieves the best performance across all datasets, demon-strating the strong complementarity between the two modalities. In the LLM-as-Enhancer setting, incorporating LLM-generated seman-tic augmentation consistently improves the performance of existing HGNN models over that of using only raw textual attributes. These findings highlight the strong potential of integrating LLM-driven se-mantic information with hypergraph topology, and establish TAHB 
+
+as a practical benchmark for future research on text-attributed hypergraph learning. 
+
+Contributions. The contributions of this paper are summarized as follows: 
+
+• Novel Benchmark. We introduce TAHB , the first publicized hypergraph benchmark jointly integrating textual attributes and hypergraph topology across 10 real-world datasets from four domains. 
+
+• Comprehensive Validation. We verify that TAHB preserves real-world structural and semantic characteristics while repro-ducing consistent performance trends across downstream tasks. 
+
+• LLM–Hypergraph Integration. We systematically investigate the integration of LLMs in hypergraph learning through LLM-as-Predictor and LLM-as-Enhancer , demonstrating the strong com-plementarity between LLM-driven semantics and hypergraph topology. 
+
+Significance. This work establishes a new research direction at the intersection of hypergraph learning and natural language pro-cessing by jointly modeling high-order structures and semantic information. By publicly releasing TAHB with standardized evalua-tion protocols, we provide a practical foundation for future research on LLM-driven text-attributed hypergraph learning. 
+
+Relevance to the CIKM Research Track. This work aligns with the CIKM Research Track topic of Evaluation , including bench-marks, evaluation of generative and LLM-based systems, and repro-ducibility. In addition, prior CIKM research has continuously ex-plored foundational datasets and benchmarking infrastructures [26, 28]. In this work, we propose TAHB , a benchmark for evaluating hypergraph learning over text-attributed higher-order structures via language model integration. 
+
+Reproducibility. The experiments are conducted on the Linux server equipped with an AMD 7960X, 2TB NVMe SSD, 128GB DDR5 memory, and GeForce RTX A6000(48G). For HRL methods, we use the source code provided by the authors of the original papers [6, 8, 9, 15, 21, 23, 41]. For parameters of each method, we use the best set-ting found via extensive grid search in the ranges suggested in its re-spective paper. To ensure reproducibility, we make all source codes, datasets, and experimental pipelines for 10 real-world datasets pub-licly available at: https://anonymous.4open.science/r/TAHB-01F8 
+
+## 2 Related Work 
+
+Hypergraph learning. Existing HRL methods can be broadly divided into semi-supervised and self-supervised approaches. Semi-supervised methods mainly extend Graph Neural Networks [22, 36] by transforming hypergraphs into graph-like structures, such as cliques [9, 41] or bipartite graphs [8], while UniGNN [15] and AllSet [6] further generalize message passing and set-based hy-peredge modeling. In contrast, self-supervised HRL methods derive supervision directly from hypergraph topology [21, 23]; for exam-ple, TriCL [23] employs tri-directional contrastive learning, whereas HypeBoy [21] adopts a partial hyperedge reconstruction strategy. Despite their success, existing HRL methods have primarily been designed for structural features or shallow node embeddings, while the integration with Pre-trained Language Models (PLMs) and Large Language Models (LLMs) remains largely underexplored. As a result, these methods are limited in their ability to capture the rich se-mantic information naturally embedded in real-world higher-order group interactions. TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning CIKM ’XX, June 03–05, 2018, Woodstock, NY 
+
+Table 1: Comparison of TAHB and existing hypergraph benchmark datasets.                                                                                                                                                                             
+
+> Datasets Scale # of Nodes # of Hyperedges # of Classes Domain Feature Representation Raw Text Existing Cora [41] Small 1,434 1,579 7Academia Bag-of-words ×
+> Citeseer [41] small 1,458 1,079 6Academia Bag-of-words ×
+> Cora-CA [41] Small 2,388 1,072 7Academia Bag-of-words ×
+> DBLP-A [37] Small 2,591 2,690 4Academia Bag-of-words ×
+> Pubmed [41] Small 3,840 7,963 3Academia Bag-of-words ×
+> AMiner [47] Large 20,201 8,052 12 Academia Bag-of-words ×
+> DBLP-P [41] Large 41,302 22,263 6Academia Bag-of-words ×
+> NTU2012 [3] Small 2,012 2,012 67 Computer Graphics GVCNN ×
+> ModelNet40 [39] Medium 12,311 12,311 40 Computer Graphics GVCNN ×
+> 20News Medium 16,242 100 4News TF-IDF ×
+> IMDB [37] Small 3,939 2,015 3Movies Bag-of-words ×
+> House [6] Small 1,290 341 2Politics One-hot encoding ×
+> TAHB
+> Amazon Pet Supplies Medium 10,466 28,441 5E-commerce PLMs ⃝
+> Amazon Arts & Crafts Medium 14,728 50,908 7E-commerce PLMs ⃝
+> Amazon Grocery Medium 19,272 56,667 5E-commerce PLMs ⃝
+> Amazon Electronics Large 23,149 40,626 3E-commerce PLMs ⃝
+> arXiv Math Small 4,118 2,342 3Academia PLMs ⃝
+> arXiv Physics Large 38,446 49,907 3Academia PLMs ⃝
+> arXiv CS Large 60,771 37,714 4Academia PLMs ⃝
+> TMDB Large 45,319 21,404 19 Movies PLMs ⃝
+> Senate Small 9,512 411 2Politics PLMs ⃝
+> House Medium 12,281 1,930 2Politics PLMs ⃝
+
+Figure 2: Taxonomy of existing graph and hypergraph bench-mark datasets. Benchmark Datasets in Graph and Hypergraph Learning. 
+
+Recent advances in graph learning have increasingly emphasized the importance of incorporating semantic information beyond pure topology. Accordingly, existing benchmark datasets can be broadly categorized from two perspectives: (1) whether they provide textual attributes and (2) whether they model primitive pairwise relations or compressive higher-order relations. Traditional graph bench-marks such as SocioDim [33] and OGB [14] mainly focus on primi-tive pairwise structures without rich textual semantics. More-recent text-attributed benchmarks, including CS-TAG [42], DTGB [48], and TEG-DB [24], provide rich textual information but still rely on standard pairwise graph formulations. In contrast, existing hyper-graph benchmarks, such as Benson’s datasets [1] and widely used benchmarks for node classification and hyperedge prediction ( e.g. ,Cora [41], Citeseer [41], Cora-CA [41], DBLP-A [37], Pubmed [41], AMiner [47], DBLP-P [41], NTU2012 [3], ModelNet40 [39], 20News, IMDB [37], and House [6]), effectively capture higher-order group relations through hypergraph structures, yet generally lack raw textual attributes associated with nodes. 
+
+Benchmark Gap and Our Positioning. As illustrated in Fig-ure 2, existing datasets only partially satisfy the requirements for modern text-aware hypergraph learning. While recent graph bench-marks provide rich textual semantics, they mainly rely on primitive pairwise structures. Conversely, existing hypergraph benchmarks capture compressive higher-order relations but generally lack raw textual attributes. Consequently, there remains no public bench-mark that jointly supports both higher-order relational modeling and raw text-aware semantic learning. To address this gap, we propose TAHB , the first benchmark specifically designed for text-attributed hypergraph learning. 
+
+## 3 TAHB : The Proposed Benchmark 
+
+In this section, we present the construction of TAHB and its key characteristics. First, Section 3.1 provides an overview of the overall architecture and composition of TAHB . Next, Section 3.2 describes the data collection and preprocessing procedures, including the con-stituent elements of each dataset such as nodes and hyperedges. Fi-nally, Section 3.3 validates TAHB as a benchmark for text-attributed hypergraph learning through analyses of (1) structural characteris-tics , (2) textual attribute distributions , and (3) performance tendencies 
+
+of various hypergraph learning methods compared with those of existing hypergraph datasets. 
+
+## 3.1 Overview 
+
+As summarized in Table 1, TAHB comprises 10 real-world datasets spanning four diverse domains: E-commerce, Academia, Movies, and Politics. Each domain is selected because textual attributes and higher-order relational structures naturally coexist, enabling the evaluation of model generalizability across diverse real-world scenarios. Based on the node scale distributions of existing hypergraph benchmark datasets [3, 6, 37, 39, 41, 47], TAHB includes three dataset scales: small (1,000–10,000 nodes), medium (10,000–20,000 nodes), and large (more than 20,000 nodes), thereby supporting scalability evaluations across varying graph sizes. CIKM ’XX, June 03–05, 2018, Woodstock, NY Trovato et al. 
+
+Existing hypergraph benchmarks often rely on numerical meta-data or preprocessed shallow features, which may fail to preserve the semantics inherent in raw text. To address this limitation, TAHB 
+
+preserves the original raw text associated with all nodes in the hypergraph. This design choice enables researchers to flexibly inte-grate pretrained language models (PLMs) or large language models (LLMs) for advanced textual representation learning and domain-specific feature extraction. Furthermore, to maximize reproducibility, we standardize the storage formats of hyperedges and textual attributes and provide a modular experimental pipeline that directly supports node classifi-cation and hyperedge prediction tasks. Such a standardized envi-ronment facilitates fair comparisons across models and establishes a systematic benchmark foundation for future research on text-attributed hypergraph learning. 
+
+## 3.2 Dataset Construction 
+
+Dataset Collection. To construct TAHB, we collect text-attributed hypergraph datasets from four real-world domains: E-commerce, Academia, Movies, and Politics. Each dataset consists of nodes associated with raw textual attributes and hyperedges representing naturally occurring higher-order group relationships. The detailed descriptions of each dataset are as follows: 
+
+• E-commerce. Collected from the Amazon Review dataset [13] and further processed into hypergraph structures using the Pet Supplies , Arts & Crafts , Grocery , and Electronics categories. Each node represents a product, where the node text consists of the product title and description, and the node label corresponds to the product sub-category. A hyperedge indicates as the set of products purchased and reviewed by the same user. 
+
+• Academia. Collected from arXiv using papers from the Com-puter Science , Physics , and Mathematics categories. 1 Each node represents a paper, where the node text consists of the paper title and abstract, and the node label corresponds to the paper sub-field. A hyperedge indicates as the set of papers authored by the same researcher. 
+
+• Movies. Collected from movies in TMDB .2 Each node represents a movie, where the node text consists of the movie title and plot description, and the node label corresponds to the movie genre. A hyperedge indicates as the set of movies featuring the same actor. 
+
+• Politics. Collected from bills in GovTrack proposed in the U.S. Senate and House of Representatives. 3 Each node represents a bill, where the node text consists of the bill title and summary, and the node label indicates whether the bill was passed or rejected. A hyperedge is defined as the set of bills proposed by the same legislator. 
+
+Data Preprocessing. To ensure the integrity and structural validity of TAHB , the collected raw data are refined through the following three-stage preprocessing pipeline. First, we remove nodes whose textual attributes are missing or contain noisy symbols and non-English sentences that may hinder contextual learning. Second, to 
+
+> 1https://www.arxiv.org
+> 2https://www.themoviedb.org
+> 3https://www.govtrack.us
+
+rigorously preserve the higher-order relational properties of hyper-graphs, we remove singleton hyperedges and isolated nodes that do not belong to any hyperedge. Finally, all preprocessed datasets are stored in a unified format consisting of node textual attributes, hypergraph structural information, and ground-truth labels. 
+
+## 3.3 Dataset Validation 
+
+Validation Questions. In this section, we validate whether the constructed TAHB exhibits the characteristics of real-world hyper-graph data and can serve as a reliable benchmark for hypergraph mining research. The validation is designed to answer the following validation questions (VQs): 
+
+• (VQ1) Does TAHB exhibit structural characteristics similar to those of existing real-world hypergraph datasets? 
+
+• (VQ2) Do the textual attributes in TAHB exhibit realistic distri-butions and informative semantics? 
+
+• (VQ3) Are the performance tendencies of HRL methods consis-tently reproduced on TAHB ?
+
+VQ1. Structural Characteristics. Real-world hypergraphs are known to exhibit the following six structural characteristics [1, 7]: 
+
+(S1) high giant-connected-component ratio, (S2) small effective diameter, (S3) high clustering coefficient, (S4) heavy-tailed degree distribution, (S5) heavy-tailed singular value distribution, and (S6) 
+
+heavy-tailed hyperedge size distribution. Following [7], we first transform each hypergraph into a standard graph via clique expansion [32] and then analyze the five structural characteristics on the transformed graph. Here, the effective diam-eter (S2) is defined as the minimum distance 𝑑 such that approxi-mately 90% of all connected node pairs can be reached within a path length of at most 𝑑 . For (S3), to verify that the observed clustering coefficients are not caused by random structural effects, we addition-ally compare each real-world hypergraph with its corresponding random hypergraph, following the protocol of [7]. Specifically, for each original hypergraph, we construct a random hypergraph of the same size ( i.e. , same numbers of nodes and hyperedges) by randomly selecting the nodes contained in each hyperedge. Table 2 reports the giant connected component ratio (S1) , effec-tive diameter (S2) , and clustering coefficient (S3) for each dataset. For (S1) , consistent with the observations in [7], we find that the vast majority of nodes in the TAHB datasets belong to a giant con-nected component. For (S2) , again following the trends reported in [7], the effective diameters of most datasets range between 2 and approximately 10, indicating a short reachability between nodes. For (S3) , the real-world hypergraphs in TAHB consistently exhibit higher clustering coefficients than their corresponding random hypergraphs, which aligns well with the findings in [7]. Figure 3, Figure 4, and Figure 5 present the degree distributions (S4) , singu-lar value distributions (S5) , and hyperedge size distributions (S6) ,respectively. Similar to existing real-world hypergraph datasets, the degree, singular value, and hyperedge size distributions in TAHB 
+
+consistently exhibit clear heavy-tailed patterns. These observations collectively demonstrate that TAHB pre-serves the fundamental structural characteristics of real-world hy-pergraphs. This suggests that TAHB is not merely a hypergraph dataset augmented with textual attributes, but a realistic benchmark TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning CIKM ’XX, June 03–05, 2018, Woodstock, NY 
+
+Table 2: Structural characteristics of TAHB datasets.                                            
+
+> Amazon Pet Supplies Amazon Arts & Crafts Amazon Grocery Amazon Electronics arXiv Math arXiv Physics arXiv CS TMDB Senate House Connected Component Ratio 1.00 1.00 1.00 0.99 0.70 0.97 0.97 0.97 1.00 1.00
+> Effective Diameter 3.16 2.74 2.84 3.46 13.74 5.42 5.49 4.95 1.96 2.16
+> Clustering Coefficient (Random) 0.16 ±4e-4 0.12 ±2e-4 0.12 ±1e-4 0.24 ±8e-4 0.52 ±4e-3 0.31 ±4e-4 0.48 ±6e-4 0.58 ±1e-3 0.41 ±5e-4 0.30 ±3e-4
+> Clustering Coefficient ( TAHB )0.46 0.28 0.35 0.52 0.71 0.53 0.64 0.59 0.57 0.45
+
+that integrates textual information while maintaining real-world hypergraph characteristics. 
+
+VQ2. Text Attribute Distribution and Quality. In this section, we validate the textual attributes collected in TAHB . In real-world text-attributed graphs, node textual attributes are generally known to follow right-skewed distributions [48]. We investigate whether the same tendency is also observed in TAHB .4
+
+Figure 6 presents the distributions of node text lengths for each dataset. As shown in the figure, TAHB exhibits the right-skewed distributions commonly observed in real-world TAG datasets. These results indicate that the textual attributes collected in TAHB well preserve the general characteristics of real-world text-attributed data. Next, we investigate whether the collected textual attributes contain informative semantics that appropriately characterize indi-vidual nodes. To this end, we conduct node classification as a down-stream task and compare the performance of randomly initialized features with that of text-based features encoded by a pretrained language model (PLM). Specifically, we use BERT-Tiny as the PLM encoder and HGNN [9] as the backbone HRL model. Intuitively, if the collected textual attributes effectively describe the nodes, the text-based features should consistently outperform the random fea-tures; otherwise, their performance would be comparable or even worse. Figure 7 shows the corresponding results. Compared with ran-dom features, the text-based features consistently achieve substan-tially higher performance on the node classification task across all datasets. 5 These results demonstrate that the textual attributes in 
+
+TAHB contain informative semantics that effectively characterize individual nodes. 
+
+VQ3. Performance Tendency Reproducibility. Finally, we in-vestigate whether the performance trends of various hypergraph representation learning (HRL) methods observed on existing hy-pergraph benchmarks are consistently reproduced on TAHB . To this end, we conduct two downstream tasks, node classification and hyperedge prediction, following the experimental protocols of prior studies [21]. We evaluate seven state-of-the-art HRL methods: HGNN [9], HyperGCN [41], HNHN [8], AllSet [6], UniGCNII [15], TriCL [23], and HypeBoy [21]. For node classification, following [21, 38], we randomly split nodes into training, validation, and test sets with ratios of 1%, 1%, and 98%, respectively, and report the average and standard devia-tion of accuracy over 5 random splits. For all HRL methods, node   
+
+> 4Since no benchmark currently exists for text-attributed hypergraphs, we compare the textual characteristics of TAHB with those observed in text-attributed graphs (TAGs). Hypergraphs are generally regarded as generalized forms of graphs and are known to exhibit structural tendencies similar to those of standard graphs [7].
+> 5We observe similar trends across other HRL methods as well.
+
+representations are first learned and then used to train an MLP clas-sifier [21]. For hyperedge prediction, following [21], we randomly split hyperedges into training, validation, and test sets with ratios of 60%, 20%, and 20%, respectively, and report AUROC over 5 random splits. Negative hyperedges are generated using the Size-Negative-Sampling strategy [29], where hyperedge sizes are sampled from the empirical size distribution of real hyperedges and nodes are randomly selected accordingly. Hyperedge representations are ob-tained from node representations via max-min pooling [21, 41]. In addition, to analyze the impact of input features, we ex-tract text-based input features using four categories of node en-coders: the traditional shallow embedding method Skip-Gram and three pretrained language models of different scales, following the setup of [42]: Small (BERT-Tiny), Medium (BERT-Base), and Large (DeBERTa-Large). Table 3 reports the node classification results on the TAHB 
+
+datasets. The main observations are as follows. First, performance generally improves as the PLM scale increases from Small to Medium, owing to the richer contextual semantics captured by larger lan-guage models. However, scaling further to the Large model (DeBERTa-Large) does not consistently improve performance and occasionally leads to slight degradation. This observation is consistent with the findings of [42] and may be attributed to overfitting or an alignment gap between the high-dimensional embedding space generated by large PLMs (1024 dimensions) and the topology-centric message-passing mechanisms of hypergraph models. Second, the relative performance trends among HRL methods are consistently reproduced on TAHB similar to those observed on existing hypergraph benchmark datasets. Specifically, the Pearson correlation coefficient (PCC) between the node classification rank-ing of HRL methods reported on existing hypergraph benchmarks in [21] and the ranking measured on TAHB yields a PCC of 0.97. This suggests that the relative performance trends validated on existing benchmarks are stably preserved in TAHB .6
+
+Finally, we note that on large-scale datasets ( i.e. , arXiv Physics and arXiv CS), self-supervised HRL methods such as TriCL and HypeBoy encountered Out-of-Memory (OOM) limitations. This is primarily due to the quadratic complexity of computing high-order contrastive losses or reconstructing dense neighbor-co-membership matrices over tens of thousands of nodes. Importantly, such em-pirical limitations were rarely observed in existing hypergraph benchmarks due to their constrained data scales. By exposing these hidden computational bottlenecks for the first time, TAHB uniquely serves as a critical testbed for evaluating and advancing scalability in high-order representation learning, paving the way for future memory-efficient frameworks. 
+
+> 6For hyperedge prediction, direct correlation analysis is difficult because no prior study evaluates all HRL methods under a unified experimental setting on existing datasets.
+
+CIKM ’XX, June 03–05, 2018, Woodstock, NY Trovato et al. 10 0 10 1 10 2 10 3
+
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+
+Amazon Pet Supplies    
+
+> 10 010 110 210 3
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+
+Amazon Arts & Crafts    
+
+> 10 010 110 210 3
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+
+Amazon Grocery   
+
+> 10 010 110 2
+> 10 1
+> 10 3
+
+Amazon Electronics  
+
+> 10 010 1
+> 10 1
+> 10 2
+> 10 3
+
+arXiv Math  
+
+> 10 010 1
+> 10 3
+
+arXiv Physics  
+
+> 10 010 1
+> 10 1
+> 10 2
+> 10 3
+> 10 4
+
+arXiv CS  
+
+> 10 010 1
+> 10 1
+> 10 3
+
+TMDB 
+
+> 10 1
+> 10 2
+> 10 3
+
+Senate 
+
+> 10 1
+> 10 3
+
+House Frequency Node degree 
+
+Figure 3: Distribution of node degrees across the TAHB datasets. 10 0 10 1 10 2
+
+> 10 2
+
+Amazon Pet Supplies   
+
+> 10 010 110 2
+> 10 2
+
+Amazon Arts & Crafts   
+
+> 10 010 110 2
+> 10 2
+
+Amazon Grocery   
+
+> 10 010 110 2
+> 10 2
+
+Amazon Electronics   
+
+> 10 010 110 2
+> 10 1
+
+arXiv Math   
+
+> 10 010 110 2
+> 10 2
+
+arXiv Physics   
+
+> 10 010 110 2
+> 10 2
+
+arXiv CS   
+
+> 10 010 110 2
+> 10 2
+
+TMDB   
+
+> 10 010 110 2
+> 10 2
+> 10 3
+
+Senate   
+
+> 10 010 110 2
+> 10 3
+
+House Singular value Rank 
+
+Figure 4: Distribution of singular-values across the TAHB datasets. 10 1
+
+> 10 1
+> 10 3
+
+Amazon Pet Supplies  
+
+> 10 110 2
+> 10 1
+> 10 3
+
+Amazon Arts & Crafts  
+
+> 10 110 2
+> 10 1
+> 10 3
+
+Amazon Grocery 
+
+> 10 1
+> 10 1
+> 10 3
+
+Amazon Electronics 
+
+> 10 1
+> 10 0
+> 10 1
+> 10 2
+> 10 3
+
+arXiv Math  
+
+> 10 110 2
+> 10 1
+> 10 3
+
+arXiv Physics  
+
+> 10 110 2
+> 10 1
+> 10 3
+
+arXiv CS  
+
+> 10 110 2
+> 10 1
+> 10 3
+
+TMDB   
+
+> 10 110 210 3
+> 10 0
+> 10 1
+
+Senate  
+
+> 10 110 2
+> 10 0
+> 10 1
+
+House Frequency Hyperedge size 
+
+Figure 5: Distribution of hyperedge sizes across the TAHB datasets. 
+
+Table 4 reports the hyperedge prediction results on the TAHB 
+
+datasets. Overall, the observed performance trends are largely con-sistent with those of node classification. These results demonstrate that TAHB faithfully preserves the task difficulty and topological discriminability of existing hypergraph benchmarks. 
+
+Summary of Findings. Overall, the experimental results in this section demonstrate that TAHB not only faithfully preserves the structural characteristics of real-world hypergraphs, but also effec-tively retains the distributional and semantic properties of textual attributes observed in real-world text-attributed data. Moreover, the performance trends of various hypergraph representation learning models and text encoding methods observed on existing benchmark datasets are consistently reproduced on TAHB . These findings sug-gest that TAHB can serve as a reliable and scalable benchmark for next-generation text-aware hypergraph representation learning that jointly leverages structural and textual information. 
+
+Ethics, Privacy, and Potential Risks . To ensure the highest stan-dard of research ethics, all benchmark datasets underlying TAHB 
+
+were curated from public repositories under appropriate creative commons or scientific data licenses. A paramount priority during our preprocessing phase was safeguarding user privacy; hence, we executed text anonymization protocols to strip away all personal TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning CIKM ’XX, June 03–05, 2018, Woodstock, NY 0 200 400 0500 1000 1500                    
+
+> Amazon Pet Supplies
+> Avg = 116.7
+> 0100 200 300 01000 2000
+> Amazon Arts & Crafts
+> Avg = 88.6
+> 0200 400 01000 2000 3000
+> Amazon Grocery
+> Avg = 132.0
+> 0200 400 01000 2000 3000
+> Amazon Electronics
+> Avg = 142.1
+> 100 200 0200 400
+> arXiv Math
+> Avg = 149.4
+> 0100 200 300 02000 4000
+> arXiv Physics
+> Avg = 191.8
+> 100 200 02000 4000 6000
+> arXiv CS
+> Avg = 182.3
+> 050 100 150 02000 4000 6000
+> TMDB
+> Avg = 52.3
+> 0500 1000 01000 2000 3000
+> Senate
+> Avg = 148.6
+> 0500 1000 02000 4000
+> House
+> Avg = 132.1
+> Count Length of node text
+
+Figure 6: Distribution of node text lengths across the TAHB datasets. Amazon Pet Supplies Amazon Arts & Crafts Amazon Grocery Amazon Electronics arXiv Math arXiv Physics arXiv CS TMDB Senate House Dataset 025 50 75 Accuracy (%)  Random BERT-Tiny 
+
+Figure 7: Comparison of node classification accuracies between random and text-attributed features on the TAHB datasets. 
+
+identifiers, account names, and specific location markers. Regard-ing potential downstream risks, web-scraped content inevitably conveys historical or societal biases latent within user-generated text. However, because TAHB functions solely as a topological and semantic benchmark for machine learning research, its utility lies in training structural encoders rather than text generation. We ac-tively encourage the research community to utilize TAHB within fair, safe, and aligned AI practices. 
+
+## 4 Exploring LLM Integration in Hypergraph Learning 
+
+Motivation. Existing studies on integrating large language models (LLMs) with graph learning have primarily focused on standard graph settings, while their applicability to hypergraph learning remains largely unexplored. Using TAHB , which jointly provides real-world hypergraph structures and raw textual attributes, we present the first systematic analysis of the integration between LLMs and hypergraph representation learning (HRL). Specifically, we investigate this integration from two complementary perspec-tives: LLM-as-Predictor , where LLMs directly perform downstream tasks, and LLM-as-Enhancer , where LLMs are utilized as knowledge augmentation modules for HRL. 
+
+LLM-as-Predictor. LLM-as-Predictor refers to a setting in which LLMs directly perform downstream tasks as standalone prediction models. Unlike conventional hypergraph neural network-based methods that explicitly learn structural information through mes-sage passing, this setting converts both hypergraph structural in-formation and textual attributes into natural language prompts and directly feeds them into LLMs. Based on the provided prompts, the LLM performs downstream prediction tasks. In this section, we investigate whether LLMs can effectively uti-lize not only textual semantics but also high-order topology induced by hyperedge co-membership, thereby exploring the potential of LLM–hypergraph integration. Specifically, neighboring informa-tion derived from the nodes belonging to the same hyperedge is transformed into textual prompts and incorporated into the LLM input. We conduct node classification as a downstream task. 7 To analyze the impact of structural and textual information on hyper-graph learning, we consider three input settings: (1) Topology-only ,only the hyperedge membership ( i.e. , a set of neighboring nodes) in-formation associated with the target node is converted into natural language prompts; (2) Text-only , where only the textual attributes of the target node are provided; and (3) Topology+Text , where both textual attributes and hypergraph structural information are pro-vided. For all three settings, we use the same prompt template and inference protocol, and measure the final prediction accuracy using the class label generated by the LLM. We evaluate three represen-tative commercial and open-source LLMs: ChatGPT-4o, Llama-3.1, and Gemini-2.5. Finally, due to the high monetary cost of LLM in-ference, we follow [4] by randomly sampling 15% of the hyperedges from each dataset to construct a sub-hypergraph, on which node classification is performed. Table 5 reports the node classification results under the three prompt settings. The main observations are summarized as follows. First, across all datasets and regardless of the LLM used (ChatGPT-4o, Llama-3.1, and Gemini-2.5), the Topology+Text setting consis-tently achieves the best performance. This suggests that textual semantics and hypergraph topology provide complementary infor-mation, and that jointly leveraging both enables the most effective  
+
+> 7For hyperedge prediction, all positive and negative candidate hyperedges should be individually converted into LLM inputs, resulting in prohibitively high monetary cost .Therefore, we only perform node classification under the LLM-as-Predictor setting.
+
+CIKM ’XX, June 03–05, 2018, Woodstock, NY Trovato et al. 
+
+Table 3: Node classification accuracy of HRL methods under different text encoders on TAHB .
+
+Dataset Embedding HGNN HyperGCN HNHN Allset UniGCNII TriCL HypeBoy Amazon Pet Supplies Skip-Gram 61.37 ±0.58 (5) 61.02 ±0.27 (6) 62.92 ±0.90 (3) 61.02 ±0.27 (7) 62.67 ±1.42 (4) 63.21 ±1.11 (2) 64.33 ±1.54 (1) 
+
+BERT-Tiny 81.97 ±0.43 (5) 79.35 ±0.69 (7) 80.14 ±0.54 (6) 82.89 ±0.75 (3) 82.86 ±1.22 (4) 85.97 ±1.36 (1) 85.83 ±3.10 (2) 
+
+BERT-Base 82.86 ±1.19 (5) 80.91 ±5.23 (7) 82.25 ±0.42 (6) 84.61 ±0.82 (4) 86.77 ±0.42 (3) 88.89 ±1.26 (2) 89.13 ±1.12 (1) 
+
+DeBERTa-Large 70.01 ±1.79 (5) 68.53 ±1.95 (7) 69.03 ±0.88 (6) 75.42 ±1.42 (3) 75.13 ±0.81 (4) 79.88 ±0.06 (1) 78.86 ±0.08 (2) 
+
+Amazon Arts & Crafts Skip-Gram 34.12 ±8.15 (6) 32.28 ±3.67 (7) 34.41 ±1.78 (5) 37.79 ±6.80 (4) 41.03 ±1.87 (3) 46.37 ±3.37 (1) 45.79 ±1.11 (2) 
+
+BERT-Tiny 75.78 ±0.93 (5) 70.18 ±2.66 (7) 74.33 ±0.78 (6) 76.23 ±0.40 (4) 77.26 ±0.38 (3) 82.57 ±1.62 (2) 82.99 ±3.11 (1) 
+
+BERT-Base 77.56 ±1.37 (5) 72.17 ±2.09 (7) 77.50 ±0.31 (6) 77.98 ±0.63 (4) 79.74 ±0.44 (3) 83.23 ±0.41 (2) 83.82 ±3.44 (1) 
+
+DeBERTa-Large 68.92 ±1.74 (5) 59.78 ±1.12 (7) 68.76 ±0.71 (6) 70.82 ±0.73 (3) 70.57 ±1.11 (4) 73.59 ±2.64 (1) 72.75 ±2.92 (2) 
+
+Amazon Grocery Skip-Gram 33.90 ±0.58 (5) 33.35 ±0.16 (6) 35.96 ±1.23 (4) 33.27 ±0.16 (7) 39.25 ±2.33 (3) 40.25 ±0.05 (2) 40.76 ±0.49 (1) 
+
+BERT-Tiny 68.23 ±3.66 (6) 60.45 ±2.46 (7) 69.36 ±0.39 (4) 68.31 ±2.46 (5) 71.59 ±0.75 (3) 72.23 ±1.14 (2) 73.54 ±1.04 (1) 
+
+BERT-Base 71.71 ±2.74 (6) 58.67 ±5.06 (7) 72.59 ±0.20 (5) 73.44 ±0.86 (3) 72.99 ±0.34 (4) 74.82 ±1.65 (1) 74.28 ±0.87 (2) 
+
+DeBERTa-Large 56.89 ±2.19 (6) 43.33 ±6.12 (7) 57.70 ±1.46 (5) 58.99 ±1.85 (4) 59.87 ±1.56 (3) 63.47 ±0.26 (2) 65.49 ±1.08 (1) 
+
+Amazon Electronics Skip-Gram 53.47 ±0.24 (6) 53.48 ±0.13 (5) 54.67 ±0.52 (3) 53.42 ±0.13 (7) 53.89 ±0.52 (4) 57.42 ±0.14 (2) 58.32 ±0.32 (1) 
+
+BERT-Tiny 71.47 ±0.91 (5) 68.96 ±1.11 (7) 72.06 ±0.09 (4) 70.81 ±0.75 (6) 77.35 ±0.48 (3) 80.42 ±1.02 (2) 82.95 ±0.91 (1) 
+
+BERT-Base 73.26 ±0.34 (6) 73.42 ±6.02 (5) 74.74 ±0.35 (4) 72.66 ±0.82 (7) 76.59 ±0.42 (3) 81.93 ±1.32 (2) 82.51 ±0.46 (1) 
+
+DeBERTa-Large 63.94 ±0.79 (6) 57.06 ±1.24 (7) 65.49 ±0.77 (4) 64.28 ±1.75 (5) 67.41 ±0.74 (3) 68.41 ±0.04 (2) 68.75 ±0.42 (1) 
+
+arXiv Math Skip-Gram 39.52 ±2.30 (7) 40.15 ±2.97 (5) 39.96 ±2.16 (6) 41.61 ±3.06 (3) 41.42 ±2.59 (4) 43.80 ±0.95 (1) 43.59 ±3.06 (2) 
+
+BERT-Tiny 72.28 ±2.56 (5) 70.71 ±2.77 (7) 72.08 ±2.87 (6) 72.32 ±2.26 (4) 72.63 ±2.39 (3) 76.48 ±2.40 (1) 75.49 ±0.90 (2) 
+
+BERT-Base 65.72 ±4.92 (5) 64.87 ±6.31 (7) 65.54 ±2.57 (6) 66.38 ±3.95 (4) 66.79 ±3.31 (3) 70.66 ±2.52 (1) 70.09 ±3.52 (2) 
+
+DeBERTa-Large 65.97 ±1.86 (5) 62.10 ±2.37 (7) 64.84 ±0.46 (6) 66.05 ±1.20 (4) 68.21 ±0.38 (3) 68.41 ±0.04 (2) 70.75 ±0.42 (1) 
+
+arXiv Physics Skip-Gram 62.62 ±0.86 (2) 61.75 ±0.77 (5) 60.52 ±2.53 (6) 61.96 ±0.64 (4) 62.23 ±2.27 (3) 64.98 ±0.33 (1) OOM 
+
+BERT-Tiny 95.06 ±0.16 (4) 93.62 ±2.87 (6) 94.67 ±0.20 (5) 95.25 ±0.14 (3) 95.30 ±0.19 (2) 96.13 ±0.29 (1) OOM 
+
+BERT-Base 94.28 ±0.42 (4) 92.14 ±3.22 (6) 93.88 ±0.69 (5) 94.36 ±0.55 (3) 94.70 ±0.36 (2) 95.90 ±0.35 (1) OOM 
+
+DeBERTa-Large 95.25 ±1.56 (2) 91.88 ±0.03 (6) 94.84 ±0.24 (5) 95.15 ±0.14 (4) 95.38 ±0.08 (1) 95.20 ±0.79 (3) OOM 
+
+arXiv CS Skip-Gram 40.34 ±0.10 (3) 39.20 ±0.12 (6) 40.31 ±0.05 (4) 40.30 ±0.03 (5) 40.45 ±0.14 (2) 56.69 ±1.85 (1) OOM 
+
+BERT-Tiny 81.19 ±0.22 (3) 40.53 ±0.13 (6) 80.37 ±0.13 (5) 81.15 ±0.16 (4) 84.38 ±0.26 (2) 86.17 ±0.14 (1) OOM 
+
+BERT-Base 82.36 ±2.64 (4) 41.20 ±0.09 (6) 82.07 ±0.23 (5) 82.74 ±0.22 (3) 87.55 ±0.08 (2) 90.25 ±0.79 (1) OOM 
+
+DeBERTa-Large 75.13 ±1.87 (3) 39.80 ±0.22 (6) 73.05 ±1.29 (5) 74.74 ±1.28 (4) 76.82 ±0.46 (2) 80.46 ±0.40 (1) OOM 
+
+TMDB Skip-Gram 23.18 ±1.26 (7) 24.04 ±0.07 (5) 24.05 ±0.10 (4) 24.03 ±0.07 (6) 24.09 ±0.08 (3) 27.01 ±0.29 (1) 26.67 ±0.92 (2) 
+
+BERT-Tiny 35.35 ±2.16 (6) 33.67 ±0.57 (7) 35.37 ±0.13 (5) 36.43 ±0.48 (4) 42.83 ±0.19 (3) 45.17 ±1.16 (1) 44.19 ±1.81 (2) 
+
+BERT-Base 37.20 ±0.78 (5) 36.87 ±1.31 (7) 37.15 ±0.31 (6) 37.31 ±0.61 (4) 47.12 ±0.28 (3) 49.05 ±1.08 (2) 50.65 ±1.27 (1) 
+
+DeBERTa-Large 37.07 ±0.12 (5) 33.16 ±2.11 (7) 36.08 ±0.06 (6) 38.61 ±1.42 (4) 42.48 ±0.39 (3) 46.06 ±0.44 (1) 45.65 ±0.72 (2) 
+
+Senate Skip-Gram 75.79 ±0.34 (4) 75.57 ±0.17 (6) 75.61 ±0.23 (5) 75.57 ±0.17 (7) 75.83 ±0.54 (3) 78.33 ±0.98 (1) 77.22 ±0.25 (2) 
+
+BERT-Tiny 81.56 ±1.47 (6) 76.86 ±1.17 (7) 81.62 ±0.36 (5) 81.93 ±0.23 (4) 82.44 ±0.28 (3) 85.64 ±0.66 (2) 87.13 ±2.70 (1) 
+
+BERT-Base 81.60 ±1.62 (6) 78.00 ±1.48 (7) 81.91 ±0.22 (4) 81.79 ±0.18 (5) 82.41 ±0.22 (3) 84.35 ±0.15 (2) 85.09 ±2.25 (1) 
+
+DeBERTa-Large 82.02 ±1.81 (5) 77.29 ±2.39 (7) 82.32 ±0.18 (3) 81.84 ±0.32 (6) 82.65 ±0.33 (2) 82.22 ±1.37 (4) 83.14 ±0.10 (1) 
+
+House Skip-Gram 78.60 ±1.37 (4) 76.31 ±0.23 (7) 78.71 ±2.07 (3) 78.30 ±0.25 (6) 78.52 ±1.19 (5) 79.79 ±0.61 (1) 79.22 ±0.31 (2) 
+
+BERT-Tiny 82.09 ±1.88 (6) 79.67 ±1.91 (7) 83.06 ±0.27 (5) 83.77 ±0.24 (4) 86.43 ±0.40 (3) 87.75 ±0.22 (2) 88.91 ±1.72 (1) 
+
+BERT-Base 83.60 ±1.93 (5) 81.15 ±2.54 (7) 83.43 ±0.19 (6) 83.67 ±0.19 (4) 86.49 ±0.07 (2) 85.61 ±0.32 (3) 86.66 ±1.40 (1) 
+
+DeBERTa-Large 83.55 ±1.89 (5) 80.19 ±3.78 (7) 83.48 ±0.27 (6) 83.67 ±0.19 (4) 84.63 ±0.35 (3) 85.93 ±0.86 (2) 86.38 ±0.23 (1) 
+
+Average Rank (AR) on TAHB 4.8 6.5 5.1 4.3 3.0 1.5 1.4 
+
+Average Rank (AR) reported in [21] 10.7 15.6 12.6 10.4 9.4 3.4 1.7 
+
+prediction performance. Second, the Text-only setting consistently outperforms the Topology-only setting. This observation suggests that LLMs, being fundamentally pretrained on natural language cor-pora, are inherently more effective at understanding and utilizing textual semantics. In contrast, leveraging hypergraph topology re-quires LLMs to infer structural relationships among multiple nodes connected through shared hyperedges, which goes beyond sim-ple semantic extraction from textual information. In other words, topology-based prediction requires relatively more-complex multi-step structural reasoning than textual-semantic prediction, which may explain the comparatively limited performance of current general-purpose LLMs under the Topology-only setting. Overall, the experimental results suggest that current general-purpose LLMs can effectively utilize not only textual semantics but also high-order topology induced by hyperedge co-membership as complementary structural information for downstream tasks. However, the consistently lower performance of the Topology-only 
+
+setting compared with the Text-only setting indicates that, while current LLMs exhibit strong capability in textual reasoning, they may still face limitations in complex hypergraph structural reason-ing. 
+
+LLM-as-Enhancer. LLM-as-Enhancer refers to a setting in which LLMs are not used as standalone prediction models, but instead serve as semantic augmentation modules that enhance the input features of existing hypergraph representation learning models. In this section, we adapt an LLM-based textual augmentation strategy TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning CIKM ’XX, June 03–05, 2018, Woodstock, NY 
+
+Table 4: Hyperedge prediction accuracy (AUROC) of HRL methods under different text encoders on TAHB .
+
+Dataset Embedding HGNN HyperGCN HNHN Allset UniGCNII TriCL HypeBoy Amazon Pet Supplies Skip-Gram 71.35 ±1.08 (7) 71.47 ±2.69 (6) 71.48 ±0.6 (5) 72.1 ±1.2 (4) 74.15 ±0.48 (3) 81.56 ±0.54 (1) 81.39 ±0.19 (2) 
+
+BERT-Tiny 71.84 ±1.78 (6) 72.97 ±0.84 (5) 71.31 ±1.13 (7) 73.26 ±0.31 (4) 74.42 ±0.43 (3) 94.35 ±0.43 (2) 95.36 ±0.12 (1) 
+
+BERT-Base 71.02 ±1.17 (7) 73.02 ±1.28 (5) 72.98 ±0.52 (6) 73.27 ±0.53 (4) 74.31 ±0.36 (3) 92.83 ±0.62 (2) 95.09 ±0.19 (1) 
+
+DeBERTa-Large 72.92 ±2.21 (5) 72.9 ±1.01 (6) 72.49 ±0.62 (7) 73.33 ±0.39 (4) 74.31 ±0.36 (3) 91.17 ±0.66 (2) 94.94 ±0.33 (1) 
+
+Amazon Arts & Crafts Skip-Gram 62.9 ±0.92 (4) 62.89 ±0.5 (5) 61.34 ±0.35 (7) 62.26 ±0.42 (6) 64.43 ±0.75 (3) 65.72 ±0.07 (2) 66.84 ±0.2 (1) 
+
+BERT-Tiny 83.0 ±1.85 (7) 85.1 ±1.02 (3) 84.92 ±1.05 (5) 84.59 ±0.85 (6) 85.09 ±3.11 (4) 91.9 ±0.64 (2) 93.76 ±0.67 (1) 
+
+BERT-Base 79.76 ±1.07 (5) 79.46 ±0.34 (6) 78.93 ±1.29 (7) 82.51 ±0.58 (4) 84.43 ±1.64 (3) 89.75 ±0.68 (2) 92.73 ±1.17 (1) 
+
+DeBERTa-Large 78.66 ±0.98 (5) 77.98 ±1.13 (6) 77.93 ±0.72 (7) 82.72 ±0.35 (4) 86.39 ±0.29 (3) 86.4 ±3.65 (2) 91.88 ±0.11 (1) 
+
+Amazon Grocery Skip-Gram 63.23 ±1.83 (6) 63.27 ±0.49 (5) 62.31 ±0.32 (7) 63.38 ±0.25 (4) 64.86 ±0.79 (3) 81.26 ±0.41 (2) 84.78 ±0.12 (1) 
+
+BERT-Tiny 84.7 ±2.29 (5) 82.42 ±0.47 (7) 84.01 ±1.02 (6) 84.85 ±0.7 (4) 85.75 ±0.8 (3) 92.04 ±0.32 (2) 95.06 ±0.16 (1) 
+
+BERT-Base 83.69 ±2.16 (7) 83.73 ±0.42 (6) 83.87 ±0.75 (5) 84.8 ±0.51 (3) 83.94 ±1.98 (4) 91.79 ±1.5 (2) 95.1 ±0.13 (1) 
+
+DeBERTa-Large 82.77 ±3.83 (6) 82.92 ±1.05 (5) 82.52 ±0.41 (7) 83.65 ±0.79 (3) 83.49 ±1.79 (4) 90.52 ±3.02 (2) 94.94 ±0.13 (1) 
+
+Amazon Electronics Skip-Gram 62.94 ±0.9 (7) 63.88 ±0.35 (4) 63.54 ±0.44 (5) 63.96 ±0.51 (3) 63.31 ±2.06 (6) 74.79 ±0.28 (2) 75.01 ±0.4 (1) 
+
+BERT-Tiny 74.09 ±0.96 (6) 73.16 ±0.31 (7) 74.43 ±0.59 (4) 74.18 ±0.63 (5) 75.25 ±2.15 (3) 93.93 ±0.29 (2) 96.09 ±0.2 (1) 
+
+BERT-Base 82.36 ±0.71 (5) 80.9 ±1.0 (7) 82.3 ±0.81 (6) 82.95 ±0.68 (3) 82.56 ±2.8 (4) 93.5 ±0.29 (2) 94.75 ±0.27 (1) 
+
+DeBERTa-Large 77.29 ±1.31 (5) 77.08 ±2.78 (6) 76.31 ±1.79 (7) 77.97 ±1.29 (4) 79.03 ±1.58 (3) 91.35 ±3.28 (2) 96.1 ±0.2 (1) 
+
+arXiv Math Skip-Gram 73.32 ±1.44 (7) 73.98 ±1.42 (5) 73.96 ±1.2 (6) 74.18 ±1.43 (4) 75.24 ±1.26 (3) 84.05 ±0.95 (1) 83.73 ±1.74 (2) 
+
+BERT-Tiny 86.23 ±1.93 (6) 84.95 ±1.99 (7) 86.44 ±0.63 (5) 86.57 ±0.59 (4) 87.34 ±0.61 (3) 97.32 ±0.6 (1) 96.19 ±1.15 (2) 
+
+BERT-Base 86.4 ±1.12 (6) 85.98 ±0.86 (7) 86.53 ±0.87 (5) 86.63 ±0.84 (4) 87.47 ±0.87 (3) 94.45 ±0.63 (1) 94.04 ±0.83 (2) 
+
+DeBERTa-Large 86.44 ±1.32 (7) 86.5 ±0.91 (6) 86.79 ±0.98 (4) 86.55 ±0.8 (5) 87.3 ±0.81 (3) 91.0 ±0.67 (1) 89.53 ±1.19 (2) 
+
+arXiv Physics Skip-Gram 64.8 ±0.88 (6) 56.29 ±0.53 (7) 64.9 ±0.28 (5) 65.31 ±0.88 (4) 66.73 ±0.17 (3) 73.59 ±0.21 (2) 74.82 ±3.15 (1) 
+
+BERT-Tiny 72.83 ±1.77 (5) 64.36 ±1.23 (7) 72.4 ±0.69 (6) 74.18 ±0.63 (4) 76.18 ±0.4 (3) 96.89 ±0.25 (2) 97.87 ±0.07 (1) 
+
+BERT-Base 71.06 ±1.84 (6) 63.93 ±1.15 (7) 71.74 ±1.11 (5) 73.25 ±0.28 (4) 76.81 ±0.6 (3) 95.27 ±0.38 (2) 96.47 ±0.29 (1) 
+
+DeBERTa-Large 67.62 ±1.47 (6) 64.03 ±1.1 (7) 67.74 ±1.9 (5) 73.27 ±0.51 (4) 77.04 ±0.65 (3) 94.33 ±0.1 (2) 95.11 ±0.27 (1) 
+
+arXiv CS Skip-Gram 62.07 ±0.74 (5) 57.06 ±2.04 (7) 61.64 ±0.68 (6) 62.42 ±0.45 (4) 62.71 ±1.48 (3) 67.35 ±0.51 (2) 67.67 ±0.4 (1) 
+
+BERT-Tiny 70.88 ±2.13 (5) 64.74 ±2.66 (7) 70.5 ±1.72 (6) 72.82 ±0.63 (4) 76.46 ±0.48 (3) 89.42 ±0.24 (2) 91.09 ±0.52 (1) 
+
+BERT-Base 70.02 ±2.19 (5) 64.57 ±0.62 (7) 69.1 ±0.6 (6) 72.92 ±0.47 (4) 77.97 ±0.91 (3) 85.96 ±1.09 (2) 93.99 ±0.28 (1) 
+
+DeBERTa-Large 70.84 ±2.95 (6) 64.06 ±0.81 (7) 70.96 ±2.9 (5) 72.91 ±0.51 (4) 76.98 ±1.89 (3) 85.71 ±0.2 (2) 86.99 ±2.07 (1) 
+
+TMDB Skip-Gram 72.34 ±1.96 (7) 72.75 ±0.32 (6) 73.33 ±1.59 (5) 81.06 ±0.3 (4) 82.06 ±0.77 (3) 85.91 ±0.43 (1) 85.0 ±0.43 (2) 
+
+BERT-Tiny 77.42 ±1.18 (6) 76.53 ±1.76 (7) 77.78 ±1.64 (5) 82.84 ±0.27 (4) 84.56 ±0.64 (3) 92.58 ±0.47 (2) 94.07 ±0.23 (1) 
+
+BERT-Base 82.57 ±1.25 (5) 76.56 ±1.84 (7) 82.29 ±0.39 (6) 82.78 ±0.52 (4) 84.39 ±0.55 (3) 90.21 ±2.35 (2) 94.73 ±0.79 (1) 
+
+DeBERTa-Large 86.92 ±1.18 (5) 83.33 ±1.54 (7) 84.83 ±0.68 (6) 87.95 ±0.46 (4) 88.59 ±0.82 (3) 91.75 ±0.49 (2) 92.38 ±0.83 (1) 
+
+Senate Skip-Gram 74.48 ±3.15 (5) 72.32 ±2.25 (7) 75.14 ±0.49 (4) 74.06 ±3.11 (6) 76.43 ±0.42 (3) 84.97 ±0.35 (1) 82.24 ±1.44 (2) 
+
+BERT-Tiny 79.7 ±0.94 (5) 76.65 ±2.71 (6) 81.29 ±1.67 (4) 76.17 ±2.65 (7) 82.39 ±0.9 (3) 97.66 ±0.3 (1) 96.22 ±1.21 (2) 
+
+BERT-Base 75.25 ±2.95 (6) 77.04 ±2.25 (5) 80.65 ±1.73 (4) 74.15 ±1.72 (7) 81.24 ±0.42 (3) 96.97 ±0.06 (1) 95.85 ±0.17 (2) 
+
+DeBERTa-Large 76.25 ±1.95 (6) 69.22 ±2.7 (7) 76.74 ±1.95 (5) 77.92 ±1.08 (4) 80.36 ±0.51(3) 94.69 ±0.26 (1) 93.97 ±1.0 (2) 
+
+House Skip-Gram 62.09 ±1.97 (6) 64.4 ±2.07 (4) 61.04 ±1.2 (7) 63.69 ±2.93 (5) 66.2 ±2.11 (3) 73.47 ±0.24 (1) 72.95 ±1.61 (2) 
+
+BERT-Tiny 72.58 ±1.67 (6) 74.52 ±2.18 (4) 71.62 ±2.54 (7) 73.57 ±2.27 (5) 74.89 ±2.57 (3) 99.8 ±0.13 (2) 99.85 ±0.07 (1) 
+
+BERT-Base 73.14 ±1.43 (6) 73.03 ±2.02 (7) 73.55 ±2.26 (5) 73.57 ±2.28 (4) 74.69 ±2.63 (3) 99.97 ±0.02 (1) 99.95 ±0.05 (2) 
+
+DeBERTa-Large 65.7 ±1.28 (6) 66.05 ±1.73 (5) 64.57 ±2.26 (7) 66.83 ±1.9 (4) 67.16 ±2.77 (3) 96.92 ±1.35 (2) 99.97 ±0.02 (1) 
+
+Average Rank (AR) 5.8 6 5.6 4.4 3.2 1.7 1.3 
+
+Table 5: Node classification accuracy of LLM-as-Predictor under different prompts and LLMs on TAHB .
+
+LLM Prompt Amazon Pet Supplies Amazon Arts & Crafts Amazon Grocery Amazon Electronics arXiv Math arXiv Physics arXiv CS TMDB Senate House GPT Topology Only 57.80 ±1.68 57.20 ±0.19 51.63 ±1.38 56.40 ±4.52 81.40 ±3.55 80.47 ±2.54 68.63 ±1.38 26.74 ±0.84 72.00 ±2.24 75.93 ±2.81 
+
+Text Only 65.93 ±0.14 70.93 ±0.68 58.11 ±1.32 70.18 ±1.24 82.27 ±1.38 87.27 ±0.01 88.11 ±1.32 46.96 ±2.51 73.27 ±3.56 74.47 ±1.53 
+
+Topology+Text 68.73 ±0.25 74.67 ±0.70 58.66 ±0.60 73.80 ±0.13 82.53 ±0.12 87.60 ±1.04 88.66 ±0.60 50.14 ±1.76 76.20 ±1.31 79.20 ±2.43 LLAMA Topology Only 25.40 ±0.32 50.47 ±0.28 51.20 ±0.11 22.90 ±1.23 17.40 ±1.23 63.27 ±3.05 26.06 ±0.67 0.98 ±0.21 62.93 ±0.17 64.40 ±1.71 
+
+Text Only 65.67 ±1.61 65.40 ±2.04 51.87 ±1.74 72.02 ±2.76 40.27 ±1.72 77.93 ±4.52 74.72 ±0.73 41.32 ±2.57 64.93 ±3.24 66.80 ±2.84 Topology+Text 66.20 ±0.99 68.93 ±3.90 55.20 ±0.08 74.64 ±2.11 54.40 ±0.51 80.00 ±1.15 80.30 ±1.06 45.10 ±0.87 65.07 ±2.30 66.73 ±1.18 
+
+Gemini Topology Only 54.72 ±2.54 54.64 ±3.18 51.36 ±2.93 51.66 ±1.06 80.48 ±0.54 80.40 ±0.52 69.16 ±1.03 24.08 ±1.81 64.22 ±2.03 66.00 ±1.54 
+
+Text Only 63.02 ±1.47 70.96 ±1.62 53.32 ±1.80 65.70 ±1.47 85.16 ±0.19 84.66 ±0.31 87.46 ±0.75 48.02 ±1.02 68.40 ±1.74 70.70 ±1.26 
+
+Topology+Text 68.82 ±2.12 73.70 ±0.49 56.86 ±0.79 68.24 ±2.65 86.94 ±0.47 87.88 ±0.05 89.96 ±0.82 49.38 ±3.06 70.44 ±1.36 75.96 ±0.80 
+
+originally proposed for graph learning [11] to hypergraph envi-ronments, thereby exploring another potential direction for LLM– hypergraph integration. The key idea is that LLM-generated rea-soning can enrich raw textual attributes with implicit task-relevant semantic information beyond what is explicitly expressed in the original text. CIKM ’XX, June 03–05, 2018, Woodstock, NY Trovato et al. 
+
+Table 6: Node classification accuracy of HGNN with LLM-based textual augmentation on TAHB .                                              
+
+> Methods LLM Amazon Pet Supplies Amazon Arts & Crafts Amazon Grocery Amazon Electronics arXiv Math arXiv Physics arXiv CS TMDB Senate House Original Text –81.97 ±0.43 75.78 ±0.93 68.23 ±3.66 71.47 ±0.91 72.28 ±2.56 95.06 ±0.16 81.19 ±0.22 35.35 ±2.16 81.56 ±1.47 82.09 ±1.88
+> Enhanced Text GPT 84.93 ±0.17 80.15 ±0.52 70.09 ±3.89 74.68 ±0.58 74.16 ±2.58 96.66 ±0.49 86.14 ±0.01 39.61 ±1.81 86.48 ±1.32 84.72 ±1.67
+> LLAMA 84.17 ±0.87 78.86 ±1.10 70.59 ±3.26 73.93 ±0.88 74.74 ±2.90 96.11 ±0.01 84.32 ±0.01 39.13 ±2.60 84.73 ±1.12 84.94 ±1.52 Gemini 83.71 ±0.29 78.29 ±0.67 68.90 ±3.85 72.48 ±0.49 74.09 ±2.83 96.19 ±0.61 85.20 ±0.30 39.33 ±1.79 85.22 ±1.55 83.20 ±2.35
+
+Specifically, the textual attributes of each node are first provided to the LLM, which is then prompted to generate both the most likely class label and the corresponding reasoning for the target node. The generated reasoning is subsequently utilized as an augmented textual attribute enriched with additional semantic information. Next, both the original textual attributes and the LLM-generated augmented textual attributes are jointly fed into PLMs to extract node features. Finally, the extracted node features are used as in-put features for existing hypergraph neural networks to perform downstream tasks. To investigate the applicability of LLM-based textual augmen-tation in hypergraph learning, we conduct node classification as the downstream task. 8 We use BERT-Tiny as the PLM encoder and HGNN as the backbone HRL model. All experiments follow the same evaluation protocols described in Section 3.3-VQ3. Table 6 reports the node classification results using LLM-based textual augmentation under different LLMs. The main observations are summarized as follows. First, applying LLM-based textual augmen-tation consistently improves performance compared with using only the original textual attributes. This suggests that the reasoning-generated text produced by LLMs can provide richer semantic infor-mation than raw textual attributes alone. Second, the effectiveness of textual augmentation generally follows the order of ChatGPT-4o, Llama-3.1, and Gemini-2.5. This observation indicates that the rea-soning quality and semantic generation capability of LLMs can di-rectly influence the final performance of hypergraph representation learning models. Overall, these results demonstrate that the LLM-based textual augmentation originally proposed in graph learning environments can also be effectively applied to hypergraph set-tings, suggesting a promising direction for future LLM–hypergraph integration research. 
+
+## 5 Future Research Directions 
+
+TAHB extends beyond a benchmark for evaluating existing hy-pergraph representation learning (HRL) methods and opens up diverse future research directions at the intersection of LLMs and hypergraph learning. By jointly providing real-world hypergraph structures and raw textual attributes, TAHB establishes a founda-tion for systematically exploring research problems that are difficult to investigate in conventional topology-centric HRL settings. 
+
+Beyond Node-Level Downstream Tasks. Most existing text-aware graph learning studies primarily focus on node-level tasks such as node classification. However, real-world hypergraphs natu-rally involve higher-level downstream tasks, including hyperedge-level and hypergraph-level prediction problems. Future research 
+
+> 8Most existing LLM-based graph learning methods have primarily focused on node classification tasks [11, 17]. Accordingly, these methods are largely optimized for node classification settings, while their extension to link prediction remains relatively underexplored. We leave the investigation of LLM-based hyperedge prediction as an important direction for future research.
+
+directions include hyperedge prediction, hyperedge classification, group recommendation, and whole-hypergraph classification by jointly leveraging textual semantics and high-order topology. By explicitly modeling groupwise interactions among multiple nodes, 
+
+TAHB provides a realistic benchmark for unified node-, hyperedge-, and hypergraph-level learning frameworks. 
+
+LLM-based Hypergraph Reasoning. Our experimental results suggest that, while current general-purpose LLMs can effectively leverage textual semantics, they still face substantial challenges in complex hypergraph structural reasoning. In particular, the consis-tently lower performance of topology-only settings compared with text-only settings indicates that understanding and reasoning over high-order topology induced by hyperedge co-membership remains challenging for existing LLMs. This observation opens up promising future directions such as hypergraph-aware prompting, structural chain-of-thought reasoning, and hyperedge-level reasoning agents. By providing realistic text-attributed hypergraphs, TAHB can serve as a foundational benchmark for evaluating LLM-based hypergraph reasoning frameworks. 
+
+Text-aware Hypergraph Learning. Existing HRL research has primarily focused on topology-driven learning, while studies jointly considering textual semantics remain relatively limited. However, our results suggest that semantic information and structural infor-mation can provide complementary signals in text-aware hyper-graph environments. TAHB enables a broad range of future research directions, including semantic-aware hypergraph representation learning, text-guided hyperedge modeling, and semantic-structural co-learning. In particular, TAHB provides a realistic evaluation en-vironment for developing representation learning frameworks that jointly model textual semantics and high-order topology. 
+
+Hypergraph Foundation Models. Although graph foundation models and graph-language models have recently attracted sig-nificant attention, most existing studies focus on standard graph settings, while foundation model research for hypergraphs remains at an early stage. A major limitation of existing hypergraph bench-marks is that they rarely provide raw textual attributes together with high-order structural information, making it difficult to study foundation models that jointly learn semantics and topology. By providing diverse text-attributed hypergraphs across multiple do-mains, TAHB can serve as a pretraining benchmark for future hy-pergraph foundation models. Furthermore, it can facilitate vari-ous downstream research directions such as instruction tuning, retrieval-augmented hypergraph learning, and LLM-aligned hyper-graph embeddings. 
+
+## 6 Conclusions 
+
+In this paper, we introduce TAHB , the first publicly available bench-mark specifically designed for text-aware hypergraph learning, which seamlessly bridges the gap between high-order groupwise TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning CIKM ’XX, June 03–05, 2018, Woodstock, NY 
+
+relations and raw textual semantics. Through rigorous and exten-sive validation, we demonstrate that TAHB faithfully preserves the fundamental structural topologies of real-world hypergraphs while retaining informative textual distributions, thereby establishing a highly reliable and realistic evaluation environment. Leveraging this infrastructure, we systematically explore the integration of LLMs with hypergraph representation learning under two com-plementary paradigms: LLM-as-Predictor and LLM-as-Enhancer. Our empirical findings reveal that current LLMs are exceptionally powerful as semantic enhancers but still face inherent limitations in multi-step structural reasoning when operating as standalone predictors. Moving forward, TAHB serves as a critical testbed for uncovering empirical computational bottlenecks and scaling up high-order learning frameworks. Ultimately, we anticipate that this benchmark will catalyze future research and pave the way to-ward advanced hypergraph foundation models that jointly optimize topological structures and rich natural language semantics. 
+
+## GenAI Usage Disclosure 
+
+In accordance with the ACM Authorship Policy, we disclose that generative AI tools were selectively employed during this research. Generative AI models (including ChatGPT-4o, Llama-3.1, and Gemini-2.5) were utilized to implement the LLM-as-Predictor and LLM-as-Enhancer frameworks. Except for limited writing assistance, these models were not used in any other stages of the research process, including data collection, preprocessing, experimental evaluation, or result analysis. GenAI-assisted writing refinement was strictly limited to assist in editing and polishing the author-written content, including minor grammar correction, phrasing edits, and word-level auto correction. 
+
+## References 
+
+[1] A. Benson, R. Abebe, M. Schaub, A. Jadabaie, and J. Kleinberg. 2018. Simplicial Closure and Higher-Order Link Prediction. PNAS (2018). [2] T. Brown, B. Mann, N. Ryder, M. Subbiah, J. Kaplan, P. Dhariwal, A. Neelakantan, P. Shyam, G. Sastry, A. Askell, et al. 2020. Language Models are Few-Shot Learners. In Proceedings of Advances in Neural Information Processing Systems (NeurIPS) .[3] D. Chen, X. Tian, Y. Shen, and M. Ouhyoung. 2003. On Visual Similarity Based 3D Model Retrieval. In Computer Graphics Forum .[4] Z. Chen, H. Mao, H. Li, W. Jin, H. Wen, X. Wei, S. Wang, D. Yin, W. Fan, H. Liu, and J. Tang. 2023. Exploring the Potential of Large Language Models (LLMs) in Learning on Graphs. arXiv preprint arXiv:2307.03393 (2023). [5] E. Chien, C. Pan, J. Peng, and O. Milenkovic. 2021. You are AllSet: A Multiset Func-tion Framework for Hypergraph Neural Networks. In Proceedings of International Conference on Learning Representations (ICLR) .[6] E. Chien, C. Pan, J. Peng, and O. Milenkovic. 2021. You are Allset: A Multiset Function Framework for Hypergraph Neural Networks. In Proceedings of Int’l Conf. on Learning Representations (ICLR) .[7] M. Do, S. Yoon, B. Hooi, and K. Shin. 2020. Structural Patterns and Genera-tive Models of Real-World Hypergraphs. In Proceedings of ACM International Conference on Knowledge Discovery and Data Mining (KDD) .[8] Y. Dong, W. Sawin, and Y. Bengio. 2020. HNHN: Hypergraph Networks with Hy-peredge Neurons. In ICML Graph Representation Learning and Beyond Workshop .[9] Y. Feng, H. You, Z. Zhang, R. Ji, and Y. Gao. 2019. Hypergraph Neural Networks. In Proceedings of AAAI Conference on Artificial Intelligence (AAAI) .[10] Z. Han, X. Zheng, C. Chen, W. Cheng, and Y. Yao. 2023. Intra and Inter Domain HyperGraph Convolutional Network for Cross-Domain Recommendation. In 
+
+Proceedings of ACM Web Conference (WWW) .[11] X. He, X. Bresson, T. Laurent, A. Perold, Y. LeCun, and B. Hooi. 2024. Harness-ing Explanations: LLM-to-LM Interpreter for Enhanced Text-Attributed Graph Representation Learning. In Proc. of Int’l Conf. on Learning Representations (ICLR) .[12] R. Henderson, D. Clevert, and F. Montanari. 2021. Improving Molecular Graph Neural Network Explainability with Orthonormalization and Induced Sparsity. In Proceedings of International Conference on Machine Learning (ICML) .[13] Y. Hou, J. Li, Z. He, A. Yan, X. Chen, and J. McAuley. 2024. Bridging Language and Items for Retrieval and Recommendation. arXiv preprint arXiv:2403.03952 
+
+(2024). [14] W. Hu, M. Fey, M. Zitnik, Y. Dong, H. Ren, B. Liu, M. Catasta, and J. Leskovec. 2020. Open Graph Benchmark: Datasets for Machine Learning on Graphs. In 
+
+NeurIPS .[15] J. Huang and J. Yang. 2021. UniGNN: a Unified Framework for Graph and Hypergraph Neural Networks. In Proc. of Int’l Joint Conf. on Artificial Intelligence (IJCAI) .[16] M. Jang, Y. Ko, H. Gwon, I. Jo, Y. Park, and S. Kim. 2023. SAGE: A Storage-Based Approach for Scalable and Efficient Sparse Generalized Matrix-Matrix Multiplication. In Proceedings of ACM International Conference on Information and Knowledge Management (CIKM) .[17] B. Jin, G. Liu, C. Han, M. Jiang, H. Ji, and J. Han. 2024. Large Language Models on Graphs: A Comprehensive Survey. IEEE Transactions on Knowledge and Data Engineering (2024). [18] B. Jin, W. Zhang, Y. Zhang, Y. Meng, X. Zhang, Q. Zhu, and J. Han. 2023. Patton: Language Model Pretraining on Text-Rich Networks. In Proceedings of the Annual Meeting of the Association for Computational Linguistics (ACL) .[19] K. Sparck Jones. 1972. A Statistical Interpretation of Term Specificity and Its application in Retrieval. Journal of Documentation (1972). [20] Y. Kang, W. Lee, Y. Lee, K. Han, and S. Kim. 2021. Adversarial Learning of Balanced Triangles for Accurate Community Detection on Signed Networks. In 
+
+Proceedings of IEEE International Conference on Data Mining (ICDM) .[21] S. Kim, S. Kang, F. Bu, S. Lee, J. Yoo, and K. Shin. 2024. HypeBoy: Generative Self-Supervised Represenation Learning on Hypergraphs. In Proc. of Int’l Conf. on Learning Representations (ICLR) .[22] T. Kipf and M. Welling. 2017. Semi-Supervised Classification with Graph Convo-lutional Networks. In Proc. of Int’l Conf. on Learning Representations (ICLR) .[23] D. Lee and K. Shin. 2023. I’m me, we’re us, and i’m us: Tri-directional contrastive learning on hypergraphs. In Proc. of AAAI Conf. on Artificial Intelligence (AAAI) .[24] Z. Li, Z. Gou, X. Zhang, Z. Liu, S. Li, Y. Hu, C. Ling, Z. Zhang, and L. Zhao. 2024. TEG-DB: A Comprehensive Benchmark for Text-Enriched Graph Learning. In 
+
+NeurIPS .[25] T. Mikolov, K. Chen, G. Corrado, and J. Dean. 2013. Efficient Estimation of Word Representations in Vector Space. arXiv preprint arXiv:1301.3781 (2013). [26] N. Neo, Y. Lee, Y. Jin, S. Kim, and S. Kumar. 2024. Towards Fair Graph Anomaly Detection: Problem, Benchmark Datasets, and Evaluation. In Proceedings of ACM International Conference on Information and Knowledge Management (CIKM) .[27] M. Newman. 2014. Coauthorship Networks and Patterns of Scientific Collabora-tion. Proceedings National Academy of Sciences USA (2014). [28] Y. Ni, Y. Cheng, X. Liu, J. Fu, Y. Li, X. He, Y. Zhang, and F. Yuan. 2025. A Content-Driven Micro-Video Recommendation Dataset at Scale. In Proceedings of ACM International Conference on Information and Knowledge Management (CIKM) .[29] P. Patil, G. Sharma, and M. Murty. 2020. Negative Sampling for Hyperlink Prediction in Networks. In Proc. of Pacific-Asia Conf. on Knowledge Discovery and Data Mining (PAKDD) .[30] C. Peng, J. He, and F. Xia. 2024. Learning on Multimodal Graphs: A Survey. arXiv preprint arXiv:2402.05322 (2024). [31] C. Raffel, N. Shazeer, A. Roberts, K. Lee, S. Narang, M. Matena, Y. Zhou, W. Li, and P. Liu. 2020. Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer. Journal of machine learning research (2020). [32] L. Sun, S. Ji, and J. Ye. 2008. Spectral Learning for Multi-Label Classification. In 
+
+Proceedings of ACM Int’l Conf. on Knowledge Discovery and Data Mining (KDD) .[33] L. Tang and H. Liu. 2009. Relational Learning via Latent Social Dimensions. In 
+
+KDD .[34] H. Touvron, L. Martin, K. Stone, P. Albert, A. Almahairi, Y. Babaei, N. Bashlykov, S. Batra, P. Bhargava, S. Bhosale, et al. 2023. Llama 2: Open Foundation and Fine-tuned Chat Models. arXiv preprint arXiv:2307.09288 (2023). [35] N. Veldt, A. Benson, and J. Kleinberg. 2020. Minimizing Localized Ratio Cut Objectives in Hypergraphs. In Proceedings of ACM International Conference on Knowledge Discovery and Data Mining (KDD) .[36] P. Veličković, G. Cucurull, A. Casanova, A. Romero, P. Lio, and Y. Bengio. 2017. Graph Attention Networks. arXiv preprint arXiv:1710.10903 (2017). [37] X. Wang, H. Ji, C. Shi, B. Wang, Y. Ye, P. Cui, and P. Yu. 2019. Heterogeneous Graph Attention Network. In Proceedings of ACM Web Conf. (WWW) .[38] T. wei, Y. You, T. Chen, Y. Shen, J. He, and Z. Wang. 2022. Augmentations in Hypergraph Contrastive Learning: Fabricated and Generative. In Proc. of the Conf. on Advances in Neural Information Processing Systems (NeurIPS) .[39] Z. Wu, S. Song, A. Khosla, F. Yu, L. Zhang, X. Tang, and J. Xiao. 2015. 3D ShapeNets: A Deep Representation for Volumetric Shapes. In Proceedings of IEEE Conf. on Computer Vision and Pattern Recognition (CVPR) .[40] K. Xu, W. Hu, J. Leskovec, and S. Jegelka. 2019. How Powerful are Graph Neural Networks?. In Proceedings of International Conference on Learning Representations (ICLR) .[41] N. Yadti, M. Nimishakavi, P. Yadav, V. Nitin, A. Louis, and P. Talukdar. 2019. Hyper-GCN: A New Method of Training Graph Convolution Networks on Hypergraphs. In Proceedings of Conf. on Neural Information Processing Systems (NeurIPS) .[42] H. Yan, C. Li, R. Long, C. Yan, J. Zhao, W. Zhuang, J. Yin, P. Zhang, W. Han, H. Sun, et al. 2023. A Comprehensive Study on Text-Attributed Graphs: Benchmarking CIKM ’XX, June 03–05, 2018, Woodstock, NY Trovato et al. 
+
+and Rethinking. In Proceedings of Advances in Neural Information Processing Systems (NeurIPS) .[43] J. Yang and J. Leskovec. 2012. Defining and Evaluating Network Communities Based on Ground-Truth. In Proceedings of IEEE International Conference on Data Mining (ICDM) .[44] L. Yang, W. Zhou, W. Peng, B. Niu, J. Gu, C. Wang, X. Cao, and D. He. 2022. Graph Neural Networks Beyond Compromise Between Attribute and Topology. In Proceedings of the ACM Web Conference (WWW) .[45] H. Yoo, Y. Lee, K. Shin, and S. Kim. 2023. Disentangling Degree-related Biases and Interest for Out-of-Distribution Generalized Directed Network Embedding. In Proceedings of ACM Web Conference (WWW) .[46] J. Yu, H. Yin, J. Li, Q. Wang, N. Hung, and X. Zhang. 2021. Self-Supervised Multi-Channel Hypergraph Convolutional Network for Social Recommendation. In Proceedings of ACM Web Conference (WWW) .[47] C. Zhang, D. Song, C. Huang, A. Swami, and N. Chawla. 2019. Heterogeneous Graph Neural Network. In Proceedings of ACM Int’l Conf. on Knowledge Discovery and Data Mining (KDD) .[48] J. Zhang, J. Chen, M. Yang, A. Feng, S. Liang, J. Shao, and R. Ying. 2024. DTGB: A Comprehensive Benchmark for Dynamic Text-Attributed Graphs. In Proceedings of Advances in Neural Information Processing Systems (NeurIPS) .[49] R. Zhang, Y. Zou, and J. Ma. 2020. Hyper-SAGNN: A Self-Attention Based Graph Neural Network for Hypergraphs. In Proceedings of International Conference on Learning Representations (ICLR) .[50] C. Zheng, X. Fan, C. Wang, and J. Qi. 2020. Defining and Evaluating Network Communities Based on Ground-Truth. In Proceedings of AAAI Conference on Artificial Intelligence (AAAI) .[51] D. Zhou, J. Huang, and B. Scholköpf. 2006. Learning with Hypergraphs: Clus-tering, Classification, and Embedding. In Proceedings of Conference on Neural Information Processing Systems (NIPS) .[52] J. Zhu, Y. Yan, L. Zhao, M. Heimann, L. Akoglu, and D. Koutra. 2020. Beyond Homophily in Graph Neural Networks: Current Limitations and Effective Designs. In Proceedings of Advances in Neural Information Processing Systems (NeurIPS) .

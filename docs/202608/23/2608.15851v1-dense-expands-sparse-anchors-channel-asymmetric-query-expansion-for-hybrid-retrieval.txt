@@ -1,0 +1,490 @@
+Title: Dense Expands, Sparse Anchors: Channel-Asymmetric Query Expansion for Hybrid Retrieval
+
+URL Source: https://arxiv.org/pdf/2608.15851v1
+
+Published Time: Tue, 18 Aug 2026 01:17:13 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Dense Expands, Sparse Anchors: Channel-Asymmetric Query Expansion for Hybrid Retrieval 
+
+Chunran Zhang 
+
+School of Computing and Artificial Intelligence Southwest Jiaotong University Chengdu, China 
+
+chronis@my.swjtu.edu.cn 
+
+Abstract 
+
+LLM-based query expansion improves retrieval by generating document-like passages. In hy-brid retrieval, however, most evaluations fuse fixed top-L dense and sparse rankings. Because the cutoff controls both which cross-channel contributions enter fusion and how much of each ranking is accessed, gains measured at one 
+
+L can change or reverse at another. We separate these effects by evaluating retrieval effective-ness under complete-list fusion and recording the policy-specific per-channel replay stopping depths at which its ordered top-K is certified. We then introduce DESA (Dense Expansion and Sparse Anchoring), a channel-asymmetric query expansion method. An LLM generates complementary reference passages; orthogonal residual expansion adds their new semantic di-rections to the dense query, while score-product anchoring incorporates their lexical cues into sparse retrieval without broadening the original query’s lexical support. Across seven BEIR datasets, DESA improves nDCG@10 and Re-call@20 over the unexpanded query by 3.82% and 2.38%, while reducing dense and sparse access depths by 36.90% and 36.56%. With equal dataset weighting, 63.31% of queries become shallower in both channels. How-ever, both depths increase with Contriever on Touché-2020. These results support channel-specific integration of generated passages and joint evaluation of retrieval effectiveness and access depth. 
+
+1 Introduction 
+
+Existing LLM-based query expansion methods use generated content to construct retrieval queries or representations and typically evaluate retrieval gains at a preset top-L cutoff (Gao et al., 2023; Wang et al., 2023; Zhang et al., 2024; Liu and Zhang, 2025). In hybrid retrieval, however, top-
+
+L jointly determines how much of each ranking is read and which documents contribute to fusion; changing L may therefore change the fused result (a) Dense expansion recovers missing semantics          
+
+> Query A
+> How are various types of income taxed differently in the USA?
+> Generated references
+> Capital gains are taxed separately from ordinary income .
+> Long-term capital gains depend on the holding period.
+> Relevant passage Rank 271 → 5
+> ... Long-term capital gains are taxed below the marginal rate and differ from wage or ordinary income ...
+> Generated evidence supplies missing document language.
+
+(b) Sparse anchoring preserves query evidence                      
+
+> Query B
+> How to fi nd cheaper alternatives to a traditional home telephone line ?
+> Generated references
+> Consider VoIP services as a home-phone alternative. Some internet service providers offer integrated phone service.
+> Relevant passage Rank 31 → 1
+> Use a VOIP service provider as an alternative to your
+> home phone line .
+> Expansion-only match Rank 5 → filtered
+> Internet Phone :VoIP dialer , reseller packages, login credentials, prices, and contact details ...
+> Green: generated |underline : original |Red: expansion-only
+
+Figure 1: FiQA examples of DESA (Maia et al., 2018; Thakur et al., 2021). Dense expansion recovers miss-ing document semantics; sparse anchoring promotes jointly supported passages and excludes expansion-only matches. Two references are shown per query; text is abridged and paraphrased, and ranks use draw 0. 
+
+itself (Zhang, 2026). A gain measured at a single cutoff is thus conditional on L and does not isolate the effect of query expansion. To separate these factors, we first determine the fused result of each query construction from the complete dense and sparse rankings (Zhang, 2026). A fixed sound replay procedure then reveals the two rankings progressively and records the per-1arXiv:2608.15851v1 [cs.IR] 16 Aug 2026 channel depths at which the same ordered top-K is certified. This separates two questions: what fused result does an expansion produce, and how much ranked evidence is required to determine it? The answers need not move together. An expansion may improve retrieval effectiveness while push-ing decisive evidence deeper into one channel. We therefore ask whether query expansion can improve effectiveness while reducing the access depth re-quired from both channels. Expansion effects are retriever-dependent (Weller et al., 2024; Li et al., 2026). On NFCorpus, applying the same expansion to both channels improves the fused result and reduces dense access depth, but increases sparse access depth. Generated terms substantially enlarge the set of documents with nonzero sparse scores, preventing the sparse ranking from exhausting as early as it does for the original query. This reversal motivates an asymmetric design: dense retrieval should absorb new semantic information, whereas sparse retrieval should restrict generated terms to documents already supported by the original query. We address this asymmetry with DESA (Dense Expansion and Sparse Anchoring), a channel-asymmetric query expansion method for hybrid retrieval. Given an original query, the LLM gen-erates several complementary reference passages around the same information need. For dense re-trieval, orthogonal residual expansion preserves the original query direction and adds only the new se-mantic component supplied by the references. For sparse retrieval, score-product anchoring multiplies each document’s scores under the original and ex-panded queries. Documents matched only by gen-erated terms receive no anchored score, while the new terms may still reorder documents supported by the original query. Together, these operations broaden dense semantic coverage without broaden-ing sparse support: Dense expands; Sparse anchors. Figure 1 illustrates this division of labor through two retrieval examples. Across seven BEIR datasets, DESA improves equal-dataset macro nDCG@10 and Recall@20 over the unexpanded query by 3.82% and 2.38%, while reducing dense and sparse access depths by 36.90% and 36.56%, respectively. With equal dataset weighting, 63.31% of queries become shal-lower in both channels. Mechanism experiments show that sparse anchoring contributes most of the effectiveness gain, while the dense orthogo-nal residual further reduces the ranked evidence required to determine the fused result. 
+
+2 Related Work 
+
+2.1 LLM-Based Query Expansion 
+
+LLM-based query expansion supplements short queries with document-like language that may be absent from the original formulation. HyDE en-codes a generated hypothetical document for dense retrieval, whereas Query2doc appends a pseudo-document to the query for sparse and dense re-trieval (Gao et al., 2023; Wang et al., 2023). Later methods generate different forms of evidence or sample multiple references to cover alternative ex-pressions of the same information need (Jagerman et al., 2023; Zhang et al., 2024). Although gener-ated text can supply useful lexical and semantic cues, its effect varies across queries, datasets, and retrievers, and irrelevant content may reduce re-trieval effectiveness (Weller et al., 2024). 
+
+2.2 Evaluating Expansion under Hybrid Fusion 
+
+Query-expansion methods commonly evaluate re-trieval using a fixed top-L prefix from each ranking (Zhang et al., 2024; Liu and Zhang, 2025). In hybrid retrieval, L also determines which cross-channel contributions enter fusion, making the mea-sured expansion effect conditional on the selected cutoff. Following EAHR, we evaluate complete-list retrieval effectiveness separately from channel access depth (Zhang, 2026), and ask whether query expansion can improve the former while reducing the latter. 
+
+2.3 Channel-Aware Integration 
+
+Generated content can enter retrieval through query text, dense representations, term weights, or rank fusion. Query2doc modifies the query text, MuGI pools representations from multiple references, Word2Passage reweights generated terms, and Exp4Fuse combines original and expanded rank-ings (Wang et al., 2023; Zhang et al., 2024; Choi et al., 2025; Liu and Zhang, 2025). DVCQR further constructs separate lexical and semantic views for sparse and dense retrieval (Li et al., 2026). These methods differ in where expansion is integrated; DESA instead focuses on how the same generated passages should be constrained differently across the two channels. Recent work also combines heterogeneous re-trievers per query: MoR weights sparse and dense 2retrievers, while QuDAR adaptively fuses four rankings formed by original and expanded queries under both retriever types (Kalra et al., 2025; Kim et al., 2026). DESA instead modifies the dense and sparse rankings before fusion: generated pas-sages expand dense semantic coverage while sparse retrieval remains anchored to the original query’s lexical support. 
+
+3 DESA 
+
+3.1 Method Overview 
+
+Given an original query qo, DESA generates a set of complementary reference passages R =
+
+{r1, . . . , r n}. Dense retrieval keeps the original query as its base direction and adds only the new semantic component supplied by the references. Sparse retrieval combines the original and ex-panded scores so that generated terms can reorder documents already matched by the original query without introducing expansion-only matches. The resulting dense and sparse rankings are fused into the final result. Figure 2 summarizes this design: Dense expands; Sparse anchors. O
+
+> Original Query
+> E
+> Expanded Query
+
+✦ rewrite       
+
+> Sparse
+> Sparse Retrieval
+> OAB
+> EBAC
+
+× πS
+
+> BA
+> C
+> Score-product anchoring
+> πD
+> Dense
+> Dense Retrieval
+> O
+> Orthogonal residual
+
+Figure 2: Design principle of DESA. The same gen-erated passages expand dense semantic coverage but remain anchored to the original query’s lexical support in sparse retrieval. 
+
+3.2 Complementary Reference Generation 
+
+The generator is prompted to produce n short pas-sages that could plausibly occur in relevant docu-ments. Each passage introduces a different alias, technical term, or paraphrase while retaining the entities, relations, numbers, polarity, temporal con-ditions, scope, and other constraints of qo. The prompt prohibits broader information needs and invented answers. The passages therefore vary in expression rather than intent, allowing the two re-trieval channels to draw additional cues from a shared expansion. The complete prompt and de-coding settings are provided in Appendix A. 
+
+3.3 Channel-Asymmetric Query Construction 3.3.1 Orthogonal Residual Expansion 
+
+Let fD be the dense encoder. We encode the orig-inal query and each query–reference pair as unit vectors: 
+
+vo = norm( fD(qo)) ,
+
+vi = norm( fD(concat( qo, r i))) ,
+
+¯vr = 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+vi.
+
+The component of ¯vr parallel to the original query is removed, and the remaining residual is added to vo:
+
+z = ¯ vr − (v⊤ 
+
+> o
+
+¯vr)vo, eD = norm( vo + z).
+
+Documents are ranked by their similarity to eD,producing the dense ranking πD. Because z ⊥ vo
+
+and ∥z∥ ≤ 1,̸
+
+(eD, vo) = arctan ∥z∥ ≤ π
+
+4 .
+
+The references can therefore add semantic di-rections absent from the original representation while keeping the expanded query within 45 ◦ of it. If they contribute no orthogonal component, then 
+
+eD = vo.
+
+3.3.2 Score-Product Anchoring 
+
+For sparse retrieval, the expanded query concate-nates the original query and all reference passages: 
+
+qr = concat( qo, r 1, . . . , r n).
+
+Let sS (q, d ) be a non-negative additive sparse scorer. Each document d receives an original score, an expanded score, and their product: 
+
+so(d) = sS (qo, d ), sr(d) = sS (qr, d ),sA(d) = so(d)sr(d).
+
+Because qr contains qo, every document sup-ported by the original query is also supported by the expanded query. Hence, 
+
+supp( sA) = supp( so) ∩ supp( sr) = supp( so).
+
+Sorting the positive anchored scores produces the sparse ranking πS . Generated terms may pro-mote or demote documents within the original sup-port, but documents matched only by the expansion 3receive zero anchored score and are excluded. If 
+
+sr is merely a positive multiple of so, the original sparse order is unchanged; positive global score rescaling also leaves the ranking invariant. 
+
+3.4 Complete Fusion and Access Measurement 
+
+We use the complete-list target and bound-based replay of Zhang (2026); DESA changes the query construction, not this evaluation protocol. Com-plete dense and sparse rankings are fused by equal-weight RRF (Cormack et al., 2009): 
+
+F (d) = X
+
+> c∈{ D,S }
+
+1
+
+κ + rank πc (d) .
+
+A document absent from a channel contributes zero. Sorting by F (d), with document identifiers breaking ties, defines the ordered target TK . Re-trieval effectiveness is evaluated directly on this complete-list result. To measure channel access, a fixed replay pro-cedure progressively reveals πD and πS . After Lc
+
+items have been read from channel c, the largest possible contribution from its next unread item is 
+
+uc(Lc) = 1
+
+κ + Lc + 1 .
+
+The replay reads from the channel with the larger bound, breaking ties in favor of the dense channel, until unread documents can no longer change the membership or order of TK . It records the replay stopping depths (LD, L S ) required to determine the complete-list result. 
+
+4 Experiments 
+
+We first examine whether a fixed top-L cutoff changes the measured effect of query expansion. We then evaluate whether DESA improves retrieval effectiveness while reducing the ranking depth re-quired from dense and sparse retrieval. The remain-ing experiments separate the contributions of the two channel operators and test robustness across generators, dense encoders, reference counts, and corpus sizes. 
+
+4.1 Evaluation Protocol 
+
+To measure cutoff sensitivity, we vary L ∈{10 , 20 , 50 , 100 , 200 , 500 , 1000 }. At each cutoff, the top-L dense and sparse rankings are fused using equal-weight RRF (Cormack et al., 2009). We com-pute nDCG@10 (Järvelin and Kekäläinen, 2002) and Recall@20, compare the ordering of query constructions across cutoff depths, and measure whether each fixed-L result reproduces the ordered top-20 from complete-list fusion. We also examine whether the cutoff changes the judgment of an expansion relative to the un-expanded query. For each query and generation draw, the metric difference between an expansion and Original is labeled as a gain, tie, or loss under both fixed-L and complete-list fusion. We report how often this label changes and separately count strict reversals, where a gain becomes a loss or vice versa. All remaining experiments use the complete-list fusion defined in Section 3.4. Retrieval ef-fectiveness is measured by nDCG@10 and Re-call@20. Channel access is measured by the dense and sparse replay stopping depths (LD, L S ). We re-port their changes from Original and the proportion of queries for which both depths decrease. Sparse support size and exhaustion rate are used to explain changes in lexical access. 
+
+4.2 Datasets and Retrieval Setup 
+
+We evaluate on seven English BEIR datasets (Thakur et al., 2021): SciFact (Wadden et al., 2020), NFCorpus (Boteva et al., 2016), TREC-COVID (Voorhees et al., 2020), FiQA (Maia et al., 2018), ArguAna (Wachsmuth et al., 2018), Touché-2020 (Bondarenko et al., 2020), and SCIDOCS (Cohan et al., 2020). These datasets cover scientific claim verification, biomedical and financial retrieval, ar-gument retrieval, and scientific document recom-mendation. Unless otherwise stated, the cutoff, controlled, and mechanism analyses use all seven datasets, with each dataset receiving equal weight in macro averages. For the scale analysis, we construct nested TREC-COVID corpora containing 25,000, 50,000, 100,000, and all documents. Every snapshot retains the judged relevant documents, while the remain-ing documents are added in a fixed order. Each smaller corpus is therefore a strict subset of the larger ones. The primary generator is Qwen2.5-7B-Instruct (Qwen Team, 2024). For each query, we perform three generation draws and produce five comple-mentary reference passages per draw. The genera-tor robustness experiment uses Mistral-7B-Instruct-v0.3 (Jiang et al., 2023) on up to 100 queries selected by a fixed hash from FiQA, ArguAna, Touché-2020, and SCIDOCS. 4Dense retrieval uses BGE-small-en-v1.5 (Xiao et al., 2024), with normalized query and document vectors ranked by dot product. Sparse retrieval uses Lucene BM25 through Pyserini 2.3.0, with 
+
+k1 = 0 .9 and b = 0 .4 (Robertson and Zaragoza, 2009; Lin et al., 2021). Contriever (Izacard et al., 2022) is used as a second dense encoder. Score ties are broken by document identifier. 
+
+4.3 Comparison Methods 
+
+The controlled comparison includes Original and Shared expansion. Original submits the unex-panded query to both retrieval channels. Shared expansion uses the same generated references as DESA but applies them directly to both channels: dense retrieval averages the representations of the five query and reference pairs, while sparse re-trieval concatenates the original query and all refer-ences. The comparison between Shared expansion and DESA therefore tests whether dense and sparse retrieval benefit from different integration rules. We also compare with three representative gen-erative expansion methods. HyDE encodes gen-erated hypothetical documents for dense retrieval (Gao et al., 2023). Query2doc appends a gener-ated pseudo-document to the query (Wang et al., 2023). MuGI generates multiple references, pools their contextualized dense representations, and uses query-weighted concatenation for sparse retrieval (Zhang et al., 2024). We evaluate all three re-produced pipelines on the same seven datasets as DESA. We further compare with the rank-based QuDAR-simple variant, which uses the same gen-erated references and fuses the top-1000 original-sparse (OS), expanded-sparse (ES), original-dense (OD), and expanded-dense (ED) rankings with RRF ( k = 60 ) (Kim et al., 2026). 
+
+4.4 Mechanism and Robustness Analysis 
+
+We isolate the two channel operators with matched controls. For dense retrieval, the original sparse ranking is paired with either unprojected contex-tual expansion or orthogonal residual expansion. For sparse retrieval, the original dense ranking is paired with either direct rewriting or score-product anchoring. A 2 × 2 comparison further evaluates Original, each proposed operator alone, and their combination. We then examine how each operator changes its retrieval channel. Dense behavior is measured by the angle between the original and expanded query vectors. Sparse behavior is measured by top-20 turnover and by whether relevant documents move upward in the ranking. We compare these quan-tities with the corresponding changes in retrieval effectiveness and access depth using within-dataset quartiles and Spearman correlations. Additional experiments vary the number of ref-erence passages over {1, 3, 5}. Score-product an-choring is compared with a binary mask that re-tains expanded-query scores only for documents matched by the original query, separating support preservation from the use of graded original scores. We also test sparse retrieval using only the gen-erated passages. Robustness experiments vary the RRF constant over {2, 20 , 60 , 100 }, replace the generator and dense encoder, and evaluate the nested TREC-COVID corpora. 
+
+4.5 Statistical Analysis 
+
+The three generation draws are averaged within each query before aggregation. We report results for each dataset and equal-dataset macro averages. The 95% confidence intervals are obtained from 10,000 stratified bootstrap samples, with queries resampled within each dataset. The primary comparisons are DESA against Original and DESA against Shared expansion. We use 10,000 stratified paired sign-flip randomiza-tions and apply Holm correction across nDCG@10, Recall@20, LD, and LS separately for each com-parator. The operator controls and the matched QuDAR comparison use the same draw-averaged, query-level paired procedure, with Holm correction across nDCG@10 and Recall@20. 
+
+5 Results 
+
+5.1 Fixed Cutoffs Alter Measured Effects 
+
+Figure 3 compares the query-level judgment of DESA relative to Original at L = 50 with the judgment under complete-list fusion. Each query– draw pair is labeled as a gain, tie, or loss from the corresponding metric difference. Diagonal cells preserve that judgment; off-diagonal cells show cases in which the fixed cutoff changes it. 5Loss Tie Gain               
+
+> Complete-list judgment
+> Loss Tie Gain
+> Fixed-L judgment ( L = 50 )
+> 18.05 1.34 1.56 0.40 45.50 1.03 1.52 1.11 29.50
+> changed 6.95% · reversed 3.07%
+> (a) nDCG@10
+> Loss Tie Gain
+> Complete-list judgment
+> 4.62 3.83 1.91 2.45 62.23 3.07 1.15 6.44 14.30
+> changed 18.84% · reversed 3.06%
+> (b) Recall@20
+
+Figure 3: Transition between the DESA-versus-Original judgment at fixed L = 50 (rows) and under complete-list fusion (columns). Cells report the equal-dataset percentage of query–draw pairs. Green off-diagonal cells change among gain, tie, and loss; red cells are strict gain–loss reversals. 
+
+The fixed cutoff changes 6.95% of nDCG judg-ments and 18.84% of Recall judgments. Strict gain– loss reversals account for 3.07% and 3.06%, respec-tively. Thus, a practical fixed cutoff can change whether expansion is judged beneficial for an in-dividual query, rather than merely perturbing the ranking. Results for other cutoffs and ordered top-20 agreement are reported in Appendix Table 5. 
+
+5.2 Retrieval Effectiveness and Access Depth 
+
+Table 1 summarizes the controlled comparison. Un-der complete-list fusion, DESA obtains the highest macro nDCG@10 and Recall@20 in the seven-dataset controlled comparison, reaching .4747 and .4695. Relative to Original, these values cor-respond to gains of 3.82% and 2.38%. The equal-dataset averages of the within-dataset replay stopping-depth reductions are 36.90% and 36.56% for the dense and sparse channels. The mean pro-portion of queries that become shallower in both channels is 63.31%. All four improvements remain significant after Holm correction ( pHolm = .0004 ).                             
+
+> Method nDCG@10 ↑Recall@20 ↑LD↓LS↓
+> Original query
+> Original 0.4572 0.4586 1752.4 1455.1
+> Shared expansion
+> Shared 0.4671 0.4666 607.4 606.7
+> Single-channel construction
+> Dense only 0.4621 0.4637 1386.5 1219.9 Sparse only 0.4714 0.4678 884.4 822.0
+> Channel-asymmetric construction
+> DESA 0.4747 0.4695 728.9 673.2
+
+Table 1: Equal-dataset macro results for the seven-dataset controlled comparison. Higher is better for re-trieval metrics; lower is better for replay stopping depths. Raw depths are averaged across datasets; percentage re-ductions in the text are computed within each dataset before macro-averaging. 
+
+Compared with Shared expansion, DESA im-proves macro nDCG by 1.61% and Recall by 0.61%. The absolute nDCG difference is +.0075 
+
+and remains significant after correction ( pHolm =
+
+.0012 ). The Recall difference is +.0028 (pHolm =
+
+.2736 ), while the differences in dense and sparse depth are also nonsignificant. DESA therefore pro-vides a significant nDCG advantage over Shared expansion. NFCorpus illustrates the effect of sparse anchor-ing. Shared expansion increases the mean sparse support from 561.5 to 3211.6 documents and raises the sparse stopping depth by 105.81% relative to Original. DESA preserves the original support size and reduces sparse depth by 23.15%, while also reducing dense depth by 15.03%. Anchoring al-lows generated terms to improve the ordering of originally matched documents without expanding the lexical support. 
+
+5.3 Contributions of the Channel Operators 
+
+The 2 × 2 experiment shows that the two chan-nel operators are complementary. Dense residual expansion alone improves nDCG and Recall by 1.08% and 1.11%, with dense and sparse depth reductions of 8.16% and 7.49%. Sparse anchor-ing alone produces larger effectiveness gains of 3.11% and 2.01%, together with depth reductions of 28.77% and 27.74%. Combining both operators gives the full DESA gains of 3.82% and 2.38%, while reducing dense and sparse depth by 36.90% and 36.56%. Sparse anchoring contributes most of the ef-fectiveness gain, while dense residual expansion further reduces access depth. Their isolated con-trols produce only small differences, whereas the complete channel-asymmetric construction signif-icantly outperforms Shared expansion in nDCG. DESA’s advantage therefore comes from combin-ing the two channel-specific operations. Table 2 connects the two operators to their channel-specific outcomes on each dataset. DESA improves nDCG@10 over Original on all seven datasets. Adding sparse anchoring to Dense only improves all seven, while adding dense residual expansion to Sparse only improves six; FiQA is the sole exception at −0.66% . Under DESA, both replay stopping depths decrease on every dataset. Shared expansion broadens the positive-score sparse support by up to 5.72 ×, whereas DESA retains the Original support exactly on six datasets and by 99.9999% on Touché-2020, where 6Effectiveness: relative ∆nDCG@10 (%) Access reduction vs. Original (%) Sparse support ( × Original) Dataset DESA vs. Orig. +Dense given Sparse +Sparse given Dense LD LS Shared DESA                                                         
+
+> SciFact +2.40 +1.12 +0.91 22.2 20.9 1.62 ×1.00 ×
+> NFCorpus +3.37 +2.14 +1.36 15.0 23.2 5.72 ×1.00 ×
+> TREC-COVID +5.69 +0.51 +4.68 74.9 66.7 1.53 ×1.00 ×
+> FiQA +3.61 −0.66 +3.74 49.7 48.7 1.64 ×1.00 ×
+> ArguAna +1.27 +0.32 +0.88 15.2 15.3 1.00 ×1.00 ×
+> Touché-2020 +7.52 +0.92 +5.70 45.8 45.8 1.88 ×1.00 ×
+> SCIDOCS +0.86 +0.03 +0.13 35.4 35.4 2.02 ×1.00 ×
+> Pattern 7/7 improve 6/7 improve 7/7 improve 7/7 shallower 7/7 shallower up to 5.72 ×≈1.00 ×
+
+Table 2: Per-dataset evidence for channel-asymmetric construction. Effectiveness columns report relative nDCG@10 changes; +Dense and +Sparse compare DESA with the corresponding one-operator construction. Access columns report replay-depth reductions from Original, where positive values indicate shallower access. Sparse support is normalized by Original; red marks the sole degradation. 
+
+the exported tail omits 25 extremely low-scoring document occurrences. The cross-dataset pattern makes the division of labor explicit: sparse anchoring supplies the more consistent effectiveness gain, while dense resid-ual expansion adds complementary gains on most datasets. Together, they improve retrieval without broadening sparse support and reduce the ranked evidence required by both channels. Detailed an-gle, turnover, relevant-rank, and operator-control diagnostics are reported in Appendix B.2. Additional binary-mask, reference-count, and operator-control results are reported in Ap-pendix C. 
+
+5.4 Comparison with Recent and Prior Methods 
+
+Under matched generated references, QuDAR-simple RRF obtains 0.4761 nDCG and 0.4714 Re-call, compared with 0.4747 and 0.4695 for DESA. Neither paired difference is significant after cor-rection. After accounting for finite sparse lists, QuDAR-simple fuses a mean of 3,911.5 available entries across its four top-1000-capped rankings. DESA requires a mean of 1,402.1 entries to certify its fused result under the replay policy, a 64.16% reduction in equal-dataset mean entry count (Ta-ble 3). Across all seven datasets, DESA’s macro nDCG and Recall exceed HyDE’s by 15.39% and 7.32%. Averaging percentage reductions within datasets, its dense and sparse stopping depths are 80.48% and 80.26% lower. Relative to MuGI, the macro effectiveness gains are 3.56% and 2.15%, and the                            
+
+> Method nDCG@10 ↑Recall@20 ↑Entries ↓
+> Matched references, seven datasets
+> QuDAR-simple 0.4761 0.4714 3911.5 DESA 0.4747 0.4695 1402.1
+> Prior query expansion, seven datasets
+> Original 0.4572 0.4586 3207.6 HyDE 0.4114 0.4374 16668.8 MuGI 0.4584 0.4596 2790.1 Query2doc 0.4728 0.4675 1771.5 DESA 0.4747 0.4695 1402.1
+
+Table 3: External comparisons over the same seven eval-uation datasets. Rank entries are the available items in QuDAR-simple’s four top-1000-capped lists and 
+
+LD + LS for the two-channel methods. 
+
+corresponding depth reductions are 24.36% and 37.21%. These comparisons show higher mean effectiveness and lower mean access depths. In the lower block, DESA has 0.40% higher nDCG and 0.43% higher Recall than Query2doc, with 11.85% and 23.28% lower dense and sparse stopping depths. 
+
+5.5 Robustness and Failure Boundary 
+
+DESA retains its effectiveness gains across the tested generator, dense encoder, and corpus sizes. Access depth decreases in most settings, with Con-triever on Touché-2020 as the only observed failure case. Detailed generator, encoder, and corpus-scale results are reported in Appendix C.1. 
+
+6 Conclusion 
+
+This work shows that query expansion in hybrid retrieval should account for the distinct match-ing behavior of dense and sparse retrieval chan-nels. DESA implements this channel-asymmetric 7view using a shared set of generated reference pas-sages. Orthogonal residual expansion adds com-plementary semantic directions to the dense query, whereas score-product anchoring uses the same generated passages to reorder documents within the original sparse support. To evaluate this de-sign without tying its measured effect to a fixed top-L cutoff, we determine the fused ranking from complete channel lists and record the per-channel replay stopping depths needed to certify its ordered top-K.Across seven BEIR datasets, DESA improves equal-dataset macro nDCG@10 and Recall@20 over Original by 3.82% and 2.38%, while reduc-ing dense and sparse replay stopping depths by 36.90% and 36.56%. The operator analysis clar-ifies the source of these gains: sparse anchoring provides the more consistent effectiveness improve-ment, and dense residual expansion contributes ad-ditional gains while reducing the ranked evidence required for fusion. Under matched generated ref-erences, paired tests do not detect a statistically significant effectiveness difference between DESA and QuDAR-simple RRF. Comparing their equal-dataset mean entry counts, DESA uses 64.16% fewer available fusion-side rank entries. Together, these findings point to a division of labor for query expansion in hybrid retrieval. Gen-erated reference passages broaden semantic cover-age in dense retrieval and, when anchored to the original query, improve ordering in sparse retrieval without broadening lexical support. This division of labor captures the central design principle of DESA: Dense expands, while Sparse anchors. 
+
+Limitations 
+
+Our evaluation covers seven English BEIR datasets, two generators, two dense encoders, BM25, and equal-weight RRF. The results may differ for other languages, learned sparse retrievers, or fusion rules. Score-product anchoring further assumes a non-negative sparse scoring function. Replay stopping depth measures the ranked ev-idence needed to certify the fused top-K, rather than wall-clock latency. End-to-end efficiency also depends on generation, encoding, indexing, and the retrieval interface. Generated references may con-tain irrelevant or unsupported expressions, while pooled relevance judgments may omit relevant doc-uments outside existing pools. Evaluating DESA with broader retrieval architectures and online in-cremental retrieval would clarify these remaining boundaries. 
+
+References                   
+
+> Alexander Bondarenko, Maik Fröbe, Meriem Be-loucif, Lukas Gienapp, Yamen Ajjour, Alexander Panchenko, Chris Biemann, Benno Stein, Henning Wachsmuth, Martin Potthast, and Matthias Hagen. 2020. Overview of Touché 2020: Argument retrieval. In Working Notes of CLEF 2020 , volume 2696 of
+> CEUR Workshop Proceedings .Vera Boteva, Demian Gholipour, Artem Sokolov, and Stefan Riezler. 2016. A full-text learning to rank dataset for medical information retrieval. In Ad-vances in Information Retrieval , pages 716–722. Springer. Jeonghwan Choi, Minjeong Ban, Minseok Kim, and Hwanjun Song. 2025. Word2Passage: Word-level importance re-weighting for query expansion. In
+> Findings of the Association for Computational Lin-guistics: ACL 2025 , pages 8276–8296, Vienna, Aus-tria. Association for Computational Linguistics. Arman Cohan, Sergey Feldman, Iz Beltagy, Doug Downey, and Daniel S. Weld. 2020. SPECTER: Document-level representation learning using citation-informed transformers. In Proceedings of the 58th Annual Meeting of the Association for Computational Linguistics , pages 2270–2282. Association for Computational Linguistics. Gordon V. Cormack, Charles L. A. Clarke, and Stefan Büttcher. 2009. Reciprocal rank fusion outperforms condorcet and individual rank learning methods. In
+> Proceedings of the 32nd International ACM SIGIR Conference on Research and Development in Infor-mation Retrieval , pages 758–759. Luyu Gao, Xueguang Ma, Jimmy Lin, and Jamie Callan. 2023. Precise zero-shot dense retrieval without rel-evance labels. In Proceedings of the 61st Annual Meeting of the Association for Computational Lin-guistics (Volume 1: Long Papers) , pages 1762–1777, Toronto, Canada. Association for Computational Lin-guistics. Gautier Izacard, Mathilde Caron, Lucas Hosseini, Sebas-tian Riedel, Piotr Bojanowski, Armand Joulin, and Edouard Grave. 2022. Unsupervised dense informa-tion retrieval with contrastive learning. Transactions on Machine Learning Research .Rolf Jagerman, Honglei Zhuang, Zhen Qin, Xuanhui Wang, and Michael Bendersky. 2023. Query expan-sion by prompting large language models. Preprint ,arXiv:2305.03653. Kalervo Järvelin and Jaana Kekäläinen. 2002. Cumu-lated gain-based evaluation of IR techniques. ACM Transactions on Information Systems , 20(4):422– 446.
+
+8Albert Q. Jiang, Alexandre Sablayrolles, Arthur Men-sch, Chris Bamford, Devendra Singh Chaplot, Diego de las Casas, Florian Bressand, Gianna Lengyel, Guil-laume Lample, Lucile Saulnier, Lélio Renard Lavaud, Marie-Anne Lachaux, Pierre Stock, Teven Le Scao, Thibaut Lavril, Thomas Wang, Timothée Lacroix, and William El Sayed. 2023. Mistral 7B. Preprint ,arXiv:2310.06825. Jushaan Singh Kalra, Xinran Zhao, To Eun Kim, Fengyu Cai, Fernando Diaz, and Tongshuang Wu. 2025. MoR: Better handling diverse queries with a mixture of sparse, dense, and human retrievers. In Proceed-ings of the 2025 Conference on Empirical Methods in Natural Language Processing , pages 11971–11990, Suzhou, China. Association for Computational Lin-guistics. Joeun Kim, Seunghyouk Yoon, Xuan-Bach Le, Youngeun Nam, Doyoung Kim, Hwanjun Song, and Jae-Gil Lee. 2026. QuDAR: Query-wise dual-perspective adaptive retrieval. In Proceedings of the 64th Annual Meeting of the Association for Compu-tational Linguistics (Volume 1: Long Papers) , pages 38662–38679. Association for Computational Lin-guistics. Chenyi Li, Xinhui Tu, and Zaixiang Wang. 2026. DVCQR: Dual-view conversational query rewriting with stage-wise reinforcement learning. In Proceed-ings of the 64th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) ,pages 22993–23014, San Diego, California, United States. Association for Computational Linguistics. Jimmy Lin, Xueguang Ma, Sheng-Chieh Lin, Jheng-Hong Yang, Ronak Pradeep, and Rodrigo Nogueira. 2021. Pyserini: A python toolkit for reproducible information retrieval research with sparse and dense representations. In Proceedings of the 44th Inter-national ACM SIGIR Conference on Research and Development in Information Retrieval , pages 2356– 2362. Lingyuan Liu and Mengxiang Zhang. 2025. Exp4Fuse: A rank fusion framework for enhanced sparse re-trieval using large language model-based query ex-pansion. In Findings of the Association for Com-putational Linguistics: ACL 2025 , pages 163–173, Vienna, Austria. Association for Computational Lin-guistics. Macedo Maia, Siegfried Handschuh, André Freitas, Brian Davis, Ross McDermott, Manel Zarrouk, and Alexandra Balahur. 2018. WWW’18 open challenge: Financial opinion mining and question answering. In 
+
+Companion Proceedings of the Web Conference 2018 ,pages 1941–1942. Qwen Team. 2024. Qwen2.5 technical report. Preprint ,arXiv:2412.15115. Stephen Robertson and Hugo Zaragoza. 2009. The probabilistic relevance framework: BM25 and be-yond. Foundations and Trends in Information Re-trieval , 3(4):333–389. Nandan Thakur, Nils Reimers, Andreas Rücklé, Ab-hishek Srivastava, and Iryna Gurevych. 2021. BEIR: A heterogeneous benchmark for zero-shot evaluation of information retrieval models. In Proceedings of the Neural Information Processing Systems Track on Datasets and Benchmarks .Ellen M. Voorhees, Tasmeer Alam, Steven Bedrick, Dina Demner-Fushman, William R. Hersh, Kyle Lo, Kirk Roberts, Ian Soboroff, and Lucy Lu Wang. 2020. TREC-COVID: Constructing a pandemic informa-tion retrieval test collection. ACM SIGIR Forum ,54(1):1–12. Henning Wachsmuth, Shahbaz Syed, and Benno Stein. 2018. Retrieval of the best counterargument without prior topic knowledge. In Proceedings of the 56th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers) , pages 241–251. Association for Computational Linguistics. David Wadden, Shanchuan Lin, Kyle Lo, Lucy Lu Wang, Madeleine van Zuylen, Arman Cohan, and Hannaneh Hajishirzi. 2020. Fact or fiction: Verify-ing scientific claims. In Proceedings of the 2020 Conference on Empirical Methods in Natural Lan-guage Processing , pages 7534–7550. Association for Computational Linguistics. Liang Wang, Nan Yang, and Furu Wei. 2023. Query2doc: Query expansion with large language models. In Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing ,pages 9414–9423, Singapore. Association for Com-putational Linguistics. Orion Weller, Kyle Lo, David Wadden, Dawn Lawrie, Benjamin Van Durme, Arman Cohan, and Luca Sol-daini. 2024. When do generative query and docu-ment expansions fail? a comprehensive study across methods, retrievers, and datasets. In Findings of the Association for Computational Linguistics: EACL 2024 , pages 1987–2003, St. Julian’s, Malta. Associa-tion for Computational Linguistics. Shitao Xiao, Zheng Liu, Peitian Zhang, Niklas Muen-nighoff, Defu Lian, and Jian-Yun Nie. 2024. C-Pack: Packed resources for general Chinese embeddings. In Proceedings of the 47th International ACM SI-GIR Conference on Research and Development in Information Retrieval , pages 641–649. Chunran Zhang. 2026. Exact adaptive hybrid re-trieval without fixed Top-L cutoffs. Preprint ,arXiv:2608.07152. Le Zhang, Yihong Wu, Qian Yang, and Jian-Yun Nie. 2024. Exploring the best practices of query expan-sion with large language models. In Findings of the Association for Computational Linguistics: EMNLP 2024 , pages 1872–1883, Miami, Florida, USA. Asso-ciation for Computational Linguistics. 
+
+9A Reproducibility Details 
+
+This section records the generation, query-construction, retrieval, and replay settings needed to reproduce the experiments. 
+
+A.1 Complementary Reference Generation 
+
+We use the following Qwen2.5-7B-Instruct revision for both the model and tokenizer: 
+
+> fe11104b620d588ccc049ff6631dd3ea002e3d98
+
+The unquantized BF16 model runs with MLX-LM 0.31.2. Decoding uses a temperature of 0.7, top-p of 0.9, top-k of 20, and a maximum of 256 new tokens. Queries are sorted by identifier and processed in batches of eight. Each batch seed is derived from the protocol version, dataset, prompt hash, and batch index using the first 64 bits of their SHA-256 digest. 
+
+> Prompt 1. Complementary Reference Generation System prompt
+> You generate evidence-like reference passages for infor-mation retrieval. Given one search query, return exactly five concise, com-plementary passages that could plausibly occur in relevant documents. Preserve every named entity, relation, number, polarity, temporal condition, scope, and constraint in the query. Add useful aliases, technical terminology, and para-phrases, but do not broaden the information need or invent a specific answer. Each passage must be one sentence of at most 25 words. Return one single-line JSON array containing exactly five distinct strings. Count the five array items before respond-ing. Do not output an object key, query identifier, Mark-down, placeholders, or any other text. Every item must contain a substantive passage.
+> User input
+> {"query":"{query}"}
+
+The user input is serialized as a canonical JSON object with one query field. XGrammar 0.2.1 re-quires exactly five strings; validation rejects empty, duplicate, or placeholder passages. Invalid output is retried once with the same seed and validation feedback, then falls back to the unexpanded query. The second generator is Mistral-7B-Instruct-v0.3 at revision 
+
+> c170c708c41dac9275d15a8fff4eca08d52bab71 .
+
+It uses the same decoding, batching, and valida-tion settings. 
+
+A.2 Query Construction 
+
+Orthogonal residual expansion uses float32 throughout. Shared expansion uses the same query [SEP] reference representations, but averages and normalizes them without removing the compo-nent parallel to the original query. For sparse retrieval, the expanded query contains one copy of the original query followed by the se-lected reference passages. BM25 scores under the original and expanded queries are stored separately before applying the document-wise score product. The binary-mask ablation retains the expanded-query score only for documents matched by both queries; the references-only ablation removes the original query. DESA neither repeats the original query nor uses MuGI’s repetition coefficient. 
+
+A.3 Baseline Reproduction 
+
+All generative baselines use the same primary gen-erator. Their generation and query-integration set-tings are specified below. HyDE generates eight hypothetical documents per run and averages their normalized representa-tions; its sparse channel uses the original query. FiQA, ArguAna, SciFact, and TREC-COVID use task-specific instructions, the remaining datasets use a general instruction, and generation is capped at 512 new tokens. Query2doc generates one pseudo-document of at most 120 words. Dense retrieval encodes it with the original query; sparse retrieval concatenates it with five copies of the original query. MuGI generates five pseudo-references. Dense retrieval averages the five query–reference repre-sentations. Sparse retrieval repeats the original query 
+
+ P ni=1 |ri||qo|β
+
+
+
+times before appending all references, where 
+
+| · | denotes character length and β = 4 . We re-produce MuGI’s generation and query integration components without its pseudo-relevance feedback calibration. 
+
+A.4 Retrieval Implementation 
+
+BGE-small-en-v1.5 uses revision 
+
+> 5c38ec7c405ec4b44b94cc5a9bb96e735b38267a .
+
+Queries are prefixed with “Represent this sen-tence for searching relevant passages:” and en-coded with a maximum length of 512 tokens. Con-triever uses mean pooling at revision 
+
+> 2bd46a25019aeea091fd42d1f0fd4801675cf699 .
+
+All query and document embeddings are normal-ized. Pyserini 2.3.0 runs with Java 21 and uses 
+
+DefaultEnglishAnalyzer . A separate Lucene index is built for each dataset and each TREC-COVID snapshot, so BM25 collection statistics are 10 computed within the corresponding corpus. Doc-uments with equal retrieval or fusion scores are ordered by the UTF-8 order of their identifiers. 
+
+A.5 Access-Depth Replay 
+
+This implements the fixed bound-based replay pro-tocol adopted in Section 3.4 from Zhang (2026). The replay starts with empty dense and sparse pre-fixes. After reading lc items from channel c, its next unread contribution is bounded by 
+
+uc(lc) = 160 + lc + 1 .
+
+The bound becomes zero after exhaustion. The replay reads the channel with the larger bound, breaking ties toward dense. An observed docu-ment’s accumulated score is a lower bound; an unseen contribution is bounded by the correspond-ing next-unread value, and a document unseen in both channels by their sum. Replay stops when these bounds certify top-20 membership and order, recording (LD, L S ) = ( lD, l S ).
+
+A.6 Artifact Traceability 
+
+Generation records store the raw and parsed out-put, hashes, decoding settings, seed, retries, run-time lock, and code commit. Query-level records store the method, generation run, effectiveness, 
+
+(LD, L S ), sparse support and exhaustion, ordered top-20, and hashes of the compressed rankings, configuration, generation, and replay trace. The Python environment is fixed by uv.lock ;Java is checked before retrieval. A hash manifest records code, configurations, prompts, inputs, mod-els, generations, and rankings. Reported tables are rebuilt from the query-level records. 
+
+B Operator Properties and Mechanism Diagnostics 
+
+B.1 Properties of the Channel Operators 
+
+For the dense construction, each contextual vector 
+
+vi is unit normalized. The triangle inequality gives 
+
+∥¯vr∥ ≤ 1
+
+n
+
+> n
+
+X
+
+> i=1
+
+∥vi∥ = 1 .
+
+Orthogonal projection cannot increase the norm, so ∥z∥ ≤ 1. Since v⊤ 
+
+> o
+
+z = 0 and ∥vo∥ = 1 ,
+
+e⊤
+
+> D
+
+vo = 1
+
+p1 + ∥z∥2 ,̸
+
+(eD, vo) = arctan ∥z∥ ≤ π
+
+4 .
+
+If z = 0, normalization leaves vo unchanged. For sparse retrieval, non-negativity gives 
+
+supp( sosr) = supp( so) ∩ supp( sr). Additivity and the inclusion of qo in qr imply supp( so) ⊆
+
+supp( sr), yielding exact support preservation. If 
+
+sr = c s o for c > 0, then sA = c s 2
+
+> o
+
+; squaring is strictly increasing on positive scores, so the ranking is unchanged. Multiplying so or sr by a positive global constant only rescales every anchored score and likewise leaves the ranking unchanged. 
+
+B.2 Mechanism Diagnostics 
+
+Table 4 reports dense angle, one minus sparse top-20 overlap with Original, and the mean reciprocal-rank change of judged relevant documents present in the exported rankings. Macros weight datasets equally. Figure 4 shows the query-level distributions behind the aggregate diagnostics. One invalid-generation fallback leaves 11,327 query–draw pairs. Their mean dense angle is 11 .98 ◦ and the max-imum is 27 .87 ◦, below the analytic 45 ◦ bound. Sparse anchoring changes 26.15% of the original sparse top-20 on average. SciFact NFCorpus TREC-C FiQA ArguAna Touché SCIDOCS 10 20 30 40 
+
+> Dense angle (degrees)
+> (a) Dense residual
+> 45° bound
+> SciFact NFCorpus TREC-C FiQA ArguAna Touché SCIDOCS 020 40 60 80
+> Sparse Top-20 turnover (%)  (b) Sparse anchoring
+
+Figure 4: Realized behavior of the two channel op-erators over three generation draws on seven datasets. Dense angles are measured from the original query; sparse turnover is one minus top-20 overlap with the original sparse ranking. Boxes show the interquartile range and median; whiskers extend to 1.5 times the in-terquartile range, with outliers omitted. 
+
+Within-dataset quartiles show no monotonic re-lation between either diagnostic and effectiveness or access depth. Relevant-document reciprocal-rank gain correlates more strongly with sparse-only nDCG gain than overall turnover does (.391 versus .078); dense-angle correlations with nDCG gain and depth reduction are .010 and .011. The data therefore support no angle or turnover threshold. Exact support preservation assumes a non-negative additive scorer and complete score export. It holds for six datasets. Touché-2020 omits 25 11 Dataset Dense angle ( ◦) Sparse top-20 turnover (%) Relevant RR change Support retained (%) SciFact 9.38 18.88 .0211 100.0000 NFCorpus 17.65 18.69 .0147 100.0000 TREC-COVID 12.99 45.37 .0021 100.0000 FiQA 13.34 33.91 .0204 100.0000 ArguAna 4.02 8.14 .0048 100.0000 Touché-2020 14.40 37.07 .0091 99.9999 SCIDOCS 12.05 20.98 .0028 100.0000 Equal-dataset macro 11.98 26.15 .0107 100.0000 
+
+Table 4: Mechanism diagnostics computed from the frozen query constructions and rankings. Support retained is the mean per-query–draw fraction of the original sparse support; the displayed macro rounds to 100.0000%. 
+
+extremely low-scoring tail documents across 23 of 147 query–draw pairs; mean and minimum re-tention are 99.99990% and 99.99881%. We retain these cases and do not call the Lucene export ex-actly support preserving there. 
+
+C Additional Experimental Results 
+
+C.1 Additional Ablations and Robustness 
+
+Binary masking preserves sparse support but re-moves original-score magnitude, lowering macro nDCG@10 by 1.54% and Recall@20 by 0.74%. Increasing references from one to three improves nDCG@10 by 1.91% and reduces dense/sparse re-play stopping depths by 17.23%/18.14%; using five adds 0.35% nDCG@10 and 0.43% Recall@20, with further reductions of 3.83%/3.40%. With Mistral, all four sampled datasets re-tain non-negative effectiveness changes and 7.12– 47.61%/7.16–47.62% dense/sparse depth reduc-tions; 10% of sampled ArguAna queries fall back. Contriever improves both metrics on all four datasets but raises Touché-2020 depths by 14.29%/4.34%. Nested TREC-COVID gains and reductions remain positive but non-monotonic. 
+
+C.2 Matched Operator and QuDAR Controls 
+
+Tables 6 and 7 report matched controls. Operator pairs share references, keep the other channel at Original, and average three draws within query before inference.                                 
+
+> Construction nDCG@10 Recall@20 Original .4572 .4586 Contextual Dense .4622 .4637 Residual Dense .4621 .4637 Rewrite Sparse .4686 .4670 Product Sparse .4714 .4678 Paired effect (proposed −control) Dense residual, nDCG −.00005 [−.00086 , . 00082 ], pHolm = 1 .0
+> Dense residual, Recall −.00006 [−.00043 , . 00033 ], pHolm = 1 .0
+> Sparse product, nDCG .00283 [−.00126 , . 00693 ], pHolm =.3650
+> Sparse product, Recall .00078 [−.00184 , . 00331 ], pHolm =.5689
+
+Table 6: Macro operator controls and query-level paired effects. Holm correction covers nDCG and Recall within each control pair.                                      
+
+> Dataset nDCG@10 Recall@20 DESA QuDAR DESA QuDAR ArguAna .3991 .3985 .9237 .9253 FiQA .3780 .3833 .5450 .5554 NFCorpus .3793 .3780 .2195 .2227 SCIDOCS .1940 .1957 .2787 .2811 SciFact .7427 .7403 .9200 .9211 TREC-COVID .8224 .8233 .0435 .0438 Touché-2020 .4071 .4137 .3560 .3500 Equal-dataset macro .4747 .4761 .4695 .4714
+
+Table 7: Matched-reference comparison with QuDAR-simple RRF (top-1000 original-sparse (OS), expanded-sparse (ES), original-dense (OD), and expanded-dense (ED) rankings; k = 60 ). DESA–QuDAR paired ef-fects are −.00145 [−.00478 , . 00181 ] for nDCG and 
+
+−.00188 [−.00400 , . 00019 ] for Recall ( pHolm = .3966 
+
+and .1668 ). 
+
+12 (a) Per-dataset controlled results 
+
+Dataset Method Queries nDCG@10 Recall@20 LD LS Sparse support Exhaust. (%) ArguAna Original 1406 .3941 .9203 157.1 156.7 8587.8 0.00 Shared .4004 .9265 123.4 123.0 8616.8 0.00 DESA .3991 .9237 133.1 132.7 8587.8 0.00 FiQA Original 648 .3649 .5260 2179.0 2076.3 28384.6 1.23 Shared .3635 .5391 1104.1 1103.6 46673.3 0.00 DESA .3780 .5450 1096.2 1065.6 28384.6 0.93 NFCorpus Original 323 .3670 .2099 474.4 173.7 561.5 48.61 Shared .3780 .2260 359.1 357.6 3211.6 1.14 DESA .3793 .2195 403.1 133.5 561.5 46.75 SCIDOCS Original 1000 .1923 .2721 694.8 599.3 11503.0 2.70 Shared .1905 .2790 372.7 372.2 23239.6 0.00 DESA .1940 .2787 448.8 387.2 11503.0 1.63 SciFact Original 300 .7253 .9036 409.1 368.6 2765.7 4.33 Shared .7325 .9182 284.1 282.6 4489.0 0.33 DESA .7427 .9200 318.3 291.6 2765.7 3.89 TREC-COVID Original 50 .7781 .0398 6270.9 4729.9 92683.8 2.00 Shared .8169 .0433 787.3 786.9 141483.1 0.00 DESA .8224 .0435 1574.8 1574.4 92683.8 0.00 Touché-2020 Original 49 .3786 .3382 2081.8 2081.4 151619.0 0.00 Shared .3883 .3344 1221.5 1221.3 284677.0 0.00 DESA .4071 .3560 1127.8 1127.4 151618.9 0.00 
+
+(b) Primary statistical tests 
+
+Comparison / outcome Effect [95% CI] p/p Holm 
+
+Original / nDCG@10 .0175 [.0111, .0238] .0001 / .0004 Original / Recall@20 .0109 [.0070, .0151] .0001 / .0004 Original / LD 1023.6 [377.5, 2012.6] .0001 / .0004 Original / LS 781.9 [356.1, 1339.7] .0001 / .0004 Shared / nDCG@10 .0075 [.0036, .0116] .0003 / .0012 Shared / Recall@20 .0028 [-.0003, .0061] .0912 / .2736 Shared / LD -121.4 [-367.0, 39.7] .3157 / .6313 Shared / LS -66.5 [-310.6, 93.0] .7909 / .7909 
+
+(c) Fixed-cutoff diagnostics 
+
+L Exact top-20 nDCG (%) Recall (%) (%) Change Reverse Change Reverse 20 1.92 18.23 8.84 22.50 3.84 50 16.54 6.95 3.07 18.84 3.06 100 47.40 2.17 0.73 11.74 0.99 1000 92.62 0.19 0.01 1.18 0.00 
+
+Table 5: Additional results. (a) Dataset-level controlled results. (b) Stratified paired tests after within-query averaging over three generation draws. (c) DESA query–draw sensitivity to fixed top-L, macro-averaged with equal dataset weight; exact top-20 compares with complete-list fusion, and the conclusion columns compare DESA with Original. 
+
+13
