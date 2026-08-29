@@ -6,85 +6,65 @@
 </div>
 
 ## 每次日报
-- 最新运行日期：2026-08-23
-- 运行时间：2026-08-23 20:11:18 UTC
+- 最新运行日期：2026-08-29
+- 运行时间：2026-08-29 22:58:03 UTC
 - 运行状态：成功
-- 本次总论文数：21
+- 本次总论文数：14
 - 精读区：8
-- 速读区：13
+- 速读区：6
 
 ### 今日简报（AI）
-今日聚焦智能体记忆主题，精读8篇、速读13篇，覆盖记忆基底评估与技能记忆新架构。  
-最值得看：记忆基底全面评估与超图技能记忆均获9.0高分；原始聊天记录搜索在效果上可匹敌结构化记忆，且语义分段式长期记忆方案值得关注。  
-下一步建议：优先精读两篇9分论文，并对比速读中两种记忆检索路线的适用场景。
-- 详情：[/202608/23/README](/202608/23/README)
+- 今日共生成 14 篇推荐（精读 8 篇，速读 6 篇）
+- 精读：《GLaQ: Grounding Latent Queries in Visual Evidence for Multimodal Reasoning》（8.0/10）, 《Schema-Agnostic Graph Reasoning Agent for Hybrid Knowledge Graphs》（8.0/10）
+- 速读：《Structure-Internalized Rule Language Model for Faithful Knowledge Graph Reasoning》（8.0/10）, 《ArborMem: Navigating Interaction States with Memory Forests》（8.0/10）, 《Do Large Language Models Play Six Degrees of Separation? Measuring Topological Compression in Long-Context Manifolds》（8.0/10）
+- 这些结果覆盖了当下较热的方向，建议先看精读区论文的关键问题与方法。
+- 详情：[/202608/29/README](/202608/29/README)
 
 ### 精读区论文标签
-1. [Harness the Memory: A Holistic Evaluation of Memory Substrates in Memory Agents](/202608/23/2608.15008v1-harness-the-memory-a-holistic-evaluation-of-memory-substrates-in-memory-agents)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：记忆增强智能体记忆基板的全方位评估，直接对应记忆增强语言模型技术
-2. [HyperSkill: Self-Evolving LLM Agents via Hypergraph-Structured Skill Memory](/202608/23/2608.16114v1-hyperskill-self-evolving-llm-agents-via-hypergraph-structured-skill-memory)  
-   标签：评分：9.0/10、query:pwt
-   evidence：面向自进化LLM智能体的超图技能记忆，直接相关于用智能体记忆提升推理
-3. [When Context Misleads: Intent-Guided Decoding for Robust Retrieval-Augmented Generation](/202608/23/2608.16515v1-when-context-misleads-intent-guided-decoding-for-robust-retrieval-augmented-generation)  
-   标签：评分：9.0/10、query:llm-memory
-   evidence：通过意图引导解码在检索上下文与参数记忆间仲裁的RAG
-4. [EgoCITE: Context-Augmented Indexing and Time-Aware Retrieval for Long-Horizon Egocentric Memory](/202608/23/2608.12627v3-egocite-context-augmented-indexing-and-time-aware-retrieval-for-long-horizon-egocentric-memory)  
-   标签：评分：8.0/10、query:llm-memory
-   evidence：长时程智能体记忆框架，上下文增强索引与时间感知检索
-5. [GEM: A Generative Embedding Model Bridging Reasoning and Retrieval](/202608/23/2608.13200v1-gem-a-generative-embedding-model-bridging-reasoning-and-retrieval)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：将生成与嵌入统一用于检索，在查询上推理以增强检索增强生成
-6. [TAHB: A Comprehensive Benchmark for Text-Attributed Hypergraph Learning](/202608/23/2608.15055v1-tahb-a-comprehensive-benchmark-for-text-attributed-hypergraph-learning)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：首个融合超图结构与原始文本属性的公开基准，支持文本感知的图结构学习与图嵌入研究
-7. [ACTS-SQL: Agentic and Critic-Oriented Tree-Structured SQL Correctness with Large Language Models](/202608/23/2608.15145v1-acts-sql-agentic-and-critic-oriented-tree-structured-sql-correctness-with-large-language-models)  
+1. [GLaQ: Grounding Latent Queries in Visual Evidence for Multimodal Reasoning](/202608/29/2608.15517v1-glaq-grounding-latent-queries-in-visual-evidence-for-multimodal-reasoning)  
    标签：评分：8.0/10、query:pwt
-   evidence：免训练的规划引导树状调试，作为单路径思维链的智能体式替代
-8. [SEER: Long-Context Reasoning via Selective Visual-Text Compression](/202608/23/2608.15962v1-seer-long-context-reasoning-via-selective-visual-text-compression)  
+   evidence：通过潜在视觉推理替代思维链的方法
+2. [Schema-Agnostic Graph Reasoning Agent for Hybrid Knowledge Graphs](/202608/29/2608.15834v1-schema-agnostic-graph-reasoning-agent-for-hybrid-knowledge-graphs)  
+   标签：评分：8.0/10、query:pwt
+   evidence：面向混合知识图谱的图推理智能体
+3. [QUMem: Personalized Memory for Query-Conditioned User-State Inference in LLM Agents](/202608/29/2608.16168v1-qumem-personalized-memory-for-query-conditioned-user-state-inference-in-llm-agents)  
    标签：评分：8.0/10、query:llm-memory
-   evidence：通过选择性视觉文本压缩实现长上下文推理
+   evidence：LLM智能体中的查询条件化上下文记忆召回
+4. [STAIR: Semantic-Temporal Automaton for Interpretable Reasoning in Temporal Question Answering](/202608/29/2608.16224v1-stair-semantic-temporal-automaton-for-interpretable-reasoning-in-temporal-question-answering)  
+   标签：评分：8.0/10、query:pwt
+   evidence：语义-时间自动机作为LLM思维链的可解释替代方案
+5. [FTA-Mem: Fact-Time-Affect Anchored Memory for Low-Density Long-Term Dialogue](/202608/29/2608.16303v1-fta-mem-fact-time-affect-anchored-memory-for-low-density-long-term-dialogue)  
+   标签：评分：8.0/10、query:llm-memory
+   evidence：面向长期对话的结构化记忆检索与合成，属于记忆增强语言模型技术
+6. [GRIP: Grounded Reasoning via Information-Restricted Premises](/202608/29/2608.16776v1-grip-grounded-reasoning-via-information-restricted-premises)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：防止查询主导并强制利用检索证据的RAG方法，直接适用于检索增强生成
+7. [GRIP: Grounded Reasoning via Information-Restricted Premises](/202608/29/2608.16776v2-grip-grounded-reasoning-via-information-restricted-premises)  
+   标签：评分：8.0/10、query:power-ticket
+   evidence：识别检索增强生成中的查询主导并利用信息受限证据瓶颈实现接地推理
+8. [Proteus: Incremental Memory Activation for Long-Context Sequence Modeling](/202608/29/2608.16844v1-proteus-incremental-memory-activation-for-long-context-sequence-modeling)  
+   标签：评分：8.0/10、query:llm-memory
+   evidence：增量记忆激活范式，改善长上下文中的记忆利用
 
 ### 速读区论文标签
-1. [When Your Agent Opens the Chat App: Agent-Controlled Search over Raw Chat Logs Rivals Structured Memory](/202608/23/2608.12888v1-when-your-agent-opens-the-chat-app-agent-controlled-search-over-raw-chat-logs-rivals-structured-memory)  
-   标签：评分：8.0/10、query:llm-memory
-   evidence：原始聊天日志上的智能体控制搜索对比结构化记忆
-2. [When Your Agent Opens the Chat App: Agent-Controlled Search over Raw Chat Logs Rivals Structured Memory](/202608/23/2608.12888v2-when-your-agent-opens-the-chat-app-agent-controlled-search-over-raw-chat-logs-rivals-structured-memory)  
+1. [Structure-Internalized Rule Language Model for Faithful Knowledge Graph Reasoning](/202608/29/2608.17443v1-structure-internalized-rule-language-model-for-faithful-knowledge-graph-reasoning)  
    标签：评分：8.0/10、query:pwt
-   evidence：智能体控制的原始聊天日志词法搜索可媲美结构化记忆
-3. [LycheeMemory V2: Efficient Long-Term Memory for LLM Agents via Semantic Segment-Level Consolidation](/202608/23/2608.12990v1-lycheememory-v2-efficient-long-term-memory-for-llm-agents-via-semantic-segment-level-consolidation)  
+   evidence：面向大模型知识图谱推理的结构内化规则方法，提升推理忠实性
+2. [ArborMem: Navigating Interaction States with Memory Forests](/202608/29/2608.17534v1-arbormem-navigating-interaction-states-with-memory-forests)  
    标签：评分：8.0/10、query:llm-memory
-   evidence：通过语义片段级整合为LLM智能体构建高效长期记忆框架
-4. [GEM: A Generative Embedding Model Bridging Reasoning and Retrieval](/202608/23/2608.13200v2-gem-a-generative-embedding-model-bridging-reasoning-and-retrieval)  
-   标签：评分：8.0/10、query:power-ticket
-   evidence：统一生成与嵌入，利用大模型对查询进行推理来丰富检索上下文，用于检索增强生成
-5. [Intern-S2-Mobius: Foundation Model with Decoupled Knowledge and Reasoning](/202608/23/2608.14290v1-intern-s2-mobius-foundation-model-with-decoupled-knowledge-and-reasoning)  
+   evidence：在线记忆框架用交互状态森林表示长对话，为LLM提供长期记忆组织方法
+3. [Do Large Language Models Play Six Degrees of Separation? Measuring Topological Compression in Long-Context Manifolds](/202608/29/2608.17950v1-do-large-language-models-play-six-degrees-of-separation-measuring-topological-compression-in-long-context-manifolds)  
    标签：评分：8.0/10、query:llm-memory
-   evidence：记忆与推理解耦的大语言模型架构，共享记忆增强推理
-6. [Handoff-H1: An Orchestrated Vision-Agent System for Material Quantity Takeoff from Construction Blueprints](/202608/23/2608.15032v1-handoff-h1-an-orchestrated-vision-agent-system-for-material-quantity-takeoff-from-construction-blueprints)  
-   标签：评分：7.0/10、query:pwt
-   evidence：持久化分层项目基座作为智能体记忆，用于改进多跳视觉推理
-7. [When Deep Research Agents Stagnate: Enhancing Reasoning with Retrieval-Aware Agent Control](/202608/23/2608.15191v1-when-deep-research-agents-stagnate-enhancing-reasoning-with-retrieval-aware-agent-control)  
-   标签：评分：7.0/10、query:llm-memory
-   evidence：检索感知的智能体控制以增强推理轨迹
-8. [Divergent-Convergent Reasoning: Scaling Test-Time Compute through Structured Solution Synthesis](/202608/23/2608.15303v1-divergent-convergent-reasoning-scaling-test-time-compute-through-structured-solution-synthesis)  
-   标签：评分：7.0/10、query:pwt
-   evidence：发散-汇聚推理作为思维链的替代方案
-9. [GLaQ: Grounding Latent Queries in Visual Evidence for Multimodal Reasoning](/202608/23/2608.15517v2-glaq-grounding-latent-queries-in-visual-evidence-for-multimodal-reasoning)  
-   标签：评分：7.0/10、query:pwt
-   evidence：提出用潜在查询基础替代思维链推理，提升多模态推理的视觉证据保持
-10. [Dense Expands, Sparse Anchors: Channel-Asymmetric Query Expansion for Hybrid Retrieval](/202608/23/2608.15851v1-dense-expands-sparse-anchors-channel-asymmetric-query-expansion-for-hybrid-retrieval)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：面向混合检索的LLM通道非对称查询扩展，可迁移至电力文档检索
-11. [When Less Is Enough: Context Selection and Prompting Strategies for Bengali News Headline Generation](/202608/23/2608.15879v1-when-less-is-enough-context-selection-and-prompting-strategies-for-bengali-news-headline-generation)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：文档级生成中的上下文选择与少样本提示，对工作票检索增强生成有方法借鉴
-12. [Navigation-Informed Embeddings: Dense-Retriever Adaptation from Agent Search Traces](/202608/23/2608.15956v1-navigation-informed-embeddings-dense-retriever-adaptation-from-agent-search-traces)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：从智能体搜索轨迹中提取目标来适配稠密检索器，无需新标注即可提升检索质量，与工单场景的RAG相关
-13. [D2-ScaleAgent: Dual-Dimensional Scaling for Long Document Understanding](/202608/23/2608.16417v1-d2-scaleagent-dual-dimensional-scaling-for-long-document-understanding)  
-   标签：评分：6.0/10、query:power-ticket
-   evidence：多模态RAG智能体框架，面向长文档理解，可与工单检索增强生成流程相关联
+   evidence：通过图稀疏化分析多跳推理与长上下文拓扑
+4. [Remember, Verify, or Ask? Cross-Family Evaluation of Memory Commitment in LLM Agents](/202608/29/2608.19564v1-remember-verify-or-ask-cross-family-evaluation-of-memory-commitment-in-llm-agents)  
+   标签：评分：8.0/10、query:llm-memory
+   evidence：LLM智能体记忆承诺的跨家族评测
+5. [Beyond Memory Majority: Latent-Source Reasoning for Multi-Agent Memory Arbitration](/202608/29/2608.19701v1-beyond-memory-majority-latent-source-reasoning-for-multi-agent-memory-arbitration)  
+   标签：评分：8.0/10、query:pwt
+   evidence：通过消除记忆相关偏差改进多智能体记忆仲裁与推理
+6. [SABET-QA: Temporal Knowledge Graph Question Answering](/202608/29/2608.20083v1-sabet-qa-temporal-knowledge-graph-question-answering)  
+   标签：评分：8.0/10、query:llm-memory
+   evidence：利用可微工作记忆在时序知识图谱上进行多跳推理
 
 
 <div class="dpr-home-promo-card">
